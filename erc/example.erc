@@ -1,0 +1,5 @@
+let a = 5;
+ let b = 1.5 ;
+let c=b;
+
+let arr = [1,2,3];
