@@ -21,6 +21,14 @@ namespace erc
             return _items[_position];
         }
 
+        public T Next()
+        {
+            if (_position + 1 >= _items.Count)
+                return default(T);
+
+            return _items[_position + 1];
+        }
+
         public T Pop()
         {
             if (_position >= _items.Count)

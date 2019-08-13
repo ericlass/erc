@@ -10,8 +10,11 @@ namespace erc
         {
             var src = File.ReadAllText("example.erc");
 
+            var context = new CompilerContext();
+            context.Source = src;
+
             var tokenizer = new Tokenizer();
-            var tokens = tokenizer.Tokenize(src);
+            var tokens = tokenizer.Tokenize(context);
 
             Console.WriteLine("TOKENS");
             Console.WriteLine("======");

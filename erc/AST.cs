@@ -6,21 +6,9 @@ using System.Threading.Tasks;
 
 namespace erc
 {
-    class AST
-    {
-    }
-
-    public enum ImmediateType
-    {
-        Int, // => i32
-        Float, // => f32
-        Double, // => f64
-        Array // => array
-    }
-
     public class Immediate
     {
-        public ImmediateType Type { get; set; }
+        public DataType Type { get; set; }
         public object Value { get; set; }
     }
 

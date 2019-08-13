@@ -14,9 +14,9 @@ namespace erc
         private HashSet<char> _mathOps = new HashSet<char> { '+', '-', '*', '/' };
         private HashSet<char> _whiteSpaces = new HashSet<char> { ' ', '\t', '\r', '\n' };
 
-        public List<Token> Tokenize(string src)
+        public List<Token> Tokenize(CompilerContext context)
         {
-            var iterator = new StringIterator(src);
+            var iterator = new StringIterator(context.Source);
             var result = new List<Token>();
 
             var token = ReadToken(iterator);
@@ -38,6 +38,7 @@ namespace erc
 
             var c = iterator.Current();
             string value = null;
+            List<List<Token>> arrayValues = null;
             TokenType type;
 
             var startLine = iterator.Line;
@@ -51,7 +52,7 @@ namespace erc
             else if (IsDigit(c))
             {
                 value = ReadNumber(iterator);
-                type = TokenType.NumberValue;
+                type = TokenType.Number;
             }
             else if (IsMathOp(c))
             {
@@ -73,20 +74,21 @@ namespace erc
             }
             else if (c == '[')
             {
-                value = ReadArray(iterator);
-                type = TokenType.ArrayValue;
+                arrayValues = ReadArray(iterator);
+                type = TokenType.Array;
             }
             else
             {
                 throw new Exception("Unexpected character '" + c + "' at (" + startLine + "," + startColumn + ")");
             }
 
-            if (value != null)
+            if (value != null || arrayValues != null)
             {
                 return new Token
                 {
                     TokenType = type,
                     Value = value,
+                    ArrayValues = arrayValues,
                     Line = startLine,
                     Column = startColumn
                 };
@@ -95,24 +97,49 @@ namespace erc
             return null;
         }
 
-        private string ReadArray(StringIterator iterator)
+        private List<List<Token>> ReadArray(StringIterator iterator)
         {
-            var result = "";
-            var c = iterator.Current();
-            while (c > 0 && c != ']')
-            {
-                result += c;
-                iterator.Step();
-                c = iterator.Current();
-            }
+            var result = new List<List<Token>>();
+            //Skip starting "["
+            iterator.Step();
 
-            if (result.Length == 0)
+            if (!SkipWhiteSpaces(iterator))
             {
                 return null;
             }
 
-            result += ']';
-            iterator.Step();
+            var c = iterator.Current();
+
+            if (c == ']')
+            {
+                return result;
+            }
+
+            var token = ReadToken(iterator);
+            var expTokens = new List<Token>();
+            while (token != null)
+            {
+                expTokens.Add(token);
+
+                if (!SkipWhiteSpaces(iterator))
+                    return null;
+
+                if (iterator.Current() == ',')
+                {
+                    result.Add(expTokens);
+                    expTokens = new List<Token>();
+                    iterator.Step();
+                }
+                else if (iterator.Current() == ']')
+                {
+                    result.Add(expTokens);
+                    iterator.Step();
+                    break;
+                }
+
+                token = ReadToken(iterator);
+            }
+
             return result;
         }
 
@@ -130,6 +157,12 @@ namespace erc
             if (result.Length == 0)
             {
                 return null;
+            }
+
+            if (c == 'f' || c == 'd')
+            {
+                result += c;
+                iterator.Step();
             }
 
             return result;

@@ -11,8 +11,8 @@ namespace erc
         Word,
         AssigmnentOperator,
         MathOperator,
-        NumberValue,
-        ArrayValue,
+        Number,
+        Array,
         StatementTerminator
     }
 }
