@@ -14,13 +14,24 @@ namespace erc
             context.Source = src;
 
             var tokenizer = new Tokenizer();
-            var tokens = tokenizer.Tokenize(context);
+            tokenizer.Tokenize(context);
 
             Console.WriteLine("TOKENS");
             Console.WriteLine("======");
-            foreach (var token in tokens)
+            foreach (var token in context.Tokens)
             {
                 Console.WriteLine(token);
+            }
+
+            var syntax = new Syntax();
+            syntax.Analyze(context);
+
+            Console.WriteLine();
+            Console.WriteLine("STATEMENTS");
+            Console.WriteLine("==========");
+            foreach (var statement in context.Statements)
+            {
+                Console.WriteLine(statement);
             }
 
             Console.WriteLine();

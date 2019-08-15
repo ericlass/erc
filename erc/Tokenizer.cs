@@ -14,7 +14,7 @@ namespace erc
         private HashSet<char> _mathOps = new HashSet<char> { '+', '-', '*', '/' };
         private HashSet<char> _whiteSpaces = new HashSet<char> { ' ', '\t', '\r', '\n' };
 
-        public List<Token> Tokenize(CompilerContext context)
+        public void Tokenize(CompilerContext context)
         {
             var iterator = new StringIterator(context.Source);
             var result = new List<Token>();
@@ -26,7 +26,7 @@ namespace erc
                 token = ReadToken(iterator);
             }
 
-            return result;
+            context.Tokens = result;
         }
 
         private Token ReadToken(StringIterator iterator)
