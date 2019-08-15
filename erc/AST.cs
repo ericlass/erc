@@ -62,7 +62,7 @@ namespace erc
     public enum ExpressionType
     {
         Immediate, // => Immediate
-        Variable, // => String
+        Variable, // => Variable
         Math // => MathExpression
     }
 
@@ -85,7 +85,7 @@ namespace erc
 
     public class DefinitionStatement
     {
-        public String Variable { get; set; }
+        public Variable Variable { get; set; }
         public Expression Expression { get; set; }
 
         public override string ToString()
@@ -96,7 +96,7 @@ namespace erc
 
     public class AssignmentStatement
     {
-        public String Variable { get; set; }
+        public Variable Variable { get; set; }
         public Expression Expression { get; set; }
 
         public override string ToString()

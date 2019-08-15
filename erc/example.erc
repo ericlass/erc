@@ -1,11 +1,11 @@
 
 let a = 5;
- let b = 1.5 ;
+ let b = 1.5f ;
 let c=b;
-let d = 1.2f;
+let d = 1.2d;
 let e = 0.5d;
 
 let k = e * d;
-k = k + a;
+k = k + 2.0;
 
 let arr = [1,2,3,a, 2 - 3 ];

@@ -14,5 +14,16 @@ namespace erc
 
         //Used for arrays etc.
         public DataType SubDataType { get; set; }
+
+        public override string ToString()
+        {
+            var result = Name + "(" + DataType;
+            if (DataType == DataType.Array)
+            {
+                result += "[" + SubDataType + "]";
+            }
+
+            return result + ")";
+        }
     }
 }

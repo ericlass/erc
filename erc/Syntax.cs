@@ -96,7 +96,7 @@ namespace erc
             return new DefinitionStatement
             {
                 Expression = expression,
-                Variable = name.Value
+                Variable = variable
             };
         }
 
@@ -126,7 +126,7 @@ namespace erc
             return new AssignmentStatement
             {
                 Expression = expression,
-                Variable = name.Value
+                Variable = variable
             };
         }
 
@@ -138,12 +138,11 @@ namespace erc
                     return (expression.Value as Immediate).Type;
 
                 case ExpressionType.Variable:
-                    var varName = expression.Value as string;
-                    if (!_context.Variables.ContainsKey(varName))
+                    var varName = expression.Value as Variable;
+                    if (!_context.Variables.ContainsKey(varName.Name))
                         throw new Exception("Variable not declared: " + varName);
 
-                    var variable = _context.Variables[varName];
-                    return variable.DataType;
+                    return varName.DataType;
 
                 case ExpressionType.Math:
                     var math = expression.Value as MathExpression;
@@ -155,12 +154,11 @@ namespace erc
                             return (first.Value as Immediate).Type;
 
                         case OperandType.Variable:
-                            var mvarName = first.Value as string;
-                            if (!_context.Variables.ContainsKey(mvarName))
+                            var mvarName = first.Value as Variable;
+                            if (!_context.Variables.ContainsKey(mvarName.Name))
                                 throw new Exception("Variable not declared: " + mvarName);
 
-                            var mvariable = _context.Variables[mvarName];
-                            return mvariable.DataType;
+                            return mvarName.DataType;
                     }
 
                     break;
@@ -202,7 +200,7 @@ namespace erc
                 if (token.TokenType == TokenType.Word)
                 {
                     result.Type = ExpressionType.Variable;
-                    result.Value = token.Value;
+                    result.Value = _context.Variables[token.Value];
                 }
                 else if (token.TokenType == TokenType.Number)
                 {
@@ -249,10 +247,31 @@ namespace erc
                     Operand2 = operand2,
                     Operator = op
                 };
+
+                var type1 = DataTypeOfOperand(operand1);
+                var type2 = DataTypeOfOperand(operand2);
+                if (type1 != type2)
+                    throw new Exception("Incompatible data type in math expression '" + result + "'! " + type1 + " <> " + type2);
             }
 
             
             return result;
+        }
+
+        private DataType DataTypeOfOperand(Operand operand)
+        {
+            switch (operand.Type)
+            {
+                case OperandType.Immediate:
+                    var immediate = operand.Value as Immediate;
+                    return immediate.Type;
+
+                case OperandType.Variable:
+                    var variable = operand.Value as Variable;
+                    return variable.DataType;
+            }
+
+            throw new Exception("Unknown operand type: " + operand);
         }
 
         private Operand ParseOperand(Token token)
@@ -272,7 +291,7 @@ namespace erc
             else if (token.TokenType == TokenType.Word)
             {
                 result.Type = OperandType.Variable;
-                result.Value = token.Value;
+                result.Value = _context.Variables[token.Value];
             }
             else
             {
