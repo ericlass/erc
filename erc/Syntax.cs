@@ -75,7 +75,6 @@ namespace erc
             var expression = ReadExpression(tokens);
             var dataType = DataTypeOfExpression(expression);
             
-
             var variable = new Variable
             {
                 DataType = dataType,
@@ -169,12 +168,26 @@ namespace erc
 
         private DataType SubDataTypeOfArray(Expression expression)
         {
-            if (expression.Type != ExpressionType.Immediate)
+            if (expression.Type == ExpressionType.Immediate)
+            {
+                var immediate = expression.Value as Immediate;
+                var list = immediate.Value as List<Expression>;
+                return DataTypeOfExpression(list[0]);
+            }
+            else if (expression.Type == ExpressionType.Math)
+            {
+                var math = expression.Value as MathExpression;
+                var exp = new Expression
+                {
+                    Type = ExpressionType.Immediate,
+                    Value = math.Operand1.Value
+                };
+                return SubDataTypeOfArray(exp);
+            }
+            else
+            {
                 throw new Exception("Cannot determine array sub type for expression: " + expression);
-
-            var immediate = expression.Value as Immediate;
-            var list = immediate.Value as List<Expression>;
-            return DataTypeOfExpression(list[0]);
+            }
         }
 
         private Expression ReadExpression(SimpleIterator<Token> tokens)
@@ -282,6 +295,21 @@ namespace erc
                 result.Type = OperandType.Immediate;
                 var dataType = GuessDataType(token);
                 var value = ParseNumber(token.Value, dataType);
+                result.Value = new Immediate
+                {
+                    Type = dataType,
+                    Value = value
+                };
+            }
+            else if (token.TokenType == TokenType.Array)
+            {
+                result.Type = OperandType.Immediate;
+                var dataType = DataType.Array;
+                var value = new List<Expression>();
+                foreach (var val in token.ArrayValues)
+                {
+                    value.Add(ReadExpression(new SimpleIterator<Token>(val)));
+                }
                 result.Value = new Immediate
                 {
                     Type = dataType,
