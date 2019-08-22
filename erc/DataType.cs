@@ -4,7 +4,7 @@ namespace erc
 {
     public enum DataType
     {
-        i32,
+        i64,
         f32,
         f64,
         Array

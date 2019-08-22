@@ -84,6 +84,7 @@ namespace erc
             if (dataType == DataType.Array)
             {
                 variable.SubDataType = SubDataTypeOfArray(expression);
+                variable.ArraySize = (expression.Value as List<Expression>).Count;
             }
 
             _context.Variables.Add(name.Value, variable);
@@ -117,6 +118,8 @@ namespace erc
             var expType = DataTypeOfExpression(expression);
             if (expType != variable.DataType)
                 throw new Exception("Incompatible data types: " + variable.DataType + " <> " + expType);
+
+            //TODO: For arrays, check sub data type and length!
 
             var terminator = tokens.Pop();
             if (terminator.TokenType != TokenType.StatementTerminator)
@@ -234,6 +237,8 @@ namespace erc
                     {
                         arrayValues.Add(ReadExpression(new SimpleIterator<Token>(val)));
                     }
+
+                    //TODO: Check that all expresions have the same data type!
 
                     result.Value = new Immediate
                     {
@@ -357,7 +362,7 @@ namespace erc
             {
                 var value = token.Value;
                 if (!value.Contains('.'))
-                    return DataType.i32;
+                    return DataType.i64;
 
                 var last = value[value.Length - 1];
 
@@ -390,9 +395,9 @@ namespace erc
                     return double.Parse(str, CultureInfo.InvariantCulture);
             }
 
-            if (dataType == DataType.i32)
+            if (dataType == DataType.i64)
             {
-                return int.Parse(str);
+                return long.Parse(str);
             }
 
             throw new Exception("Unsupported number type: " + dataType + " for value " + str);
