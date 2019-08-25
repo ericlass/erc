@@ -11,6 +11,14 @@ namespace erc
         public DataType Type { get; set; }
         public object Value { get; set; }
 
+        public List<Expression> ValueAsArray()
+        {
+            if (Type != DataType.Array)
+                throw new Exception("Immediate is not an array but a " + Type);
+
+            return (List<Expression>)Value;
+        }
+
         public override string ToString()
         {
             var valueStr = Value.ToString();
@@ -18,8 +26,9 @@ namespace erc
             {
                 valueStr = "[" + String.Join(", ", Value as List<Expression>) + "]";
             }
-            return Type + "(" + valueStr + ")";
+            return Type + "(\"" + valueStr + "\")";
         }
+
     }
 
     public enum OperandType

@@ -2,12 +2,13 @@
 let a = 5;
  let b = 1.5f ;
 let c=b;
-let d = 1.2d;
+let d = 1.2;
 let e = 0.5d;
 
 let k = e * d;
 k = k + 2.0;
 
-let arr = [1,2,3,a, 2 - 3 ];
+let arr = [1,2,3, 2 - 3 ];
+arr = [1,2,3,5];
 
-let arr2 = [1,2,3] + [3,2,1];
+let arr2 = [1,2,3,4] + [4,3,2,1];

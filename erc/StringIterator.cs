@@ -29,6 +29,14 @@ namespace erc
             return _items[_position];
         }
 
+        public char Next()
+        {
+            if (_position + 1 >= _items.Length)
+                return (char)0;
+
+            return _items[_position + 1];
+        }
+
         public void Step()
         {
             _position += 1;

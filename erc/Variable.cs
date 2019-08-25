@@ -48,7 +48,7 @@ namespace erc
             var result = Name + "(" + DataType;
             if (DataType == DataType.Array)
             {
-                result += "[" + SubDataType + "]";
+                result += "[" + SubDataType + "; " + ArraySize + "]";
             }
 
             return result + ")";

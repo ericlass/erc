@@ -84,7 +84,7 @@ namespace erc
             if (dataType == DataType.Array)
             {
                 variable.SubDataType = SubDataTypeOfArray(expression);
-                variable.ArraySize = (expression.Value as List<Expression>).Count;
+                variable.ArraySize = SizeOfArray(expression);
             }
 
             _context.Variables.Add(name.Value, variable);
@@ -120,6 +120,16 @@ namespace erc
                 throw new Exception("Incompatible data types: " + variable.DataType + " <> " + expType);
 
             //TODO: For arrays, check sub data type and length!
+            if (expType == DataType.Array)
+            {
+                var subType = SubDataTypeOfArray(expression);
+                if (variable.SubDataType != subType)
+                    throw new Exception("Array expression sub type " + subType + " is not compatible with variable subtype " + variable);
+
+                var arrLength = SizeOfArray(expression);
+                if (variable.ArraySize != arrLength)
+                    throw new Exception("Arrays must have same size: " + variable.ArraySize + " != " + arrLength + " for " + variable);
+            }
 
             var terminator = tokens.Pop();
             if (terminator.TokenType != TokenType.StatementTerminator)
@@ -193,6 +203,30 @@ namespace erc
             }
         }
 
+        private long SizeOfArray(Expression expression)
+        {
+            if (expression.Type == ExpressionType.Immediate)
+            {
+                var immediate = expression.Value as Immediate;
+                var list = immediate.Value as List<Expression>;
+                return list.Count;
+            }
+            else if (expression.Type == ExpressionType.Math)
+            {
+                var math = expression.Value as MathExpression;
+                var exp = new Expression
+                {
+                    Type = ExpressionType.Immediate,
+                    Value = math.Operand1.Value
+                };
+                return SizeOfArray(exp);
+            }
+            else
+            {
+                throw new Exception("Cannot determine array size for expression: " + expression);
+            }
+        }
+
         private Expression ReadExpression(SimpleIterator<Token> tokens)
         {
             var expTokens = new List<Token>();
@@ -238,13 +272,25 @@ namespace erc
                         arrayValues.Add(ReadExpression(new SimpleIterator<Token>(val)));
                     }
 
-                    //TODO: Check that all expresions have the same data type!
-
                     result.Value = new Immediate
                     {
                         Type = DataType.Array,
                         Value = arrayValues
                     };
+
+                    //Check that all expresions have the same data type!
+                    if (arrayValues.Count > 0)
+                    {
+                        var firstType = DataTypeOfExpression(arrayValues[0]);
+                        for (int i = 1; i < arrayValues.Count; i++)
+                        {
+                            var currentType = DataTypeOfExpression(arrayValues[i]);
+                            if (firstType != currentType)
+                            {
+                                throw new Exception("All expression in array must be of same type: " + result);
+                            }
+                        }
+                    }
                 }
             }
             else
@@ -315,11 +361,26 @@ namespace erc
                 {
                     value.Add(ReadExpression(new SimpleIterator<Token>(val)));
                 }
+
                 result.Value = new Immediate
                 {
                     Type = dataType,
                     Value = value
                 };
+
+                //Check that all expresions have the same data type!
+                if (value.Count > 0)
+                {
+                    var firstType = DataTypeOfExpression(value[0]);
+                    for (int i = 1; i < value.Count; i++)
+                    {
+                        var currentType = DataTypeOfExpression(value[i]);
+                        if (firstType != currentType)
+                        {
+                            throw new Exception("All expression in array must be of same type: " + result);
+                        }
+                    }
+                }
             }
             else if (token.TokenType == TokenType.Word)
             {

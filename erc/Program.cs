@@ -35,6 +35,12 @@ namespace erc
             }
 
             Console.WriteLine();
+            Console.WriteLine("CODE");
+            Console.WriteLine("==========");
+            var generator = new CodeGenerator();
+            Console.WriteLine(generator.Generate(context));
+
+            Console.WriteLine();
             Console.Write("Press Enter to close");
             Console.Read();
         }
