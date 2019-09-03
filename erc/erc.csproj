@@ -65,9 +65,12 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="bnf.txt">
+    <None Include="doc\bnf.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="doc\AST.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

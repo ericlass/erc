@@ -1,5 +1,5 @@
-<statement>             ::= (<definition> | <assignment>) ";"
-<definition>            ::= "let" <assignment>
+<statement>             ::= (<var_decl> | <assignment>) ";"
+<var_decl>              ::= "let" <assignment>
 <assignment>            ::= <identifier> "=" <expression>
 
 <expression>            ::= <immediate> | <identifier> | <math_expression>

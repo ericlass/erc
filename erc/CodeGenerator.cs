@@ -27,14 +27,14 @@ namespace erc
             var codeLines = new List<string>();
             foreach (var statement in statements)
             {
-                switch (statement.Type)
+                switch (statement.Kind)
                 {
-                    case StatementType.Definition:
-                        var line = GenerateDefinition(statement.Value as DefinitionStatement);
+                    case StatementKind.VarDecl:
+                        var line = GenerateVarDecl(statement.VarDecl);
                         if (line != null)
                             codeLines.Add(line);
                         break;
-                    case StatementType.Assignment:
+                    case StatementKind.Assignment:
                         break;
                     default:
                         break;
@@ -50,78 +50,18 @@ namespace erc
             return builder.ToString();
         }
 
-        private string GenerateDefinition(DefinitionStatement statement)
+        private string GenerateVarDecl(VarDeclStatement statement)
         {
             var variable = statement.Variable;
             var expression = statement.Expression;
 
             var register = GetOrTakeRegisterForVariable(variable);
-            Console.WriteLine(variable.Name + " => " + register);
+            //Console.WriteLine(variable.Name + " => " + register);
 
             if (register == null)
                 throw new Exception("No register available for variable: " + variable);
 
-            switch (expression.Type)
-            {
-                case ExpressionType.Immediate:
-                    var immediate = expression.Value as Immediate;
-                    if (immediate.Type == DataType.i64)
-                    {
-                        return "mov " + register + ", " + immediate.Value;
-                    }
-                    else if (immediate.Type == DataType.f32)
-                    {
-                        var immName = "imm_" + variable.Name;
-                        var fVal = (float) immediate.Value;
-                        _dataEntries.Add(immName + " dd " + fVal.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                        return "movss " + register + ", [" + immName + "]";
-                    }
-                    else if (immediate.Type == DataType.f64)
-                    {
-                        var immName = "imm_" + variable.Name;
-                        var dVal = (double) immediate.Value;
-                        _dataEntries.Add(immName + " dq " + dVal.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                        return "movsd " + register + ", [" + immName + "]";
-                    }
-                    else if (immediate.Type == DataType.Array)
-                    {
-                        return "[array not implemented yet]";
-                    }
-                    break;
-
-                case ExpressionType.Variable:
-                    var srcVar = expression.Value as Variable;
-                    var reg = GetRegisterForVariable(srcVar);
-                    if (reg == null)
-                        throw new Exception("Variable is not defined yet: " + srcVar);
-
-                    //Should be okay because it is checked before that the variable of the same type
-                    if (srcVar.DataType == DataType.i64)
-                    {
-                        return "mov " + register + ", " + reg;
-                    }
-                    else if (srcVar.DataType == DataType.f32)
-                    {
-                        return "movss " + register + ", " + reg;
-                    }
-                    else if (srcVar.DataType == DataType.f64)
-                    {
-                        return "movsd " + register + ", " + reg;
-                    }
-                    else if (srcVar.DataType == DataType.Array)
-                    {
-                        return "[array not implemented yet]";
-                    }
-                    break;
-
-                case ExpressionType.Math:
-                    var math = expression.Value as MathExpression;
-                    return "[math expression]";
-                    break;
-
-                default:
-                    throw new Exception("Unknown expression type: " + expression);
-            }
+            //TODO: Recursively go through expression tree and generate code, starting from leafs
 
             return "[unsupported]";
         }
@@ -173,7 +113,7 @@ namespace erc
             return result;
         }
 
-        private void FreeVariable(Variable variable)
+        private void FreeVariableRegister(Variable variable)
         {
             _variableRegister.Remove(variable.Name);
         }

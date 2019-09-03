@@ -1,0 +1,84 @@
+﻿Variables
+=========
+
+- Required info
+    - Name
+    - Datatype
+    - ArrayDataType (if Datatype = Array)
+    - Current location of value (register (name), stack (offset), heap (pointer))
+        - Is assigned during definition, might change after that
+
+AST
+===
+
+"a = 5"
+
+- Assignment
+    - Variable "a"
+    - Immediate "5"
+    
+"b = 5 + a"
+
+- Assignment
+    - Variable "b"
+    - AddOp
+        - Immediate "5"
+        - Variable "b"
+        
+"let c = [1,2,4-2,b,sqrt(4)]"
+
+- Declaration
+    - Variable "c"
+    - NewArray
+        - Immediate "1"
+        - Immediate "2"
+        - SubOp
+            - Immediate "4"
+            - Immediate "2"
+        - Variable "b"
+        - FuncCall "sqrt"
+            - Immediate "4"
+        
+
+AST CLASSES
+===========
+
+enum StatementKind {
+    VariableDeclaration,
+    Assignment
+}
+
+pub Statement {
+    StatementKind {get;set;}
+    DeclarationStatement {get;set;}
+    AssignmentStatement {get;set;}
+}
+
+pub AssignmentStatement {
+    VarName {get;set;}
+    Expression {get;set;}
+}
+
+pub DeclarationStatement : AssignmentStatement {}
+
+pub Expression {
+    List<ExpressionItem> Items {get;set;}
+}
+
+enum ItemKind {
+    Immediate,
+    Variable,
+    AddOp,
+    SubOp,
+    MulOp,
+    DivOp,
+    FuncCall
+}
+
+pub ExpressionItem {
+    ItemKind {get;set;}
+	DataType {get;set;}
+	string Identifier {get;set;} //Name of variable, function etc.
+    object Value {get;set;} //For immediates (int, long, string... but not for arrays!)
+    List<ExpressionItem> Children {get;set;} //Values for arrays, math expression, parameters for function calls etc.
+}

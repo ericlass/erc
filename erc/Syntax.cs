@@ -45,19 +45,19 @@ namespace erc
             var first = token.Value;
             if (first == "let")
             {
-                result.Type = StatementType.Definition;
-                result.Value = ReadDefinition(tokens);
+                result.Kind = StatementKind.VarDecl;
+                result.VarDecl = ReadVarDecl(tokens);
             }
             else
             {
-                result.Type = StatementType.Assignment;
-                result.Value = ReadAssignment(tokens);
+                result.Kind = StatementKind.Assignment;
+                result.Assignment = ReadAssignment(tokens);
             }
 
             return result;
         }
 
-        private DefinitionStatement ReadDefinition(SimpleIterator<Token> tokens)
+        private VarDeclStatement ReadVarDecl(SimpleIterator<Token> tokens)
         {
             var let = tokens.Pop();
 
@@ -93,7 +93,7 @@ namespace erc
             if (terminator.TokenType != TokenType.StatementTerminator)
                 throw new Exception("Expected statement terminator, found " + name);
 
-            return new DefinitionStatement
+            return new VarDeclStatement
             {
                 Expression = expression,
                 Variable = variable
@@ -142,60 +142,61 @@ namespace erc
             };
         }
 
-        private DataType DataTypeOfExpression(Expression expression)
+        private DataType DataTypeOfExpression(ExpressionItem expressionItem)
         {
-            switch (expression.Type)
-            {
-                case ExpressionType.Immediate:
-                    return (expression.Value as Immediate).Type;
+            var dt = FindDataTypeOfExpression(expressionItem);
+            if (dt == null)
+                throw new Exception("Could not determine data type of expression: " + expressionItem);
 
-                case ExpressionType.Variable:
-                    var varName = expression.Value as Variable;
-                    if (!_context.Variables.ContainsKey(varName.Name))
-                        throw new Exception("Variable not declared: " + varName);
-
-                    return varName.DataType;
-
-                case ExpressionType.Math:
-                    var math = expression.Value as MathExpression;
-                    var first = math.Operand1;
-
-                    switch (first.Type)
-                    {
-                        case OperandType.Immediate:
-                            return (first.Value as Immediate).Type;
-
-                        case OperandType.Variable:
-                            var mvarName = first.Value as Variable;
-                            if (!_context.Variables.ContainsKey(mvarName.Name))
-                                throw new Exception("Variable not declared: " + mvarName);
-
-                            return mvarName.DataType;
-                    }
-
-                    break;
-            }
-
-            throw new Exception("Cannot determine datatype of expression: " + expression);
+            return dt.Value;
         }
 
-        private DataType SubDataTypeOfArray(Expression expression)
+        private Nullable<DataType> FindDataTypeOfExpression(ExpressionItem expressionItem)
         {
-            if (expression.Type == ExpressionType.Immediate)
+            switch (expressionItem.Kind)
             {
-                var immediate = expression.Value as Immediate;
-                var list = immediate.Value as List<Expression>;
-                return DataTypeOfExpression(list[0]);
+                case ExpItemKind.Immediate:
+                    if (expressionItem.Value is long)
+                        return DataType.i64;
+                    else if (expressionItem.Value is float)
+                        return DataType.f32;
+                    else if (expressionItem.Value is double)
+                        return DataType.f64;
+                    else if (expressionItem.Children != null && expressionItem.Children.Count != 0)
+                        return DataType.Array;
+                    else throw new Exception("Unknown immediate value: " + expressionItem.Value);
+
+                case ExpItemKind.Variable:
+                    var varName = expressionItem.Identifier;
+                    if (!_context.Variables.ContainsKey(varName))
+                        throw new Exception("Variable not declared: " + varName);
+
+                    return _context.Variables[varName].DataType;
             }
-            else if (expression.Type == ExpressionType.Math)
+
+            foreach (var item in expressionItem.Children)
             {
-                var math = expression.Value as MathExpression;
-                var exp = new Expression
-                {
-                    Type = ExpressionType.Immediate,
-                    Value = math.Operand1.Value
-                };
-                return SubDataTypeOfArray(exp);
+                var current = FindDataTypeOfExpression(item);
+                if (current != null)
+                    return current;
+            }
+
+            return null;
+        }
+
+        private DataType SubDataTypeOfArray(ExpressionItem expression)
+        {
+            if (expression.Kind == ExpItemKind.Immediate)
+            {
+                return DataTypeOfExpression(expression.Children[0]);
+            }
+            else if (expression.Kind == ExpItemKind.Variable)
+            {
+                return _context.Variables[expression.Identifier].SubDataType;
+            }
+            else if (expression.Kind == ExpItemKind.AddOp || expression.Kind == ExpItemKind.SubOp || expression.Kind == ExpItemKind.MulOp || expression.Kind == ExpItemKind.DivOp)
+            {
+                return DataTypeOfExpression(expression.Children[0]);
             }
             else
             {
@@ -203,23 +204,19 @@ namespace erc
             }
         }
 
-        private long SizeOfArray(Expression expression)
+        private long SizeOfArray(ExpressionItem expression)
         {
-            if (expression.Type == ExpressionType.Immediate)
+            if (expression.Kind == ExpItemKind.Immediate)
             {
-                var immediate = expression.Value as Immediate;
-                var list = immediate.Value as List<Expression>;
-                return list.Count;
+                return expression.Children.Count;
             }
-            else if (expression.Type == ExpressionType.Math)
+            else if (expression.Kind == ExpItemKind.Variable)
             {
-                var math = expression.Value as MathExpression;
-                var exp = new Expression
-                {
-                    Type = ExpressionType.Immediate,
-                    Value = math.Operand1.Value
-                };
-                return SizeOfArray(exp);
+                return _context.Variables[expression.Identifier].ArraySize;
+            }
+            else if (expression.Kind == ExpItemKind.AddOp || expression.Kind == ExpItemKind.SubOp || expression.Kind == ExpItemKind.MulOp || expression.Kind == ExpItemKind.DivOp)
+            {
+                return SizeOfArray(expression.Children[0]);
             }
             else
             {
@@ -227,7 +224,7 @@ namespace erc
             }
         }
 
-        private Expression ReadExpression(SimpleIterator<Token> tokens)
+        private ExpressionItem ReadExpression(SimpleIterator<Token> tokens)
         {
             var expTokens = new List<Token>();
             var tok = tokens.Current();
@@ -239,9 +236,9 @@ namespace erc
             }
 
             if (expTokens.Count == 0)
-                throw new Exception("Expected expresion, found " + tokens.Current());
+                throw new Exception("Expected expression, found " + tokens.Current());
 
-            Expression result = new Expression();
+            ExpressionItem result = new ExpressionItem();
 
             if (expTokens.Count == 1)
             {
@@ -249,34 +246,40 @@ namespace erc
                 var token = expTokens[0];
                 if (token.TokenType == TokenType.Word)
                 {
-                    result.Type = ExpressionType.Variable;
-                    result.Value = _context.Variables[token.Value];
+                    Variable variable = null;
+                    if (_context.Variables.ContainsKey(token.Value))
+                        variable = _context.Variables[token.Value];
+                    else
+                        throw new Exception("Undefined variable: " + token);
+
+                    result.Kind = ExpItemKind.Variable;
+                    result.DataType = variable.DataType;
+                    result.Identifier = token.Value;
                 }
                 else if (token.TokenType == TokenType.Number)
                 {
-                    result.Type = ExpressionType.Immediate;
                     var dataType = GuessDataType(token);
                     var value = ParseNumber(token.Value, dataType);
-                    result.Value = new Immediate
-                    {
-                        Type = dataType,
-                        Value = value
-                    };
+
+                    result.Kind = ExpItemKind.Immediate;
+                    result.DataType = dataType;
+                    result.Value = value;
                 }
                 else if (token.TokenType == TokenType.Array)
                 {
-                    result.Type = ExpressionType.Immediate;
-                    var arrayValues = new List<Expression>();
-                    foreach (var val in token.ArrayValues)
+                    var arrayValues = new List<ExpressionItem>();
+                    foreach (var vals in token.ArrayValues)
                     {
-                        arrayValues.Add(ReadExpression(new SimpleIterator<Token>(val)));
+                        var valExp = ReadExpression(new SimpleIterator<Token>(vals));
+                        if (valExp.Children == null || valExp.Children.Count != 1)
+                            throw new Exception("Array item expression must only return one exp item: " + token);
+
+                        arrayValues.Add(valExp.Children[0]);
                     }
 
-                    result.Value = new Immediate
-                    {
-                        Type = DataType.Array,
-                        Value = arrayValues
-                    };
+                    result.Kind = ExpItemKind.Immediate;
+                    result.DataType = DataType.Array;
+                    result.Children = arrayValues;
 
                     //Check that all expresions have the same data type!
                     if (arrayValues.Count > 0)
@@ -287,7 +290,7 @@ namespace erc
                             var currentType = DataTypeOfExpression(arrayValues[i]);
                             if (firstType != currentType)
                             {
-                                throw new Exception("All expression in array must be of same type: " + result);
+                                throw new Exception("All expressions in array must be of same type: " + result);
                             }
                         }
                     }
@@ -299,110 +302,34 @@ namespace erc
                 if (expTokens.Count != 3)
                     throw new Exception("Math expressions must be '<operand> <operator> <operand>' currently, not more, not less");
 
-                result.Type = ExpressionType.Math;
+                result.Kind = ParseOperator(expTokens[1].Value);
 
-                var operand1 = ParseOperand(expTokens[0]);
-                var op = ParseOperator(expTokens[1].Value);
-                var operand2 = ParseOperand(expTokens[2]);
+                //0 and 2 are correct, 1 is the operator!
+                var operand1 = ReadExpression(SimpleIterator<Token>.Singleton(expTokens[0]));
+                var operand2 = ReadExpression(SimpleIterator<Token>.Singleton(expTokens[2]));
 
-                result.Value = new MathExpression
-                {
-                    Operand1 = operand1,
-                    Operand2 = operand2,
-                    Operator = op
-                };
+                result.Children = new List<ExpressionItem> { operand1, operand2 };
 
-                var type1 = DataTypeOfOperand(operand1);
-                var type2 = DataTypeOfOperand(operand2);
+                var type1 = DataTypeOfExpression(operand1);
+                var type2 = DataTypeOfExpression(operand2);
                 if (type1 != type2)
                     throw new Exception("Incompatible data type in math expression '" + result + "'! " + type1 + " <> " + type2);
+
+                result.DataType = type1;
             }
 
             
             return result;
         }
 
-        private DataType DataTypeOfOperand(Operand operand)
-        {
-            switch (operand.Type)
-            {
-                case OperandType.Immediate:
-                    var immediate = operand.Value as Immediate;
-                    return immediate.Type;
-
-                case OperandType.Variable:
-                    var variable = operand.Value as Variable;
-                    return variable.DataType;
-            }
-
-            throw new Exception("Unknown operand type: " + operand);
-        }
-
-        private Operand ParseOperand(Token token)
-        {
-            var result = new Operand();
-            if (token.TokenType == TokenType.Number)
-            {
-                result.Type = OperandType.Immediate;
-                var dataType = GuessDataType(token);
-                var value = ParseNumber(token.Value, dataType);
-                result.Value = new Immediate
-                {
-                    Type = dataType,
-                    Value = value
-                };
-            }
-            else if (token.TokenType == TokenType.Array)
-            {
-                result.Type = OperandType.Immediate;
-                var dataType = DataType.Array;
-                var value = new List<Expression>();
-                foreach (var val in token.ArrayValues)
-                {
-                    value.Add(ReadExpression(new SimpleIterator<Token>(val)));
-                }
-
-                result.Value = new Immediate
-                {
-                    Type = dataType,
-                    Value = value
-                };
-
-                //Check that all expresions have the same data type!
-                if (value.Count > 0)
-                {
-                    var firstType = DataTypeOfExpression(value[0]);
-                    for (int i = 1; i < value.Count; i++)
-                    {
-                        var currentType = DataTypeOfExpression(value[i]);
-                        if (firstType != currentType)
-                        {
-                            throw new Exception("All expression in array must be of same type: " + result);
-                        }
-                    }
-                }
-            }
-            else if (token.TokenType == TokenType.Word)
-            {
-                result.Type = OperandType.Variable;
-                result.Value = _context.Variables[token.Value];
-            }
-            else
-            {
-                throw new Exception("Unsupported operand type: " + token);
-            }
-
-            return result;
-        }
-
-        private MathOperator ParseOperator(string op)
+        private ExpItemKind ParseOperator(string op)
         {
             switch (op)
             {
-                case "+": return MathOperator.Add;
-                case "-": return MathOperator.Subtract;
-                case "*": return MathOperator.Multiply;
-                case "/": return MathOperator.Divide;
+                case "+": return ExpItemKind.AddOp;
+                case "-": return ExpItemKind.SubOp;
+                case "*": return ExpItemKind.MulOp;
+                case "/": return ExpItemKind.DivOp;
 
                 default:
                     throw new Exception("Unsupported math operator: " + op);

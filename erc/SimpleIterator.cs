@@ -13,6 +13,11 @@ namespace erc
             _items = items;
         }
 
+        public static SimpleIterator<T> Singleton(T value)
+        {
+            return new SimpleIterator<T>(new List<T> { value });
+        }
+
         public T Current()
         {
             if (_position >= _items.Count)

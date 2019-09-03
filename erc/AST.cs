@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace erc
 {
+    /*
     public class Immediate
     {
         public DataType Type { get; set; }
@@ -74,54 +75,91 @@ namespace erc
         Variable, // => Variable
         Math // => MathExpression
     }
+    */
 
-    public class Expression
+    public enum ExpItemKind
     {
-        public ExpressionType Type { get; set; }
-        public object Value { get; set; }
+        Immediate,
+        Variable,
+        AddOp,
+        SubOp,
+        MulOp,
+        DivOp,
+        FuncCall
+    }
+
+    public class ExpressionItem
+    {
+        public ExpItemKind Kind { get; set; }
+        public DataType DataType { get; set; }
+        public object Value { get; set; } //For immediates (int, long, string... but not for arrays!)
+        public string Identifier { get; set; } //Name of variable, function etc.
+        public List<ExpressionItem> Children { get; set; } //Values for arrays, math expression, parameters for function calls etc.
 
         public override string ToString()
         {
-            return Type + "(" + Value + ")";
+            switch (Kind)
+            {
+                case ExpItemKind.Immediate:
+                    return Kind + ": " + DataType + "(" + Value + ")";
+                case ExpItemKind.Variable:
+                    return Kind + ": " + DataType + "(" + Identifier + ")";
+                case ExpItemKind.AddOp:
+                case ExpItemKind.SubOp:
+                case ExpItemKind.MulOp:
+                case ExpItemKind.DivOp:
+                    return Kind.ToString();
+                case ExpItemKind.FuncCall:
+                    return Kind + ": " + "(" + Identifier + ") [" + String.Join(";", Children) + "]";
+            }
+
+            throw new Exception("Unknown expression kind: " + Kind);
         }
     }
 
-    public enum StatementType
+    public enum StatementKind
     {
-        Definition, // => DefinitionStatement
+        VarDecl, // => VarDeclStatement
         Assignment // => AssignmentStatement
     }
 
-    public class DefinitionStatement
+    public class Statement
     {
-        public Variable Variable { get; set; }
-        public Expression Expression { get; set; }
+        public StatementKind Kind { get; set; }
+        public VarDeclStatement VarDecl { get; set; }
+        public AssignmentStatement Assignment { get; set; }
 
         public override string ToString()
         {
-            return Variable + " = " + Expression;
+            string value = null;
+            switch (Kind)
+            {
+                case StatementKind.VarDecl:
+                    value = VarDecl.ToString();
+                    break;
+                case StatementKind.Assignment:
+                    value = Assignment.ToString();
+                    break;
+                default:
+                    throw new Exception("Unknown statement kind: " + Kind);
+            }
+
+            return Kind + ": " + value;
         }
+    }
+
+    public class VarDeclStatement : AssignmentStatement
+    {
     }
 
     public class AssignmentStatement
     {
         public Variable Variable { get; set; }
-        public Expression Expression { get; set; }
+        public ExpressionItem Expression { get; set; }
 
         public override string ToString()
         {
             return Variable + " = " + Expression;
-        }
-    }
-
-    public class Statement
-    {
-        public StatementType Type { get; set; }
-        public object Value { get; set; }
-
-        public override string ToString()
-        {
-            return Type + ": " + Value;
         }
     }
 
