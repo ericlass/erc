@@ -19,23 +19,30 @@ namespace erc
         private RegisterAllocator _allocator = new RegisterAllocator();
         private Dictionary<string, Register> _variableRegister = new Dictionary<string, Register>();
         private List<String> _dataEntries = new List<string>();
+        private CompilerContext _context = null;
 
         public string Generate(CompilerContext context)
         {
-            var statements = context.Statements;
-
+            _context = context;
             var codeLines = new List<string>();
-            foreach (var statement in statements)
+            foreach (var statement in context.AST.Children)
             {
                 switch (statement.Kind)
                 {
-                    case StatementKind.VarDecl:
-                        var line = GenerateVarDecl(statement.VarDecl);
+                    case AstItemKind.VarDecl:
+                        var location = CreateNewLocationForVariable(statement.Identifier);
+                        var line = GenerateExpression(statement.Children[0], location);
                         if (line != null)
                             codeLines.Add(line);
                         break;
-                    case StatementKind.Assignment:
+
+                    case AstItemKind.Assignment:
+                        location = GetCurrentLocationOfVariable(statement.Identifier);
+                        line = GenerateExpression(statement.Children[0], location);
+                        if (line != null)
+                            codeLines.Add(line);
                         break;
+
                     default:
                         break;
                 }
@@ -50,33 +57,109 @@ namespace erc
             return builder.ToString();
         }
 
-        private string GenerateVarDecl(VarDeclStatement statement)
+        private StorageLocation CreateNewLocationForVariable(string varName)
         {
-            var variable = statement.Variable;
-            var expression = statement.Expression;
-
-            var register = GetOrTakeRegisterForVariable(variable);
-            //Console.WriteLine(variable.Name + " => " + register);
-
-            if (register == null)
-                throw new Exception("No register available for variable: " + variable);
-
-            //TODO: Recursively go through expression tree and generate code, starting from leafs
-
-            return "[unsupported]";
+            var variable = _context.Variables[varName];
+            return GetOrTakeRegisterForVariable(variable);
         }
 
-        private Nullable<Register> GetRegisterForVariable(Variable variable)
+        private StorageLocation GetCurrentLocationOfVariable(string varName)
+        {
+            var variable = _context.Variables[varName];
+            return GetRegisterForVariable(variable);
+        }
+
+        private int _index = 0;
+
+        private StorageLocation GetTemporaryLocation(DataType dataType, DataType subType, long arraySize)
+        {
+            var name = "temp" + _index;
+            _index += 1;
+
+            var variable = new Variable();
+            variable.Name = name;
+            variable.DataType = dataType;
+            variable.ArraySize = arraySize;
+            variable.SubDataType = subType;
+
+            return GetOrTakeRegisterForVariable(variable);
+        }
+
+        private string GenerateExpression(AstItem expression, StorageLocation location)
+        {
+            switch (expression.Kind)
+            {
+                case AstItemKind.Immediate:
+                    return "istore " + location.ToCode() + ", " + expression.Value;
+
+                case AstItemKind.Variable:
+                    var varLocation = GetCurrentLocationOfVariable(expression.Identifier);
+                    return "vstore " + location.ToCode() + ", " + varLocation;
+
+                case AstItemKind.Array:
+                    var arraySize = expression.Children.Count;
+                    var itemSize = GetByteSizeOfDataType(expression.DataType);
+                    var arrayByteSize = 8 + (itemSize * arraySize);
+                    var builder = new StringBuilder();
+                    builder.AppendLine("alloc acc, " + arrayByteSize);
+                    builder.AppendLine("istore [acc], " + arraySize);
+                    var i = 0;
+                    foreach (var item in expression.Children)
+                    {
+                        var vLocation = new StorageLocation { Kind = StorageLocationKind.Heap, Address = itemSize * i };
+                        builder.AppendLine(GenerateExpression(item, vLocation));
+                        i += 1;
+                    }
+                    builder.Append("istore " + location.ToCode() + ", acc");
+                    return builder.ToString();
+
+
+                case AstItemKind.AddOp: //Almost the same for other ops, just different op at the end
+                    var operand1 = expression.Children[0];
+                    var operand1Location = GetTemporaryLocation(operand1.DataType, operand1.DataType, operand1.Children.Count);
+                    GenerateExpression(operand1, operand1Location);
+
+                    var operand2 = expression.Children[1];
+                    var operand2Location = GetTemporaryLocation(operand2.DataType, operand2.DataType, operand2.Children.Count);
+                    GenerateExpression(operand2, operand2Location);
+
+                    var targetLocation = GetTemporaryLocation(operand2.DataType, operand2.DataType, operand2.Children.Count);
+
+                    //TODO: Add results of both expressions and store into "location"
+                    return "add " + targetLocation.ToCode() + ", " + operand1Location.ToCode() + ", " + operand2Location.ToCode();
+            }
+
+            return "[not implemented: " + expression.Kind + "]";
+        }
+
+        private long GetByteSizeOfDataType(DataType dataType)
+        {
+            switch (dataType)
+            {
+                case DataType.f32:
+                    return 4;
+
+                case DataType.i64:
+                case DataType.f64:
+                case DataType.Array:
+                    return 8;
+
+                default:
+                    throw new Exception("Unknown data type: " + dataType);
+            }
+        }
+
+        private StorageLocation GetRegisterForVariable(Variable variable)
         {
             if (_variableRegister.ContainsKey(variable.Name))
             {
-                return _variableRegister[variable.Name];
+                return new StorageLocation { Kind = StorageLocationKind.Register, Register = _variableRegister[variable.Name] };
             }
 
             return null;
         }
 
-        private Nullable<Register> GetOrTakeRegisterForVariable(Variable variable)
+        private StorageLocation GetOrTakeRegisterForVariable(Variable variable)
         {
             var reg = GetRegisterForVariable(variable);
             if (reg != null)
@@ -110,7 +193,7 @@ namespace erc
             var result = _allocator.TakeRegister(regSize);
             _variableRegister.Add(variable.Name, result);
 
-            return result;
+            return new StorageLocation { Kind = StorageLocationKind.Register, Register = result };
         }
 
         private void FreeVariableRegister(Variable variable)

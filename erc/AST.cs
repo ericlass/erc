@@ -77,90 +77,170 @@ namespace erc
     }
     */
 
-    public enum ExpItemKind
+    public enum AstItemKind
     {
+        Programm,
+        VarDecl,
+        Assignment,
         Immediate,
         Variable,
+        Array,
         AddOp,
         SubOp,
         MulOp,
         DivOp,
-        FuncCall
+        //EqualsOp,
+        //NotEqualsOp,
+        //LessThanOp,
+        //GreaterThanOp,
+        //AndOp,
+        //OrOp,
+        //VarDecl,
+        //Assignment,
+        //FuncCall,
+        //If
     }
 
-    public class ExpressionItem
+    public class AstItem
     {
-        public ExpItemKind Kind { get; set; }
+        private List<AstItem> _children = new List<AstItem>();
+
+        public AstItemKind Kind { get; set; }
         public DataType DataType { get; set; }
-        public object Value { get; set; } //For immediates (int, long, string... but not for arrays!)
         public string Identifier { get; set; } //Name of variable, function etc.
-        public List<ExpressionItem> Children { get; set; } //Values for arrays, math expression, parameters for function calls etc.
+        public object Value { get; set; } //Value for immediates
+        public List<AstItem> Children { get => _children; set => _children = value; }
+        public AstItem()
+        {
+        }
+
+        public AstItem(AstItemKind kind)
+        {
+            Kind = kind;
+        }
 
         public override string ToString()
         {
             switch (Kind)
             {
-                case ExpItemKind.Immediate:
-                    return Kind + ": " + DataType + "(" + Value + ")";
-                case ExpItemKind.Variable:
-                    return Kind + ": " + DataType + "(" + Identifier + ")";
-                case ExpItemKind.AddOp:
-                case ExpItemKind.SubOp:
-                case ExpItemKind.MulOp:
-                case ExpItemKind.DivOp:
+                case AstItemKind.Programm:
                     return Kind.ToString();
-                case ExpItemKind.FuncCall:
-                    return Kind + ": " + "(" + Identifier + ") [" + String.Join(";", Children) + "]";
+
+                case AstItemKind.VarDecl:
+                case AstItemKind.Assignment:
+                    return Kind + ": " + DataType + "(" + Identifier + "; " + Children[0] + ")";
+
+                case AstItemKind.Immediate:
+                    return Kind + ": " + DataType + "(" + Value + ")";
+
+                case AstItemKind.Array:
+                    var childValues = Children.ConvertAll((item) => item.ToString());
+                    return "[" + String.Join(",", childValues) + "]";
+
+                case AstItemKind.Variable:
+                    return Kind + ": " + DataType + "(" + Identifier + ")";
+
+                case AstItemKind.AddOp:
+                case AstItemKind.SubOp:
+                case AstItemKind.MulOp:
+                case AstItemKind.DivOp:
+                    return Kind.ToString();
             }
 
             throw new Exception("Unknown expression kind: " + Kind);
         }
-    }
 
-    public enum StatementKind
-    {
-        VarDecl, // => VarDeclStatement
-        Assignment // => AssignmentStatement
-    }
-
-    public class Statement
-    {
-        public StatementKind Kind { get; set; }
-        public VarDeclStatement VarDecl { get; set; }
-        public AssignmentStatement Assignment { get; set; }
-
-        public override string ToString()
+        public static AstItem Programm()
         {
-            string value = null;
-            switch (Kind)
-            {
-                case StatementKind.VarDecl:
-                    value = VarDecl.ToString();
-                    break;
-                case StatementKind.Assignment:
-                    value = Assignment.ToString();
-                    break;
-                default:
-                    throw new Exception("Unknown statement kind: " + Kind);
-            }
-
-            return Kind + ": " + value;
+            return new AstItem(AstItemKind.Programm);
         }
-    }
 
-    public class VarDeclStatement : AssignmentStatement
-    {
-    }
-
-    public class AssignmentStatement
-    {
-        public Variable Variable { get; set; }
-        public ExpressionItem Expression { get; set; }
-
-        public override string ToString()
+        public static AstItem VarDecl(string varName, DataType dataType, AstItem expression)
         {
-            return Variable + " = " + Expression;
+            var result = new AstItem(AstItemKind.VarDecl);
+            result.Identifier = varName;
+            result.DataType = dataType;
+            result.Children.Add(expression);
+            return result;
         }
+
+        public static AstItem Assignment(string varName, DataType dataType, AstItem expression)
+        {
+            var result = new AstItem(AstItemKind.Assignment);
+            result.Identifier = varName;
+            result.DataType = dataType;
+            result.Children.Add(expression);
+            return result;
+        }
+
+        private static AstItem Immediate(object value, DataType dataType)
+        {
+            var result = new AstItem(AstItemKind.Immediate);
+            result.DataType = dataType;
+            result.Value = value;
+            return result;
+        }
+
+        public static AstItem Immediate(long value)
+        {
+            return Immediate(value, DataType.i64);
+        }
+
+        public static AstItem Immediate(float value)
+        {
+            return Immediate(value, DataType.f32);
+        }
+
+        public static AstItem Immediate(double value)
+        {
+            return Immediate(value, DataType.f64);
+        }
+
+        public static AstItem Variable(string varName, DataType dataType)
+        {
+            var result = new AstItem(AstItemKind.Variable);
+            result.Identifier = varName;
+            result.DataType = dataType;
+            return result;
+        }
+
+        public static AstItem Array(AstItem[] values)
+        {
+            var result = new AstItem(AstItemKind.Array);
+            result.Children.AddRange(values);
+            return result;
+        }
+
+        private static AstItem ArithmeticOp(AstItemKind op, AstItem op1, AstItem op2)
+        {
+            var result = new AstItem(op);
+            result.Children.Add(op1);
+            result.Children.Add(op2);
+            return result;
+        }
+
+        public static AstItem AddOp(AstItem op1, AstItem op2)
+        {
+            return ArithmeticOp(AstItemKind.AddOp, op1, op2);
+        }
+
+        public static AstItem SubOp(AstItem op1, AstItem op2)
+        {
+            return ArithmeticOp(AstItemKind.SubOp, op1, op2);
+        }
+
+        public static AstItem MulOp(AstItem op1, AstItem op2)
+        {
+            return ArithmeticOp(AstItemKind.MulOp, op1, op2);
+        }
+
+        public static AstItem DivOp(AstItem op1, AstItem op2)
+        {
+            return ArithmeticOp(AstItemKind.DivOp, op1, op2);
+        }
+
     }
+
+
 
 }

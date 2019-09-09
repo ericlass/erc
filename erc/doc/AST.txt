@@ -1,84 +1,233 @@
-﻿Variables
-=========
-
-- Required info
-    - Name
-    - Datatype
-    - ArrayDataType (if Datatype = Array)
-    - Current location of value (register (name), stack (offset), heap (pointer))
-        - Is assigned during definition, might change after that
-
-AST
+﻿AST
 ===
 
 "a = 5"
 
 - Assignment
-    - Variable "a"
-    - Immediate "5"
+	- Variable "a"
+	- Immediate "5"
     
 "b = 5 + a"
 
 - Assignment
-    - Variable "b"
-    - AddOp
-        - Immediate "5"
-        - Variable "b"
-        
+	- Variable "b"
+	- AddOp
+    	- Immediate "5"
+    	- Variable "a"
+   	 
 "let c = [1,2,4-2,b,sqrt(4)]"
 
 - Declaration
-    - Variable "c"
-    - NewArray
-        - Immediate "1"
-        - Immediate "2"
-        - SubOp
-            - Immediate "4"
-            - Immediate "2"
-        - Variable "b"
-        - FuncCall "sqrt"
-            - Immediate "4"
-        
+	- Variable "c"
+	- Array
+    	- Immediate "1"
+    	- Immediate "2"
+    	- SubOp
+        	- Immediate "4"
+        	- Immediate "2"
+    	- Variable "b"
+    	- FuncCall "sqrt"
+        	- Immediate "4"
+   	 
+"let d = [1,2,3,4] + [4,3,2,1]"
+
+- Declaration
+	- Variable "d"
+	- AddOp
+    	- Array
+        	- Immediate "1"
+        	- Immediate "2"
+        	- Immediate "3"
+        	- Immediate "4"
+    	- Array
+        	- Immediate "4"
+        	- Immediate "3"
+        	- Immediate "2"
+        	- Immediate "1"
+       	 
+"if (x < 5 && x > 1) y == x"
+
+- If
+	- EqualsOp
+    	- AndOp
+        	- LessThanOp
+            	- Variable "x"
+            	- Immediate "5"
+        	- GreaterThanOp
+            	- Variable "x"
+            	- Immediate "1"
+	- StatementBlock
+    	- Assignment
+        	- Variable "y"
+        	- Variable "x"
+       	 
+       	 
+"""
+fn sqr(x: i64): i64
+{
+	ret x * x;
+}
+"""
+
+- FuncDecl "sqr"
+	- Parameter "x"
+    	- Type "i64"
+	- RetType "i64"
+	- Ret
+    	- MulOp
+        	- Variable "x"
+        	- Variable "x"
+
+"""
+struct Vector4f
+{
+	x: f32,
+	y: f32,
+	z: f32,
+	w: f32 = 1.0f
+}
+"""
+
+- StructDecl "Vector4f"
+	- Field "x"
+    	- Type "f32"
+	- Field "y"
+    	- Type "f32"
+	- Field "z"
+    	- Type "f32"
+	- Field "w"
+    	- Type "f32"
+    	- Immediate "1.0f"
+
+"""
+let b = Vector4f
+{
+	x = 1.0f,
+	y = a,
+	z = sqr(a)
+}
+"""
+
+- Declaration
+	- Variable "b"
+	- NewStruct "Vector4f"
+    	- Field "x"
+        	- Immediate "1.0f"
+    	- Field "y"
+        	- Variable "a"
+    	- Field "z"
+        	- FuncCall "sqr"
+            	- Variable "a"
+           	 
+           	 
+"""
+let x = b.x;
+"""
+    
 
 AST CLASSES
 ===========
 
-enum StatementKind {
-    VariableDeclaration,
-    Assignment
+public enum AstItemKind
+{
+	Immediate,
+	Variable,
+	Array,
+	AddOp,
+	SubOp,
+	MulOp,
+	DivOp,
+	EqualsOp,
+	NotEqualsOp,
+	LessThanOp,
+	GreaterThanOp,
+	AndOp,
+	OrOp,
+	VarDecl,
+	Assignment,
+	FuncCall,
+	If
 }
 
-pub Statement {
-    StatementKind {get;set;}
-    DeclarationStatement {get;set;}
-    AssignmentStatement {get;set;}
+public class AstItem
+{
+	public AstItemKind Kind { get; set; }
+	public DataType DataType { get; set; }
+	public object Value { get; set; } //For immediates (int, long, string... but not for arrays!)
+	public string Identifier { get; set; } //Name of variable, function etc.
+	public List<AstItem> Children { get; set; } //Values for arrays, math expression, parameters for function calls etc.
 }
 
-pub AssignmentStatement {
-    VarName {get;set;}
-    Expression {get;set;}
+public enum StorageLocationKind
+{
+	Register,
+	Stack,
+	Heap
 }
 
-pub DeclarationStatement : AssignmentStatement {}
-
-pub Expression {
-    List<ExpressionItem> Items {get;set;}
+public class StorageLocation
+{
+	public StorageLocationKind Kind { get;set; }
+	public Register Register { get;set; }
+	public long Address { get;set; } //For stack: offset from base, for heap: memory address (pointer)
 }
 
-enum ItemKind {
-    Immediate,
-    Variable,
-    AddOp,
-    SubOp,
-    MulOp,
-    DivOp,
-    FuncCall
+
+GENERATOR
+=========
+
+fn Generate(AstItem item)
+{
+	foreach (var child in item.Children)
+	{
+    	switch (child.Kind)
+    	{
+        	case VarDecl:
+            	var location = CreateNewLocationForVariable(child.Children[0].Identifier);
+            	GenerateExpression(child.Children[1], location);
+            	break;
+       	 
+        	case Assignment:
+            	var location = GetCurrentLocationOfVariable(child.Children[0].Identifier);
+            	GenerateExpression(child.Children[1], location);
+            	break;
+           	 
+        	case If:
+            	var location = GetTemporaryLocation();
+            	GenerateExpression(child.Children[0], location);
+            	//TODO: Emit check for true/false of expression result ("jz")
+            	Generate(child.Children[1]);
+            	break;
+    	}
+	}
 }
 
-pub ExpressionItem {
-    ItemKind {get;set;}
-	DataType {get;set;}
-	string Identifier {get;set;} //Name of variable, function etc.
-    object Value {get;set;} //For immediates (int, long, string... but not for arrays!)
-    List<ExpressionItem> Children {get;set;} //Values for arrays, math expression, parameters for function calls etc.
+fn GenerateExpression(AstItem expression, StorageLocation location)
+{
+	switch (expression.Kind)
+	{
+    	case Immediate:
+        	//TODO: Store value at "location"
+       	 
+    	case Variable:
+        	//TODO: Get Value from variable and store into "location"
+       	 
+    	case Array:
+        	//TODO: Generate array in memory (<length-8-byte><contents>), store base pointer in "location"
+       	 
+    	case AddOp: //Almost the same for other ops, just different op at the end
+        	var operand1Location = GetTemporaryLocationForOperand();
+        	GenerateExpression(expression.Children[0], operand1Location);
+        	var operand2Location = GetTemporaryLocationForOperand();       	 
+        	GenerateExpression(expression.Children[1], operand2Location);
+        	//TODO: Add results of both expressions and store into "location"
+       	 
+    	case FuncCall:
+        	//TODO: Put parameters in registers/stack as required
+        	//TODO: Maybe: Save current state of registers etc.
+        	//TODO: Maybe: Generate exception handler for this function
+        	//TODO: Call function
+        	//TODO: Clean up after function call
+	}
 }
+

@@ -29,7 +29,7 @@ namespace erc
             Console.WriteLine();
             Console.WriteLine("STATEMENTS");
             Console.WriteLine("==========");
-            foreach (var statement in context.Statements)
+            foreach (var statement in context.AST.Children)
             {
                 Console.WriteLine(statement);
             }

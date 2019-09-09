@@ -19,19 +19,19 @@ namespace erc
         {
             _context = context;
             var tokens = new SimpleIterator<Token>(context.Tokens);
-            var result = new List<Statement>();
+            var result = AstItem.Programm();
 
             var token = tokens.Current();
             while (token != null)
             {
-                result.Add(ReadStatement(tokens));
+                result.Children.Add(ReadStatement(tokens));
                 token = tokens.Current();
             }
 
-            context.Statements = result;
+            context.AST = result;
         }
 
-        private Statement ReadStatement(SimpleIterator<Token> tokens)
+        private AstItem ReadStatement(SimpleIterator<Token> tokens)
         {
             var token = tokens.Current();
 
@@ -40,24 +40,22 @@ namespace erc
                 throw new Exception("Expected identifier or 'let', found " + token.TokenType);
             }
 
-            var result = new Statement();
+            AstItem result = null;
 
             var first = token.Value;
             if (first == "let")
             {
-                result.Kind = StatementKind.VarDecl;
-                result.VarDecl = ReadVarDecl(tokens);
+                result = ReadVarDecl(tokens);
             }
             else
             {
-                result.Kind = StatementKind.Assignment;
-                result.Assignment = ReadAssignment(tokens);
+                result = ReadAssignment(tokens);
             }
 
             return result;
         }
 
-        private VarDeclStatement ReadVarDecl(SimpleIterator<Token> tokens)
+        private AstItem ReadVarDecl(SimpleIterator<Token> tokens)
         {
             var let = tokens.Pop();
 
@@ -83,7 +81,7 @@ namespace erc
 
             if (dataType == DataType.Array)
             {
-                variable.SubDataType = SubDataTypeOfArray(expression);
+                variable.SubDataType = DataTypeOfExpression(expression.Children[0]);
                 variable.ArraySize = SizeOfArray(expression);
             }
 
@@ -93,14 +91,10 @@ namespace erc
             if (terminator.TokenType != TokenType.StatementTerminator)
                 throw new Exception("Expected statement terminator, found " + name);
 
-            return new VarDeclStatement
-            {
-                Expression = expression,
-                Variable = variable
-            };
+            return AstItem.VarDecl(variable.Name, variable.DataType, expression);
         }
 
-        private AssignmentStatement ReadAssignment(SimpleIterator<Token> tokens)
+        private AstItem ReadAssignment(SimpleIterator<Token> tokens)
         {
             var name = tokens.Pop();
             if (name.TokenType != TokenType.Word)
@@ -122,7 +116,7 @@ namespace erc
             //TODO: For arrays, check sub data type and length!
             if (expType == DataType.Array)
             {
-                var subType = SubDataTypeOfArray(expression);
+                var subType = DataTypeOfExpression(expression.Children[0]);
                 if (variable.SubDataType != subType)
                     throw new Exception("Array expression sub type " + subType + " is not compatible with variable subtype " + variable);
 
@@ -135,14 +129,10 @@ namespace erc
             if (terminator.TokenType != TokenType.StatementTerminator)
                 throw new Exception("Expected statement terminator, found " + name);
 
-            return new AssignmentStatement
-            {
-                Expression = expression,
-                Variable = variable
-            };
+            return AstItem.Assignment(variable.Name, variable.DataType, expression);
         }
 
-        private DataType DataTypeOfExpression(ExpressionItem expressionItem)
+        private DataType DataTypeOfExpression(AstItem expressionItem)
         {
             var dt = FindDataTypeOfExpression(expressionItem);
             if (dt == null)
@@ -151,11 +141,11 @@ namespace erc
             return dt.Value;
         }
 
-        private Nullable<DataType> FindDataTypeOfExpression(ExpressionItem expressionItem)
+        private Nullable<DataType> FindDataTypeOfExpression(AstItem expressionItem)
         {
             switch (expressionItem.Kind)
             {
-                case ExpItemKind.Immediate:
+                case AstItemKind.Immediate:
                     if (expressionItem.Value is long)
                         return DataType.i64;
                     else if (expressionItem.Value is float)
@@ -166,7 +156,7 @@ namespace erc
                         return DataType.Array;
                     else throw new Exception("Unknown immediate value: " + expressionItem.Value);
 
-                case ExpItemKind.Variable:
+                case AstItemKind.Variable:
                     var varName = expressionItem.Identifier;
                     if (!_context.Variables.ContainsKey(varName))
                         throw new Exception("Variable not declared: " + varName);
@@ -184,17 +174,17 @@ namespace erc
             return null;
         }
 
-        private DataType SubDataTypeOfArray(ExpressionItem expression)
+        private DataType SubDataTypeOfArray(AstItem expression)
         {
-            if (expression.Kind == ExpItemKind.Immediate)
+            if (expression.Kind == AstItemKind.Immediate)
             {
-                return DataTypeOfExpression(expression.Children[0]);
+                return expression.DataType;
             }
-            else if (expression.Kind == ExpItemKind.Variable)
+            else if (expression.Kind == AstItemKind.Variable)
             {
                 return _context.Variables[expression.Identifier].SubDataType;
             }
-            else if (expression.Kind == ExpItemKind.AddOp || expression.Kind == ExpItemKind.SubOp || expression.Kind == ExpItemKind.MulOp || expression.Kind == ExpItemKind.DivOp)
+            else if (expression.Kind == AstItemKind.AddOp || expression.Kind == AstItemKind.SubOp || expression.Kind == AstItemKind.MulOp || expression.Kind == AstItemKind.DivOp)
             {
                 return DataTypeOfExpression(expression.Children[0]);
             }
@@ -204,17 +194,17 @@ namespace erc
             }
         }
 
-        private long SizeOfArray(ExpressionItem expression)
+        private long SizeOfArray(AstItem expression)
         {
-            if (expression.Kind == ExpItemKind.Immediate)
+            if (expression.Kind == AstItemKind.Immediate)
             {
                 return expression.Children.Count;
             }
-            else if (expression.Kind == ExpItemKind.Variable)
+            else if (expression.Kind == AstItemKind.Variable)
             {
                 return _context.Variables[expression.Identifier].ArraySize;
             }
-            else if (expression.Kind == ExpItemKind.AddOp || expression.Kind == ExpItemKind.SubOp || expression.Kind == ExpItemKind.MulOp || expression.Kind == ExpItemKind.DivOp)
+            else if (expression.Kind == AstItemKind.AddOp || expression.Kind == AstItemKind.SubOp || expression.Kind == AstItemKind.MulOp || expression.Kind == AstItemKind.DivOp)
             {
                 return SizeOfArray(expression.Children[0]);
             }
@@ -224,7 +214,7 @@ namespace erc
             }
         }
 
-        private ExpressionItem ReadExpression(SimpleIterator<Token> tokens)
+        private AstItem ReadExpression(SimpleIterator<Token> tokens)
         {
             var expTokens = new List<Token>();
             var tok = tokens.Current();
@@ -238,7 +228,7 @@ namespace erc
             if (expTokens.Count == 0)
                 throw new Exception("Expected expression, found " + tokens.Current());
 
-            ExpressionItem result = new ExpressionItem();
+            AstItem result = new AstItem();
 
             if (expTokens.Count == 1)
             {
@@ -252,7 +242,7 @@ namespace erc
                     else
                         throw new Exception("Undefined variable: " + token);
 
-                    result.Kind = ExpItemKind.Variable;
+                    result.Kind = AstItemKind.Variable;
                     result.DataType = variable.DataType;
                     result.Identifier = token.Value;
                 }
@@ -261,23 +251,24 @@ namespace erc
                     var dataType = GuessDataType(token);
                     var value = ParseNumber(token.Value, dataType);
 
-                    result.Kind = ExpItemKind.Immediate;
+                    result.Kind = AstItemKind.Immediate;
                     result.DataType = dataType;
                     result.Value = value;
                 }
                 else if (token.TokenType == TokenType.Array)
                 {
-                    var arrayValues = new List<ExpressionItem>();
+                    var arrayValues = new List<AstItem>();
                     foreach (var vals in token.ArrayValues)
                     {
                         var valExp = ReadExpression(new SimpleIterator<Token>(vals));
-                        if (valExp.Children == null || valExp.Children.Count != 1)
-                            throw new Exception("Array item expression must only return one exp item: " + token);
+                        //if (valExp.Children == null || valExp.Children.Count != 1)
+                        //throw new Exception("Array item expression must only return one exp item: " + token);
 
-                        arrayValues.Add(valExp.Children[0]);
+                        //arrayValues.Add(valExp.Children[0]);
+                        arrayValues.Add(valExp);
                     }
 
-                    result.Kind = ExpItemKind.Immediate;
+                    result.Kind = AstItemKind.Immediate;
                     result.DataType = DataType.Array;
                     result.Children = arrayValues;
 
@@ -308,7 +299,7 @@ namespace erc
                 var operand1 = ReadExpression(SimpleIterator<Token>.Singleton(expTokens[0]));
                 var operand2 = ReadExpression(SimpleIterator<Token>.Singleton(expTokens[2]));
 
-                result.Children = new List<ExpressionItem> { operand1, operand2 };
+                result.Children = new List<AstItem> { operand1, operand2 };
 
                 var type1 = DataTypeOfExpression(operand1);
                 var type2 = DataTypeOfExpression(operand2);
@@ -322,14 +313,14 @@ namespace erc
             return result;
         }
 
-        private ExpItemKind ParseOperator(string op)
+        private AstItemKind ParseOperator(string op)
         {
             switch (op)
             {
-                case "+": return ExpItemKind.AddOp;
-                case "-": return ExpItemKind.SubOp;
-                case "*": return ExpItemKind.MulOp;
-                case "/": return ExpItemKind.DivOp;
+                case "+": return AstItemKind.AddOp;
+                case "-": return AstItemKind.SubOp;
+                case "*": return AstItemKind.MulOp;
+                case "/": return AstItemKind.DivOp;
 
                 default:
                     throw new Exception("Unsupported math operator: " + op);
