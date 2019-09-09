@@ -5,33 +5,27 @@ namespace erc
     public class Variable
     {
         public string Name { get; set; } 
-
         public DataType DataType { get; set; }
-
-        //Used for arrays etc.
-        public DataType SubDataType { get; set; }
-
-        public long ArraySize { get; set; }
 
         public Nullable<RegisterSize> GetRegisterSizeForArray()
         {
-            if (DataType != DataType.Array)
+            if (DataType.MainType != RawDataType.Array)
                 throw new Exception("GetRegisterSizeForArray is only allowed for array variables!");
 
-            switch (SubDataType)
+            switch (DataType.SubType)
             {
-                case DataType.i64:
-                case DataType.f64:
-                    if (ArraySize == 2)
+                case RawDataType.i64:
+                case RawDataType.f64:
+                    if (DataType.Size == 2)
                         return RegisterSize.R128;
-                    if (ArraySize == 4)
+                    if (DataType.Size == 4)
                         return RegisterSize.R256;
                     break;
 
-                case DataType.f32:
-                    if (ArraySize == 4)
+                case RawDataType.f32:
+                    if (DataType.Size == 4)
                         return RegisterSize.R128;
-                    if (ArraySize == 8)
+                    if (DataType.Size == 8)
                         return RegisterSize.R256;
                     break;
             }
@@ -41,13 +35,7 @@ namespace erc
 
         public override string ToString()
         {
-            var result = Name + "(" + DataType;
-            if (DataType == DataType.Array)
-            {
-                result += "[" + SubDataType + "; " + ArraySize + "]";
-            }
-
-            return result + ")";
+            return Name + "(" + DataType + ")";
         }
     }
 }

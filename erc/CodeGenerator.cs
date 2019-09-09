@@ -71,7 +71,7 @@ namespace erc
 
         private int _index = 0;
 
-        private StorageLocation GetTemporaryLocation(DataType dataType, DataType subType, long arraySize)
+        private StorageLocation GetTemporaryLocation(DataType dataType)
         {
             var name = "temp" + _index;
             _index += 1;
@@ -79,8 +79,6 @@ namespace erc
             var variable = new Variable();
             variable.Name = name;
             variable.DataType = dataType;
-            variable.ArraySize = arraySize;
-            variable.SubDataType = subType;
 
             return GetOrTakeRegisterForVariable(variable);
         }
@@ -98,7 +96,7 @@ namespace erc
 
                 case AstItemKind.Array:
                     var arraySize = expression.Children.Count;
-                    var itemSize = GetByteSizeOfDataType(expression.DataType);
+                    var itemSize = GetByteSizeOfRawDataType(expression.DataType.SubType.Value);
                     var arrayByteSize = 8 + (itemSize * arraySize);
                     var builder = new StringBuilder();
                     builder.AppendLine("alloc acc, " + arrayByteSize);
@@ -116,14 +114,14 @@ namespace erc
 
                 case AstItemKind.AddOp: //Almost the same for other ops, just different op at the end
                     var operand1 = expression.Children[0];
-                    var operand1Location = GetTemporaryLocation(operand1.DataType, operand1.DataType, operand1.Children.Count);
+                    var operand1Location = GetTemporaryLocation(operand1.DataType);
                     GenerateExpression(operand1, operand1Location);
 
                     var operand2 = expression.Children[1];
-                    var operand2Location = GetTemporaryLocation(operand2.DataType, operand2.DataType, operand2.Children.Count);
+                    var operand2Location = GetTemporaryLocation(operand2.DataType);
                     GenerateExpression(operand2, operand2Location);
 
-                    var targetLocation = GetTemporaryLocation(operand2.DataType, operand2.DataType, operand2.Children.Count);
+                    var targetLocation = GetTemporaryLocation(operand2.DataType);
 
                     //TODO: Add results of both expressions and store into "location"
                     return "add " + targetLocation.ToCode() + ", " + operand1Location.ToCode() + ", " + operand2Location.ToCode();
@@ -132,16 +130,16 @@ namespace erc
             return "[not implemented: " + expression.Kind + "]";
         }
 
-        private long GetByteSizeOfDataType(DataType dataType)
+        private long GetByteSizeOfRawDataType(RawDataType dataType)
         {
             switch (dataType)
             {
-                case DataType.f32:
+                case RawDataType.f32:
                     return 4;
 
-                case DataType.i64:
-                case DataType.f64:
-                case DataType.Array:
+                case RawDataType.i64:
+                case RawDataType.f64:
+                case RawDataType.Array:
                     return 8;
 
                 default:
@@ -167,18 +165,18 @@ namespace erc
 
             var regSize = RegisterSize.R64;
 
-            switch (variable.DataType)
+            switch (variable.DataType.MainType)
             {
-                case DataType.i64:
+                case RawDataType.i64:
                     regSize = RegisterSize.R64;
                     break;
 
-                case DataType.f32:
-                case DataType.f64:
+                case RawDataType.f32:
+                case RawDataType.f64:
                     regSize = RegisterSize.R128;
                     break;
 
-                case DataType.Array:
+                case RawDataType.Array:
                     var arrSize = variable.GetRegisterSizeForArray();
                     if (arrSize == null)
                         return null;

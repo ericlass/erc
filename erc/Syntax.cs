@@ -79,12 +79,6 @@ namespace erc
                 Name = name.Value
             };
 
-            if (dataType == DataType.Array)
-            {
-                variable.SubDataType = DataTypeOfExpression(expression.Children[0]);
-                variable.ArraySize = SizeOfArray(expression);
-            }
-
             _context.Variables.Add(name.Value, variable);
 
             var terminator = tokens.Pop();
@@ -113,18 +107,6 @@ namespace erc
             if (expType != variable.DataType)
                 throw new Exception("Incompatible data types: " + variable.DataType + " <> " + expType);
 
-            //TODO: For arrays, check sub data type and length!
-            if (expType == DataType.Array)
-            {
-                var subType = DataTypeOfExpression(expression.Children[0]);
-                if (variable.SubDataType != subType)
-                    throw new Exception("Array expression sub type " + subType + " is not compatible with variable subtype " + variable);
-
-                var arrLength = SizeOfArray(expression);
-                if (variable.ArraySize != arrLength)
-                    throw new Exception("Arrays must have same size: " + variable.ArraySize + " != " + arrLength + " for " + variable);
-            }
-
             var terminator = tokens.Pop();
             if (terminator.TokenType != TokenType.StatementTerminator)
                 throw new Exception("Expected statement terminator, found " + name);
@@ -138,23 +120,30 @@ namespace erc
             if (dt == null)
                 throw new Exception("Could not determine data type of expression: " + expressionItem);
 
-            return dt.Value;
+            return dt;
         }
 
-        private Nullable<DataType> FindDataTypeOfExpression(AstItem expressionItem)
+        private DataType FindDataTypeOfExpression(AstItem expressionItem)
         {
             switch (expressionItem.Kind)
             {
                 case AstItemKind.Immediate:
                     if (expressionItem.Value is long)
-                        return DataType.i64;
+                        return new DataType(RawDataType.i64);
                     else if (expressionItem.Value is float)
-                        return DataType.f32;
+                        return new DataType(RawDataType.f32);
                     else if (expressionItem.Value is double)
-                        return DataType.f64;
-                    else if (expressionItem.Children != null && expressionItem.Children.Count != 0)
-                        return DataType.Array;
-                    else throw new Exception("Unknown immediate value: " + expressionItem.Value);
+                        return new DataType(RawDataType.f64);
+                    else if (expressionItem.Children != null && expressionItem.Children.Count > 0)
+                    {
+                        var subType = FindDataTypeOfExpression(expressionItem.Children[0]);
+                        if (subType.MainType == RawDataType.Array)
+                            throw new Exception("Array of arrays not supported yet!");
+                        var arraySize = expressionItem.Children.Count;
+                        return new DataType(RawDataType.Array, subType.MainType, arraySize);
+                    }
+                    else
+                        throw new Exception("Unknown immediate value: " + expressionItem.Value);
 
                 case AstItemKind.Variable:
                     var varName = expressionItem.Identifier;
@@ -172,46 +161,6 @@ namespace erc
             }
 
             return null;
-        }
-
-        private DataType SubDataTypeOfArray(AstItem expression)
-        {
-            if (expression.Kind == AstItemKind.Immediate)
-            {
-                return expression.DataType;
-            }
-            else if (expression.Kind == AstItemKind.Variable)
-            {
-                return _context.Variables[expression.Identifier].SubDataType;
-            }
-            else if (expression.Kind == AstItemKind.AddOp || expression.Kind == AstItemKind.SubOp || expression.Kind == AstItemKind.MulOp || expression.Kind == AstItemKind.DivOp)
-            {
-                return DataTypeOfExpression(expression.Children[0]);
-            }
-            else
-            {
-                throw new Exception("Cannot determine array sub type for expression: " + expression);
-            }
-        }
-
-        private long SizeOfArray(AstItem expression)
-        {
-            if (expression.Kind == AstItemKind.Immediate)
-            {
-                return expression.Children.Count;
-            }
-            else if (expression.Kind == AstItemKind.Variable)
-            {
-                return _context.Variables[expression.Identifier].ArraySize;
-            }
-            else if (expression.Kind == AstItemKind.AddOp || expression.Kind == AstItemKind.SubOp || expression.Kind == AstItemKind.MulOp || expression.Kind == AstItemKind.DivOp)
-            {
-                return SizeOfArray(expression.Children[0]);
-            }
-            else
-            {
-                throw new Exception("Cannot determine array size for expression: " + expression);
-            }
         }
 
         private AstItem ReadExpression(SimpleIterator<Token> tokens)
@@ -252,7 +201,7 @@ namespace erc
                     var value = ParseNumber(token.Value, dataType);
 
                     result.Kind = AstItemKind.Immediate;
-                    result.DataType = dataType;
+                    result.DataType = new DataType(dataType);
                     result.Value = value;
                 }
                 else if (token.TokenType == TokenType.Array)
@@ -261,15 +210,11 @@ namespace erc
                     foreach (var vals in token.ArrayValues)
                     {
                         var valExp = ReadExpression(new SimpleIterator<Token>(vals));
-                        //if (valExp.Children == null || valExp.Children.Count != 1)
-                        //throw new Exception("Array item expression must only return one exp item: " + token);
-
-                        //arrayValues.Add(valExp.Children[0]);
                         arrayValues.Add(valExp);
                     }
 
                     result.Kind = AstItemKind.Immediate;
-                    result.DataType = DataType.Array;
+                    result.DataType = DataTypeOfExpression(arrayValues[0]);
                     result.Children = arrayValues;
 
                     //Check that all expresions have the same data type!
@@ -332,33 +277,33 @@ namespace erc
             return token.TokenType == TokenType.Word || token.TokenType == TokenType.Number || token.TokenType == TokenType.Array || token.TokenType == TokenType.MathOperator;
         }
 
-        private DataType GuessDataType(Token token)
+        private RawDataType GuessDataType(Token token)
         {
             if (token.TokenType == TokenType.Array)
-                return DataType.Array;
+                return RawDataType.Array;
 
             if (token.TokenType == TokenType.Number)
             {
                 var value = token.Value;
                 if (!value.Contains('.'))
-                    return DataType.i64;
+                    return RawDataType.i64;
 
                 var last = value[value.Length - 1];
 
                 if (last == 'f')
-                    return DataType.f32;
+                    return RawDataType.f32;
 
-                return DataType.f64;
+                return RawDataType.f64;
             }
 
             throw new Exception("Cannot guess data type of: " + token);
         }
 
-        private object ParseNumber(string str, DataType dataType)
+        private object ParseNumber(string str, RawDataType dataType)
         {
             var last = str[str.Length - 1];
 
-            if (dataType == DataType.f32)
+            if (dataType == RawDataType.f32)
             {
                 if (last == 'f')
                     return float.Parse(str.Substring(0, str.Length - 1), CultureInfo.InvariantCulture);
@@ -366,7 +311,7 @@ namespace erc
                     return float.Parse(str, CultureInfo.InvariantCulture);
             }
 
-            if (dataType == DataType.f64)
+            if (dataType == RawDataType.f64)
             {
                 if (last == 'd')
                     return double.Parse(str.Substring(0, str.Length - 1), CultureInfo.InvariantCulture);
@@ -374,7 +319,7 @@ namespace erc
                     return double.Parse(str, CultureInfo.InvariantCulture);
             }
 
-            if (dataType == DataType.i64)
+            if (dataType == RawDataType.i64)
             {
                 return long.Parse(str);
             }

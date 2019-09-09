@@ -110,6 +110,7 @@ namespace erc
         public string Identifier { get; set; } //Name of variable, function etc.
         public object Value { get; set; } //Value for immediates
         public List<AstItem> Children { get => _children; set => _children = value; }
+
         public AstItem()
         {
         }
@@ -183,17 +184,17 @@ namespace erc
 
         public static AstItem Immediate(long value)
         {
-            return Immediate(value, DataType.i64);
+            return Immediate(value, new DataType(RawDataType.i64));
         }
 
         public static AstItem Immediate(float value)
         {
-            return Immediate(value, DataType.f32);
+            return Immediate(value, new DataType(RawDataType.f32));
         }
 
         public static AstItem Immediate(double value)
         {
-            return Immediate(value, DataType.f64);
+            return Immediate(value, new DataType(RawDataType.f64));
         }
 
         public static AstItem Variable(string varName, DataType dataType)
@@ -204,10 +205,11 @@ namespace erc
             return result;
         }
 
-        public static AstItem Array(AstItem[] values)
+        public static AstItem Array(AstItem[] values, RawDataType subType)
         {
             var result = new AstItem(AstItemKind.Array);
             result.Children.AddRange(values);
+            result.DataType = new DataType(RawDataType.Array, subType, values.Length);
             return result;
         }
 
