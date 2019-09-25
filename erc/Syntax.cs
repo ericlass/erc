@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace erc
 {
@@ -134,14 +132,6 @@ namespace erc
                         return new DataType(RawDataType.f32);
                     else if (expressionItem.Value is double)
                         return new DataType(RawDataType.f64);
-                    else if (expressionItem.Children != null && expressionItem.Children.Count > 0)
-                    {
-                        var subType = FindDataTypeOfExpression(expressionItem.Children[0]);
-                        if (subType.MainType == RawDataType.Array)
-                            throw new Exception("Array of arrays not supported yet!");
-                        var arraySize = expressionItem.Children.Count;
-                        return new DataType(RawDataType.Array, subType.MainType, arraySize);
-                    }
                     else
                         throw new Exception("Unknown immediate value: " + expressionItem.Value);
 
@@ -151,6 +141,13 @@ namespace erc
                         throw new Exception("Variable not declared: " + varName);
 
                     return _context.Variables[varName].DataType;
+
+                case AstItemKind.Array:
+                    var subType = FindDataTypeOfExpression(expressionItem.Children[0]);
+                    if (subType.MainType == RawDataType.Array)
+                        throw new Exception("Array of arrays not supported yet!");
+                    var arraySize = expressionItem.Children.Count;
+                    return new DataType(RawDataType.Array, subType.MainType, arraySize);
             }
 
             foreach (var item in expressionItem.Children)
@@ -177,7 +174,7 @@ namespace erc
             if (expTokens.Count == 0)
                 throw new Exception("Expected expression, found " + tokens.Current());
 
-            AstItem result = new AstItem();
+            AstItem result = null;
 
             if (expTokens.Count == 1)
             {
@@ -191,18 +188,21 @@ namespace erc
                     else
                         throw new Exception("Undefined variable: " + token);
 
-                    result.Kind = AstItemKind.Variable;
-                    result.DataType = variable.DataType;
-                    result.Identifier = token.Value;
+                    result = AstItem.Variable(token.Value, variable.DataType);
                 }
                 else if (token.TokenType == TokenType.Number)
                 {
                     var dataType = GuessDataType(token);
                     var value = ParseNumber(token.Value, dataType);
 
-                    result.Kind = AstItemKind.Immediate;
-                    result.DataType = new DataType(dataType);
-                    result.Value = value;
+                    if (value is long)
+                        result = AstItem.Immediate((long)value);
+                    else if (value is float)
+                        result = AstItem.Immediate((float)value);
+                    else if (value is double)
+                        result = AstItem.Immediate((double)value);
+                    else
+                        throw new Exception("Unexpected number value type: " + value.GetType());
                 }
                 else if (token.TokenType == TokenType.Array)
                 {
@@ -213,9 +213,8 @@ namespace erc
                         arrayValues.Add(valExp);
                     }
 
-                    result.Kind = AstItemKind.Immediate;
-                    result.DataType = DataTypeOfExpression(arrayValues[0]);
-                    result.Children = arrayValues;
+                    var subType = DataTypeOfExpression(arrayValues[0]);
+                    result = AstItem.Array(arrayValues, subType.MainType);
 
                     //Check that all expresions have the same data type!
                     if (arrayValues.Count > 0)
@@ -238,6 +237,7 @@ namespace erc
                 if (expTokens.Count != 3)
                     throw new Exception("Math expressions must be '<operand> <operator> <operand>' currently, not more, not less");
 
+                result = new AstItem();
                 result.Kind = ParseOperator(expTokens[1].Value);
 
                 //0 and 2 are correct, 1 is the operator!
@@ -254,7 +254,6 @@ namespace erc
                 result.DataType = type1;
             }
 
-            
             return result;
         }
 

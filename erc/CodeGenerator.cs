@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 
 namespace erc
@@ -16,8 +17,6 @@ namespace erc
             "section '.text' code readable executable\n" +
             "start:\n";
 
-        private RegisterAllocator _allocator = new RegisterAllocator();
-        private Dictionary<string, Register> _variableRegister = new Dictionary<string, Register>();
         private List<String> _dataEntries = new List<string>();
         private CompilerContext _context = null;
 
@@ -30,17 +29,21 @@ namespace erc
                 switch (statement.Kind)
                 {
                     case AstItemKind.VarDecl:
-                        var location = CreateNewLocationForVariable(statement.Identifier);
+                        var location = context.Variables[statement.Identifier].Location;
                         var line = GenerateExpression(statement.Children[0], location);
                         if (line != null)
                             codeLines.Add(line);
                         break;
 
                     case AstItemKind.Assignment:
-                        location = GetCurrentLocationOfVariable(statement.Identifier);
+                        location = context.Variables[statement.Identifier].Location;
                         line = GenerateExpression(statement.Children[0], location);
                         if (line != null)
                             codeLines.Add(line);
+                        break;
+
+                    case AstItemKind.VarScopeEnd:
+                        //codeLines.Add("-- free " + statement.Identifier);
                         break;
 
                     default:
@@ -57,32 +60,6 @@ namespace erc
             return builder.ToString();
         }
 
-        private StorageLocation CreateNewLocationForVariable(string varName)
-        {
-            var variable = _context.Variables[varName];
-            return GetOrTakeRegisterForVariable(variable);
-        }
-
-        private StorageLocation GetCurrentLocationOfVariable(string varName)
-        {
-            var variable = _context.Variables[varName];
-            return GetRegisterForVariable(variable);
-        }
-
-        private int _index = 0;
-
-        private StorageLocation GetTemporaryLocation(DataType dataType)
-        {
-            var name = "temp" + _index;
-            _index += 1;
-
-            var variable = new Variable();
-            variable.Name = name;
-            variable.DataType = dataType;
-
-            return GetOrTakeRegisterForVariable(variable);
-        }
-
         private string GenerateExpression(AstItem expression, StorageLocation location)
         {
             switch (expression.Kind)
@@ -91,16 +68,18 @@ namespace erc
                     return "istore " + location.ToCode() + ", " + expression.Value;
 
                 case AstItemKind.Variable:
-                    var varLocation = GetCurrentLocationOfVariable(expression.Identifier);
-                    return "vstore " + location.ToCode() + ", " + varLocation;
+                    var varLocation = _context.Variables[expression.Identifier].Location;
+                    return "vstore " + location.ToCode() + ", " + varLocation.ToCode();
 
                 case AstItemKind.Array:
                     var arraySize = expression.Children.Count;
                     var itemSize = GetByteSizeOfRawDataType(expression.DataType.SubType.Value);
                     var arrayByteSize = 8 + (itemSize * arraySize);
+
                     var builder = new StringBuilder();
                     builder.AppendLine("alloc acc, " + arrayByteSize);
                     builder.AppendLine("istore [acc], " + arraySize);
+
                     var i = 0;
                     foreach (var item in expression.Children)
                     {
@@ -113,21 +92,133 @@ namespace erc
 
 
                 case AstItemKind.AddOp: //Almost the same for other ops, just different op at the end
-                    var operand1 = expression.Children[0];
-                    var operand1Location = GetTemporaryLocation(operand1.DataType);
-                    GenerateExpression(operand1, operand1Location);
+                    //TODO: Reserving the temporary locations first and then generating the expression yields high usage of locations which is not required. Fix this.
 
+                    var operand1 = expression.Children[0];
                     var operand2 = expression.Children[1];
-                    var operand2Location = GetTemporaryLocation(operand2.DataType);
+
+                    StorageLocation operand1Location = GetLocationOfOperand(operand1);
+                    StorageLocation operand2Location = GetLocationOfOperand(operand2);
+
+                    GenerateExpression(operand1, operand1Location);
                     GenerateExpression(operand2, operand2Location);
 
-                    var targetLocation = GetTemporaryLocation(operand2.DataType);
+                    builder = new StringBuilder();
+                    builder.AppendLine("mov " + location.ToCode() + ", " + operand1Location.ToCode());
+                    builder.Append("add " + location.ToCode() + ", " + operand2Location.ToCode());
+                               
+                    //TODO: Free temporary locations
 
-                    //TODO: Add results of both expressions and store into "location"
-                    return "add " + targetLocation.ToCode() + ", " + operand1Location.ToCode() + ", " + operand2Location.ToCode();
+                    return builder.ToString();
             }
 
             return "[not implemented: " + expression.Kind + "]";
+        }
+
+        private StorageLocation GetLocationOfOperand(AstItem operand)
+        {
+            if (operand.Kind == AstItemKind.Variable)
+            {
+                return _context.Variables[operand.Identifier].Location;
+            }
+            else if (operand.Kind == AstItemKind.Immediate)
+            {
+                string typeName = null;
+                string value = null;
+                switch (operand.DataType.MainType)
+                {
+                    case RawDataType.i64:
+                        typeName = "dq";
+                        long longVal = (long)operand.Value;
+                        value = longVal.ToString();
+                        break;
+
+                    case RawDataType.f32:
+                        typeName = "dd";
+                        float floatVal = (float)operand.Value;
+                        value = floatVal.ToString(CultureInfo.InvariantCulture);
+                        break;
+
+                    case RawDataType.f64:
+                        typeName = "dq";
+                        double doubleVal = (double)operand.Value;
+                        value = doubleVal.ToString(CultureInfo.InvariantCulture);
+                        break;
+
+                    case RawDataType.Array:
+                        var isFullImediate = operand.Children.TrueForAll((c) => c.Kind == AstItemKind.Immediate);
+                        //If array is "full" immediate, create data section entry
+                        if (isFullImediate)
+                        {
+                            var allValues = new List<string>();
+                            switch (operand.DataType.SubType)
+                            {
+                                case RawDataType.i64:
+                                    typeName = "dq";
+                                    foreach (var child in operand.Children)
+                                    {
+                                        long vLong = (long)operand.Value;
+                                        allValues.Add(vLong.ToString());
+                                    }
+                                    break;
+
+                                case RawDataType.f32:
+                                    typeName = "dd";
+                                    foreach (var child in operand.Children)
+                                    {
+                                        long vFloat = (long)operand.Value;
+                                        allValues.Add(vFloat.ToString(CultureInfo.InvariantCulture));
+                                    }
+                                    break;
+
+                                case RawDataType.f64:
+                                    typeName = "dq";
+                                    foreach (var child in operand.Children)
+                                    {
+                                        long vDouble = (long)operand.Value;
+                                        allValues.Add(vDouble.ToString(CultureInfo.InvariantCulture));
+                                    }
+                                    break;
+
+                                case RawDataType.Array:
+                                    throw new Exception("Arrays of arrays not supported atm!");
+
+                                default:
+                                    throw new Exception("Unknown data type: " + operand.DataType.MainType);
+                            }
+
+                            value = String.Join(",", allValues);
+                        }
+                        else
+                        {
+                            //TODO: If array is NOT "full" immediate, it must be generated on the stack (or heap)
+                        }
+
+                        break;
+
+                    default:
+                        throw new Exception("Unknown data type: " + operand.DataType.MainType);
+                }
+
+                var dataName = "imm_" + operand.Identifier;
+                _dataEntries.Add(dataName + " " + typeName + " " + value);
+
+                return new StorageLocation
+                {
+                    Kind = StorageLocationKind.DataSection,
+                    DataName = dataName
+                };
+            }
+            else if (operand.Kind == AstItemKind.Array)
+            {
+                return new StorageLocation
+                {
+                    Kind = StorageLocationKind.Stack,
+                    Address = 0
+                };
+            }
+
+            throw new Exception("AST Item of kind '" + operand.Kind + " cannot be operand for math operator!");
         }
 
         private long GetByteSizeOfRawDataType(RawDataType dataType)
@@ -145,58 +236,6 @@ namespace erc
                 default:
                     throw new Exception("Unknown data type: " + dataType);
             }
-        }
-
-        private StorageLocation GetRegisterForVariable(Variable variable)
-        {
-            if (_variableRegister.ContainsKey(variable.Name))
-            {
-                return new StorageLocation { Kind = StorageLocationKind.Register, Register = _variableRegister[variable.Name] };
-            }
-
-            return null;
-        }
-
-        private StorageLocation GetOrTakeRegisterForVariable(Variable variable)
-        {
-            var reg = GetRegisterForVariable(variable);
-            if (reg != null)
-                return reg;
-
-            var regSize = RegisterSize.R64;
-
-            switch (variable.DataType.MainType)
-            {
-                case RawDataType.i64:
-                    regSize = RegisterSize.R64;
-                    break;
-
-                case RawDataType.f32:
-                case RawDataType.f64:
-                    regSize = RegisterSize.R128;
-                    break;
-
-                case RawDataType.Array:
-                    var arrSize = variable.GetRegisterSizeForArray();
-                    if (arrSize == null)
-                        return null;
-
-                    regSize = arrSize.Value;
-                    break;
-
-                default:
-                    throw new Exception("Unknown data type: " + variable);
-            }
-
-            var result = _allocator.TakeRegister(regSize);
-            _variableRegister.Add(variable.Name, result);
-
-            return new StorageLocation { Kind = StorageLocationKind.Register, Register = result };
-        }
-
-        private void FreeVariableRegister(Variable variable)
-        {
-            _variableRegister.Remove(variable.Name);
         }
 
     }

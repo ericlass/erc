@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 
 namespace erc
@@ -26,14 +25,21 @@ namespace erc
             var syntax = new Syntax();
             syntax.Analyze(context);
 
-            Console.WriteLine();
-            Console.WriteLine("STATEMENTS");
-            Console.WriteLine("==========");
-            foreach (var statement in context.AST.Children)
-            {
-                Console.WriteLine(statement);
-            }
+            var processor = new PostProcessor();
+            processor.Process(context);
 
+            Console.WriteLine();
+            Console.WriteLine("STORAGE");
+            Console.WriteLine("=======");
+            var locator = new StorageLocator();
+            locator.Locate(context);
+
+            Console.WriteLine();
+            Console.WriteLine("AST");
+            Console.WriteLine("===");
+            Console.Write(context.AST.ToTreeString());
+
+            Console.WriteLine();
             Console.WriteLine();
             Console.WriteLine("CODE");
             Console.WriteLine("==========");

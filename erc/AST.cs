@@ -6,77 +6,6 @@ using System.Threading.Tasks;
 
 namespace erc
 {
-    /*
-    public class Immediate
-    {
-        public DataType Type { get; set; }
-        public object Value { get; set; }
-
-        public List<Expression> ValueAsArray()
-        {
-            if (Type != DataType.Array)
-                throw new Exception("Immediate is not an array but a " + Type);
-
-            return (List<Expression>)Value;
-        }
-
-        public override string ToString()
-        {
-            var valueStr = Value.ToString();
-            if (Type == DataType.Array)
-            {
-                valueStr = "[" + String.Join(", ", Value as List<Expression>) + "]";
-            }
-            return Type + "(\"" + valueStr + "\")";
-        }
-
-    }
-
-    public enum OperandType
-    {
-        Immediate, // => Immediate
-        Variable // => String
-    }
-
-    public class Operand
-    {
-        public OperandType Type { get; set; }
-        public object Value { get; set; }
-
-        public override string ToString()
-        {
-            return Type + "(" + Value + ")";
-        }
-    }
-
-    public enum MathOperator
-    {
-        Add,
-        Subtract,
-        Multiply,
-        Divide
-    }
-
-    public class MathExpression
-    {
-        public MathOperator Operator { get; set; }
-        public Operand Operand1 { get; set; }
-        public Operand Operand2 { get; set; }
-
-        public override string ToString()
-        {
-            return "'" + Operand1 + "' '" + Operator + "' '" + Operand2 + "'";
-        }
-    }
-
-    public enum ExpressionType
-    {
-        Immediate, // => Immediate
-        Variable, // => Variable
-        Math // => MathExpression
-    }
-    */
-
     public enum AstItemKind
     {
         Programm,
@@ -84,6 +13,7 @@ namespace erc
         Assignment,
         Immediate,
         Variable,
+        VarScopeEnd,
         Array,
         AddOp,
         SubOp,
@@ -131,6 +61,9 @@ namespace erc
                 case AstItemKind.Assignment:
                     return Kind + ": " + DataType + "(" + Identifier + "; " + Children[0] + ")";
 
+                case AstItemKind.VarScopeEnd:
+                    return Kind + ": " + Identifier;
+
                 case AstItemKind.Immediate:
                     return Kind + ": " + DataType + "(" + Value + ")";
 
@@ -145,10 +78,49 @@ namespace erc
                 case AstItemKind.SubOp:
                 case AstItemKind.MulOp:
                 case AstItemKind.DivOp:
+                    return Kind + ": " + String.Join(", ", Children);
+            }
+
+            throw new Exception("Unknown expression kind: " + Kind);
+        }
+
+        public string ToSimpleString()
+        {
+            switch (Kind)
+            {
+                case AstItemKind.VarDecl:
+                case AstItemKind.Assignment:
+                case AstItemKind.Variable:
+                    return Kind + ": \"" + Identifier + "\" (" + DataType + ")";
+
+                case AstItemKind.VarScopeEnd:
+                    return Kind + ": " + Identifier;
+
+                case AstItemKind.Immediate:
+                    return Kind + ": " + Value + " (" + DataType + ")";
+
+                default:
                     return Kind.ToString();
             }
 
             throw new Exception("Unknown expression kind: " + Kind);
+        }
+
+        public string ToTreeString()
+        {
+            return ToTreeStringRec(0);
+        }
+
+        private string ToTreeStringRec(int level)
+        {
+            var indent = new String(' ', level * 4);
+            var result = indent + ToSimpleString() + Environment.NewLine;
+            level += 1;
+            foreach (var child in Children)
+            {
+                result += child.ToTreeStringRec(level);
+            }
+            return result;
         }
 
         public static AstItem Programm()
@@ -205,11 +177,11 @@ namespace erc
             return result;
         }
 
-        public static AstItem Array(AstItem[] values, RawDataType subType)
+        public static AstItem Array(List<AstItem> values, RawDataType subType)
         {
             var result = new AstItem(AstItemKind.Array);
             result.Children.AddRange(values);
-            result.DataType = new DataType(RawDataType.Array, subType, values.Length);
+            result.DataType = new DataType(RawDataType.Array, subType, values.Count);
             return result;
         }
 
@@ -239,6 +211,11 @@ namespace erc
         public static AstItem DivOp(AstItem op1, AstItem op2)
         {
             return ArithmeticOp(AstItemKind.DivOp, op1, op2);
+        }
+
+        public static AstItem VarScopeEnd(string varName)
+        {
+            return new AstItem { Kind = AstItemKind.VarScopeEnd, Identifier = varName };
         }
 
     }
