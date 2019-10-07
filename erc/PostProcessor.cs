@@ -8,6 +8,23 @@ namespace erc
         public void Process(CompilerContext context)
         {
             CreateVariableScopeNodes(context.AST);
+            AssignDataNames(context.AST);
+        }
+
+        private int _immCounter = 0;
+
+        private void AssignDataNames(AstItem item)
+        {
+            if (item.Kind == AstItemKind.Immediate || item.Kind == AstItemKind.Array)
+            {
+                item.Identifier = "imm_" + _immCounter;
+                _immCounter += 1;
+            }
+
+            foreach (var child in item.Children)
+            {
+                AssignDataNames(child);
+            }
         }
 
         /// <summary>

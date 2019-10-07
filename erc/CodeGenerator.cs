@@ -5,7 +5,7 @@ using System.Text;
 
 namespace erc
 {
-    public class CodeGenerator
+    public partial class CodeGenerator
     {
         private const string CodeHeader =
             "format PE64 NX GUI 6.0\n" +
@@ -19,35 +19,27 @@ namespace erc
 
         private List<String> _dataEntries = new List<string>();
         private CompilerContext _context = null;
+        private long _immCounter = 0;
+
+        private string GetImmName()
+        {
+            _immCounter += 1;
+            return "imm_" + _immCounter;
+        }
 
         public string Generate(CompilerContext context)
         {
             _context = context;
+
+            GenerateDataSection(context.AST);
+
             var codeLines = new List<string>();
             foreach (var statement in context.AST.Children)
             {
-                switch (statement.Kind)
+                if (statement.Kind != AstItemKind.VarScopeEnd)
                 {
-                    case AstItemKind.VarDecl:
-                        var location = context.Variables[statement.Identifier].Location;
-                        var line = GenerateExpression(statement.Children[0], location);
-                        if (line != null)
-                            codeLines.Add(line);
-                        break;
-
-                    case AstItemKind.Assignment:
-                        location = context.Variables[statement.Identifier].Location;
-                        line = GenerateExpression(statement.Children[0], location);
-                        if (line != null)
-                            codeLines.Add(line);
-                        break;
-
-                    case AstItemKind.VarScopeEnd:
-                        //codeLines.Add("-- free " + statement.Identifier);
-                        break;
-
-                    default:
-                        break;
+                    codeLines.Add("// " + statement.SourceLine);
+                    codeLines.Add(GenerateStatement(statement));
                 }
             }
 
@@ -60,182 +52,111 @@ namespace erc
             return builder.ToString();
         }
 
-        private string GenerateExpression(AstItem expression, StorageLocation location)
+        private void GenerateDataSection(AstItem item)
         {
-            switch (expression.Kind)
+            if (item.Kind == AstItemKind.Immediate)
             {
-                case AstItemKind.Immediate:
-                    return "istore " + location.ToCode() + ", " + expression.Value;
-
-                case AstItemKind.Variable:
-                    var varLocation = _context.Variables[expression.Identifier].Location;
-                    return "vstore " + location.ToCode() + ", " + varLocation.ToCode();
-
-                case AstItemKind.Array:
-                    var arraySize = expression.Children.Count;
-                    var itemSize = GetByteSizeOfRawDataType(expression.DataType.SubType.Value);
-                    var arrayByteSize = 8 + (itemSize * arraySize);
-
-                    var builder = new StringBuilder();
-                    builder.AppendLine("alloc acc, " + arrayByteSize);
-                    builder.AppendLine("istore [acc], " + arraySize);
-
-                    var i = 0;
-                    foreach (var item in expression.Children)
-                    {
-                        var vLocation = new StorageLocation { Kind = StorageLocationKind.Heap, Address = itemSize * i };
-                        builder.AppendLine(GenerateExpression(item, vLocation));
-                        i += 1;
-                    }
-                    builder.Append("istore " + location.ToCode() + ", acc");
-                    return builder.ToString();
-
-
-                case AstItemKind.AddOp: //Almost the same for other ops, just different op at the end
-                    //TODO: Reserving the temporary locations first and then generating the expression yields high usage of locations which is not required. Fix this.
-
-                    var operand1 = expression.Children[0];
-                    var operand2 = expression.Children[1];
-
-                    StorageLocation operand1Location = GetLocationOfOperand(operand1);
-                    StorageLocation operand2Location = GetLocationOfOperand(operand2);
-
-                    GenerateExpression(operand1, operand1Location);
-                    GenerateExpression(operand2, operand2Location);
-
-                    builder = new StringBuilder();
-                    builder.AppendLine("mov " + location.ToCode() + ", " + operand1Location.ToCode());
-                    builder.Append("add " + location.ToCode() + ", " + operand2Location.ToCode());
-                               
-                    //TODO: Free temporary locations
-
-                    return builder.ToString();
-            }
-
-            return "[not implemented: " + expression.Kind + "]";
-        }
-
-        private StorageLocation GetLocationOfOperand(AstItem operand)
-        {
-            if (operand.Kind == AstItemKind.Variable)
-            {
-                return _context.Variables[operand.Identifier].Location;
-            }
-            else if (operand.Kind == AstItemKind.Immediate)
-            {
-                string typeName = null;
-                string value = null;
-                switch (operand.DataType.MainType)
+                switch (item.DataType.MainType)
                 {
                     case RawDataType.i64:
-                        typeName = "dq";
-                        long longVal = (long)operand.Value;
-                        value = longVal.ToString();
+                        _dataEntries.Add(item.Identifier + " dq " + item.Value);
                         break;
 
                     case RawDataType.f32:
-                        typeName = "dd";
-                        float floatVal = (float)operand.Value;
-                        value = floatVal.ToString(CultureInfo.InvariantCulture);
+                        float fVal = (float)item.Value;
+                        _dataEntries.Add(item.Identifier + " dd " + fVal.ToString(CultureInfo.InvariantCulture));
                         break;
 
                     case RawDataType.f64:
-                        typeName = "dq";
-                        double doubleVal = (double)operand.Value;
-                        value = doubleVal.ToString(CultureInfo.InvariantCulture);
+                        var dVal = (double)item.Value;
+                        _dataEntries.Add(item.Identifier + " dq " + dVal.ToString(CultureInfo.InvariantCulture));
                         break;
 
                     case RawDataType.Array:
-                        var isFullImediate = operand.Children.TrueForAll((c) => c.Kind == AstItemKind.Immediate);
-                        //If array is "full" immediate, create data section entry
-                        if (isFullImediate)
-                        {
-                            var allValues = new List<string>();
-                            switch (operand.DataType.SubType)
-                            {
-                                case RawDataType.i64:
-                                    typeName = "dq";
-                                    foreach (var child in operand.Children)
-                                    {
-                                        long vLong = (long)operand.Value;
-                                        allValues.Add(vLong.ToString());
-                                    }
-                                    break;
-
-                                case RawDataType.f32:
-                                    typeName = "dd";
-                                    foreach (var child in operand.Children)
-                                    {
-                                        long vFloat = (long)operand.Value;
-                                        allValues.Add(vFloat.ToString(CultureInfo.InvariantCulture));
-                                    }
-                                    break;
-
-                                case RawDataType.f64:
-                                    typeName = "dq";
-                                    foreach (var child in operand.Children)
-                                    {
-                                        long vDouble = (long)operand.Value;
-                                        allValues.Add(vDouble.ToString(CultureInfo.InvariantCulture));
-                                    }
-                                    break;
-
-                                case RawDataType.Array:
-                                    throw new Exception("Arrays of arrays not supported atm!");
-
-                                default:
-                                    throw new Exception("Unknown data type: " + operand.DataType.MainType);
-                            }
-
-                            value = String.Join(",", allValues);
-                        }
-                        else
-                        {
-                            //TODO: If array is NOT "full" immediate, it must be generated on the stack (or heap)
-                        }
-
                         break;
-
                     default:
-                        throw new Exception("Unknown data type: " + operand.DataType.MainType);
+                        break;
                 }
-
-                var dataName = "imm_" + operand.Identifier;
-                _dataEntries.Add(dataName + " " + typeName + " " + value);
-
-                return new StorageLocation
-                {
-                    Kind = StorageLocationKind.DataSection,
-                    DataName = dataName
-                };
             }
-            else if (operand.Kind == AstItemKind.Array)
+            else if (item.Kind == AstItemKind.Array)
             {
-                return new StorageLocation
+                if (IsFullImmediateArray(item))
                 {
-                    Kind = StorageLocationKind.Stack,
-                    Address = 0
-                };
+                    var dataLine = item.Identifier;
+                    switch (item.Children[0].DataType.MainType)
+                    {
+                        case RawDataType.i64:
+                            dataLine += " dq ";
+                            dataLine += String.Join(",", item.Children.ConvertAll<string>((a) => a.Value.ToString()));
+                            break;
+
+                        case RawDataType.f32:
+                            dataLine += " dd ";
+                            dataLine += String.Join(",", item.Children.ConvertAll<string>((a) => {
+                                var fVal = (float)a.Value;
+                                return fVal.ToString("0.0", CultureInfo.InvariantCulture);
+                            }));
+                            break;
+
+                        case RawDataType.f64:
+                            dataLine += " dd ";
+                            dataLine += String.Join(",", item.Children.ConvertAll<string>((a) => {
+                                var dVal = (double)a.Value;
+                                return dVal.ToString("0.0", CultureInfo.InvariantCulture);
+                            }));
+                            break;
+
+                        case RawDataType.Array:
+                            throw new Exception("Array of arrays not supported!");
+                        default:
+                            throw new Exception("Unknown data type: " + item.Children[0].DataType.MainType);
+                    }
+                    _dataEntries.Add(dataLine);
+                }
             }
 
-            throw new Exception("AST Item of kind '" + operand.Kind + " cannot be operand for math operator!");
+            foreach (var child in item.Children)
+            {
+                GenerateDataSection(child);
+            }
         }
 
-        private long GetByteSizeOfRawDataType(RawDataType dataType)
+        private bool IsFullImmediateArray(AstItem array)
         {
-            switch (dataType)
-            {
-                case RawDataType.f32:
-                    return 4;
+            if (array.Kind != AstItemKind.Array)
+                throw new Exception("Only array items are expected!");
 
-                case RawDataType.i64:
-                case RawDataType.f64:
-                case RawDataType.Array:
-                    return 8;
+            return array.Children.TrueForAll((i) => i.Kind == AstItemKind.Immediate);
+        }
 
-                default:
-                    throw new Exception("Unknown data type: " + dataType);
+        private string GenerateStatement(AstItem statement)
+        {
+            switch (statement.Kind) {
+                case AstItemKind.VarDecl:
+                    return GenerateVarDecl(statement);
+
+                case AstItemKind.Assignment:
+                    return GenerateAssignment(statement);
             }
+
+            return "";
+        }
+
+        private string GenerateVarDecl(AstItem statement)
+        {
+            var variable = _context.Variables[statement.Identifier];
+            return GenerateExpression(statement.Children[0], variable.Location);
+        }
+
+        private string GenerateAssignment(AstItem statement)
+        {
+            var variable = _context.Variables[statement.Identifier];
+            return GenerateExpression(statement.Children[0], variable.Location);
+        }
+
+        private string GenerateExpression(AstItem expression, StorageLocation targetLocation)
+        {
+            return "";
         }
 
     }

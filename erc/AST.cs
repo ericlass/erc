@@ -39,6 +39,7 @@ namespace erc
         public DataType DataType { get; set; }
         public string Identifier { get; set; } //Name of variable, function etc.
         public object Value { get; set; } //Value for immediates
+        public string SourceLine { get; set; } //Source code line, only filled for statements
         public List<AstItem> Children { get => _children; set => _children = value; }
 
         public AstItem()

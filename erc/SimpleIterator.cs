@@ -7,6 +7,7 @@ namespace erc
     {
         private List<T> _items = null;
         private int _position = 0;
+        private int _captureStart = 0;
 
         public SimpleIterator(List<T> items)
         {
@@ -16,6 +17,19 @@ namespace erc
         public static SimpleIterator<T> Singleton(T value)
         {
             return new SimpleIterator<T>(new List<T> { value });
+        }
+
+        public void StartCapture()
+        {
+            _captureStart = _position;
+        }
+
+        public List<T> GetCapture()
+        {
+            if (_position >= _items.Count)
+                return new List<T>();
+
+            return _items.GetRange(_captureStart + 1, _position - _captureStart);
         }
 
         public T Current()

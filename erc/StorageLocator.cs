@@ -132,10 +132,10 @@ namespace erc
             _free64Registers.Push(Register.R14);
             _free64Registers.Push(Register.R13);
             _free64Registers.Push(Register.R12);
-            _free64Registers.Push(Register.R11);
-            _free64Registers.Push(Register.R10);
-            _free64Registers.Push(Register.R9);
-            _free64Registers.Push(Register.R8);
+            //_free64Registers.Push(Register.R11); //used for arithmetic
+            //_free64Registers.Push(Register.R10); //used for arithmetic
+            //_free64Registers.Push(Register.R9); //parameter passing
+            //_free64Registers.Push(Register.R8); //parameter passing
 
             _free128Registers.Push(Register.XMM15);
             _free128Registers.Push(Register.XMM14);
@@ -150,8 +150,8 @@ namespace erc
             _free128Registers.Push(Register.XMM5);
             _free128Registers.Push(Register.XMM4);
             _free128Registers.Push(Register.XMM3);
-            _free128Registers.Push(Register.XMM2);
-            _free128Registers.Push(Register.XMM1);
+            //_free128Registers.Push(Register.XMM2); //used for arithmetic
+            //_free128Registers.Push(Register.XMM1); //used for arithmetic
             //_free128Registers.Push(Register.XMM0); //used as accumulator
 
             _free256Registers.Push(Register.YMM15);
@@ -167,8 +167,8 @@ namespace erc
             _free256Registers.Push(Register.YMM5);
             _free256Registers.Push(Register.YMM4);
             _free256Registers.Push(Register.YMM3);
-            _free256Registers.Push(Register.YMM2);
-            _free256Registers.Push(Register.YMM1);
+            //_free256Registers.Push(Register.YMM2); //used for arithmetic
+            //_free256Registers.Push(Register.YMM1); //used for arithmetic
             //_free256Registers.Push(Register.YMM0); //used as accumulator
         }
 

@@ -8,7 +8,7 @@ let e = 0.5d;
 let k = e * d;
 k = k + 2.0;
 
-let arrX = [1,2,3,4];
+let arrX = [1,2,3,4,5];
 let arrY = [1.0f,2.0f,3.0f,4.0f];
 let arrZ = [0.1,2.0,3.0,4.0];
 

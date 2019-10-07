@@ -40,6 +40,8 @@ namespace erc
 
             AstItem result = null;
 
+            tokens.StartCapture();
+
             var first = token.Value;
             if (first == "let")
             {
@@ -49,6 +51,9 @@ namespace erc
             {
                 result = ReadAssignment(tokens);
             }
+
+            var lineTokens = tokens.GetCapture();
+            result.SourceLine = String.Join(" ", lineTokens.ConvertAll<string>((a) => a.Value));
 
             return result;
         }

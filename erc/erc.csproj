@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="AST.cs" />
     <Compile Include="CodeGenerator.cs" />
+    <Compile Include="CodeGeneratorMovement.cs" />
     <Compile Include="CompilerContext.cs" />
     <Compile Include="DataType.cs" />
     <Compile Include="PostProcessor.cs" />
