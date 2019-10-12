@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Globalization;
 
 namespace erc
 {
@@ -14,7 +12,7 @@ namespace erc
         Immediate,
         Variable,
         VarScopeEnd,
-        Array,
+        Vector,
         AddOp,
         SubOp,
         MulOp,
@@ -41,6 +39,7 @@ namespace erc
         public object Value { get; set; } //Value for immediates
         public string SourceLine { get; set; } //Source code line, only filled for statements
         public List<AstItem> Children { get => _children; set => _children = value; }
+        public bool DataGenerated { get; set; } = false; //Used to track which immediates have already been generated in the data section
 
         public AstItem()
         {
@@ -68,9 +67,9 @@ namespace erc
                 case AstItemKind.Immediate:
                     return Kind + ": " + DataType + "(" + Value + ")";
 
-                case AstItemKind.Array:
+                case AstItemKind.Vector:
                     var childValues = Children.ConvertAll((item) => item.ToString());
-                    return "[" + String.Join(",", childValues) + "]";
+                    return "<" + String.Join(",", childValues) + ">";
 
                 case AstItemKind.Variable:
                     return Kind + ": " + DataType + "(" + Identifier + ")";
@@ -95,16 +94,33 @@ namespace erc
                     return Kind + ": \"" + Identifier + "\" (" + DataType + ")";
 
                 case AstItemKind.VarScopeEnd:
-                    return Kind + ": " + Identifier;
+                    return Kind + ": \"" + Identifier + "\"";
 
                 case AstItemKind.Immediate:
-                    return Kind + ": " + Value + " (" + DataType + ")";
+                    return Kind + ": " + ImmediateValueToString() + " (" + DataType + ")";
 
                 default:
                     return Kind.ToString();
             }
 
             throw new Exception("Unknown expression kind: " + Kind);
+        }
+
+        private string ImmediateValueToString()
+        {
+            if (Value == null)
+                return "";
+
+            if (Value is float fVal)
+            {
+                return fVal.ToString("0.0", CultureInfo.InvariantCulture);
+            }
+            else if (Value is double dVal)
+            {
+                return dVal.ToString("0.0", CultureInfo.InvariantCulture);
+            }
+
+            return Value.ToString();
         }
 
         public string ToTreeString()
@@ -178,11 +194,11 @@ namespace erc
             return result;
         }
 
-        public static AstItem Array(List<AstItem> values, RawDataType subType)
+        public static AstItem Vector(List<AstItem> values, DataType dataType)
         {
-            var result = new AstItem(AstItemKind.Array);
+            var result = new AstItem(AstItemKind.Vector);
             result.Children.AddRange(values);
-            result.DataType = new DataType(RawDataType.Array, subType, values.Count);
+            result.DataType = dataType;
             return result;
         }
 

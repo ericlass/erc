@@ -38,7 +38,7 @@ namespace erc
 
             var c = iterator.Current();
             string value = null;
-            List<List<Token>> arrayValues = null;
+            List<List<Token>> values = null;
             TokenType type;
 
             var startLine = iterator.Line;
@@ -72,23 +72,23 @@ namespace erc
                 type = TokenType.StatementTerminator;
                 iterator.Step();
             }
-            else if (c == '[')
+            else if (c == '<')
             {
-                arrayValues = ReadArray(iterator);
-                type = TokenType.Array;
+                values = ReadVector(iterator);
+                type = TokenType.Vector;
             }
             else
             {
                 throw new Exception("Unexpected character '" + c + "' at (" + startLine + "," + startColumn + ")");
             }
 
-            if (value != null || arrayValues != null)
+            if (value != null || values != null)
             {
                 return new Token
                 {
                     TokenType = type,
                     Value = value,
-                    ArrayValues = arrayValues,
+                    Values = values,
                     Line = startLine,
                     Column = startColumn
                 };
@@ -97,10 +97,10 @@ namespace erc
             return null;
         }
 
-        private List<List<Token>> ReadArray(StringIterator iterator)
+        private List<List<Token>> ReadVector(StringIterator iterator)
         {
             var result = new List<List<Token>>();
-            //Skip starting "["
+            //Skip starting "<"
             iterator.Step();
 
             if (!SkipWhiteSpaces(iterator))
@@ -110,7 +110,7 @@ namespace erc
 
             var c = iterator.Current();
 
-            if (c == ']')
+            if (c == '>')
             {
                 return result;
             }
@@ -130,7 +130,7 @@ namespace erc
                     expTokens = new List<Token>();
                     iterator.Step();
                 }
-                else if (iterator.Current() == ']')
+                else if (iterator.Current() == '>')
                 {
                     result.Add(expTokens);
                     iterator.Step();

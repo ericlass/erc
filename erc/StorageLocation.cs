@@ -70,34 +70,16 @@ namespace erc
                     return new StorageLocation { Kind = StorageLocationKind.Register, Register = Register.R10 };
 
                 case RawDataType.f32:
-                    return new StorageLocation { Kind = StorageLocationKind.Register, Register = Register.XMM1 };
-
                 case RawDataType.f64:
+                case RawDataType.ivec2q:
+                case RawDataType.vec2d:
+                case RawDataType.vec4f:
                     return new StorageLocation { Kind = StorageLocationKind.Register, Register = Register.XMM1 };
 
-                case RawDataType.Array:
-                    switch (dataType.SubType)
-                    {
-                        case RawDataType.i64:
-                        case RawDataType.f64:
-                            if (dataType.Size == 2)
-                                return new StorageLocation { Kind = StorageLocationKind.Register, Register = Register.XMM1 };
-                            else if (dataType.Size == 4)
-                                return new StorageLocation { Kind = StorageLocationKind.Register, Register = Register.YMM1 };
-                            else
-                                //Address is 0, real stack offset depends on current stack frame
-                                return new StorageLocation { Kind = StorageLocationKind.Stack, Address = 0 };
-
-                        case RawDataType.f32:
-                            if (dataType.Size == 4)
-                                return new StorageLocation { Kind = StorageLocationKind.Register, Register = Register.XMM1 };
-                            else if (dataType.Size == 8)
-                                return new StorageLocation { Kind = StorageLocationKind.Register, Register = Register.YMM1 };
-                            else
-                                //Address is 0, real stack offset depends on current stack frame
-                                return new StorageLocation { Kind = StorageLocationKind.Stack, Address = 0 };
-                    }
-                    break;
+                case RawDataType.ivec4q:
+                case RawDataType.vec4d:
+                case RawDataType.vec8f:
+                    return new StorageLocation { Kind = StorageLocationKind.Register, Register = Register.YMM1 };
             }
 
             throw new Exception("Unable to determine temp location for data type: " + dataType);
@@ -111,34 +93,16 @@ namespace erc
                     return new StorageLocation { Kind = StorageLocationKind.Register, Register = Register.R11 };
 
                 case RawDataType.f32:
-                    return new StorageLocation { Kind = StorageLocationKind.Register, Register = Register.XMM2 };
-
                 case RawDataType.f64:
+                case RawDataType.ivec2q:
+                case RawDataType.vec2d:
+                case RawDataType.vec4f:
                     return new StorageLocation { Kind = StorageLocationKind.Register, Register = Register.XMM2 };
 
-                case RawDataType.Array:
-                    switch (dataType.SubType)
-                    {
-                        case RawDataType.i64:
-                        case RawDataType.f64:
-                            if (dataType.Size == 2)
-                                return new StorageLocation { Kind = StorageLocationKind.Register, Register = Register.XMM2 };
-                            else if (dataType.Size == 4)
-                                return new StorageLocation { Kind = StorageLocationKind.Register, Register = Register.YMM2 };
-                            else
-                                //Address is 0, real stack offset depends on current stack frame
-                                return new StorageLocation { Kind = StorageLocationKind.Stack, Address = 0 };
-
-                        case RawDataType.f32:
-                            if (dataType.Size == 4)
-                                return new StorageLocation { Kind = StorageLocationKind.Register, Register = Register.XMM2 };
-                            else if (dataType.Size == 8)
-                                return new StorageLocation { Kind = StorageLocationKind.Register, Register = Register.YMM2 };
-                            else
-                                //Address is 0, real stack offset depends on current stack frame
-                                return new StorageLocation { Kind = StorageLocationKind.Stack, Address = 0 };
-                    }
-                    break;
+                case RawDataType.ivec4q:
+                case RawDataType.vec4d:
+                case RawDataType.vec8f:
+                    return new StorageLocation { Kind = StorageLocationKind.Register, Register = Register.YMM2 };
             }
 
             throw new Exception("Unable to determine temp location for data type: " + dataType);

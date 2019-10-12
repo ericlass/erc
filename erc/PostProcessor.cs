@@ -15,7 +15,7 @@ namespace erc
 
         private void AssignDataNames(AstItem item)
         {
-            if (item.Kind == AstItemKind.Immediate || item.Kind == AstItemKind.Array)
+            if (item.Kind == AstItemKind.Immediate || item.Kind == AstItemKind.Vector)
             {
                 item.Identifier = "imm_" + _immCounter;
                 _immCounter += 1;

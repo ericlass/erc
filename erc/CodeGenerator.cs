@@ -31,6 +31,7 @@ namespace erc
         {
             _context = context;
 
+            InitMovementGenerators();
             GenerateDataSection(context.AST);
 
             var codeLines = new List<string>();
@@ -54,64 +55,72 @@ namespace erc
 
         private void GenerateDataSection(AstItem item)
         {
-            if (item.Kind == AstItemKind.Immediate)
+            if (!item.DataGenerated)
             {
-                switch (item.DataType.MainType)
+                if (item.Kind == AstItemKind.Immediate)
                 {
-                    case RawDataType.i64:
-                        _dataEntries.Add(item.Identifier + " dq " + item.Value);
-                        break;
-
-                    case RawDataType.f32:
-                        float fVal = (float)item.Value;
-                        _dataEntries.Add(item.Identifier + " dd " + fVal.ToString(CultureInfo.InvariantCulture));
-                        break;
-
-                    case RawDataType.f64:
-                        var dVal = (double)item.Value;
-                        _dataEntries.Add(item.Identifier + " dq " + dVal.ToString(CultureInfo.InvariantCulture));
-                        break;
-
-                    case RawDataType.Array:
-                        break;
-                    default:
-                        break;
-                }
-            }
-            else if (item.Kind == AstItemKind.Array)
-            {
-                if (IsFullImmediateArray(item))
-                {
-                    var dataLine = item.Identifier;
-                    switch (item.Children[0].DataType.MainType)
+                    switch (item.DataType.MainType)
                     {
                         case RawDataType.i64:
-                            dataLine += " dq ";
-                            dataLine += String.Join(",", item.Children.ConvertAll<string>((a) => a.Value.ToString()));
+                            _dataEntries.Add(item.Identifier + " dq " + item.Value);
                             break;
 
                         case RawDataType.f32:
-                            dataLine += " dd ";
-                            dataLine += String.Join(",", item.Children.ConvertAll<string>((a) => {
-                                var fVal = (float)a.Value;
-                                return fVal.ToString("0.0", CultureInfo.InvariantCulture);
-                            }));
+                            float fVal = (float)item.Value;
+                            _dataEntries.Add(item.Identifier + " dd " + fVal.ToString("0.0", CultureInfo.InvariantCulture));
                             break;
 
                         case RawDataType.f64:
-                            dataLine += " dd ";
-                            dataLine += String.Join(",", item.Children.ConvertAll<string>((a) => {
-                                var dVal = (double)a.Value;
-                                return dVal.ToString("0.0", CultureInfo.InvariantCulture);
-                            }));
+                            var dVal = (double)item.Value;
+                            _dataEntries.Add(item.Identifier + " dq " + dVal.ToString("0.0", CultureInfo.InvariantCulture));
                             break;
 
-                        case RawDataType.Array:
-                            throw new Exception("Array of arrays not supported!");
                         default:
-                            throw new Exception("Unknown data type: " + item.Children[0].DataType.MainType);
+                            throw new Exception("Unsupported type for immediates: " + item.DataType.MainType);
                     }
-                    _dataEntries.Add(dataLine);
+
+                    item.DataGenerated = true;
+                }
+                else if (item.Kind == AstItemKind.Vector)
+                {
+                    if (IsFullImmediateVector(item))
+                    {
+                        var dataLine = item.Identifier;
+                        switch (item.DataType.MainType)
+                        {
+                            case RawDataType.ivec2q:
+                            case RawDataType.ivec4q:
+                                dataLine += " dq ";
+                                dataLine += String.Join(",", item.Children.ConvertAll<string>((a) => a.Value.ToString()));
+                                break;
+
+                            case RawDataType.vec4f:
+                            case RawDataType.vec8f:
+                                dataLine += " dd ";
+                                dataLine += String.Join(",", item.Children.ConvertAll<string>((a) =>
+                                {
+                                    var fVal = (float)a.Value;
+                                    return fVal.ToString("0.0", CultureInfo.InvariantCulture);
+                                }));
+                                break;
+
+                            case RawDataType.vec2d:
+                            case RawDataType.vec4d:
+                                dataLine += " dq ";
+                                dataLine += String.Join(",", item.Children.ConvertAll<string>((a) =>
+                                {
+                                    var dVal = (double)a.Value;
+                                    return dVal.ToString("0.0", CultureInfo.InvariantCulture);
+                                }));
+                                break;
+
+                            default:
+                                throw new Exception("Incorrect data type for vector AST item: " + item.DataType.MainType);
+                        }
+                        _dataEntries.Add(dataLine);
+
+                        item.Children.ForEach((c) => c.DataGenerated = true);
+                    }
                 }
             }
 
@@ -121,12 +130,12 @@ namespace erc
             }
         }
 
-        private bool IsFullImmediateArray(AstItem array)
+        private bool IsFullImmediateVector(AstItem vector)
         {
-            if (array.Kind != AstItemKind.Array)
-                throw new Exception("Only array items are expected!");
+            if (vector.Kind != AstItemKind.Vector)
+                throw new Exception("Only vector items are expected!");
 
-            return array.Children.TrueForAll((i) => i.Kind == AstItemKind.Immediate);
+            return vector.Children.TrueForAll((i) => i.Kind == AstItemKind.Immediate);
         }
 
         private string GenerateStatement(AstItem statement)
@@ -156,7 +165,19 @@ namespace erc
 
         private string GenerateExpression(AstItem expression, StorageLocation targetLocation)
         {
-            return "";
+            switch (expression.Kind)
+            {
+                case AstItemKind.Immediate:
+                    var src = StorageLocation.DataSection(expression.Identifier);
+                    return Move(expression.DataType, src, targetLocation);
+                    
+                case AstItemKind.Variable:
+                    var variable = _context.Variables[expression.Identifier];
+                    return Move(expression.DataType, variable.Location, targetLocation);
+
+                default:
+                    return "";
+            }
         }
 
     }

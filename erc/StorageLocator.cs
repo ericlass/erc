@@ -85,45 +85,19 @@ namespace erc
                 case RawDataType.f64:
                     return _free128Registers;
 
-                case RawDataType.Array:
-                    switch (dataType.SubType)
-                    {
-                        case RawDataType.f32:
-                            if (dataType.Size == 4)
-                            {
-                                return _free128Registers;
-                            }
-                            else if (dataType.Size == 8)
-                            {
-                                return _free256Registers;
-                            }
-                            break;
+                case RawDataType.ivec2q:
+                case RawDataType.vec2d:
+                case RawDataType.vec4f:
+                    return _free128Registers;
 
-                        case RawDataType.f64:
-                        case RawDataType.i64:
-                            if (dataType.Size == 2)
-                            {
-                                return _free128Registers;
-                            }
-                            else if (dataType.Size == 4)
-                            {
-                                return _free256Registers;
-                            }
-                            break;
-
-                        case RawDataType.Array:
-                            throw new Exception("Arrays of arrays not supported atm!");
-
-                        default:
-                            throw new Exception("Unknown data type: " + dataType.MainType);
-                    }
-                    break;
+                case RawDataType.ivec4q:
+                case RawDataType.vec4d:
+                case RawDataType.vec8f:
+                    return _free256Registers;
 
                 default:
                     throw new Exception("Unknown data type: " + dataType.MainType);
             }
-
-            return null;
         }
 
         private void Init()

@@ -147,12 +147,18 @@ namespace erc
 
                     return _context.Variables[varName].DataType;
 
-                case AstItemKind.Array:
+                case AstItemKind.Vector:
                     var subType = FindDataTypeOfExpression(expressionItem.Children[0]);
-                    if (subType.MainType == RawDataType.Array)
-                        throw new Exception("Array of arrays not supported yet!");
-                    var arraySize = expressionItem.Children.Count;
-                    return new DataType(RawDataType.Array, subType.MainType, arraySize);
+                    if (DataType.IsVectorType(subType.MainType))
+                        throw new Exception("Vectors of vectors are not allowed!");
+
+                    var vectorSize = expressionItem.Children.Count;
+                    var vectorType = DataType.GetVectorType(subType.MainType, vectorSize);
+
+                    if (vectorType == RawDataType.Void)
+                        throw new Exception("Vectors of " + subType.MainType + " cannot have length " + vectorSize);
+
+                    return new DataType(vectorType, subType.MainType);
             }
 
             foreach (var item in expressionItem.Children)
@@ -209,28 +215,32 @@ namespace erc
                     else
                         throw new Exception("Unexpected number value type: " + value.GetType());
                 }
-                else if (token.TokenType == TokenType.Array)
+                else if (token.TokenType == TokenType.Vector)
                 {
-                    var arrayValues = new List<AstItem>();
-                    foreach (var vals in token.ArrayValues)
+                    var values = new List<AstItem>();
+                    foreach (var vals in token.Values)
                     {
                         var valExp = ReadExpression(new SimpleIterator<Token>(vals));
-                        arrayValues.Add(valExp);
+                        values.Add(valExp);
                     }
 
-                    var subType = DataTypeOfExpression(arrayValues[0]);
-                    result = AstItem.Array(arrayValues, subType.MainType);
+                    var subType = DataTypeOfExpression(values[0]);
+                    var vectorType = DataType.GetVectorType(subType.MainType, values.Count);
+                    if (vectorType == RawDataType.Void)
+                        throw new Exception("Not a valid vector type: " + subType.MainType + " x " + values.Count);
 
-                    //Check that all expresions have the same data type!
-                    if (arrayValues.Count > 0)
+                    result = AstItem.Vector(values, new DataType(vectorType, subType.MainType));
+
+                    //Check that all expressions have the same data type!
+                    if (values.Count > 0)
                     {
-                        var firstType = DataTypeOfExpression(arrayValues[0]);
-                        for (int i = 1; i < arrayValues.Count; i++)
+                        var firstType = DataTypeOfExpression(values[0]);
+                        for (int i = 1; i < values.Count; i++)
                         {
-                            var currentType = DataTypeOfExpression(arrayValues[i]);
+                            var currentType = DataTypeOfExpression(values[i]);
                             if (firstType != currentType)
                             {
-                                throw new Exception("All expressions in array must be of same type: " + result);
+                                throw new Exception("All expressions in vector must be of same type: " + result);
                             }
                         }
                     }
@@ -278,14 +288,11 @@ namespace erc
 
         private bool IsExpressionToken(Token token)
         {
-            return token.TokenType == TokenType.Word || token.TokenType == TokenType.Number || token.TokenType == TokenType.Array || token.TokenType == TokenType.MathOperator;
+            return token.TokenType == TokenType.Word || token.TokenType == TokenType.Number || token.TokenType == TokenType.Vector || token.TokenType == TokenType.MathOperator;
         }
 
         private RawDataType GuessDataType(Token token)
         {
-            if (token.TokenType == TokenType.Array)
-                return RawDataType.Array;
-
             if (token.TokenType == TokenType.Number)
             {
                 var value = token.Value;

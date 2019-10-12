@@ -21,36 +21,23 @@ namespace erc
                 case RawDataType.f64:
                     return "movsd";
 
-                case RawDataType.Array:
-                    switch (dataType.SubType)
-                    {
-                        case RawDataType.i64:
-                            if (dataType.Size == 2)
-                                return "movdqu";
-                            else if (dataType.Size == 4)
-                                return "vmovdqu";
-                            else
-                                return null;
+                case RawDataType.ivec2q:
+                    return "movdqa";
 
-                        case RawDataType.f32:
-                            if (dataType.Size == 2)
-                                return "movaps";
-                            else if (dataType.Size == 4)
-                                return "vmovaps";
-                            else
-                                return null;
+                case RawDataType.ivec4q:
+                    return "vmovdqa";
 
-                        case RawDataType.f64:
-                            if (dataType.Size == 2)
-                                return "movapd";
-                            else if (dataType.Size == 4)
-                                return "vmovapd";
-                            else
-                                return null;
+                case RawDataType.vec2d:
+                    return "movapd";
 
-                        default:
-                            throw new Exception("Unsupported array sub type: " + dataType.SubType);
-                    }
+                case RawDataType.vec4d:
+                    return "vmovapd";
+
+                case RawDataType.vec4f:
+                    return "movaps";
+
+                case RawDataType.vec8f:
+                    return "vmovaps";
 
                 default:
                     throw new Exception("Unsupported data type: " + dataType.SubType);

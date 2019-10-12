@@ -12,7 +12,7 @@ namespace erc
         AssigmnentOperator,
         MathOperator,
         Number,
-        Array,
+        Vector,
         StatementTerminator
     }
 }

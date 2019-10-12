@@ -29,7 +29,7 @@ namespace erc
             if (_position >= _items.Count)
                 return new List<T>();
 
-            return _items.GetRange(_captureStart + 1, _position - _captureStart);
+            return _items.GetRange(_captureStart, _position - _captureStart);
         }
 
         public T Current()

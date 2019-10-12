@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace erc
 {
@@ -7,6 +9,13 @@ namespace erc
     {
         static void Main(string[] args)
         {
+            //var prefix = InfixToPrefix("a+b*c+d*e-f");
+            var prefix = InfixToPrefix("a*((b+c))");
+
+            Console.WriteLine(prefix);
+            if (prefix != null)
+                Console.Read();
+
             var src = File.ReadAllText("example.erc");
 
             var context = new CompilerContext();
@@ -50,5 +59,77 @@ namespace erc
             Console.Write("Press Enter to close");
             Console.Read();
         }
+
+        private static string InfixToPrefix(string inFix)
+        {
+            var output = new StringBuilder();
+            var stack = new Stack<char>();
+            var cbuffer = ' ';
+
+            foreach (char c in inFix.ToCharArray())//Iterates characters in inFix
+            {
+                if (Char.IsLetterOrDigit(c))
+                {
+                    output.Append(c);
+                }
+                else if (c == '(')
+                {
+                    stack.Push(c);
+                }
+                else if (c == ')')
+                {
+                    cbuffer = stack.Pop();
+                    while (cbuffer != '(')
+                    {
+                        output.Append(cbuffer);
+                        cbuffer = stack.Pop();
+                    }
+                }
+                else
+                {
+                    if (stack.Count != 0 && Predecessor(stack.Peek(), c))//If find an operator
+                    {
+                        cbuffer = stack.Pop();
+                        while (Predecessor(cbuffer, c))
+                        {
+                            output.Append(cbuffer);
+
+                            if (stack.Count == 0)
+                                break;
+
+                            cbuffer = stack.Pop();
+                        }
+                        stack.Push(c);
+                    }
+                    else
+                        stack.Push(c);
+                }
+            }
+
+            while (stack.Count > 0)
+            {
+                cbuffer = stack.Pop();
+                output.Append(cbuffer);
+            }
+
+            var postFixStr = output.ToString().ToCharArray();
+            Array.Reverse(postFixStr);
+            return new string(postFixStr);
+        }
+
+        private static bool Predecessor(char firstOperator, char secondOperator)
+        {
+            string opString = "(+-*/%";
+
+            int firstPoint, secondPoint;
+
+            int[] precedence = { 0, 12, 12, 13, 13, 13 };
+
+            firstPoint = opString.IndexOf(firstOperator);
+            secondPoint = opString.IndexOf(secondOperator);
+
+            return (precedence[firstPoint] >= precedence[secondPoint]) ? true : false;
+        }
+
     }
 }
