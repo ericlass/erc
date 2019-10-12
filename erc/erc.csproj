@@ -48,6 +48,7 @@
     <Compile Include="CodeGeneratorMovement.cs" />
     <Compile Include="CompilerContext.cs" />
     <Compile Include="DataType.cs" />
+    <Compile Include="Instructions.cs" />
     <Compile Include="PostProcessor.cs" />
     <Compile Include="RawDataType.cs" />
     <Compile Include="Program.cs" />
