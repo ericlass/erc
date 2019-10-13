@@ -1,5 +1,5 @@
 
-let a = 5;
+let a = 5+7*8;
  let b = 1.5f ;
 let c=b;
 let d = 1.2;

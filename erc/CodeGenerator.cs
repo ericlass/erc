@@ -168,8 +168,10 @@ namespace erc
             switch (expression.Kind)
             {
                 case AstItemKind.Immediate:
+                case AstItemKind.Vector:
                     var src = StorageLocation.DataSection(expression.Identifier);
                     return Move(expression.DataType, src, targetLocation);
+
                     
                 case AstItemKind.Variable:
                     var variable = _context.Variables[expression.Identifier];

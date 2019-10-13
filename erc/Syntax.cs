@@ -189,84 +189,112 @@ namespace erc
 
             if (expTokens.Count == 1)
             {
-                //Single immediate or variable
-                var token = expTokens[0];
-                if (token.TokenType == TokenType.Word)
-                {
-                    Variable variable = null;
-                    if (_context.Variables.ContainsKey(token.Value))
-                        variable = _context.Variables[token.Value];
-                    else
-                        throw new Exception("Undefined variable: " + token);
-
-                    result = AstItem.Variable(token.Value, variable.DataType);
-                }
-                else if (token.TokenType == TokenType.Number)
-                {
-                    var dataType = GuessDataType(token);
-                    var value = ParseNumber(token.Value, dataType);
-
-                    if (value is long)
-                        result = AstItem.Immediate((long)value);
-                    else if (value is float)
-                        result = AstItem.Immediate((float)value);
-                    else if (value is double)
-                        result = AstItem.Immediate((double)value);
-                    else
-                        throw new Exception("Unexpected number value type: " + value.GetType());
-                }
-                else if (token.TokenType == TokenType.Vector)
-                {
-                    var values = new List<AstItem>();
-                    foreach (var vals in token.Values)
-                    {
-                        var valExp = ReadExpression(new SimpleIterator<Token>(vals));
-                        values.Add(valExp);
-                    }
-
-                    var subType = DataTypeOfExpression(values[0]);
-                    var vectorType = DataType.GetVectorType(subType.MainType, values.Count);
-                    if (vectorType == RawDataType.Void)
-                        throw new Exception("Not a valid vector type: " + subType.MainType + " x " + values.Count);
-
-                    result = AstItem.Vector(values, new DataType(vectorType, subType.MainType));
-
-                    //Check that all expressions have the same data type!
-                    if (values.Count > 0)
-                    {
-                        var firstType = DataTypeOfExpression(values[0]);
-                        for (int i = 1; i < values.Count; i++)
-                        {
-                            var currentType = DataTypeOfExpression(values[i]);
-                            if (firstType != currentType)
-                            {
-                                throw new Exception("All expressions in vector must be of same type: " + result);
-                            }
-                        }
-                    }
-                }
+                //Single immediate, vector or variable
+                result = ReadSingleAstItem(expTokens[0]);
             }
             else
             {
                 //Math Expression
-                if (expTokens.Count != 3)
-                    throw new Exception("Math expressions must be '<operand> <operator> <operand>' currently, not more, not less");
+                var expItemsInfix = new List<AstItem>();
+                DataType expDataType = null;
 
-                result = new AstItem();
-                result.Kind = ParseOperator(expTokens[1].Value);
+                foreach (var token in expTokens)
+                {
+                    switch (token.TokenType)
+                    {
+                        case TokenType.Word:
+                        case TokenType.Number:
+                        case TokenType.Vector:
+                            var operandItem = ReadSingleAstItem(token);
+                            expItemsInfix.Add(operandItem);
 
-                //0 and 2 are correct, 1 is the operator!
-                var operand1 = ReadExpression(SimpleIterator<Token>.Singleton(expTokens[0]));
-                var operand2 = ReadExpression(SimpleIterator<Token>.Singleton(expTokens[2]));
+                            if (expDataType == null)
+                            {
+                                expDataType = operandItem.DataType;
+                            }
+                            else
+                            {
+                                if (expDataType != operandItem.DataType)
+                                    throw new Exception("All operands in an expressions must have the same data type! " + token + " has data type " + operandItem.DataType + " instead of " + expDataType);
+                            }
+                            break;
 
-                result.Children = new List<AstItem> { operand1, operand2 };
+                        case TokenType.MathOperator:
+                            var operatorItem = new AstItem(ParseOperator(token.Value));
+                            expItemsInfix.Add(operatorItem);
+                            break;
 
-                var type1 = DataTypeOfExpression(operand1);
-                var type2 = DataTypeOfExpression(operand2);
-                if (type1 != type2)
-                    throw new Exception("Incompatible data type in math expression '" + result + "'! " + type1 + " <> " + type2);
+                        default:
+                            throw new Exception("Unexpected expression token: " + token);
+                    }
+                }
 
-                result.DataType = type1;
+                //Convert to prefix
+                var prefix = InfixToPrefix(expItemsInfix);
+                //Convert prefix to AST
+                result = PrefixToAst(prefix);
+            }
+
+            return result;
+        }
+
+        private AstItem ReadSingleAstItem(Token token)
+        {
+            AstItem result = null;
+
+            if (token.TokenType == TokenType.Word)
+            {
+                Variable variable = null;
+                if (_context.Variables.ContainsKey(token.Value))
+                    variable = _context.Variables[token.Value];
+                else
+                    throw new Exception("Undefined variable: " + token);
+
+                result = AstItem.Variable(token.Value, variable.DataType);
+            }
+            else if (token.TokenType == TokenType.Number)
+            {
+                var dataType = GuessDataType(token);
+                var value = ParseNumber(token.Value, dataType);
+
+                if (value is long)
+                    result = AstItem.Immediate((long)value);
+                else if (value is float)
+                    result = AstItem.Immediate((float)value);
+                else if (value is double)
+                    result = AstItem.Immediate((double)value);
+                else
+                    throw new Exception("Unexpected number value type: " + value.GetType());
+            }
+            else if (token.TokenType == TokenType.Vector)
+            {
+                var values = new List<AstItem>();
+                foreach (var vals in token.Values)
+                {
+                    var valExp = ReadExpression(new SimpleIterator<Token>(vals));
+                    values.Add(valExp);
+                }
+
+                var subType = DataTypeOfExpression(values[0]);
+                var vectorType = DataType.GetVectorType(subType.MainType, values.Count);
+                if (vectorType == RawDataType.Void)
+                    throw new Exception("Not a valid vector type: " + subType.MainType + " x " + values.Count);
+
+                result = AstItem.Vector(values, new DataType(vectorType, subType.MainType));
+
+                //Check that all expressions have the same data type!
+                if (values.Count > 0)
+                {
+                    var firstType = DataTypeOfExpression(values[0]);
+                    for (int i = 1; i < values.Count; i++)
+                    {
+                        var currentType = DataTypeOfExpression(values[i]);
+                        if (firstType != currentType)
+                        {
+                            throw new Exception("All expressions in vector must be of same type: " + result);
+                        }
+                    }
+                }
             }
 
             return result;
@@ -336,6 +364,127 @@ namespace erc
             }
 
             throw new Exception("Unsupported number type: " + dataType + " for value " + str);
+        }
+
+        private AstItem PrefixToAst(List<AstItem> prefix)
+        {
+            var current = prefix[0];
+            prefix.RemoveAt(0);
+
+            switch (current.Kind)
+            {
+                case AstItemKind.Immediate:
+                case AstItemKind.Variable:
+                case AstItemKind.Vector:
+                    return current;
+
+                case AstItemKind.AddOp:
+                case AstItemKind.SubOp:
+                case AstItemKind.MulOp:
+                case AstItemKind.DivOp:
+                    current.Children.Add(PrefixToAst(prefix));
+                    current.Children.Add(PrefixToAst(prefix));
+                    return current;
+
+                default:
+                    throw new Exception("Unexpected item in infix expression: " + current);
+            }
+        }
+
+        /// <summary>
+        /// Convert to the given expression in infix notation to prefix notation.
+        /// </summary>
+        /// <param name="infix">The expression in infix notation.</param>
+        /// <returns>The expression converted to prefix notation.</returns>
+        private List<AstItem> InfixToPrefix(List<AstItem> infix)
+        {
+            var output = new List<AstItem>();
+            var stack = new Stack<AstItem>();
+            AstItem cbuffer = null;
+
+            //Convert infix to postfix
+            foreach (var item in infix)
+            {
+                if (item.Kind == AstItemKind.Immediate || item.Kind == AstItemKind.Variable || item.Kind == AstItemKind.Vector)
+                {
+                    output.Add(item);
+                }
+                /*else if (c == '(')
+                {
+                    stack.Push(c);
+                }
+                else if (c == ')')
+                {
+                    cbuffer = stack.Pop();
+                    while (cbuffer != '(')
+                    {
+                        output.Append(cbuffer);
+                        cbuffer = stack.Pop();
+                    }
+                }*/
+                else
+                {
+                    if (stack.Count != 0 && Predecessor(stack.Peek(), item))
+                    {
+                        cbuffer = stack.Pop();
+                        while (Predecessor(cbuffer, item))
+                        {
+                            output.Add(cbuffer);
+
+                            if (stack.Count == 0)
+                                break;
+
+                            cbuffer = stack.Pop();
+                        }
+                        stack.Push(item);
+                    }
+                    else
+                        stack.Push(item);
+                }
+            }
+
+            while (stack.Count > 0)
+            {
+                cbuffer = stack.Pop();
+                output.Add(cbuffer);
+            }
+
+            //Reverse to convert postfix to prefix
+            output.Reverse();
+            return output;
+        }
+
+        /// <summary>
+        /// Checks is firstOperator is a predecessor of secondOperator, meaning it has a higher or equal operator precedence.
+        /// </summary>
+        /// <param name="firstOperator">The first operator.</param>
+        /// <param name="secondOperator">The second operator.</param>
+        /// <returns></returns>
+        private bool Predecessor(AstItem firstOperator, AstItem secondOperator)
+        {
+            return OperatorPrecedence(firstOperator) >= OperatorPrecedence(secondOperator);
+        }
+
+        /// <summary>
+        /// Gets the precedence for the given operator.
+        /// </summary>
+        /// <param name="op">The operator.</param>
+        /// <returns>The precedence.</returns>
+        private int OperatorPrecedence(AstItem op)
+        {
+            switch (op.Kind)
+            {
+                case AstItemKind.AddOp:
+                case AstItemKind.SubOp:
+                    return 12;
+
+                case AstItemKind.MulOp:
+                case AstItemKind.DivOp:
+                    return 13;
+
+                default:
+                    throw new Exception("Not an operator: " + op);
+            }
         }
 
     }
