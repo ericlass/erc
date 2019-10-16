@@ -121,6 +121,9 @@ namespace erc
 
                         item.Children.ForEach((c) => c.DataGenerated = true);
                     }
+                    else {
+                        //Vectors that are not full-immediate need to be generated at runtime, not at compile time in data section
+                    }
                 }
             }
 
@@ -168,18 +171,276 @@ namespace erc
             switch (expression.Kind)
             {
                 case AstItemKind.Immediate:
-                case AstItemKind.Vector:
                     var src = StorageLocation.DataSection(expression.Identifier);
                     return Move(expression.DataType, src, targetLocation);
-
+                
+                case AstItemKind.Vector:
+                    if (IsFullImmediateVector(expression))
+                    {
+                        src = StorageLocation.DataSection(expression.Identifier);
+                        return Move(expression.DataType, src, targetLocation);
+                    }
+                    else
+                    {
+                        //Generate vector in accumulator register, one value by one, shifting the values right accordingly.
+                        //TODO: Check if this actually works. If not, assemble vector on stack.
+                        var accumulator = StorageLocation.AccumulatorLocation(expression.DataType);
+                        var expressions = new List<string>();
+                        for (int i = expression.Children.Count - 1; i >= 0; i--)
+                        {
+                            var child = expression.Children[i];
+                            expressions.Add(GenerateExpression(child, accumulator));
+                            expressions.Add("shift accumulator right X bytes with (V)PSLLDQ");
+                        }
+                        expressions.Add(Move(expression.DataType, accumulator, targetLocation));
+                        return String.Join("\n", expressions);
+                    }
                     
                 case AstItemKind.Variable:
                     var variable = _context.Variables[expression.Identifier];
                     return Move(expression.DataType, variable.Location, targetLocation);
+                
+                case AstItemKind.Expression:
+                    var ops = GenerateExpressionOperations(expression.Children);
+                    CollapsePushPop(ops);
+                    //TODO: Convert ops to code string
+                    //TODO: Move value from accumulator to targetLocation
+                    break;
 
                 default:
                     return "";
             }
+        }
+
+        private List<Operation> GenerateExpressionOperations(List<AstItem> items)
+        {
+            var ops = new List<Operation>();
+            
+            foreach (var item in items)
+            {
+                switch (item.Kind)
+                {
+                    case AstItemKind.Immediate:
+                        ops.Add(new Operation(Instruction.Push, StorageLocation.DataSection(item.Identifier)));
+                        break;
+                        
+                    case AstItemKind.Vector:
+                        //TODO: Do as above in GenerateExpression
+                        //TODO: "push" to stack with "sub esp, X", "movdqu [esp], xmm0"
+                        break;
+                        
+                    case AstItemKind.Variable:
+                        var variable = _context.Variables[item.Identifier];
+                        ops.Add(new Operation(Instruction.Push, variable.Location));
+                        break;
+                        
+                    case AstItemKind.AddOp:
+                    case AstItemKind.SubOp:
+                    case AstItemKind.MulOp:
+                    case AstItemKind.DivOp:
+                        var accumulator = StorageLocation.AccumulatorLocation(item.DataType);
+                        var operand1 = StorageLocation.TempLocation(item.DataType);
+                        var operand2 = StorageLocation.TempLocation(item.DataType);
+                        var instruction = GetInstruction(item.Kind, item.DataType);
+                        
+                        if (RequiresThreeOperandSyntax(item.DataType))
+                        {
+                            ops.Add(new Operation(Instruction.Pop, operand2));
+                            ops.Add(new Operation(Instruction.Pop, operand1));
+                            ops.Add(new Operation(instruction, accumulator, operand1, operand2));
+                        }
+                        else
+                        {
+                            ops.Add(new Operation(Instruction.Pop, operand1));
+                            ops.Add(new Operation(Instruction.Pop, accumulator));
+                            ops.Add(new Operation(instruction, accumulator, operand1));
+                        }
+                        
+                        ops.Add(new Operation(Instruction.Push, accumulator));
+                        break;
+                        
+                    default:
+                        throw new Exception("Unexpected item in expression: " + item);            
+                }
+            }
+            
+            return ops;
+        }
+
+        private Instruction GetInstruction(AstItemKind kind, DataType dataType)
+        {
+            switch (kind)
+            {
+                case AstItemKind.AddOp:
+                    switch (dataType.MainType)
+                    {
+                        case RawDataType.i64:
+                            return Instruction.Add;
+                        case RawDataType.f32:
+                            return Instruction.VAddSS;
+                        case RawDataType.f64:
+                            return Instruction.VAddSD;
+                        case RawDataType.ivec2q:
+                        case RawDataType.ivec4q:
+                            return Instruction.VPAddQ;
+                        case RawDataType.vec4f:
+                        case RawDataType.vec8f:
+                            return Instruction.VAddPS;
+                        case RawDataType.vec2d:
+                        case RawDataType.vec4d:
+                            return Instruction.VAddPD;
+
+                        default:
+                            throw new Exception("Unknown data type: " + dataType);
+                    }
+
+                case AstItemKind.SubOp:
+                    switch (dataType.MainType)
+                    {
+                        case RawDataType.i64:
+                            return Instruction.Sub;
+                        case RawDataType.f32:
+                            return Instruction.VSubSS;
+                        case RawDataType.f64:
+                            return Instruction.VSubSD;
+                        case RawDataType.ivec2q:
+                        case RawDataType.ivec4q:
+                            return Instruction.VPSubQ;
+                        case RawDataType.vec4f:
+                        case RawDataType.vec8f:
+                            return Instruction.VSubPS;
+                        case RawDataType.vec2d:
+                        case RawDataType.vec4d:
+                            return Instruction.VSubPD;
+
+                        default:
+                            throw new Exception("Unknown data type: " + dataType);
+                    }
+
+                case AstItemKind.MulOp:
+                    switch (dataType.MainType)
+                    {
+                        case RawDataType.i64:
+                            return Instruction.Mul;
+                        case RawDataType.f32:
+                            return Instruction.VMulSS;
+                        case RawDataType.f64:
+                            return Instruction.VMulSD;
+                        case RawDataType.ivec2q:
+                        case RawDataType.ivec4q:
+                            return Instruction.VPMulQ;
+                        case RawDataType.vec4f:
+                        case RawDataType.vec8f:
+                            return Instruction.VMulPS;
+                        case RawDataType.vec2d:
+                        case RawDataType.vec4d:
+                            return Instruction.VMulPD;
+
+                        default:
+                            throw new Exception("Unknown data type: " + dataType);
+                    }
+
+                case AstItemKind.DivOp:
+                    switch (dataType.MainType)
+                    {
+                        case RawDataType.i64:
+                            return Instruction.Div;
+                        case RawDataType.f32:
+                            return Instruction.VDivSS;
+                        case RawDataType.f64:
+                            return Instruction.VDivSD;
+                        case RawDataType.ivec2q:
+                        case RawDataType.ivec4q:
+                            return Instruction.VPDivQ;
+                        case RawDataType.vec4f:
+                        case RawDataType.vec8f:
+                            return Instruction.VDivPS;
+                        case RawDataType.vec2d:
+                        case RawDataType.vec4d:
+                            return Instruction.VDivPD;
+
+                        default:
+                            throw new Exception("Unknown data type: " + dataType);
+                    }
+
+                default:
+                    throw new Exception("Not a math operator: " + kind);
+            }
+        }
+
+        private void CollapsePushPop(List<Operation> ops)
+        {
+            for (int i = 0; i < ops.Count; i++)
+            {
+                var popOp = ops[i];
+                if (popOp.Instruction == Instruction.Pop)
+                {
+                    for (int j = i; j >= 0; j--)
+                    {
+                        var pushOp = ops[j];
+                        if (pushOp.Instruction == Instruction.Push)
+                        {
+                            var source = pushOp.Operand1;
+                            var target = popOp.Operand1;
+                            if (source != target)
+                            {
+                                //Transform pop to direct move in-place
+                                popOp.Instruction = Instruction.Mov;
+                                popOp.Operand1 = target;
+                                popOp.Operand2 = source;
+                                
+                                //Make push a nop so it is removed below
+                                pushOp.Instruction = Instruction.Nop;
+                            }
+                            else
+                            {
+                                //Check if location has changed between the push and pop
+                                var hasChanged = false;
+                                for (int k = j; k < i; k++)
+                                {
+                                    var checkOp = ops[k];
+                                    if (checkOp.Instruction != Instruction.Nop && checkOp.Instruction != Instruction.Pop)
+                                    {
+                                        if (checkOp.Operand1 == source)
+                                        {
+                                            hasChanged = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                
+                                //If not, push/pop can simply be removed.
+                                if (!hasChanged)
+                                {
+                                    pushOp.Instruction = Instruction.Nop;
+                                    popOp.Instruction = Instruction.Nop;
+                                }
+                                //If yes, value needs to be saved somewhere and restored later
+                                else
+                                {
+                                    //Use free register if possible
+                                    var register = TakeIntermediateRegister(popOp.DataType);
+                                    if (register != null)
+                                    {
+                                        pushOp.Instruction = Instruction.Mov;
+                                        pushOp.Operand2 = pushOp.Operand1;
+                                        pushOp.Operand1 = register;
+                                        
+                                        popOp.Instruction = Instruction.Mov;
+                                        popOp.Operand2 = register;
+                                    }
+                                    else
+                                    {
+                                        //No registers left, put on stack. Nothing to do as this is already the case.
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            ops.RemoveAll((a) => a.Instruction == Instruction.Nop);
         }
 
     }

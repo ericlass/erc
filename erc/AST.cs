@@ -13,6 +13,7 @@ namespace erc
         Variable,
         VarScopeEnd,
         Vector,
+        Expression,
         AddOp,
         SubOp,
         MulOp,
@@ -200,6 +201,16 @@ namespace erc
             result.Children.AddRange(values);
             result.DataType = dataType;
             return result;
+        }
+        
+        public static AstItem Expression(DataType dataType, List<AstItem> children)
+        {
+            return new AstItem
+            {
+                Kind = AstItemKind.Expression,
+                DataType = dataType,
+                Children = children
+            };
         }
 
         private static AstItem ArithmeticOp(AstItemKind op, AstItem op1, AstItem op2)

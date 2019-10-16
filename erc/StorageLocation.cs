@@ -62,6 +62,30 @@ namespace erc
             return new StorageLocation { Kind = StorageLocationKind.DataSection, DataName = dataName };
         }
 
+        public static StorageLocation AccumulatorLocation(DataType dataType)
+        {
+            switch (dataType.MainType)
+            {
+                case RawDataType.i64:
+                    return new StorageLocation { Kind = StorageLocationKind.Register, Register = Register.RAX };
+
+                case RawDataType.f32:
+                case RawDataType.f64:
+                case RawDataType.ivec2q:
+                case RawDataType.vec4f:
+                case RawDataType.vec2d:
+                    return new StorageLocation { Kind = StorageLocationKind.Register, Register = Register.XMM4 };
+
+                case RawDataType.ivec4q:
+                case RawDataType.vec8f:
+                case RawDataType.vec4d:
+                    return new StorageLocation { Kind = StorageLocationKind.Register, Register = Register.YMM0 };
+
+                default:
+                    throw new Exception("No accumulator location for data type: " + dataType);
+            }
+        }
+
         public static StorageLocation TempLocation(DataType dataType)
         {
             switch (dataType.MainType)

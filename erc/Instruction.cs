@@ -1,0 +1,34 @@
+﻿namespace erc
+{
+    public enum Instruction
+    {
+        Nop,
+        Push,
+        Pop,
+        Mov,
+        Add,
+        Sub,
+        Mul,
+        Div,
+        VAddSS,
+        VSubSS,
+        VMulSS,
+        VDivSS,
+        VAddSD,
+        VSubSD,
+        VMulSD,
+        VDivSD,
+        VPAddQ,
+        VPSubQ,
+        VPMulQ,
+        VPDivQ,
+        VAddPS,
+        VSubPS,
+        VMulPS,
+        VDivPS,
+        VAddPD,
+        VSubPD,
+        VMulPD,
+        VDivPD
+    }
+}

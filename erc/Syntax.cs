@@ -229,10 +229,8 @@ namespace erc
                     }
                 }
 
-                //Convert to prefix
-                var prefix = InfixToPrefix(expItemsInfix);
-                //Convert prefix to AST
-                result = PrefixToAst(prefix);
+                //Convert to postfix
+                result = InfixToPostfix(expItemsInfix);
             }
 
             return result;
@@ -366,37 +364,12 @@ namespace erc
             throw new Exception("Unsupported number type: " + dataType + " for value " + str);
         }
 
-        private AstItem PrefixToAst(List<AstItem> prefix)
-        {
-            var current = prefix[0];
-            prefix.RemoveAt(0);
-
-            switch (current.Kind)
-            {
-                case AstItemKind.Immediate:
-                case AstItemKind.Variable:
-                case AstItemKind.Vector:
-                    return current;
-
-                case AstItemKind.AddOp:
-                case AstItemKind.SubOp:
-                case AstItemKind.MulOp:
-                case AstItemKind.DivOp:
-                    current.Children.Add(PrefixToAst(prefix));
-                    current.Children.Add(PrefixToAst(prefix));
-                    return current;
-
-                default:
-                    throw new Exception("Unexpected item in infix expression: " + current);
-            }
-        }
-
         /// <summary>
-        /// Convert to the given expression in infix notation to prefix notation.
+        /// Convert to the given expression in infix notation to postfix notation.
         /// </summary>
         /// <param name="infix">The expression in infix notation.</param>
-        /// <returns>The expression converted to prefix notation.</returns>
-        private List<AstItem> InfixToPrefix(List<AstItem> infix)
+        /// <returns>The expression converted to postfix notation.</returns>
+        private AstItem InfixToPostfix(List<AstItem> infix)
         {
             var output = new List<AstItem>();
             var stack = new Stack<AstItem>();
@@ -449,9 +422,7 @@ namespace erc
                 output.Add(cbuffer);
             }
 
-            //Reverse to convert postfix to prefix
-            output.Reverse();
-            return output;
+            return AstItem.Expression(output[0].DataType, output);
         }
 
         /// <summary>
