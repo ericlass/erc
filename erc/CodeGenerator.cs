@@ -100,7 +100,7 @@ namespace erc
                                 return fVal.ToString("0.0", CultureInfo.InvariantCulture);
                             }));
                         }
-                        else if (item.DataType == DataType.VEC4F || item.DataType == DataType.VEC8F)
+                        else if (item.DataType == DataType.VEC2D || item.DataType == DataType.VEC4D)
                         {
                             dataLine += " dq ";
                             dataLine += String.Join(",", item.Children.ConvertAll<string>((a) =>
@@ -187,7 +187,7 @@ namespace erc
                             expressions.Add(GenerateExpression(child, accumulator));
                             expressions.Add("shift accumulator right X bytes with (V)PSLLDQ");
                         }
-                        expressions.Add(Move(expression.DataType, accumulator, targetLocation));
+                        expressions.Add(Move(expression.DataType, targetLocation, accumulator));
                         return String.Join("\n", expressions);
                     }
                     
@@ -198,9 +198,11 @@ namespace erc
                 case AstItemKind.Expression:
                     var ops = GenerateExpressionOperations(expression.Children);
                     CollapsePushPop(ops);
-                    //TODO: Convert ops to code string
-                    //TODO: Move value from accumulator to targetLocation
-                    break;
+                    //Convert ops to code string
+                    var result = String.Join("\n", ops);
+                    //Move value from accumulator to targetLocation
+                    result += "\n" + Move(expression.DataType, expression.DataType.Accumulator, targetLocation);
+                    return result;
 
                 default:
                     return "";
@@ -233,7 +235,7 @@ namespace erc
                     case AstItemKind.SubOp:
                     case AstItemKind.MulOp:
                     case AstItemKind.DivOp:
-                        var accumulator =item.DataType.Accumulator;
+                        var accumulator = item.DataType.Accumulator;
                         var operand1 = item.DataType.TempRegister1;
                         var operand2 = item.DataType.TempRegister2;
                         var instruction = GetInstruction(item.Kind, item.DataType);
@@ -242,6 +244,7 @@ namespace erc
                         {
                             ops.Add(new Operation(Instruction.POP, operand2));
                             ops.Add(new Operation(Instruction.POP, operand1));
+                            //TODO: Check how this works so no operand is lost!
                             ops.Add(new Operation(instruction, accumulator, operand1, operand2));
                         }
                         else if (instruction.NumOperands == 2)
@@ -260,13 +263,14 @@ namespace erc
                         throw new Exception("Unexpected item in expression: " + item);            
                 }
             }
-            
+
+            ops.RemoveAt(ops.Count - 1);
             return ops;
         }
 
         private Instruction GetInstruction(AstItemKind kind, DataType dataType)
         {
-            var key = kind + dataType.Name;
+            var key = kind + "_" + dataType.Name;
             return _instructionMap[key.ToLower()];
         }
 
@@ -337,12 +341,19 @@ namespace erc
                                     }
                                 }
                             }
+                            break;
                         }
                     }
                 }
             }
             
             ops.RemoveAll((a) => a.Instruction == Instruction.NOP);
+        }
+
+        public StorageLocation TakeIntermediateRegister(DataType dataType)
+        {
+            //TODO: Implement
+            return null;
         }
 
         private void InitInstructionMap()

@@ -42,16 +42,16 @@ namespace erc
 
         public override string ToString()
         {
-            var result = Instruction.ToString();
+            var result = Instruction.Name;
 
             if (Operand1 != null)
-                result += " " + Operand1.ToString();
+                result += " " + Operand1.ToCode();
 
             if (Operand2 != null)
-                result += ", " + Operand2.ToString();
+                result += ", " + Operand2.ToCode();
 
             if (Operand3 != null)
-                result += ", " + Operand3.ToString();
+                result += ", " + Operand3.ToCode();
 
             return result.ToLower();
         }

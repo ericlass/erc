@@ -61,7 +61,7 @@ namespace erc
             var location = variable.Location;
             if (location.Kind == StorageLocationKind.Register)
             {
-                Console.WriteLine("Freeing variable " + variable.Name + " from register " + location.Register);
+                //Console.WriteLine("Freeing variable " + variable.Name + " from register " + location.Register);
                 var dataType = variable.DataType;
                 var registerStack = GetMatchingRegisterStack(dataType);
                 registerStack.Push(location.Register);
@@ -69,7 +69,7 @@ namespace erc
             else if (location.Kind == StorageLocationKind.Stack)
             {
                 //Nothing can be done yet as it is not known at this point if the value is the last on the stack or not
-                Console.WriteLine("Freeing variable " + variable.Name + " from stack offset " + location.Address);
+                //Console.WriteLine("Freeing variable " + variable.Name + " from stack offset " + location.Address);
             }
         }
 
@@ -107,9 +107,9 @@ namespace erc
             _free128Registers.Push(Register.XMM9);
             _free128Registers.Push(Register.XMM8);
             _free128Registers.Push(Register.XMM7);
-            _free128Registers.Push(Register.XMM6); //used for arithmetic
-            _free128Registers.Push(Register.XMM5); //used for arithmetic
-            _free128Registers.Push(Register.XMM4); //used as accumulator
+            //_free128Registers.Push(Register.XMM6); //used for arithmetic
+            //_free128Registers.Push(Register.XMM5); //used for arithmetic
+            //_free128Registers.Push(Register.XMM4); //used as accumulator
             //_free128Registers.Push(Register.XMM3); //parameter passing
             //_free128Registers.Push(Register.XMM2); //parameter passing
             //_free128Registers.Push(Register.XMM1); //parameter passing

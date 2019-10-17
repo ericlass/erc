@@ -229,6 +229,8 @@ namespace erc
                     }
                 }
 
+                expItemsInfix.ForEach((a) => a.DataType = expDataType);
+
                 //Convert to postfix
                 result = InfixToPostfix(expItemsInfix);
             }
