@@ -174,17 +174,17 @@ namespace erc
 
         public static AstItem Immediate(long value)
         {
-            return Immediate(value, new DataType(RawDataType.i64));
+            return Immediate(value, DataType.I64);
         }
 
         public static AstItem Immediate(float value)
         {
-            return Immediate(value, new DataType(RawDataType.f32));
+            return Immediate(value, DataType.F32);
         }
 
         public static AstItem Immediate(double value)
         {
-            return Immediate(value, new DataType(RawDataType.f64));
+            return Immediate(value, DataType.F64);
         }
 
         public static AstItem Variable(string varName, DataType dataType)

@@ -111,7 +111,7 @@ namespace erc
 
         private string getMovementId(DataType dataType, StorageLocation src, StorageLocation trgt)
         {
-            var result = dataType.MainType + "_" + src.Kind + "_" + trgt.Kind;
+            var result = dataType.Name + "_" + src.Kind + "_" + trgt.Kind;
             return result.ToLower();
         }
 

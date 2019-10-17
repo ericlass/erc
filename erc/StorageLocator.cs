@@ -41,7 +41,6 @@ namespace erc
             var dataType = variable.DataType;
             var registerStack = GetMatchingRegisterStack(dataType);
 
-
             //If register found, use it
             if (registerStack != null && registerStack.Count > 0)
             {
@@ -54,7 +53,7 @@ namespace erc
             //Otherwise, put on stack
             Console.WriteLine("Assigning variable " + variable.Name + " to stack offset " + _stackOffset);
             variable.Location = new StorageLocation { Kind = StorageLocationKind.Stack, Address = _stackOffset };
-            _stackOffset += dataType.GetValueByteSize();
+            _stackOffset += dataType.ByteSize;
         }
 
         private void FreeLocation(Variable variable)
@@ -76,28 +75,16 @@ namespace erc
 
         private Stack<Register> GetMatchingRegisterStack(DataType dataType)
         {
-            switch (dataType.MainType)
-            {
-                case RawDataType.i64:
-                    return _free64Registers;
+            if (dataType == DataType.I64)
+                return _free64Registers;
+            else if (dataType == DataType.F32 || dataType == DataType.F64)
+                return _free128Registers;
+            else if (dataType == DataType.IVEC2Q || dataType == DataType.VEC4F || dataType == DataType.VEC2D)
+                return _free128Registers;
+            else if (dataType == DataType.IVEC4Q || dataType == DataType.VEC8F || dataType == DataType.VEC4D)
+                return _free256Registers;
 
-                case RawDataType.f32:
-                case RawDataType.f64:
-                    return _free128Registers;
-
-                case RawDataType.ivec2q:
-                case RawDataType.vec2d:
-                case RawDataType.vec4f:
-                    return _free128Registers;
-
-                case RawDataType.ivec4q:
-                case RawDataType.vec4d:
-                case RawDataType.vec8f:
-                    return _free256Registers;
-
-                default:
-                    throw new Exception("Unknown data type: " + dataType.MainType);
-            }
+            throw new Exception("Unknown data type: " + dataType);
         }
 
         private void Init()
@@ -120,13 +107,13 @@ namespace erc
             _free128Registers.Push(Register.XMM9);
             _free128Registers.Push(Register.XMM8);
             _free128Registers.Push(Register.XMM7);
-            _free128Registers.Push(Register.XMM6);
-            _free128Registers.Push(Register.XMM5);
-            _free128Registers.Push(Register.XMM4);
-            _free128Registers.Push(Register.XMM3);
-            //_free128Registers.Push(Register.XMM2); //used for arithmetic
-            //_free128Registers.Push(Register.XMM1); //used for arithmetic
-            //_free128Registers.Push(Register.XMM0); //used as accumulator
+            _free128Registers.Push(Register.XMM6); //used for arithmetic
+            _free128Registers.Push(Register.XMM5); //used for arithmetic
+            _free128Registers.Push(Register.XMM4); //used as accumulator
+            //_free128Registers.Push(Register.XMM3); //parameter passing
+            //_free128Registers.Push(Register.XMM2); //parameter passing
+            //_free128Registers.Push(Register.XMM1); //parameter passing
+            //_free128Registers.Push(Register.XMM0); //parameter passing
 
             _free256Registers.Push(Register.YMM15);
             _free256Registers.Push(Register.YMM14);

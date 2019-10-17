@@ -20,6 +20,7 @@ namespace erc
         private List<String> _dataEntries = new List<string>();
         private CompilerContext _context = null;
         private long _immCounter = 0;
+        private Dictionary<string, Instruction> _instructionMap = null;
 
         private string GetImmName()
         {
@@ -32,6 +33,7 @@ namespace erc
             _context = context;
 
             InitMovementGenerators();
+            InitInstructionMap();
             GenerateDataSection(context.AST);
 
             var codeLines = new List<string>();
@@ -59,25 +61,22 @@ namespace erc
             {
                 if (item.Kind == AstItemKind.Immediate)
                 {
-                    switch (item.DataType.MainType)
+                    if (item.DataType == DataType.I64)
                     {
-                        case RawDataType.i64:
-                            _dataEntries.Add(item.Identifier + " dq " + item.Value);
-                            break;
-
-                        case RawDataType.f32:
-                            float fVal = (float)item.Value;
-                            _dataEntries.Add(item.Identifier + " dd " + fVal.ToString("0.0", CultureInfo.InvariantCulture));
-                            break;
-
-                        case RawDataType.f64:
-                            var dVal = (double)item.Value;
-                            _dataEntries.Add(item.Identifier + " dq " + dVal.ToString("0.0", CultureInfo.InvariantCulture));
-                            break;
-
-                        default:
-                            throw new Exception("Unsupported type for immediates: " + item.DataType.MainType);
+                        _dataEntries.Add(item.Identifier + " dq " + item.Value);
                     }
+                    else if (item.DataType == DataType.F32)
+                    {
+                        float fVal = (float)item.Value;
+                        _dataEntries.Add(item.Identifier + " dd " + fVal.ToString("0.0", CultureInfo.InvariantCulture));
+                    }
+                    else if (item.DataType == DataType.F64)
+                    {
+                        var dVal = (double)item.Value;
+                        _dataEntries.Add(item.Identifier + " dq " + dVal.ToString("0.0", CultureInfo.InvariantCulture));
+                    }
+                    else
+                        throw new Exception("Unsupported type for immediates: " + item.DataType);
 
                     item.DataGenerated = true;
                 }
@@ -86,37 +85,33 @@ namespace erc
                     if (IsFullImmediateVector(item))
                     {
                         var dataLine = item.Identifier;
-                        switch (item.DataType.MainType)
+
+                        if (item.DataType == DataType.IVEC2Q || item.DataType == DataType.IVEC4Q)
                         {
-                            case RawDataType.ivec2q:
-                            case RawDataType.ivec4q:
-                                dataLine += " dq ";
-                                dataLine += String.Join(",", item.Children.ConvertAll<string>((a) => a.Value.ToString()));
-                                break;
-
-                            case RawDataType.vec4f:
-                            case RawDataType.vec8f:
-                                dataLine += " dd ";
-                                dataLine += String.Join(",", item.Children.ConvertAll<string>((a) =>
-                                {
-                                    var fVal = (float)a.Value;
-                                    return fVal.ToString("0.0", CultureInfo.InvariantCulture);
-                                }));
-                                break;
-
-                            case RawDataType.vec2d:
-                            case RawDataType.vec4d:
-                                dataLine += " dq ";
-                                dataLine += String.Join(",", item.Children.ConvertAll<string>((a) =>
-                                {
-                                    var dVal = (double)a.Value;
-                                    return dVal.ToString("0.0", CultureInfo.InvariantCulture);
-                                }));
-                                break;
-
-                            default:
-                                throw new Exception("Incorrect data type for vector AST item: " + item.DataType.MainType);
+                            dataLine += " dq ";
+                            dataLine += String.Join(",", item.Children.ConvertAll<string>((a) => a.Value.ToString()));
                         }
+                        else if (item.DataType == DataType.VEC4F || item.DataType == DataType.VEC8F)
+                        {
+                            dataLine += " dd ";
+                            dataLine += String.Join(",", item.Children.ConvertAll<string>((a) =>
+                            {
+                                var fVal = (float)a.Value;
+                                return fVal.ToString("0.0", CultureInfo.InvariantCulture);
+                            }));
+                        }
+                        else if (item.DataType == DataType.VEC4F || item.DataType == DataType.VEC8F)
+                        {
+                            dataLine += " dq ";
+                            dataLine += String.Join(",", item.Children.ConvertAll<string>((a) =>
+                            {
+                                var dVal = (double)a.Value;
+                                return dVal.ToString("0.0", CultureInfo.InvariantCulture);
+                            }));
+                        }
+                        else
+                            throw new Exception("Incorrect data type for vector AST item: " + item.DataType);
+
                         _dataEntries.Add(dataLine);
 
                         item.Children.ForEach((c) => c.DataGenerated = true);
@@ -184,7 +179,7 @@ namespace erc
                     {
                         //Generate vector in accumulator register, one value by one, shifting the values right accordingly.
                         //TODO: Check if this actually works. If not, assemble vector on stack.
-                        var accumulator = StorageLocation.AccumulatorLocation(expression.DataType);
+                        var accumulator = expression.DataType.Accumulator;
                         var expressions = new List<string>();
                         for (int i = expression.Children.Count - 1; i >= 0; i--)
                         {
@@ -221,7 +216,7 @@ namespace erc
                 switch (item.Kind)
                 {
                     case AstItemKind.Immediate:
-                        ops.Add(new Operation(Instruction.Push, StorageLocation.DataSection(item.Identifier)));
+                        ops.Add(new Operation(Instruction.PUSH, StorageLocation.DataSection(item.Identifier)));
                         break;
                         
                     case AstItemKind.Vector:
@@ -231,32 +226,34 @@ namespace erc
                         
                     case AstItemKind.Variable:
                         var variable = _context.Variables[item.Identifier];
-                        ops.Add(new Operation(Instruction.Push, variable.Location));
+                        ops.Add(new Operation(Instruction.PUSH, variable.Location));
                         break;
                         
                     case AstItemKind.AddOp:
                     case AstItemKind.SubOp:
                     case AstItemKind.MulOp:
                     case AstItemKind.DivOp:
-                        var accumulator = StorageLocation.AccumulatorLocation(item.DataType);
-                        var operand1 = StorageLocation.TempLocation(item.DataType);
-                        var operand2 = StorageLocation.TempLocation(item.DataType);
+                        var accumulator =item.DataType.Accumulator;
+                        var operand1 = item.DataType.TempRegister1;
+                        var operand2 = item.DataType.TempRegister2;
                         var instruction = GetInstruction(item.Kind, item.DataType);
-                        
-                        if (RequiresThreeOperandSyntax(item.DataType))
+
+                        if (instruction.NumOperands == 3)
                         {
-                            ops.Add(new Operation(Instruction.Pop, operand2));
-                            ops.Add(new Operation(Instruction.Pop, operand1));
+                            ops.Add(new Operation(Instruction.POP, operand2));
+                            ops.Add(new Operation(Instruction.POP, operand1));
                             ops.Add(new Operation(instruction, accumulator, operand1, operand2));
                         }
-                        else
+                        else if (instruction.NumOperands == 2)
                         {
-                            ops.Add(new Operation(Instruction.Pop, operand1));
-                            ops.Add(new Operation(Instruction.Pop, accumulator));
+                            ops.Add(new Operation(Instruction.POP, operand1));
+                            ops.Add(new Operation(Instruction.POP, accumulator));
                             ops.Add(new Operation(instruction, accumulator, operand1));
                         }
+                        else
+                            throw new Exception("Invalid number of instruction operands: " + instruction);
                         
-                        ops.Add(new Operation(Instruction.Push, accumulator));
+                        ops.Add(new Operation(Instruction.PUSH, accumulator));
                         break;
                         
                     default:
@@ -269,103 +266,8 @@ namespace erc
 
         private Instruction GetInstruction(AstItemKind kind, DataType dataType)
         {
-            switch (kind)
-            {
-                case AstItemKind.AddOp:
-                    switch (dataType.MainType)
-                    {
-                        case RawDataType.i64:
-                            return Instruction.Add;
-                        case RawDataType.f32:
-                            return Instruction.VAddSS;
-                        case RawDataType.f64:
-                            return Instruction.VAddSD;
-                        case RawDataType.ivec2q:
-                        case RawDataType.ivec4q:
-                            return Instruction.VPAddQ;
-                        case RawDataType.vec4f:
-                        case RawDataType.vec8f:
-                            return Instruction.VAddPS;
-                        case RawDataType.vec2d:
-                        case RawDataType.vec4d:
-                            return Instruction.VAddPD;
-
-                        default:
-                            throw new Exception("Unknown data type: " + dataType);
-                    }
-
-                case AstItemKind.SubOp:
-                    switch (dataType.MainType)
-                    {
-                        case RawDataType.i64:
-                            return Instruction.Sub;
-                        case RawDataType.f32:
-                            return Instruction.VSubSS;
-                        case RawDataType.f64:
-                            return Instruction.VSubSD;
-                        case RawDataType.ivec2q:
-                        case RawDataType.ivec4q:
-                            return Instruction.VPSubQ;
-                        case RawDataType.vec4f:
-                        case RawDataType.vec8f:
-                            return Instruction.VSubPS;
-                        case RawDataType.vec2d:
-                        case RawDataType.vec4d:
-                            return Instruction.VSubPD;
-
-                        default:
-                            throw new Exception("Unknown data type: " + dataType);
-                    }
-
-                case AstItemKind.MulOp:
-                    switch (dataType.MainType)
-                    {
-                        case RawDataType.i64:
-                            return Instruction.Mul;
-                        case RawDataType.f32:
-                            return Instruction.VMulSS;
-                        case RawDataType.f64:
-                            return Instruction.VMulSD;
-                        case RawDataType.ivec2q:
-                        case RawDataType.ivec4q:
-                            return Instruction.VPMulQ;
-                        case RawDataType.vec4f:
-                        case RawDataType.vec8f:
-                            return Instruction.VMulPS;
-                        case RawDataType.vec2d:
-                        case RawDataType.vec4d:
-                            return Instruction.VMulPD;
-
-                        default:
-                            throw new Exception("Unknown data type: " + dataType);
-                    }
-
-                case AstItemKind.DivOp:
-                    switch (dataType.MainType)
-                    {
-                        case RawDataType.i64:
-                            return Instruction.Div;
-                        case RawDataType.f32:
-                            return Instruction.VDivSS;
-                        case RawDataType.f64:
-                            return Instruction.VDivSD;
-                        case RawDataType.ivec2q:
-                        case RawDataType.ivec4q:
-                            return Instruction.VPDivQ;
-                        case RawDataType.vec4f:
-                        case RawDataType.vec8f:
-                            return Instruction.VDivPS;
-                        case RawDataType.vec2d:
-                        case RawDataType.vec4d:
-                            return Instruction.VDivPD;
-
-                        default:
-                            throw new Exception("Unknown data type: " + dataType);
-                    }
-
-                default:
-                    throw new Exception("Not a math operator: " + kind);
-            }
+            var key = kind + dataType.Name;
+            return _instructionMap[key.ToLower()];
         }
 
         private void CollapsePushPop(List<Operation> ops)
@@ -373,24 +275,24 @@ namespace erc
             for (int i = 0; i < ops.Count; i++)
             {
                 var popOp = ops[i];
-                if (popOp.Instruction == Instruction.Pop)
+                if (popOp.Instruction == Instruction.POP)
                 {
                     for (int j = i; j >= 0; j--)
                     {
                         var pushOp = ops[j];
-                        if (pushOp.Instruction == Instruction.Push)
+                        if (pushOp.Instruction == Instruction.PUSH)
                         {
                             var source = pushOp.Operand1;
                             var target = popOp.Operand1;
                             if (source != target)
                             {
                                 //Transform pop to direct move in-place
-                                popOp.Instruction = Instruction.Mov;
+                                popOp.Instruction = Instruction.MOV;
                                 popOp.Operand1 = target;
                                 popOp.Operand2 = source;
                                 
                                 //Make push a nop so it is removed below
-                                pushOp.Instruction = Instruction.Nop;
+                                pushOp.Instruction = Instruction.NOP;
                             }
                             else
                             {
@@ -399,7 +301,7 @@ namespace erc
                                 for (int k = j; k < i; k++)
                                 {
                                     var checkOp = ops[k];
-                                    if (checkOp.Instruction != Instruction.Nop && checkOp.Instruction != Instruction.Pop)
+                                    if (checkOp.Instruction != Instruction.NOP && checkOp.Instruction != Instruction.POP)
                                     {
                                         if (checkOp.Operand1 == source)
                                         {
@@ -412,8 +314,8 @@ namespace erc
                                 //If not, push/pop can simply be removed.
                                 if (!hasChanged)
                                 {
-                                    pushOp.Instruction = Instruction.Nop;
-                                    popOp.Instruction = Instruction.Nop;
+                                    pushOp.Instruction = Instruction.NOP;
+                                    popOp.Instruction = Instruction.NOP;
                                 }
                                 //If yes, value needs to be saved somewhere and restored later
                                 else
@@ -422,11 +324,11 @@ namespace erc
                                     var register = TakeIntermediateRegister(popOp.DataType);
                                     if (register != null)
                                     {
-                                        pushOp.Instruction = Instruction.Mov;
+                                        pushOp.Instruction = Instruction.MOV;
                                         pushOp.Operand2 = pushOp.Operand1;
                                         pushOp.Operand1 = register;
                                         
-                                        popOp.Instruction = Instruction.Mov;
+                                        popOp.Instruction = Instruction.MOV;
                                         popOp.Operand2 = register;
                                     }
                                     else
@@ -440,7 +342,58 @@ namespace erc
                 }
             }
             
-            ops.RemoveAll((a) => a.Instruction == Instruction.Nop);
+            ops.RemoveAll((a) => a.Instruction == Instruction.NOP);
+        }
+
+        private void InitInstructionMap()
+        {
+            _instructionMap = new Dictionary<string, Instruction>
+            {
+                ["addop_i64"] = Instruction.ADD,
+                ["subop_i64"] = Instruction.SUB,
+                ["mulop_i64"] = Instruction.MUL,
+                ["divop_i64"] = Instruction.DIV,
+
+                ["addop_f32"] = Instruction.VADDSS,
+                ["subop_f32"] = Instruction.VSUBSS,
+                ["mulop_f32"] = Instruction.VMULSS,
+                ["divop_f32"] = Instruction.VDIVSS,
+
+                ["addop_f64"] = Instruction.VADDSD,
+                ["subop_f64"] = Instruction.VSUBSD,
+                ["mulop_f64"] = Instruction.VMULSD,
+                ["divop_f64"] = Instruction.VDIVSD,
+
+                ["addop_ivec2q"] = Instruction.VPADDQ,
+                ["subop_ivec2q"] = Instruction.VPSUBQ,
+                ["mulop_ivec2q"] = Instruction.VPMULQ,
+                ["divop_ivec2q"] = Instruction.VPDIVQ,
+
+                ["addop_ivec4q"] = Instruction.VPADDQ,
+                ["subop_ivec4q"] = Instruction.VPSUBQ,
+                ["mulop_ivec4q"] = Instruction.VPMULQ,
+                ["divop_ivec4q"] = Instruction.VPDIVQ,
+
+                ["addop_vec4f"] = Instruction.VADDPS,
+                ["subop_vec4f"] = Instruction.VSUBPS,
+                ["mulop_vec4f"] = Instruction.VMULPS,
+                ["divop_vec4f"] = Instruction.VDIVPS,
+
+                ["addop_vec8f"] = Instruction.VADDPS,
+                ["subop_vec8f"] = Instruction.VSUBPS,
+                ["mulop_vec8f"] = Instruction.VMULPS,
+                ["divop_vec8f"] = Instruction.VDIVPS,
+
+                ["addop_vec2d"] = Instruction.VADDPD,
+                ["subop_vec2d"] = Instruction.VSUBPD,
+                ["mulop_vec2d"] = Instruction.VMULPD,
+                ["divop_vec2d"] = Instruction.VDIVPD,
+
+                ["addop_vec4d"] = Instruction.VADDPD,
+                ["subop_vec4d"] = Instruction.VSUBPD,
+                ["mulop_vec4d"] = Instruction.VMULPD,
+                ["divop_vec4d"] = Instruction.VDIVPD,
+            };
         }
 
     }

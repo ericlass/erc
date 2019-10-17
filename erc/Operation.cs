@@ -4,7 +4,7 @@ namespace erc
 {
     public class Operation
     {
-        public Instruction Instruction { get; set; } = Instruction.Nop;
+        public Instruction Instruction { get; set; } = Instruction.NOP;
         public DataType DataType { get; set; }
         public StorageLocation Operand1 { get; set; }
         public StorageLocation Operand2 { get; set; }

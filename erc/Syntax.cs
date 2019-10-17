@@ -132,11 +132,11 @@ namespace erc
             {
                 case AstItemKind.Immediate:
                     if (expressionItem.Value is long)
-                        return new DataType(RawDataType.i64);
+                        return DataType.I64;
                     else if (expressionItem.Value is float)
-                        return new DataType(RawDataType.f32);
+                        return DataType.F32;
                     else if (expressionItem.Value is double)
-                        return new DataType(RawDataType.f64);
+                        return DataType.F64;
                     else
                         throw new Exception("Unknown immediate value: " + expressionItem.Value);
 
@@ -149,16 +149,16 @@ namespace erc
 
                 case AstItemKind.Vector:
                     var subType = FindDataTypeOfExpression(expressionItem.Children[0]);
-                    if (DataType.IsVectorType(subType.MainType))
+                    if (subType.IsVector)
                         throw new Exception("Vectors of vectors are not allowed!");
 
                     var vectorSize = expressionItem.Children.Count;
-                    var vectorType = DataType.GetVectorType(subType.MainType, vectorSize);
+                    var vectorType = DataType.GetVectorType(subType, vectorSize);
 
-                    if (vectorType == RawDataType.Void)
-                        throw new Exception("Vectors of " + subType.MainType + " cannot have length " + vectorSize);
+                    if (vectorType == DataType.VOID)
+                        throw new Exception("Vectors of " + subType + " cannot have length " + vectorSize);
 
-                    return new DataType(vectorType, subType.MainType);
+                    return vectorType;
             }
 
             foreach (var item in expressionItem.Children)
@@ -274,11 +274,11 @@ namespace erc
                 }
 
                 var subType = DataTypeOfExpression(values[0]);
-                var vectorType = DataType.GetVectorType(subType.MainType, values.Count);
-                if (vectorType == RawDataType.Void)
-                    throw new Exception("Not a valid vector type: " + subType.MainType + " x " + values.Count);
+                var vectorType = DataType.GetVectorType(subType, values.Count);
+                if (vectorType == DataType.VOID)
+                    throw new Exception("Not a valid vector type: " + subType + " x " + values.Count);
 
-                result = AstItem.Vector(values, new DataType(vectorType, subType.MainType));
+                result = AstItem.Vector(values, vectorType);
 
                 //Check that all expressions have the same data type!
                 if (values.Count > 0)
@@ -317,30 +317,30 @@ namespace erc
             return token.TokenType == TokenType.Word || token.TokenType == TokenType.Number || token.TokenType == TokenType.Vector || token.TokenType == TokenType.MathOperator;
         }
 
-        private RawDataType GuessDataType(Token token)
+        private DataType GuessDataType(Token token)
         {
             if (token.TokenType == TokenType.Number)
             {
                 var value = token.Value;
                 if (!value.Contains('.'))
-                    return RawDataType.i64;
+                    return DataType.I64;
 
                 var last = value[value.Length - 1];
 
                 if (last == 'f')
-                    return RawDataType.f32;
+                    return DataType.F32;
 
-                return RawDataType.f64;
+                return DataType.F64;
             }
 
             throw new Exception("Cannot guess data type of: " + token);
         }
 
-        private object ParseNumber(string str, RawDataType dataType)
+        private object ParseNumber(string str, DataType dataType)
         {
             var last = str[str.Length - 1];
 
-            if (dataType == RawDataType.f32)
+            if (dataType == DataType.F32)
             {
                 if (last == 'f')
                     return float.Parse(str.Substring(0, str.Length - 1), CultureInfo.InvariantCulture);
@@ -348,7 +348,7 @@ namespace erc
                     return float.Parse(str, CultureInfo.InvariantCulture);
             }
 
-            if (dataType == RawDataType.f64)
+            if (dataType == DataType.F64)
             {
                 if (last == 'd')
                     return double.Parse(str.Substring(0, str.Length - 1), CultureInfo.InvariantCulture);
@@ -356,7 +356,7 @@ namespace erc
                     return double.Parse(str, CultureInfo.InvariantCulture);
             }
 
-            if (dataType == RawDataType.i64)
+            if (dataType == DataType.I64)
             {
                 return long.Parse(str);
             }
