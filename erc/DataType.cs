@@ -9,9 +9,10 @@ namespace erc
         public bool IsVector { get; private set; }
         public int NumElements { get; private set; }
         public DataType ElementType { get; private set; }
-        public StorageLocation Accumulator { get; set; }
-        public StorageLocation TempRegister1 { get; set; }
-        public StorageLocation TempRegister2 { get; set; }
+        public StorageLocation Accumulator { get; private set; }
+        public StorageLocation TempRegister1 { get; private set; }
+        public StorageLocation TempRegister2 { get; private set; }
+        public Instruction MoveInstruction { get; private set; }
         //public bool IsReference { get; private set; }
 
         private DataType()
@@ -87,6 +88,10 @@ namespace erc
             return Name;
         }
 
+        /*********************************/
+        /*********************************/
+        /*********************************/
+
         public static DataType VOID = new DataType
         {
             Name = "void"
@@ -100,7 +105,8 @@ namespace erc
             NumElements = 1,
             Accumulator = StorageLocation.AsRegister(Register.RAX),
             TempRegister1 = StorageLocation.AsRegister(Register.R10),
-            TempRegister2 = StorageLocation.AsRegister(Register.R11)
+            TempRegister2 = StorageLocation.AsRegister(Register.R11),
+            MoveInstruction = Instruction.MOV
         };
 
         public static DataType F32 = new DataType
@@ -111,7 +117,8 @@ namespace erc
             NumElements = 1,
             Accumulator = StorageLocation.AsRegister(Register.XMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
-            TempRegister2 = StorageLocation.AsRegister(Register.XMM6)
+            TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
+            MoveInstruction = Instruction.VMOVSS
         };
 
         public static DataType F64 = new DataType
@@ -122,7 +129,8 @@ namespace erc
             NumElements = 1,
             Accumulator = StorageLocation.AsRegister(Register.XMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
-            TempRegister2 = StorageLocation.AsRegister(Register.XMM6)
+            TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
+            MoveInstruction = Instruction.VMOVSD
         };
 
         public static DataType IVEC2Q = new DataType
@@ -134,7 +142,8 @@ namespace erc
             ElementType = I64,
             Accumulator = StorageLocation.AsRegister(Register.XMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
-            TempRegister2 = StorageLocation.AsRegister(Register.XMM6)
+            TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
+            MoveInstruction = Instruction.VMOVDQA
         };
 
         public static DataType IVEC4Q = new DataType
@@ -146,7 +155,8 @@ namespace erc
             ElementType = I64,
             Accumulator = StorageLocation.AsRegister(Register.YMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.YMM5),
-            TempRegister2 = StorageLocation.AsRegister(Register.YMM6)
+            TempRegister2 = StorageLocation.AsRegister(Register.YMM6),
+            MoveInstruction = Instruction.VMOVDQA
         };
 
         public static DataType VEC4F = new DataType
@@ -158,7 +168,8 @@ namespace erc
             ElementType = F32,
             Accumulator = StorageLocation.AsRegister(Register.XMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
-            TempRegister2 = StorageLocation.AsRegister(Register.XMM6)
+            TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
+            MoveInstruction = Instruction.VMOVAPS
         };
 
         public static DataType VEC8F = new DataType
@@ -170,7 +181,8 @@ namespace erc
             ElementType = F32,
             Accumulator = StorageLocation.AsRegister(Register.YMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.YMM5),
-            TempRegister2 = StorageLocation.AsRegister(Register.YMM6)
+            TempRegister2 = StorageLocation.AsRegister(Register.YMM6),
+            MoveInstruction = Instruction.VMOVAPS
         };
 
         public static DataType VEC2D = new DataType
@@ -182,7 +194,8 @@ namespace erc
             ElementType = F64,
             Accumulator = StorageLocation.AsRegister(Register.XMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
-            TempRegister2 = StorageLocation.AsRegister(Register.XMM6)
+            TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
+            MoveInstruction = Instruction.VMOVAPD
         };
 
         public static DataType VEC4D = new DataType
@@ -194,7 +207,8 @@ namespace erc
             ElementType = F64,
             Accumulator = StorageLocation.AsRegister(Register.YMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.YMM5),
-            TempRegister2 = StorageLocation.AsRegister(Register.YMM6)
+            TempRegister2 = StorageLocation.AsRegister(Register.YMM6),
+            MoveInstruction = Instruction.VMOVAPD
         };
 
         /*

@@ -14,7 +14,13 @@
         public static Instruction NOP = new Instruction("NOP", 0);
         public static Instruction PUSH = new Instruction("PUSH", 1);
         public static Instruction POP = new Instruction("POP", 1);
+
         public static Instruction MOV = new Instruction("MOV", 2);
+        public static Instruction VMOVSS = new Instruction("VMOVSS", 2);
+        public static Instruction VMOVSD = new Instruction("VMOVSD", 2);
+        public static Instruction VMOVDQA = new Instruction("VMOVDQA", 2);
+        public static Instruction VMOVAPS = new Instruction("VMOVAPS", 2);
+        public static Instruction VMOVAPD = new Instruction("VMOVAPD", 2);
 
         public static Instruction ADD = new Instruction("ADD", 2);
         public static Instruction SUB = new Instruction("SUB", 2);

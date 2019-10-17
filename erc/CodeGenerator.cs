@@ -41,7 +41,7 @@ namespace erc
             {
                 if (statement.Kind != AstItemKind.VarScopeEnd)
                 {
-                    codeLines.Add("// " + statement.SourceLine);
+                    //codeLines.Add("// " + statement.SourceLine);
                     codeLines.Add(GenerateStatement(statement));
                 }
             }
@@ -51,7 +51,7 @@ namespace erc
             _dataEntries.ForEach((d) => builder.AppendLine(d));
             builder.AppendLine();
             builder.AppendLine(CodeSection);
-            codeLines.ForEach((l) => builder.AppendLine(l));
+            codeLines.ForEach((l) => builder.AppendLine(l.ToLower()));
             return builder.ToString();
         }
 
@@ -198,10 +198,14 @@ namespace erc
                 case AstItemKind.Expression:
                     var ops = GenerateExpressionOperations(expression.Children);
                     CollapsePushPop(ops);
+                    
                     //Convert ops to code string
+                    //TODO: Do this the right way, with the movement generators etc.
                     var result = String.Join("\n", ops);
+
                     //Move value from accumulator to targetLocation
                     result += "\n" + Move(expression.DataType, expression.DataType.Accumulator, targetLocation);
+
                     return result;
 
                 default:
@@ -218,7 +222,7 @@ namespace erc
                 switch (item.Kind)
                 {
                     case AstItemKind.Immediate:
-                        ops.Add(new Operation(Instruction.PUSH, StorageLocation.DataSection(item.Identifier)));
+                        ops.Add(new Operation(item.DataType, Instruction.PUSH, StorageLocation.DataSection(item.Identifier)));
                         break;
                         
                     case AstItemKind.Vector:
@@ -228,7 +232,7 @@ namespace erc
                         
                     case AstItemKind.Variable:
                         var variable = _context.Variables[item.Identifier];
-                        ops.Add(new Operation(Instruction.PUSH, variable.Location));
+                        ops.Add(new Operation(item.DataType, Instruction.PUSH, variable.Location));
                         break;
                         
                     case AstItemKind.AddOp:
@@ -242,21 +246,21 @@ namespace erc
 
                         if (instruction.NumOperands == 3)
                         {
-                            ops.Add(new Operation(Instruction.POP, operand2));
-                            ops.Add(new Operation(Instruction.POP, operand1));
+                            ops.Add(new Operation(item.DataType, Instruction.POP, operand2));
+                            ops.Add(new Operation(item.DataType, Instruction.POP, operand1));
                             //TODO: Check how this works so no operand is lost!
-                            ops.Add(new Operation(instruction, accumulator, operand1, operand2));
+                            ops.Add(new Operation(item.DataType, instruction, accumulator, operand1, operand2));
                         }
                         else if (instruction.NumOperands == 2)
                         {
-                            ops.Add(new Operation(Instruction.POP, operand1));
-                            ops.Add(new Operation(Instruction.POP, accumulator));
-                            ops.Add(new Operation(instruction, accumulator, operand1));
+                            ops.Add(new Operation(item.DataType, Instruction.POP, operand1));
+                            ops.Add(new Operation(item.DataType, Instruction.POP, accumulator));
+                            ops.Add(new Operation(item.DataType, instruction, accumulator, operand1));
                         }
                         else
                             throw new Exception("Invalid number of instruction operands: " + instruction);
                         
-                        ops.Add(new Operation(Instruction.PUSH, accumulator));
+                        ops.Add(new Operation(item.DataType, Instruction.PUSH, accumulator));
                         break;
                         
                     default:
@@ -291,7 +295,7 @@ namespace erc
                             if (source != target)
                             {
                                 //Transform pop to direct move in-place
-                                popOp.Instruction = Instruction.MOV;
+                                popOp.Instruction = popOp.DataType.MoveInstruction;
                                 popOp.Operand1 = target;
                                 popOp.Operand2 = source;
                                 
@@ -328,11 +332,11 @@ namespace erc
                                     var register = TakeIntermediateRegister(popOp.DataType);
                                     if (register != null)
                                     {
-                                        pushOp.Instruction = Instruction.MOV;
+                                        pushOp.Instruction = pushOp.DataType.MoveInstruction;
                                         pushOp.Operand2 = pushOp.Operand1;
                                         pushOp.Operand1 = register;
                                         
-                                        popOp.Instruction = Instruction.MOV;
+                                        popOp.Instruction = popOp.DataType.MoveInstruction;
                                         popOp.Operand2 = register;
                                     }
                                     else

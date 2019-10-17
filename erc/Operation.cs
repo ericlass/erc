@@ -14,26 +14,30 @@ namespace erc
         {
         }
 
-        public Operation(Instruction instruction)
+        public Operation(DataType dataType, Instruction instruction)
         {
+            DataType = dataType;
             Instruction = instruction;
         }
 
-        public Operation(Instruction instruction, StorageLocation operand1)
+        public Operation(DataType dataType, Instruction instruction, StorageLocation operand1)
         {
+            DataType = dataType;
             Instruction = instruction;
             Operand1 = operand1;
         }
 
-        public Operation(Instruction instruction, StorageLocation operand1, StorageLocation operand2)
+        public Operation(DataType dataType, Instruction instruction, StorageLocation operand1, StorageLocation operand2)
         {
+            DataType = dataType;
             Instruction = instruction;
             Operand1 = operand1;
             Operand2 = operand2;
         }
 
-        public Operation(Instruction instruction, StorageLocation operand1, StorageLocation operand2, StorageLocation operand3)
+        public Operation(DataType dataType, Instruction instruction, StorageLocation operand1, StorageLocation operand2, StorageLocation operand3)
         {
+            DataType = dataType;
             Instruction = instruction;
             Operand1 = operand1;
             Operand2 = operand2;
