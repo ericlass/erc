@@ -46,16 +46,24 @@ namespace erc
 
         public override string ToString()
         {
-            var result = Instruction.Name;
+            var result = "";
+            if (Instruction.Generator == null)
+            {
+                result = Instruction.Name;
 
-            if (Operand1 != null)
-                result += " " + Operand1.ToCode();
+                if (Operand1 != null)
+                    result += " " + Operand1.ToCode();
 
-            if (Operand2 != null)
-                result += ", " + Operand2.ToCode();
+                if (Operand2 != null)
+                    result += ", " + Operand2.ToCode();
 
-            if (Operand3 != null)
-                result += ", " + Operand3.ToCode();
+                if (Operand3 != null)
+                    result += ", " + Operand3.ToCode();
+            }
+            else
+            {
+                result = Instruction.Generator(Instruction, Operand1, Operand2, Operand3);
+            }
 
             return result.ToLower();
         }

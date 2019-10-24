@@ -1,18 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 
 namespace erc
 {
     public class StorageLocator
     {
-        private Stack<Register> _free64Registers = new Stack<Register>();
-        private Stack<Register> _free128Registers = new Stack<Register>();
-        private Stack<Register> _free256Registers = new Stack<Register>();
+        private Stack<RegisterGroup> _freeRRegisters = new Stack<RegisterGroup>();
+        private Stack<RegisterGroup> _freeMMRegisters = new Stack<RegisterGroup>();
 
         private long _stackOffset = 0;
-
-        //TODO: Stack
 
         //Heap? not here, dynamically at runtime
 
@@ -39,21 +35,77 @@ namespace erc
         private void AssignLocation(Variable variable)
         {
             var dataType = variable.DataType;
-            var registerStack = GetMatchingRegisterStack(dataType);
+            var register = GetMatchingRegister(dataType);
 
             //If register found, use it
-            if (registerStack != null && registerStack.Count > 0)
+            if (register != null)
             {
-                var register = registerStack.Pop();
-                Console.WriteLine("Assigning variable " + variable.Name + " to register " + register);
+                //Console.WriteLine("Assigning variable " + variable.Name + " to register " + register);
                 variable.Location = new StorageLocation { Kind = StorageLocationKind.Register, Register = register };
                 return;
             }
 
+            //Align stack offset according to data type (natural alignment), assuming RBP is always aligned to 32 bytes so offset 0 is already aligned
+            if (_stackOffset > 0 && dataType.ByteSize > 1)
+            {
+                var prevOffset = _stackOffset;
+
+                var div = _stackOffset / dataType.ByteSize;
+                var mod = _stackOffset % dataType.ByteSize;
+                if (mod > 0)
+                    div += 1;
+
+                _stackOffset = div * dataType.ByteSize;
+
+                //Console.WriteLine("Aligning stack offset " + prevOffset + " to " + _stackOffset + " to " + dataType.ByteSize + " bytes");
+            }
+
             //Otherwise, put on stack
-            Console.WriteLine("Assigning variable " + variable.Name + " to stack offset " + _stackOffset);
+            //Console.WriteLine("Assigning variable " + variable.Name + " to stack offset " + _stackOffset);
             variable.Location = new StorageLocation { Kind = StorageLocationKind.Stack, Address = _stackOffset };
             _stackOffset += dataType.ByteSize;
+        }
+
+        private Register GetMatchingRegister(DataType dataType)
+        {
+            Stack<RegisterGroup> stack = null;
+
+            if (dataType == DataType.I64)
+                stack = _freeRRegisters;
+            else
+                stack = _freeMMRegisters;
+
+            if (stack == null)
+                throw new Exception("Unknown data type: " + dataType);
+
+            if (stack.Count == 0)
+                return null;
+
+            var group = stack.Pop();
+            return GroupToSpecificRegister(group, dataType);
+        }
+
+        //TODO: Move this to static method in Register class
+        private Register GroupToSpecificRegister(RegisterGroup group, DataType dataType)
+        {
+            var allRegisters = Register.GetAllValues();
+
+            var byteSize = dataType.ByteSize;
+            if (dataType == DataType.F32 || dataType == DataType.F64)
+            {
+                //TODO: Bad hack to make F32/F64 go into XMM registers. Find a better way.
+                byteSize = DataType.VEC4F.ByteSize;
+            }
+
+            var found = allRegisters.FindAll((r) => r.Group == group && r.ByteSize == byteSize);
+
+            if (found.Count == 0)
+                throw new Exception("Could not find any register for group " + group + " and data type " + dataType);
+
+            if (found.Count > 1)
+                throw new Exception("Found multiple registers for group " + group + " and data type " + dataType);
+
+            return found[0];
         }
 
         private void FreeLocation(Variable variable)
@@ -63,74 +115,50 @@ namespace erc
             {
                 //Console.WriteLine("Freeing variable " + variable.Name + " from register " + location.Register);
                 var dataType = variable.DataType;
-                var registerStack = GetMatchingRegisterStack(dataType);
-                registerStack.Push(location.Register);
+                Stack<RegisterGroup> stack = null;
+
+                if (dataType == DataType.I64)
+                    stack = _freeRRegisters;
+                else
+                    stack = _freeMMRegisters;
+
+                stack.Push(location.Register.Group);
             }
             else if (location.Kind == StorageLocationKind.Stack)
             {
-                //Nothing can be done yet as it is not known at this point if the value is the last on the stack or not
+                //Nothing to do here. Stack does not need to be cleaned up, just leave it as it is
                 //Console.WriteLine("Freeing variable " + variable.Name + " from stack offset " + location.Address);
             }
         }
 
-        private Stack<Register> GetMatchingRegisterStack(DataType dataType)
-        {
-            if (dataType == DataType.I64)
-                return _free64Registers;
-            else if (dataType == DataType.F32 || dataType == DataType.F64)
-                return _free128Registers;
-            else if (dataType == DataType.IVEC2Q || dataType == DataType.VEC4F || dataType == DataType.VEC2D)
-                return _free128Registers;
-            else if (dataType == DataType.IVEC4Q || dataType == DataType.VEC8F || dataType == DataType.VEC4D)
-                return _free256Registers;
-
-            throw new Exception("Unknown data type: " + dataType);
-        }
-
         private void Init()
         {
-            _free64Registers.Push(Register.R15);
-            _free64Registers.Push(Register.R14);
-            _free64Registers.Push(Register.R13);
-            _free64Registers.Push(Register.R12);
-            //_free64Registers.Push(Register.R11); //used for arithmetic
-            //_free64Registers.Push(Register.R10); //used for arithmetic
-            //_free64Registers.Push(Register.R9); //parameter passing
-            //_free64Registers.Push(Register.R8); //parameter passing
+            _freeRRegisters.Push(RegisterGroup.R15);
+            _freeRRegisters.Push(RegisterGroup.R14);
+            _freeRRegisters.Push(RegisterGroup.R13);
+            _freeRRegisters.Push(RegisterGroup.R12);
+            //_freeRRegisters.Push(RegisterGroup.R11); //used for arithmetic
+            //_freeRRegisters.Push(RegisterGroup.R10); //used for arithmetic
+            //_freeRRegisters.Push(RegisterGroup.R9); //parameter passing
+            //_freeRRegisters.Push(RegisterGroup.R8); //parameter passing
+            //_freeRRegisters.Push(RegisterGroup.A); //used as accumulator
 
-            _free128Registers.Push(Register.XMM15);
-            _free128Registers.Push(Register.XMM14);
-            _free128Registers.Push(Register.XMM13);
-            _free128Registers.Push(Register.XMM12);
-            _free128Registers.Push(Register.XMM11);
-            _free128Registers.Push(Register.XMM10);
-            _free128Registers.Push(Register.XMM9);
-            _free128Registers.Push(Register.XMM8);
-            _free128Registers.Push(Register.XMM7);
-            //_free128Registers.Push(Register.XMM6); //used for arithmetic
-            //_free128Registers.Push(Register.XMM5); //used for arithmetic
-            //_free128Registers.Push(Register.XMM4); //used as accumulator
-            //_free128Registers.Push(Register.XMM3); //parameter passing
-            //_free128Registers.Push(Register.XMM2); //parameter passing
-            //_free128Registers.Push(Register.XMM1); //parameter passing
-            //_free128Registers.Push(Register.XMM0); //parameter passing
-
-            _free256Registers.Push(Register.YMM15);
-            _free256Registers.Push(Register.YMM14);
-            _free256Registers.Push(Register.YMM13);
-            _free256Registers.Push(Register.YMM12);
-            _free256Registers.Push(Register.YMM11);
-            _free256Registers.Push(Register.YMM10);
-            _free256Registers.Push(Register.YMM9);
-            _free256Registers.Push(Register.YMM8);
-            _free256Registers.Push(Register.YMM7);
-            _free256Registers.Push(Register.YMM6);
-            _free256Registers.Push(Register.YMM5);
-            _free256Registers.Push(Register.YMM4);
-            _free256Registers.Push(Register.YMM3);
-            //_free256Registers.Push(Register.YMM2); //used for arithmetic
-            //_free256Registers.Push(Register.YMM1); //used for arithmetic
-            //_free256Registers.Push(Register.YMM0); //used as accumulator
+            _freeMMRegisters.Push(RegisterGroup.MM15);
+            _freeMMRegisters.Push(RegisterGroup.MM14);
+            _freeMMRegisters.Push(RegisterGroup.MM13);
+            _freeMMRegisters.Push(RegisterGroup.MM12);
+            _freeMMRegisters.Push(RegisterGroup.MM11);
+            _freeMMRegisters.Push(RegisterGroup.MM10);
+            _freeMMRegisters.Push(RegisterGroup.MM9);
+            _freeMMRegisters.Push(RegisterGroup.MM8);
+            _freeMMRegisters.Push(RegisterGroup.MM7);
+            //_freeMMRegisters.Push(RegisterGroup.MM6); //used for arithmetic
+            //_freeMMRegisters.Push(RegisterGroup.MM5); //used for arithmetic
+            //_freeMMRegisters.Push(RegisterGroup.MM4); //used as accumulator
+            //_freeMMRegisters.Push(RegisterGroup.MM3); //parameter passing
+            //_freeMMRegisters.Push(RegisterGroup.MM2); //parameter passing
+            //_freeMMRegisters.Push(RegisterGroup.MM1); //parameter passing
+            //_freeMMRegisters.Push(RegisterGroup.MM0); //parameter passing
         }
 
     }

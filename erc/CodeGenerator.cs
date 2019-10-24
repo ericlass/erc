@@ -17,7 +17,14 @@ namespace erc
             "section '.text' code readable executable\n" +
             "start:\n";
 
-        private List<String> _dataEntries = new List<string>();
+        private const string CodeFooter =
+            "\nxor ecx,ecx\n" +
+            "call[ExitProcess]\n\n" +
+            "section '.idata' import data readable writeable\n" +
+            "library kernel32,'KERNEL32.DLL'\n\n" +
+            "import kernel32,\\\n" +
+            "  ExitProcess,'ExitProcess'\n";
+
         private CompilerContext _context = null;
         private long _immCounter = 0;
         private Dictionary<string, Instruction> _instructionMap = null;
@@ -34,7 +41,9 @@ namespace erc
 
             InitMovementGenerators();
             InitInstructionMap();
-            GenerateDataSection(context.AST);
+
+            var dataEntries = new List<Tuple<int, string>>();
+            GenerateDataSection(context.AST, dataEntries);
 
             var codeLines = new List<string>();
             foreach (var statement in context.AST.Children)
@@ -48,14 +57,21 @@ namespace erc
 
             StringBuilder builder = new StringBuilder();
             builder.AppendLine(CodeHeader);
-            _dataEntries.ForEach((d) => builder.AppendLine(d));
+
+            //Sort data entries descending by size to make them aligned
+            dataEntries.Sort((a, b) => b.Item1 - a.Item1);
+            dataEntries.ForEach((d) => builder.AppendLine(d.Item2));
+
             builder.AppendLine();
             builder.AppendLine(CodeSection);
             codeLines.ForEach((l) => builder.AppendLine(l.ToLower()));
+
+            builder.AppendLine(CodeFooter);
+
             return builder.ToString();
         }
 
-        private void GenerateDataSection(AstItem item)
+        private void GenerateDataSection(AstItem item, List<Tuple<int, string>> entries)
         {
             if (!item.DataGenerated)
             {
@@ -63,17 +79,17 @@ namespace erc
                 {
                     if (item.DataType == DataType.I64)
                     {
-                        _dataEntries.Add(item.Identifier + " dq " + item.Value);
+                        entries.Add(new Tuple<int, string>(item.DataType.ByteSize, item.Identifier + " dq " + item.Value));
                     }
                     else if (item.DataType == DataType.F32)
                     {
                         float fVal = (float)item.Value;
-                        _dataEntries.Add(item.Identifier + " dd " + fVal.ToString("0.0", CultureInfo.InvariantCulture));
+                        entries.Add(new Tuple<int, string>(item.DataType.ByteSize, item.Identifier + " dd " + fVal.ToString("0.0", CultureInfo.InvariantCulture)));
                     }
                     else if (item.DataType == DataType.F64)
                     {
                         var dVal = (double)item.Value;
-                        _dataEntries.Add(item.Identifier + " dq " + dVal.ToString("0.0", CultureInfo.InvariantCulture));
+                        entries.Add(new Tuple<int, string>(item.DataType.ByteSize, item.Identifier + " dq " + dVal.ToString("0.0", CultureInfo.InvariantCulture)));
                     }
                     else
                         throw new Exception("Unsupported type for immediates: " + item.DataType);
@@ -112,7 +128,7 @@ namespace erc
                         else
                             throw new Exception("Incorrect data type for vector AST item: " + item.DataType);
 
-                        _dataEntries.Add(dataLine);
+                        entries.Add(new Tuple<int, string>(item.DataType.ByteSize, dataLine));
 
                         item.Children.ForEach((c) => c.DataGenerated = true);
                     }
@@ -124,7 +140,7 @@ namespace erc
 
             foreach (var child in item.Children)
             {
-                GenerateDataSection(child);
+                GenerateDataSection(child, entries);
             }
         }
 

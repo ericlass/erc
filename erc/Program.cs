@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using System.Text;
 
 namespace erc
 {
@@ -9,6 +8,10 @@ namespace erc
     {
         static void Main(string[] args)
         {
+            var stopWatch = new Stopwatch();
+
+            stopWatch.Start();
+
             var src = File.ReadAllText("example.erc");
 
             var context = new CompilerContext();
@@ -17,6 +20,21 @@ namespace erc
             var tokenizer = new Tokenizer();
             tokenizer.Tokenize(context);
 
+            var syntax = new Syntax();
+            syntax.Analyze(context);
+
+            var processor = new PostProcessor();
+            processor.Process(context);
+
+            var locator = new StorageLocator();
+            locator.Locate(context);
+
+            var generator = new CodeGenerator();
+            string finalCode = generator.Generate(context);
+
+            stopWatch.Stop();
+            var compilationTime = stopWatch.ElapsedMilliseconds;
+            
             Console.WriteLine("TOKENS");
             Console.WriteLine("======");
             foreach (var token in context.Tokens)
@@ -24,17 +42,12 @@ namespace erc
                 Console.WriteLine(token);
             }
 
-            var syntax = new Syntax();
-            syntax.Analyze(context);
-
-            var processor = new PostProcessor();
-            processor.Process(context);
-
+            /*
             Console.WriteLine();
             Console.WriteLine("STORAGE");
             Console.WriteLine("=======");
             var locator = new StorageLocator();
-            locator.Locate(context);
+            locator.Locate(context);*/
 
             Console.WriteLine();
             Console.WriteLine("AST");
@@ -45,8 +58,9 @@ namespace erc
             Console.WriteLine();
             Console.WriteLine("CODE");
             Console.WriteLine("==========");
-            var generator = new CodeGenerator();
-            Console.WriteLine(generator.Generate(context));
+            Console.WriteLine(finalCode);
+
+            Console.WriteLine("Compilation took: " + compilationTime + " ms");
 
             Console.WriteLine();
             Console.Write("Press Enter to close");

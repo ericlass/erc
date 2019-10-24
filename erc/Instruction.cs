@@ -1,9 +1,14 @@
-﻿namespace erc
+﻿using System;
+
+namespace erc
 {
+    public delegate string GeneratorFunc(Instruction instr, StorageLocation op1, StorageLocation op2, StorageLocation op3);
+
     public class Instruction
     {
         public string Name { get; set; }
         public int NumOperands { get; set; }
+        public GeneratorFunc Generator { get; set; }
 
         private Instruction(string name, int numOperands)
         {
@@ -11,20 +16,31 @@
             NumOperands = numOperands;
         }
 
+        private Instruction(string name, int numOperands, GeneratorFunc generator)
+        {
+            Name = name;
+            NumOperands = numOperands;
+            Generator = generator;
+        }
+
         public static Instruction NOP = new Instruction("NOP", 0);
         public static Instruction PUSH = new Instruction("PUSH", 1);
         public static Instruction POP = new Instruction("POP", 1);
 
         public static Instruction MOV = new Instruction("MOV", 2);
-        public static Instruction VMOVSS = new Instruction("VMOVSS", 2);
-        public static Instruction VMOVSD = new Instruction("VMOVSD", 2);
+        public static Instruction VMOVSS = new Instruction("VMOVSS", 2, (instr, op1, op2, op3) => instr.Name + " " + op1.ToCode() + ", " + op2.ToCode() + ", " + op2.ToCode());
+        public static Instruction VMOVSD = new Instruction("VMOVSD", 2, (instr, op1, op2, op3) => instr.Name + " " + op1.ToCode() + ", " + op2.ToCode() + ", " + op2.ToCode());
         public static Instruction VMOVDQA = new Instruction("VMOVDQA", 2);
         public static Instruction VMOVAPS = new Instruction("VMOVAPS", 2);
         public static Instruction VMOVAPD = new Instruction("VMOVAPD", 2);
 
         public static Instruction ADD = new Instruction("ADD", 2);
         public static Instruction SUB = new Instruction("SUB", 2);
-        public static Instruction MUL = new Instruction("MUL", 2);
+
+        //Special behavior for MUL which expects the first operand to be in the accumulator and only takes the second operand as parameter
+        //This here works because for two operand syntax the first operand is already in the accumulator
+        public static Instruction MUL = new Instruction("MUL", 2, (instr, op1, op2, op3) => instr.Name + " " + op2.ToCode());
+
         public static Instruction DIV = new Instruction("DIV", 2);
 
         public static Instruction VADDSS = new Instruction("VADDSS", 3);

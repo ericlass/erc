@@ -28,7 +28,7 @@ namespace erc
                 ["i64_datasection_stack"] = (src, trgt) => "mov RAX, [" + src.DataName + "]\n" + "mov [RBP-" + trgt.Address + "], RAX",
 
                 //----- f32 -----
-                ["f32_register_register"] = (src, trgt) => "vmovss " + trgt.Register + ", " + src.Register,
+                ["f32_register_register"] = (src, trgt) => "vmovss " + trgt.Register + ", " + src.Register + ", " + src.Register,
                 ["f32_register_stack"] = (src, trgt) => "vmovss [RBP-" + trgt.Address + "], " + src.Register,
                 ["f32_stack_register"] = (src, trgt) => "vmovss " + trgt.Register + ", [RBP-" + src.Address + "]",
                 ["f32_stack_stack"] = (src, trgt) => "vmovss XMM0, [RBP-" + src.Address + "]\n" + "vmovss [RBP-" + trgt.Address + "], XMM0",
@@ -36,7 +36,7 @@ namespace erc
                 ["f32_datasection_stack"] = (src, trgt) => "vmovss XMM0, [" + src.DataName + "]\n" + "vmovss [RBP-" + trgt.Address + "], XMM0",
 
                 //----- f64 -----
-                ["f64_register_register"] = (src, trgt) => "vmovsd " + trgt.Register + ", " + src.Register,
+                ["f64_register_register"] = (src, trgt) => "vmovsd " + trgt.Register + ", " + src.Register + ", " + src.Register,
                 ["f64_register_stack"] = (src, trgt) => "vmovsd [RBP-" + trgt.Address + "], " + src.Register,
                 ["f64_stack_register"] = (src, trgt) => "vmovsd " + trgt.Register + ", [RBP-" + src.Address + "]",
                 ["f64_stack_stack"] = (src, trgt) => "vmovsd XMM0, [RBP-" + src.Address + "]\n" + "vmovsd [RBP-" + trgt.Address + "], XMM0",
