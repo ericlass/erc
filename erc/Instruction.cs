@@ -8,12 +8,20 @@ namespace erc
     {
         public string Name { get; set; }
         public int NumOperands { get; set; }
+        public bool RequiresOperandSize { get; set; }
         public GeneratorFunc Generator { get; set; }
 
         private Instruction(string name, int numOperands)
         {
             Name = name;
             NumOperands = numOperands;
+        }
+
+        private Instruction(string name, int numOperands, bool requiresOperandSize)
+        {
+            Name = name;
+            NumOperands = numOperands;
+            RequiresOperandSize = requiresOperandSize;
         }
 
         private Instruction(string name, int numOperands, GeneratorFunc generator)
@@ -23,16 +31,37 @@ namespace erc
             Generator = generator;
         }
 
+        private Instruction(string name, int numOperands, bool requiresOperandSize, GeneratorFunc generator)
+        {
+            Name = name;
+            NumOperands = numOperands;
+            RequiresOperandSize = requiresOperandSize;
+            Generator = generator;
+        }
+
         public static Instruction NOP = new Instruction("NOP", 0);
         public static Instruction PUSH = new Instruction("PUSH", 1);
         public static Instruction POP = new Instruction("POP", 1);
 
         public static Instruction MOV = new Instruction("MOV", 2);
-        public static Instruction VMOVSS = new Instruction("VMOVSS", 2, (instr, op1, op2, op3) => instr.Name + " " + op1.ToCode() + ", " + op2.ToCode() + ", " + op2.ToCode());
-        public static Instruction VMOVSD = new Instruction("VMOVSD", 2, (instr, op1, op2, op3) => instr.Name + " " + op1.ToCode() + ", " + op2.ToCode() + ", " + op2.ToCode());
-        public static Instruction VMOVDQA = new Instruction("VMOVDQA", 2);
-        public static Instruction VMOVAPS = new Instruction("VMOVAPS", 2);
-        public static Instruction VMOVAPD = new Instruction("VMOVAPD", 2);
+
+        public static Instruction VMOVSS = new Instruction("VMOVSS", 2, (instr, op1, op2, op3) => {
+                if (op1.Kind == StorageLocationKind.Register && op2.Kind == StorageLocationKind.Register)
+                    return instr.Name + " " + op1.ToCode() + ", " + op2.ToCode() + ", " + op2.ToCode();
+                else
+                    return instr.Name + " " + op1.ToCode() + ", " + op2.ToCode();
+        });
+
+        public static Instruction VMOVSD = new Instruction("VMOVSD", 2, (instr, op1, op2, op3) => {
+            if (op1.Kind == StorageLocationKind.Register && op2.Kind == StorageLocationKind.Register)
+                return instr.Name + " " + op1.ToCode() + ", " + op2.ToCode() + ", " + op2.ToCode();
+            else
+                return instr.Name + " " + op1.ToCode() + ", " + op2.ToCode();
+        });
+
+        public static Instruction VMOVDQA = new Instruction("VMOVDQA", 2, true);
+        public static Instruction VMOVAPS = new Instruction("VMOVAPS", 2, true);
+        public static Instruction VMOVAPD = new Instruction("VMOVAPD", 2, true);
 
         public static Instruction ADD = new Instruction("ADD", 2);
         public static Instruction SUB = new Instruction("SUB", 2);
@@ -67,6 +96,8 @@ namespace erc
         public static Instruction VSUBPD = new Instruction("VSUBPD", 3);
         public static Instruction VMULPD = new Instruction("VMULPD", 3);
         public static Instruction VDIVPD = new Instruction("VDIVPD", 3);
+
+        public static Instruction VPSLLDQ = new Instruction("VPSLLDQ", 3);
 
     }
 }

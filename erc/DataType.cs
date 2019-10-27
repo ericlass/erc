@@ -8,6 +8,7 @@ namespace erc
         public int ByteSize { get; private set; }
         public bool IsVector { get; private set; }
         public int NumElements { get; private set; }
+        public string OperandSize { get; private set; }
         public DataType ElementType { get; private set; }
         public StorageLocation Accumulator { get; private set; }
         public StorageLocation TempRegister1 { get; private set; }
@@ -103,6 +104,7 @@ namespace erc
             ByteSize = 8,
             IsVector = false,
             NumElements = 1,
+            OperandSize = "qword",
             Accumulator = StorageLocation.AsRegister(Register.RAX),
             TempRegister1 = StorageLocation.AsRegister(Register.R10),
             TempRegister2 = StorageLocation.AsRegister(Register.R11),
@@ -115,6 +117,7 @@ namespace erc
             ByteSize = 4,
             IsVector = false,
             NumElements = 1,
+            OperandSize = "dword",
             Accumulator = StorageLocation.AsRegister(Register.XMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
             TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
@@ -127,6 +130,7 @@ namespace erc
             ByteSize = 8,
             IsVector = false,
             NumElements = 1,
+            OperandSize = "qword",
             Accumulator = StorageLocation.AsRegister(Register.XMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
             TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
@@ -140,6 +144,7 @@ namespace erc
             IsVector = true,
             NumElements = 2,
             ElementType = I64,
+            OperandSize = "dqword",
             Accumulator = StorageLocation.AsRegister(Register.XMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
             TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
@@ -153,6 +158,7 @@ namespace erc
             IsVector = true,
             NumElements = 4,
             ElementType = I64,
+            OperandSize = "qqword",
             Accumulator = StorageLocation.AsRegister(Register.YMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.YMM5),
             TempRegister2 = StorageLocation.AsRegister(Register.YMM6),
@@ -166,6 +172,7 @@ namespace erc
             IsVector = true,
             NumElements = 4,
             ElementType = F32,
+            OperandSize = "dqword",
             Accumulator = StorageLocation.AsRegister(Register.XMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
             TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
@@ -179,6 +186,7 @@ namespace erc
             IsVector = true,
             NumElements = 8,
             ElementType = F32,
+            OperandSize = "qqword",
             Accumulator = StorageLocation.AsRegister(Register.YMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.YMM5),
             TempRegister2 = StorageLocation.AsRegister(Register.YMM6),
@@ -192,6 +200,7 @@ namespace erc
             IsVector = true,
             NumElements = 2,
             ElementType = F64,
+            OperandSize = "dqword",
             Accumulator = StorageLocation.AsRegister(Register.XMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
             TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
@@ -205,6 +214,7 @@ namespace erc
             IsVector = true,
             NumElements = 4,
             ElementType = F64,
+            OperandSize = "qqword",
             Accumulator = StorageLocation.AsRegister(Register.YMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.YMM5),
             TempRegister2 = StorageLocation.AsRegister(Register.YMM6),

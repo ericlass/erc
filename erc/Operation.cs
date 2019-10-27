@@ -52,13 +52,13 @@ namespace erc
                 result = Instruction.Name;
 
                 if (Operand1 != null)
-                    result += " " + Operand1.ToCode();
+                    result += " " + OperandToString(Operand1);
 
                 if (Operand2 != null)
-                    result += ", " + Operand2.ToCode();
+                    result += ", " + OperandToString(Operand2);
 
                 if (Operand3 != null)
-                    result += ", " + Operand3.ToCode();
+                    result += ", " + OperandToString(Operand3);
             }
             else
             {
@@ -67,5 +67,14 @@ namespace erc
 
             return result.ToLower();
         }
+
+        private string OperandToString(StorageLocation operand)
+        {
+            string result = "";
+            if ((operand.Kind == StorageLocationKind.DataSection || operand.Kind == StorageLocationKind.Heap) && Instruction.RequiresOperandSize)
+                result += DataType.OperandSize + " ";
+            return result + operand.ToCode();
+        }
+
     }
 }

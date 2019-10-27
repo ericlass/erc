@@ -39,19 +39,19 @@ namespace erc
         {
             _context = context;
 
-            InitMovementGenerators();
+            //InitMovementGenerators();
             InitInstructionMap();
 
             var dataEntries = new List<Tuple<int, string>>();
             GenerateDataSection(context.AST, dataEntries);
 
-            var codeLines = new List<string>();
+            var codeLines = new List<Operation>();
             foreach (var statement in context.AST.Children)
             {
                 if (statement.Kind != AstItemKind.VarScopeEnd)
                 {
                     //codeLines.Add("// " + statement.SourceLine);
-                    codeLines.Add(GenerateStatement(statement));
+                    codeLines.AddRange(GenerateStatement(statement));
                 }
             }
 
@@ -64,7 +64,7 @@ namespace erc
 
             builder.AppendLine();
             builder.AppendLine(CodeSection);
-            codeLines.ForEach((l) => builder.AppendLine(l.ToLower()));
+            codeLines.ForEach((l) => builder.AppendLine(l.ToString().ToLower()));
 
             builder.AppendLine(CodeFooter);
 
@@ -152,7 +152,7 @@ namespace erc
             return vector.Children.TrueForAll((i) => i.Kind == AstItemKind.Immediate);
         }
 
-        private string GenerateStatement(AstItem statement)
+        private List<Operation> GenerateStatement(AstItem statement)
         {
             switch (statement.Kind) {
                 case AstItemKind.VarDecl:
@@ -162,22 +162,22 @@ namespace erc
                     return GenerateAssignment(statement);
             }
 
-            return "";
+            return new List<Operation>();
         }
 
-        private string GenerateVarDecl(AstItem statement)
+        private List<Operation> GenerateVarDecl(AstItem statement)
         {
             var variable = _context.Variables[statement.Identifier];
             return GenerateExpression(statement.Children[0], variable.Location);
         }
 
-        private string GenerateAssignment(AstItem statement)
+        private List<Operation> GenerateAssignment(AstItem statement)
         {
             var variable = _context.Variables[statement.Identifier];
             return GenerateExpression(statement.Children[0], variable.Location);
         }
 
-        private string GenerateExpression(AstItem expression, StorageLocation targetLocation)
+        private List<Operation> GenerateExpression(AstItem expression, StorageLocation targetLocation)
         {
             switch (expression.Kind)
             {
@@ -196,15 +196,15 @@ namespace erc
                         //Generate vector in accumulator register, one value by one, shifting the values right accordingly.
                         //TODO: Check if this actually works. If not, assemble vector on stack.
                         var accumulator = expression.DataType.Accumulator;
-                        var expressions = new List<string>();
+                        var expressions = new List<Operation>();
                         for (int i = expression.Children.Count - 1; i >= 0; i--)
                         {
                             var child = expression.Children[i];
-                            expressions.Add(GenerateExpression(child, accumulator));
-                            expressions.Add("shift accumulator right X bytes with (V)PSLLDQ");
+                            expressions.AddRange(GenerateExpression(child, accumulator));
+                            //expressions.Add("shift accumulator right X bytes with (V)PSLLDQ");
                         }
-                        expressions.Add(Move(expression.DataType, targetLocation, accumulator));
-                        return String.Join("\n", expressions);
+                        expressions.AddRange(Move(expression.DataType, targetLocation, accumulator));
+                        return expressions;
                     }
                     
                 case AstItemKind.Variable:
@@ -214,18 +214,14 @@ namespace erc
                 case AstItemKind.Expression:
                     var ops = GenerateExpressionOperations(expression.Children);
                     CollapsePushPop(ops);
-                    
-                    //Convert ops to code string
-                    //TODO: Do this the right way, with the movement generators etc.
-                    var result = String.Join("\n", ops);
 
                     //Move value from accumulator to targetLocation
-                    result += "\n" + Move(expression.DataType, expression.DataType.Accumulator, targetLocation);
+                    ops.AddRange(Move(expression.DataType, expression.DataType.Accumulator, targetLocation));
 
-                    return result;
+                    return ops;
 
                 default:
-                    return "";
+                    return new List<Operation>();
             }
         }
 
