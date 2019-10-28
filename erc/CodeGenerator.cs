@@ -193,17 +193,15 @@ namespace erc
                     }
                     else
                     {
-                        //Generate vector in accumulator register, one value by one, shifting the values right accordingly.
-                        //TODO: Check if this actually works. If not, assemble vector on stack.
-                        var accumulator = expression.DataType.Accumulator;
+                        var accumulator = expression.DataType.ElementType.Accumulator;
                         var expressions = new List<Operation>();
                         for (int i = expression.Children.Count - 1; i >= 0; i--)
                         {
                             var child = expression.Children[i];
                             expressions.AddRange(GenerateExpression(child, accumulator));
-                            //expressions.Add("shift accumulator right X bytes with (V)PSLLDQ");
+                            expressions.AddRange(Push(expression.DataType.ElementType, accumulator));
                         }
-                        expressions.AddRange(Move(expression.DataType, targetLocation, accumulator));
+                        expressions.AddRange(Move(expression.DataType, targetLocation, StorageLocation.StackFromTop(expression.DataType.ByteSize)));
                         return expressions;
                     }
                     
@@ -239,7 +237,6 @@ namespace erc
                         
                     case AstItemKind.Vector:
                         //TODO: Do as above in GenerateExpression
-                        //TODO: "push" to stack with "sub esp, X", "movdqu [esp], xmm0"
                         break;
                         
                     case AstItemKind.Variable:

@@ -45,14 +45,16 @@ namespace erc
 
         public static Instruction MOV = new Instruction("MOV", 2);
 
-        public static Instruction VMOVSS = new Instruction("VMOVSS", 2, (instr, op1, op2, op3) => {
-                if (op1.Kind == StorageLocationKind.Register && op2.Kind == StorageLocationKind.Register)
-                    return instr.Name + " " + op1.ToCode() + ", " + op2.ToCode() + ", " + op2.ToCode();
-                else
-                    return instr.Name + " " + op1.ToCode() + ", " + op2.ToCode();
+        public static Instruction VMOVSS = new Instruction("VMOVSS", 2, (instr, op1, op2, op3) => 
+        {
+            if (op1.Kind == StorageLocationKind.Register && op2.Kind == StorageLocationKind.Register)
+                return instr.Name + " " + op1.ToCode() + ", " + op2.ToCode() + ", " + op2.ToCode();
+            else
+                return instr.Name + " " + op1.ToCode() + ", " + op2.ToCode();
         });
 
-        public static Instruction VMOVSD = new Instruction("VMOVSD", 2, (instr, op1, op2, op3) => {
+        public static Instruction VMOVSD = new Instruction("VMOVSD", 2, (instr, op1, op2, op3) => 
+        {
             if (op1.Kind == StorageLocationKind.Register && op2.Kind == StorageLocationKind.Register)
                 return instr.Name + " " + op1.ToCode() + ", " + op2.ToCode() + ", " + op2.ToCode();
             else
@@ -64,7 +66,10 @@ namespace erc
         public static Instruction VMOVAPD = new Instruction("VMOVAPD", 2, true);
 
         public static Instruction ADD = new Instruction("ADD", 2);
+        public static Instruction ADD_IMM = new Instruction("ADD", 2, (instr, op1, op2, op3) => instr.Name + " " + op1.ToCode() + ", " + op2.Address);
+
         public static Instruction SUB = new Instruction("SUB", 2);
+        public static Instruction SUB_IMM = new Instruction("SUB", 2, (instr, op1, op2, op3) => instr.Name + " " + op1.ToCode() + ", " + op2.Address);
 
         //Special behavior for MUL which expects the first operand to be in the accumulator and only takes the second operand as parameter
         //This here works because for two operand syntax the first operand is already in the accumulator

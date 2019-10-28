@@ -5,7 +5,8 @@ namespace erc
     public enum StorageLocationKind
     {
         Register,
-        Stack,
+        StackFromBase,
+        StackFromTop,
         Heap,
         DataSection
     }
@@ -24,8 +25,11 @@ namespace erc
                 case StorageLocationKind.Register:
                     return Register.ToString();
 
-                case StorageLocationKind.Stack:
-                    return "[RSP + " + Address + "]";
+                case StorageLocationKind.StackFromBase:
+                    return "[RBP-" + Address + "]";
+
+                case StorageLocationKind.StackFromTop:
+                    return "[RSP+" + Address + "]";
 
                 case StorageLocationKind.Heap:
                     return "[" + Address + "]";
@@ -45,7 +49,8 @@ namespace erc
                 case StorageLocationKind.Register:
                     return Kind + "(" + Register + ")";
 
-                case StorageLocationKind.Stack:
+                case StorageLocationKind.StackFromBase:
+                case StorageLocationKind.StackFromTop:
                 case StorageLocationKind.Heap:
                     return Kind + "(" + Address + ")";
 
@@ -65,6 +70,21 @@ namespace erc
         public static StorageLocation AsRegister(Register register)
         {
             return new StorageLocation { Kind = StorageLocationKind.Register, Register = register };
+        }
+
+        public static StorageLocation StackFromBase(long offset)
+        {
+            return new StorageLocation { Kind = StorageLocationKind.StackFromBase, Address = offset };
+        }
+
+        public static StorageLocation StackFromTop(long offset)
+        {
+            return new StorageLocation { Kind = StorageLocationKind.StackFromTop, Address = offset };
+        }
+
+        public static StorageLocation Immediate(long value)
+        {
+            return new StorageLocation { Address = value };
         }
 
     }

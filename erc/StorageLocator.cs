@@ -62,7 +62,7 @@ namespace erc
 
             //Otherwise, put on stack
             //Console.WriteLine("Assigning variable " + variable.Name + " to stack offset " + _stackOffset);
-            variable.Location = new StorageLocation { Kind = StorageLocationKind.Stack, Address = _stackOffset };
+            variable.Location = StorageLocation.StackFromBase(_stackOffset);
             _stackOffset += dataType.ByteSize;
         }
 
@@ -124,7 +124,7 @@ namespace erc
 
                 stack.Push(location.Register.Group);
             }
-            else if (location.Kind == StorageLocationKind.Stack)
+            else if (location.Kind == StorageLocationKind.StackFromBase || location.Kind == StorageLocationKind.StackFromTop)
             {
                 //Nothing to do here. Stack does not need to be cleaned up, just leave it as it is
                 //Console.WriteLine("Freeing variable " + variable.Name + " from stack offset " + location.Address);
