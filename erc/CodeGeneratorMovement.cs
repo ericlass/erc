@@ -50,8 +50,8 @@ namespace erc
             }
             else
             {
-                result.Add(new Operation(dataType, dataType.MoveInstruction, StorageLocation.StackFromTop(0), source));
                 result.Add(new Operation(dataType, Instruction.SUB_IMM, StorageLocation.AsRegister(Register.RSP), StorageLocation.Immediate(dataType.ByteSize)));
+                result.Add(new Operation(dataType, dataType.MoveInstruction, StorageLocation.StackFromTop(0), source));                
             }
 
             return result;

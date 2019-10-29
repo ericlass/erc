@@ -194,15 +194,28 @@ namespace erc
                     else
                     {
                         var accumulator = expression.DataType.ElementType.Accumulator;
-                        var expressions = new List<Operation>();
+                        var operations = new List<Operation>();
+
+                        //Save current stack pointer
+                        operations.AddRange(Move(DataType.I64, StorageLocation.AsRegister(Register.RSP), StorageLocation.AsRegister(Register.RSI)));
+
+                        //Align stack correctly
+                        operations.Add(new Operation(DataType.I64, Instruction.AND_IMM, StorageLocation.AsRegister(Register.RSP), StorageLocation.Immediate(expression.DataType.ByteSize * -1)));
+
+                        //Generate single items on stack
                         for (int i = expression.Children.Count - 1; i >= 0; i--)
                         {
                             var child = expression.Children[i];
-                            expressions.AddRange(GenerateExpression(child, accumulator));
-                            expressions.AddRange(Push(expression.DataType.ElementType, accumulator));
+                            operations.AddRange(GenerateExpression(child, accumulator));
+                            operations.AddRange(Push(expression.DataType.ElementType, accumulator));
                         }
-                        expressions.AddRange(Move(expression.DataType, targetLocation, StorageLocation.StackFromTop(expression.DataType.ByteSize)));
-                        return expressions;
+
+                        //Move final vector to target
+                        operations.AddRange(Move(expression.DataType, StorageLocation.StackFromTop(0), targetLocation));
+                        //Restore stack pointer
+                        operations.AddRange(Move(DataType.I64, StorageLocation.AsRegister(Register.RSI), StorageLocation.AsRegister(Register.RSP)));
+
+                        return operations;
                     }
                     
                 case AstItemKind.Variable:
@@ -214,7 +227,10 @@ namespace erc
                     CollapsePushPop(ops);
 
                     //Move value from accumulator to targetLocation
-                    ops.AddRange(Move(expression.DataType, expression.DataType.Accumulator, targetLocation));
+                    if (targetLocation != expression.DataType.Accumulator)
+                    {
+                        ops.AddRange(Move(expression.DataType, expression.DataType.Accumulator, targetLocation));
+                    }
 
                     return ops;
 
