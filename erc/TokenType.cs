@@ -13,6 +13,8 @@ namespace erc
         MathOperator,
         Number,
         Vector,
-        StatementTerminator
+        StatementTerminator,
+        RoundBracketOpen,
+        RoundBracketClose
     }
 }

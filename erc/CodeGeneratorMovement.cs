@@ -43,7 +43,7 @@ namespace erc
             var result = new List<Operation>();
 
             //TODO: make sure value is aligned on stack
-
+            
             if (dataType == DataType.I64)
             {
                 result.Add(new Operation() { DataType = dataType, Instruction = Instruction.PUSH, Operand1 = source });

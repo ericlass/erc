@@ -103,6 +103,28 @@ namespace erc
             return GetAllValues().FindAll((a) => a.ByteSize == size);
         }
 
+        public static Register GroupToSpecificRegister(RegisterGroup group, DataType dataType)
+        {
+            var allRegisters = Register.GetAllValues();
+
+            var byteSize = dataType.ByteSize;
+            if (dataType == DataType.F32 || dataType == DataType.F64)
+            {
+                //TODO: Bad hack to make F32/F64 go into XMM registers. Find a better way.
+                byteSize = DataType.VEC4F.ByteSize;
+            }
+
+            var found = allRegisters.FindAll((r) => r.Group == group && r.ByteSize == byteSize);
+
+            if (found.Count == 0)
+                throw new Exception("Could not find any register for group " + group + " and data type " + dataType);
+
+            if (found.Count > 1)
+                throw new Exception("Found multiple registers for group " + group + " and data type " + dataType);
+
+            return found[0];
+        }
+
         /*********************************************/
         /**************** R REGISTERS ****************/
         /*********************************************/

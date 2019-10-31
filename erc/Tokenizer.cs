@@ -77,6 +77,18 @@ namespace erc
                 values = ReadVector(iterator);
                 type = TokenType.Vector;
             }
+            else if (c == '(')
+            {
+                value = c.ToString();
+                type = TokenType.RoundBracketOpen;
+                iterator.Step();
+            }
+            else if (c == ')')
+            {
+                value = c.ToString();
+                type = TokenType.RoundBracketClose;
+                iterator.Step();
+            }
             else
             {
                 throw new Exception("Unexpected character '" + c + "' at (" + startLine + "," + startColumn + ")");

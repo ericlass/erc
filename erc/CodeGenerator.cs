@@ -273,7 +273,6 @@ namespace erc
                         {
                             ops.Add(new Operation(item.DataType, Instruction.POP, operand2));
                             ops.Add(new Operation(item.DataType, Instruction.POP, operand1));
-                            //TODO: Check how this works so no operand is lost!
                             ops.Add(new Operation(item.DataType, instruction, accumulator, operand1, operand2));
                         }
                         else if (instruction.NumOperands == 2)
@@ -331,7 +330,7 @@ namespace erc
                             {
                                 //Check if location has changed between the push and pop
                                 var hasChanged = false;
-                                for (int k = j; k < i; k++)
+                                for (int k = j + 1; k < i; k++)
                                 {
                                     var checkOp = ops[k];
                                     if (checkOp.Instruction != Instruction.NOP && checkOp.Instruction != Instruction.POP)

@@ -18,6 +18,8 @@ namespace erc
         SubOp,
         MulOp,
         DivOp,
+        RoundBracketOpen,
+        RoundBracketClose,
         //EqualsOp,
         //NotEqualsOp,
         //LessThanOp,
@@ -56,6 +58,8 @@ namespace erc
             switch (Kind)
             {
                 case AstItemKind.Programm:
+                case AstItemKind.RoundBracketOpen:
+                case AstItemKind.RoundBracketClose:
                     return Kind.ToString();
 
                 case AstItemKind.VarDecl:
@@ -244,6 +248,16 @@ namespace erc
         public static AstItem VarScopeEnd(string varName)
         {
             return new AstItem { Kind = AstItemKind.VarScopeEnd, Identifier = varName };
+        }
+
+        public static AstItem RoundBracketOpen()
+        {
+            return new AstItem { Kind = AstItemKind.RoundBracketOpen };
+        }
+
+        public static AstItem RoundBracketClose()
+        {
+            return new AstItem { Kind = AstItemKind.RoundBracketClose };
         }
 
     }

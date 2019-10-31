@@ -224,6 +224,14 @@ namespace erc
                             expItemsInfix.Add(operatorItem);
                             break;
 
+                        case TokenType.RoundBracketOpen:
+                            expItemsInfix.Add(AstItem.RoundBracketOpen());
+                            break;
+
+                        case TokenType.RoundBracketClose:
+                            expItemsInfix.Add(AstItem.RoundBracketClose());
+                            break;
+
                         default:
                             throw new Exception("Unexpected expression token: " + token);
                     }
@@ -316,7 +324,13 @@ namespace erc
 
         private bool IsExpressionToken(Token token)
         {
-            return token.TokenType == TokenType.Word || token.TokenType == TokenType.Number || token.TokenType == TokenType.Vector || token.TokenType == TokenType.MathOperator;
+            return
+                token.TokenType == TokenType.Word ||
+                token.TokenType == TokenType.Number ||
+                token.TokenType == TokenType.Vector ||
+                token.TokenType == TokenType.MathOperator ||
+                token.TokenType == TokenType.RoundBracketOpen ||
+                token.TokenType == TokenType.RoundBracketClose;
         }
 
         private DataType GuessDataType(Token token)
@@ -384,19 +398,19 @@ namespace erc
                 {
                     output.Add(item);
                 }
-                /*else if (c == '(')
+                else if (item.Kind == AstItemKind.RoundBracketOpen)
                 {
-                    stack.Push(c);
+                    stack.Push(item);
                 }
-                else if (c == ')')
+                else if (item.Kind == AstItemKind.RoundBracketClose)
                 {
                     cbuffer = stack.Pop();
-                    while (cbuffer != '(')
+                    while (cbuffer.Kind != AstItemKind.RoundBracketOpen)
                     {
-                        output.Append(cbuffer);
+                        output.Add(cbuffer);
                         cbuffer = stack.Pop();
                     }
-                }*/
+                }
                 else
                 {
                     if (stack.Count != 0 && Predecessor(stack.Peek(), item))
@@ -454,6 +468,10 @@ namespace erc
                 case AstItemKind.MulOp:
                 case AstItemKind.DivOp:
                     return 13;
+
+                case AstItemKind.RoundBracketOpen:
+                case AstItemKind.RoundBracketClose:
+                    return 11;
 
                 default:
                     throw new Exception("Not an operator: " + op);
