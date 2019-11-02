@@ -42,8 +42,8 @@ namespace erc
 
             var result = new List<Operation>();
 
-            //TODO: make sure value is aligned on stack
-            
+            //TODO: make sure value is aligned on stack. Is this actually possible? How to keep track of the alignment-gaps
+
             if (dataType == DataType.I64)
             {
                 result.Add(new Operation() { DataType = dataType, Instruction = Instruction.PUSH, Operand1 = source });
@@ -51,7 +51,33 @@ namespace erc
             else
             {
                 result.Add(new Operation(dataType, Instruction.SUB_IMM, StorageLocation.AsRegister(Register.RSP), StorageLocation.Immediate(dataType.ByteSize)));
-                result.Add(new Operation(dataType, dataType.MoveInstruction, StorageLocation.StackFromTop(0), source));                
+                result.Add(new Operation(dataType, dataType.MoveInstruction, StorageLocation.StackFromTop(0), source));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Generate the required operations for poping a value from the stack.
+        /// </summary>
+        /// <param name="dataType">The data type to pop.</param>
+        /// <param name="target">The target location.</param>
+        /// <returns>The operations required to pop the value from the stack.</returns>
+        public List<Operation> Pop(DataType dataType, StorageLocation target)
+        {
+            if (target.Kind != StorageLocationKind.Register)
+                throw new Exception("Can only pop to register, but given: " + target);
+
+            var result = new List<Operation>();
+
+            if (dataType == DataType.I64)
+            {
+                result.Add(new Operation() { DataType = dataType, Instruction = Instruction.POP, Operand1 = target });
+            }
+            else
+            {
+                result.Add(new Operation(dataType, dataType.MoveInstruction, target, StorageLocation.StackFromTop(0)));
+                result.Add(new Operation(dataType, Instruction.ADD_IMM, StorageLocation.AsRegister(Register.RSP), StorageLocation.Immediate(dataType.ByteSize)));
             }
 
             return result;

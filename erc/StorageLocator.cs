@@ -128,7 +128,7 @@ namespace erc
             _freeMMRegisters.Push(RegisterGroup.MM10);
             _freeMMRegisters.Push(RegisterGroup.MM9);
             _freeMMRegisters.Push(RegisterGroup.MM8);
-            _freeMMRegisters.Push(RegisterGroup.MM7);
+            //_freeMMRegisters.Push(RegisterGroup.MM7); //used for constructing vectors
             //_freeMMRegisters.Push(RegisterGroup.MM6); //used for arithmetic
             //_freeMMRegisters.Push(RegisterGroup.MM5); //used for arithmetic
             //_freeMMRegisters.Push(RegisterGroup.MM4); //used as accumulator

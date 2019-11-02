@@ -1,4 +1,5 @@
 ﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -13,7 +14,7 @@ namespace erc
             "include 'win64a.inc'\n\n" +
             "section '.data' data readable writeable\n";
 
-        private const string CodeSection = 
+        private const string CodeSection =
             "section '.text' code readable executable\n" +
             "start:\n";
 
@@ -50,7 +51,7 @@ namespace erc
             {
                 if (statement.Kind != AstItemKind.VarScopeEnd)
                 {
-                    //codeLines.Add("// " + statement.SourceLine);
+                    codeLines.Add(new Operation(DataType.I64, Instruction.NOP));
                     codeLines.AddRange(GenerateStatement(statement));
                 }
             }
@@ -132,7 +133,8 @@ namespace erc
 
                         item.Children.ForEach((c) => c.DataGenerated = true);
                     }
-                    else {
+                    else
+                    {
                         //Vectors that are not full-immediate need to be generated at runtime, not at compile time in data section
                     }
                 }
@@ -154,7 +156,8 @@ namespace erc
 
         private List<Operation> GenerateStatement(AstItem statement)
         {
-            switch (statement.Kind) {
+            switch (statement.Kind)
+            {
                 case AstItemKind.VarDecl:
                     return GenerateVarDecl(statement);
 
@@ -184,7 +187,7 @@ namespace erc
                 case AstItemKind.Immediate:
                     var src = StorageLocation.DataSection(expression.Identifier);
                     return Move(expression.DataType, src, targetLocation);
-                
+
                 case AstItemKind.Vector:
                     if (IsFullImmediateVector(expression))
                     {
@@ -193,38 +196,18 @@ namespace erc
                     }
                     else
                     {
-                        var accumulator = expression.DataType.ElementType.Accumulator;
-                        var operations = new List<Operation>();
-
-                        //Save current stack pointer
-                        operations.AddRange(Move(DataType.I64, StorageLocation.AsRegister(Register.RSP), StorageLocation.AsRegister(Register.RSI)));
-
-                        //Align stack correctly
-                        operations.Add(new Operation(DataType.I64, Instruction.AND_IMM, StorageLocation.AsRegister(Register.RSP), StorageLocation.Immediate(expression.DataType.ByteSize * -1)));
-
-                        //Generate single items on stack
-                        for (int i = expression.Children.Count - 1; i >= 0; i--)
-                        {
-                            var child = expression.Children[i];
-                            operations.AddRange(GenerateExpression(child, accumulator));
-                            operations.AddRange(Push(expression.DataType.ElementType, accumulator));
-                        }
-
-                        //Move final vector to target
-                        operations.AddRange(Move(expression.DataType, StorageLocation.StackFromTop(0), targetLocation));
-                        //Restore stack pointer
-                        operations.AddRange(Move(DataType.I64, StorageLocation.AsRegister(Register.RSI), StorageLocation.AsRegister(Register.RSP)));
-
-                        return operations;
+                        return GenerateVectorWithExpressions(expression, targetLocation);
                     }
-                    
+
                 case AstItemKind.Variable:
                     var variable = _context.Variables[expression.Identifier];
                     return Move(expression.DataType, variable.Location, targetLocation);
-                
+
                 case AstItemKind.Expression:
                     var ops = GenerateExpressionOperations(expression.Children);
                     CollapsePushPop(ops);
+                    //It is possible that some push/pops remain. For vectors, these must be converted to moves.
+                    GenerateVectorPushPops(ops);
 
                     //Move value from accumulator to targetLocation
                     if (targetLocation != expression.DataType.Accumulator)
@@ -239,10 +222,70 @@ namespace erc
             }
         }
 
+        //Replace PUSH and POP of vectors with corresponding moves
+        private void GenerateVectorPushPops(List<Operation> ops)
+        {
+            for (int i = ops.Count - 1; i >= 0; i--)
+            {
+                var op = ops[i];
+                if (op.DataType.IsVector)
+                {
+                    if (op.Instruction == Instruction.PUSH)
+                    {
+                        ops.RemoveAt(i);
+                        ops.InsertRange(i, Push(op.DataType, op.Operand1));
+                    }
+                    else if (op.Instruction == Instruction.POP)
+                    {
+                        ops.RemoveAt(i);
+                        ops.InsertRange(i, Pop(op.DataType, op.Operand1));
+                    }
+                }
+            }
+        }
+
+        private List<Operation> GenerateVectorWithExpressions(AstItem expression, StorageLocation targetLocation)
+        {
+            var accumulator = expression.DataType.ElementType.Accumulator;
+            var operations = new List<Operation>();
+
+            //Save current stack pointer
+            operations.AddRange(Move(DataType.I64, StorageLocation.AsRegister(Register.RSP), StorageLocation.AsRegister(Register.RSI)));
+
+            //Align stack correctly
+            operations.Add(new Operation(DataType.I64, Instruction.AND_IMM, StorageLocation.AsRegister(Register.RSP), StorageLocation.Immediate(expression.DataType.ByteSize * -1)));
+
+            //Generate vector on stack
+            operations.AddRange(GenerateVectorWithExpressionsOnStack(expression));
+            
+            //Move final vector to target
+            operations.AddRange(Move(expression.DataType, StorageLocation.StackFromTop(0), targetLocation));
+            //Restore stack pointer
+            operations.AddRange(Move(DataType.I64, StorageLocation.AsRegister(Register.RSI), StorageLocation.AsRegister(Register.RSP)));
+
+            return operations;
+        }
+
+        private List<Operation> GenerateVectorWithExpressionsOnStack(AstItem expression)
+        {
+            var accumulator = expression.DataType.ElementType.Accumulator;
+            var operations = new List<Operation>();
+
+            //Generate single items on stack
+            for (int i = expression.Children.Count - 1; i >= 0; i--)
+            {
+                var child = expression.Children[i];
+                operations.AddRange(GenerateExpression(child, accumulator));
+                operations.AddRange(Push(expression.DataType.ElementType, accumulator));
+            }
+
+            return operations;
+        }
+
         private List<Operation> GenerateExpressionOperations(List<AstItem> items)
         {
             var ops = new List<Operation>();
-            
+
             foreach (var item in items)
             {
                 switch (item.Kind)
@@ -250,16 +293,33 @@ namespace erc
                     case AstItemKind.Immediate:
                         ops.Add(new Operation(item.DataType, Instruction.PUSH, StorageLocation.DataSection(item.Identifier)));
                         break;
-                        
+
                     case AstItemKind.Vector:
-                        //TODO: Do as above in GenerateExpression
+                        if (IsFullImmediateVector(item))
+                        {
+                            ops.Add(new Operation(item.DataType, Instruction.PUSH, StorageLocation.DataSection(item.Identifier)));
+                        }
+                        else
+                        {
+                            //TODO: Put into DataType as .ConstructionRegister (null for non-vector types)
+                            Register register = null;
+                            if (item.DataType.ByteSize == 16)
+                                register = Register.XMM7;
+                            else if (item.DataType.ByteSize == 32)
+                                register = Register.YMM7;
+                            else
+                                throw new Exception("Unknown ");
+
+                            var target = StorageLocation.AsRegister(register);
+                            ops.AddRange(GenerateVectorWithExpressionsOnStack(item));
+                        }
                         break;
-                        
+
                     case AstItemKind.Variable:
                         var variable = _context.Variables[item.Identifier];
                         ops.Add(new Operation(item.DataType, Instruction.PUSH, variable.Location));
                         break;
-                        
+
                     case AstItemKind.AddOp:
                     case AstItemKind.SubOp:
                     case AstItemKind.MulOp:
@@ -283,12 +343,12 @@ namespace erc
                         }
                         else
                             throw new Exception("Invalid number of instruction operands: " + instruction);
-                        
+
                         ops.Add(new Operation(item.DataType, Instruction.PUSH, accumulator));
                         break;
-                        
+
                     default:
-                        throw new Exception("Unexpected item in expression: " + item);            
+                        throw new Exception("Unexpected item in expression: " + item);
                 }
             }
 
@@ -322,7 +382,7 @@ namespace erc
                                 popOp.Instruction = popOp.DataType.MoveInstruction;
                                 popOp.Operand1 = target;
                                 popOp.Operand2 = source;
-                                
+
                                 //Make push a nop so it is removed below
                                 pushOp.Instruction = Instruction.NOP;
                             }
@@ -342,7 +402,7 @@ namespace erc
                                         }
                                     }
                                 }
-                                
+
                                 //If not, push/pop can simply be removed.
                                 if (!hasChanged)
                                 {
@@ -359,7 +419,7 @@ namespace erc
                                         pushOp.Instruction = pushOp.DataType.MoveInstruction;
                                         pushOp.Operand2 = pushOp.Operand1;
                                         pushOp.Operand1 = register;
-                                        
+
                                         popOp.Instruction = popOp.DataType.MoveInstruction;
                                         popOp.Operand2 = register;
                                     }
@@ -374,7 +434,7 @@ namespace erc
                     }
                 }
             }
-            
+
             ops.RemoveAll((a) => a.Instruction == Instruction.NOP);
         }
 
