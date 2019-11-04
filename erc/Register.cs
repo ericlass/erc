@@ -93,12 +93,12 @@ namespace erc
             return _allValues;
         }
 
-        public static List<Register> RegistersByGroup(RegisterGroup group)
+        public static List<Register> FindByGroup(RegisterGroup group)
         {
             return GetAllValues().FindAll((a) => a.Group == group);
         }
 
-        public static List<Register> RegistersBySize(int size)
+        public static List<Register> FindBySize(int size)
         {
             return GetAllValues().FindAll((a) => a.ByteSize == size);
         }
@@ -110,7 +110,7 @@ namespace erc
             var byteSize = dataType.ByteSize;
             if (dataType == DataType.F32 || dataType == DataType.F64)
             {
-                //TODO: Bad hack to make F32/F64 go into XMM registers. Find a better way.
+                //HACK: Bad hack to make F32/F64 go into XMM registers. Find a better way.
                 byteSize = DataType.VEC4F.ByteSize;
             }
 

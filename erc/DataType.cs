@@ -1,9 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace erc
 {
     public class DataType
     {
+        private static List<DataType> _allValues = null;
+
         public string Name { get; private set; }
         public int ByteSize { get; private set; }
         public bool IsVector { get; private set; }
@@ -13,6 +17,7 @@ namespace erc
         public StorageLocation Accumulator { get; private set; }
         public StorageLocation TempRegister1 { get; private set; }
         public StorageLocation TempRegister2 { get; private set; }
+        public StorageLocation ConstructionRegister { get; private set; }
         public Instruction MoveInstruction { get; private set; }
         //public bool IsReference { get; private set; }
 
@@ -89,6 +94,27 @@ namespace erc
             return Name;
         }
 
+        public static List<DataType> GetAllValues()
+        {
+            if (_allValues == null)
+            {
+                _allValues = new List<DataType>();
+                var regType = typeof(DataType);
+                var fields = regType.GetFields(BindingFlags.Public | BindingFlags.Static);
+                foreach (var field in fields)
+                {
+                    _allValues.Add(field.GetValue(null) as DataType);
+                }
+            }
+
+            return _allValues;
+        }
+
+        public static DataType FindByName(string name)
+        {
+            return GetAllValues().Find((dt) => dt.Name == name);
+        }
+
         /*********************************/
         /*********************************/
         /*********************************/
@@ -148,6 +174,7 @@ namespace erc
             Accumulator = StorageLocation.AsRegister(Register.XMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
             TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
+            ConstructionRegister = StorageLocation.AsRegister(Register.XMM7),
             MoveInstruction = Instruction.VMOVDQA
         };
 
@@ -162,6 +189,7 @@ namespace erc
             Accumulator = StorageLocation.AsRegister(Register.YMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.YMM5),
             TempRegister2 = StorageLocation.AsRegister(Register.YMM6),
+            ConstructionRegister = StorageLocation.AsRegister(Register.YMM7),
             MoveInstruction = Instruction.VMOVDQA
         };
 
@@ -176,6 +204,7 @@ namespace erc
             Accumulator = StorageLocation.AsRegister(Register.XMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
             TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
+            ConstructionRegister = StorageLocation.AsRegister(Register.XMM7),
             MoveInstruction = Instruction.VMOVAPS
         };
 
@@ -190,6 +219,7 @@ namespace erc
             Accumulator = StorageLocation.AsRegister(Register.YMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.YMM5),
             TempRegister2 = StorageLocation.AsRegister(Register.YMM6),
+            ConstructionRegister = StorageLocation.AsRegister(Register.YMM7),
             MoveInstruction = Instruction.VMOVAPS
         };
 
@@ -204,6 +234,7 @@ namespace erc
             Accumulator = StorageLocation.AsRegister(Register.XMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
             TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
+            ConstructionRegister = StorageLocation.AsRegister(Register.XMM7),
             MoveInstruction = Instruction.VMOVAPD
         };
 
@@ -218,6 +249,7 @@ namespace erc
             Accumulator = StorageLocation.AsRegister(Register.YMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.YMM5),
             TempRegister2 = StorageLocation.AsRegister(Register.YMM6),
+            ConstructionRegister = StorageLocation.AsRegister(Register.YMM7),
             MoveInstruction = Instruction.VMOVAPD
         };
 

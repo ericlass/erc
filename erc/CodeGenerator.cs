@@ -246,7 +246,6 @@ namespace erc
 
         private List<Operation> GenerateVectorWithExpressions(AstItem expression, StorageLocation targetLocation)
         {
-            var accumulator = expression.DataType.ElementType.Accumulator;
             var operations = new List<Operation>();
 
             //Save current stack pointer
@@ -275,6 +274,8 @@ namespace erc
             for (int i = expression.Children.Count - 1; i >= 0; i--)
             {
                 var child = expression.Children[i];
+                //TODO: OPTIMIZE - When expression is immediate or variable, it is not required to go through the accumulator.
+                //                 You can directly "push" the register or memory location to the stack.
                 operations.AddRange(GenerateExpression(child, accumulator));
                 operations.AddRange(Push(expression.DataType.ElementType, accumulator));
             }
@@ -301,16 +302,7 @@ namespace erc
                         }
                         else
                         {
-                            //TODO: Put into DataType as .ConstructionRegister (null for non-vector types)
-                            Register register = null;
-                            if (item.DataType.ByteSize == 16)
-                                register = Register.XMM7;
-                            else if (item.DataType.ByteSize == 32)
-                                register = Register.YMM7;
-                            else
-                                throw new Exception("Unknown ");
-
-                            var target = StorageLocation.AsRegister(register);
+                            var target = item.DataType.ConstructionRegister;
                             ops.AddRange(GenerateVectorWithExpressionsOnStack(item));
                         }
                         break;

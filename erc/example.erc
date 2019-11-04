@@ -22,3 +22,6 @@ let y = x5 + x5;
 let abc = <1.0, d * 2.0, (2.0 * d) + 3.0, d / 4.0>;
 
 let xyz = <d, e> + <e, d>;
+
+fn test(a: i64): i64 {
+}

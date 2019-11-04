@@ -20,15 +20,17 @@ namespace erc
         DivOp,
         RoundBracketOpen,
         RoundBracketClose,
+        Parameter,
+        ParameterList,
+        StatementList,
+        FunctionDecl,
+        FunctionCall
         //EqualsOp,
         //NotEqualsOp,
         //LessThanOp,
         //GreaterThanOp,
         //AndOp,
         //OrOp,
-        //VarDecl,
-        //Assignment,
-        //FuncCall,
         //If
     }
 
@@ -57,11 +59,6 @@ namespace erc
         {
             switch (Kind)
             {
-                case AstItemKind.Programm:
-                case AstItemKind.RoundBracketOpen:
-                case AstItemKind.RoundBracketClose:
-                    return Kind.ToString();
-
                 case AstItemKind.VarDecl:
                 case AstItemKind.Assignment:
                     return Kind + ": " + DataType + "(" + Identifier + "; " + Children[0] + ")";
@@ -73,8 +70,7 @@ namespace erc
                     return Kind + ": " + DataType + "(" + Value + ")";
 
                 case AstItemKind.Vector:
-                    var childValues = Children.ConvertAll((item) => item.ToString());
-                    return "<" + String.Join(",", childValues) + ">";
+                    return "<" + String.Join(",", Children) + ">";
 
                 case AstItemKind.Variable:
                     return Kind + ": " + DataType + "(" + Identifier + ")";
@@ -84,9 +80,21 @@ namespace erc
                 case AstItemKind.MulOp:
                 case AstItemKind.DivOp:
                     return Kind + ": " + String.Join(", ", Children);
-            }
 
-            throw new Exception("Unknown expression kind: " + Kind);
+                case AstItemKind.Parameter:
+                    return Kind + ": " + Identifier + "(" + DataType + ")";
+
+                case AstItemKind.ParameterList:
+                case AstItemKind.StatementList:
+                    return Kind + ": " + String.Join(", ", Children);
+
+                case AstItemKind.FunctionDecl:
+                case AstItemKind.FunctionCall:
+                    return Kind + ": " + Identifier + "(" + String.Join(", ", Children) + ")";
+
+                default:
+                    return Kind.ToString();
+            }
         }
 
         public string ToSimpleString()
@@ -96,6 +104,7 @@ namespace erc
                 case AstItemKind.VarDecl:
                 case AstItemKind.Assignment:
                 case AstItemKind.Variable:
+                case AstItemKind.Parameter:
                     return Kind + ": \"" + Identifier + "\" (" + DataType + ")";
 
                 case AstItemKind.VarScopeEnd:
@@ -107,8 +116,6 @@ namespace erc
                 default:
                     return Kind.ToString();
             }
-
-            throw new Exception("Unknown expression kind: " + Kind);
         }
 
         private string ImmediateValueToString()
@@ -206,7 +213,7 @@ namespace erc
             result.DataType = dataType;
             return result;
         }
-        
+
         public static AstItem Expression(DataType dataType, List<AstItem> children)
         {
             return new AstItem
@@ -260,8 +267,37 @@ namespace erc
             return new AstItem { Kind = AstItemKind.RoundBracketClose };
         }
 
+        public static AstItem Parameter(string name, DataType dataType)
+        {
+            return new AstItem { Kind = AstItemKind.Parameter, Identifier = name, DataType = dataType };
+        }
+
+        public static AstItem ParameterList(List<AstItem> parameters)
+        {
+            if (parameters != null && !parameters.TrueForAll((p) => p.Kind == AstItemKind.Parameter))
+                throw new Exception("All parameters must be Kind = Parameter!");
+
+            return new AstItem { Kind = AstItemKind.ParameterList, Children = parameters };
+        }
+
+        public static AstItem StatementList(List<AstItem> statements)
+        {
+            //TODO: Check that all items in given list are statements
+            return new AstItem { Kind = AstItemKind.StatementList, Children = statements };
+        }
+
+        public static AstItem FunctionDecl(string name, DataType returnType, List<AstItem> parameters, List<AstItem> statements)
+        {
+            var paramList = ParameterList(parameters);
+            var statementList = StatementList(statements);
+
+            return new AstItem { Kind = AstItemKind.FunctionDecl, Identifier = name, DataType = returnType, Children = new List<AstItem>() { paramList, statementList } };
+        }
+
+        public static AstItem FunctionCall(string name, List<AstItem> parameterValues)
+        {
+            return new AstItem { Kind = AstItemKind.FunctionCall, Identifier = name, Children = parameterValues };
+        }
+
     }
-
-
-
 }

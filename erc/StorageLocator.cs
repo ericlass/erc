@@ -16,7 +16,6 @@ namespace erc
         {
             Init();
 
-            //TODO: Sort variables by "freeing order" so the ones that are freed first are the ones on top of the stack and can be popped.
             foreach (var statement in context.AST.Children)
             {
                 if (statement.Kind == AstItemKind.VarDecl)

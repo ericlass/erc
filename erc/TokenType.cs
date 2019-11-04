@@ -14,7 +14,11 @@ namespace erc
         Number,
         Vector,
         StatementTerminator,
+        TypeOperator, //Colon
+        Comma,
         RoundBracketOpen,
-        RoundBracketClose
+        RoundBracketClose,
+        CurlyBracketOpen,
+        CurlyBracketClose
     }
 }

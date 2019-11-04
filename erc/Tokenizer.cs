@@ -89,6 +89,30 @@ namespace erc
                 type = TokenType.RoundBracketClose;
                 iterator.Step();
             }
+            else if (c == '{')
+            {
+                value = c.ToString();
+                type = TokenType.CurlyBracketOpen;
+                iterator.Step();
+            }
+            else if (c == '}')
+            {
+                value = c.ToString();
+                type = TokenType.CurlyBracketClose;
+                iterator.Step();
+            }
+            else if (c == ':')
+            {
+                value = c.ToString();
+                type = TokenType.TypeOperator;
+                iterator.Step();
+            }
+            else if (c == ',')
+            {
+                value = c.ToString();
+                type = TokenType.Comma;
+                iterator.Step();
+            }
             else
             {
                 throw new Exception("Unexpected character '" + c + "' at (" + startLine + "," + startColumn + ")");
