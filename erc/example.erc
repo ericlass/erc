@@ -1,27 +1,26 @@
 
-let a = (5+(7-3))*8;
- let b = 1.5f ;
-let c=b;
-let d = 1.2;
-let e = 0.5d;
+fn main() {
+	let a = (5+(7-3))*8;
+	 let b = 1.5f ;
+	let c=b;
+	let d = 1.2;
+	let e = 0.5d;
 
-let k = e * d;
-k = k + 2.0;
+	let k = e * d;
+	k = k + 2.0;
 
-let x1 = <1, 2>;
-let x2 = <1, 2, 3, 4>;
+	let x1 = <1, 2>;
+	let x2 = <1, 2, 3, 4>;
 
-let x3 = <1.0f, 2.0f, 3.0f, 4.0f>;
-let x4 = <1.0f, 2.0f, 3.0f, 4.0f, 1.0f, 2.0f, 3.0f, 4.0f>;
+	let x3 = <1.0f, 2.0f, 3.0f, 4.0f>;
+	let x4 = <1.0f, 2.0f, 3.0f, 4.0f, 1.0f, 2.0f, 3.0f, 4.0f>;
 
-let x5 = <1.0, 2.0>;
-let x6 = <1.0, 2.0, 3.0, 4.0>;
+	let x5 = <1.0, 2.0>;
+	let x6 = <1.0, 2.0, 3.0, 4.0>;
 
-let y = x5 + x5;
+	let y = x5 + x5;
 
-let abc = <1.0, d * 2.0, (2.0 * d) + 3.0, d / 4.0>;
+	let abc = <1.0, d * 2.0, (2.0 * d) + 3.0, d / 4.0>;
 
-let xyz = <d, e> + <e, d>;
-
-fn test(a: i64): i64 {
+	let xyz = <d, e> + <e, d>;
 }

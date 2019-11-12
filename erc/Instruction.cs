@@ -107,5 +107,7 @@ namespace erc
 
         public static Instruction VPSLLDQ = new Instruction("VPSLLDQ", 3);
 
+        public static Instruction CALL = new Instruction("CALL", 1, (instr, op1, op2, op3) => instr.Name + " " + op1.ToCode());
+
     }
 }

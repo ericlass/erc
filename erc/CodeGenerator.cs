@@ -1,5 +1,4 @@
 ﻿using System;
-using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -20,7 +19,7 @@ namespace erc
 
         private const string CodeFooter =
             "\nxor ecx,ecx\n" +
-            "call[ExitProcess]\n\n" +
+            "call [ExitProcess]\n\n" +
             "section '.idata' import data readable writeable\n" +
             "library kernel32,'KERNEL32.DLL'\n\n" +
             "import kernel32,\\\n" +
@@ -29,6 +28,7 @@ namespace erc
         private CompilerContext _context = null;
         private long _immCounter = 0;
         private Dictionary<string, Instruction> _instructionMap = null;
+        private Function _currentFunction = null;
 
         private string GetImmName()
         {
@@ -51,7 +51,7 @@ namespace erc
             {
                 if (statement.Kind != AstItemKind.VarScopeEnd)
                 {
-                    codeLines.Add(new Operation(DataType.I64, Instruction.NOP));
+                    //codeLines.Add(new Operation(DataType.I64, Instruction.NOP));
                     codeLines.AddRange(GenerateStatement(statement));
                 }
             }
@@ -154,6 +154,35 @@ namespace erc
             return vector.Children.TrueForAll((i) => i.Kind == AstItemKind.Immediate);
         }
 
+        private List<Operation> GenerateFunction(AstItem function)
+        {
+            if (function.Kind != AstItemKind.FunctionDecl)
+                throw new Exception("Given AST item must be a FunctionDecl!");
+
+            var parameters = function.Children[0];
+            var statements = function.Children[1];
+
+            var result = new List<Operation>();
+
+            _currentFunction = _context.Functions[function.Identifier];
+
+            var labelName = "fn_" + function.Identifier;
+            //TODO: Add function label in ASM code
+
+            foreach (var statement in function.Children[1].Children)
+            {
+                if (statement.Kind != AstItemKind.VarScopeEnd)
+                {
+                    //result.Add(new Operation(DataType.I64, Instruction.NOP));
+                    result.AddRange(GenerateStatement(statement));
+                }
+            }
+
+            _currentFunction = null;
+
+            return result;
+        }
+
         private List<Operation> GenerateStatement(AstItem statement)
         {
             switch (statement.Kind)
@@ -163,6 +192,9 @@ namespace erc
 
                 case AstItemKind.Assignment:
                     return GenerateAssignment(statement);
+
+                case AstItemKind.FunctionCall:
+                    return GenerateFunctionCall(statement, null);
             }
 
             return new List<Operation>();
@@ -176,8 +208,35 @@ namespace erc
 
         private List<Operation> GenerateAssignment(AstItem statement)
         {
+            //TODO: Is it allowed to overwrite values of parameters?
+            //var location = GetVariableOrParameterLocation(expression.Identifier);
+
             var variable = _context.Variables[statement.Identifier];
             return GenerateExpression(statement.Children[0], variable.Location);
+        }
+
+        private List<Operation> GenerateFunctionCall(AstItem funcCall, StorageLocation targetLocation)
+        {
+            var result = new List<Operation>();
+            var function = _context.Functions[funcCall.Identifier];
+
+            //Generate parameter value in desired locations
+            for (int i = 0; i < function.Parameters.Count; i++)
+            {
+                //Assuming that AST item has as many children as function has parameters, as this is checked before
+                var parameter = function.Parameters[i];
+                var expression = funcCall.Children[i];
+                result.AddRange(GenerateExpression(expression, parameter.Location));
+            }
+
+            //Finally, call function
+            result.Add(new Operation(function.ReturnType, Instruction.CALL, StorageLocation.Label(function.Name)));
+
+            //Move result value (if exists) to target location (if required)
+            if (function.ReturnType != DataType.VOID && targetLocation != null && function.ReturnLocation != targetLocation)
+                result.AddRange(Move(function.ReturnType, function.ReturnLocation, targetLocation));
+
+            return result;
         }
 
         private List<Operation> GenerateExpression(AstItem expression, StorageLocation targetLocation)
@@ -200,8 +259,12 @@ namespace erc
                     }
 
                 case AstItemKind.Variable:
-                    var variable = _context.Variables[expression.Identifier];
-                    return Move(expression.DataType, variable.Location, targetLocation);
+                    var location = GetVariableOrParameterLocation(expression.Identifier);
+                    return Move(expression.DataType, location, targetLocation);
+
+                case AstItemKind.FunctionCall:
+                    return GenerateFunctionCall(expression, targetLocation);
+                    break;
 
                 case AstItemKind.Expression:
                     var ops = GenerateExpressionOperations(expression.Children);
@@ -256,7 +319,7 @@ namespace erc
 
             //Generate vector on stack
             operations.AddRange(GenerateVectorWithExpressionsOnStack(expression));
-            
+
             //Move final vector to target
             operations.AddRange(Move(expression.DataType, StorageLocation.StackFromTop(0), targetLocation));
             //Restore stack pointer
@@ -275,7 +338,7 @@ namespace erc
             {
                 var child = expression.Children[i];
                 //TODO: OPTIMIZE - When expression is immediate or variable, it is not required to go through the accumulator.
-                //                 You can directly "push" the register or memory location to the stack.
+                //             	You can directly "push" the register or memory location to the stack.
                 operations.AddRange(GenerateExpression(child, accumulator));
                 operations.AddRange(Push(expression.DataType.ElementType, accumulator));
             }
@@ -308,8 +371,13 @@ namespace erc
                         break;
 
                     case AstItemKind.Variable:
-                        var variable = _context.Variables[item.Identifier];
-                        ops.Add(new Operation(item.DataType, Instruction.PUSH, variable.Location));
+                        var location = GetVariableOrParameterLocation(item.Identifier);
+                        ops.Add(new Operation(item.DataType, Instruction.PUSH, location));
+                        break;
+
+                    case AstItemKind.FunctionCall:
+                        ops.AddRange(GenerateFunctionCall(item, item.DataType.Accumulator));
+                        Push(item.DataType, item.DataType.Accumulator);
                         break;
 
                     case AstItemKind.AddOp:
@@ -346,6 +414,24 @@ namespace erc
 
             ops.RemoveAt(ops.Count - 1);
             return ops;
+        }
+
+        private StorageLocation GetVariableOrParameterLocation(string name)
+        {
+            //Variables take precedence over parameters
+            if (_context.Variables.ContainsKey(name))
+            {
+                var variable = _context.Variables[name];
+                return variable.Location;
+            }
+            else if (_currentFunction != null)
+            {
+                var parameter = _currentFunction.Parameters.Find((p) => p.Name == name);
+                if (parameter != null)
+                    return parameter.Location;
+            }
+
+            throw new Exception("Expected variable or function parameter, found unknown identifier '" + name + "'!");
         }
 
         private Instruction GetInstruction(AstItemKind kind, DataType dataType)

@@ -68,5 +68,10 @@ namespace erc
             return _position < _items.Count;
         }
 
+        public List<T> ToList()
+        {
+            return new List<T>(_items);
+        }
+
     }
 }

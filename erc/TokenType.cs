@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace erc
 {
@@ -19,6 +15,8 @@ namespace erc
         RoundBracketOpen,
         RoundBracketClose,
         CurlyBracketOpen,
-        CurlyBracketClose
+        CurlyBracketClose,
+        Let,
+        Fn
     }
 }

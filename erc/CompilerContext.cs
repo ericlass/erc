@@ -10,5 +10,6 @@ namespace erc
         public AstItem AST { get; set; }
 
         public Dictionary<string, Variable> Variables { get; set; } = new Dictionary<string, Variable>();
+        public Dictionary<string, Function> Functions { get; set; } = new Dictionary<string, Function>();
     }
 }

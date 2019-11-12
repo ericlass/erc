@@ -7,7 +7,11 @@ namespace erc
     {
         public void Process(CompilerContext context)
         {
-            CreateVariableScopeNodes(context.AST);
+            foreach (var function in context.AST.Children)
+            {
+                CreateVariableScopeNodes(function);
+            }
+            
             AssignDataNames(context.AST);
         }
 

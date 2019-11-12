@@ -294,9 +294,9 @@ namespace erc
             return new AstItem { Kind = AstItemKind.FunctionDecl, Identifier = name, DataType = returnType, Children = new List<AstItem>() { paramList, statementList } };
         }
 
-        public static AstItem FunctionCall(string name, List<AstItem> parameterValues)
+        public static AstItem FunctionCall(string name, DataType returnType, List<AstItem> parameterValues)
         {
-            return new AstItem { Kind = AstItemKind.FunctionCall, Identifier = name, Children = parameterValues };
+            return new AstItem { Kind = AstItemKind.FunctionCall, DataType = returnType, Identifier = name, Children = parameterValues };
         }
 
     }

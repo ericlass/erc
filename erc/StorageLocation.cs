@@ -8,7 +8,8 @@ namespace erc
         StackFromBase,
         StackFromTop,
         Heap,
-        DataSection
+        DataSection,
+        Label
     }
 
     public class StorageLocation
@@ -35,6 +36,7 @@ namespace erc
                     return "[" + Address + "]";
 
                 case StorageLocationKind.DataSection:
+                case StorageLocationKind.Label:
                     return "[" + DataName + "]";
 
                 default:
@@ -87,5 +89,14 @@ namespace erc
             return new StorageLocation { Address = value };
         }
 
+        public static StorageLocation Heap()
+        {
+            return new StorageLocation { Kind = StorageLocationKind.Heap };
+        }
+
+        internal static StorageLocation Label(string label)
+        {
+            return new StorageLocation { Kind = StorageLocationKind.Label, DataName = label };
+        }
     }
 }

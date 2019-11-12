@@ -8,6 +8,9 @@ namespace erc
         private Stack<RegisterGroup> _freeRRegisters = new Stack<RegisterGroup>();
         private Stack<RegisterGroup> _freeMMRegisters = new Stack<RegisterGroup>();
 
+        private Stack<RegisterGroup> _freeParameterRRegisters = new Stack<RegisterGroup>();
+        private Stack<RegisterGroup> _freeParameterMMRegisters = new Stack<RegisterGroup>();
+
         private long _stackOffset = 0;
 
         //Heap? not here, dynamically at runtime
@@ -16,18 +19,90 @@ namespace erc
         {
             Init();
 
-            foreach (var statement in context.AST.Children)
+            foreach (var function in context.AST.Children)
             {
-                if (statement.Kind == AstItemKind.VarDecl)
+                AssignFunctionParameterLocations(context.Functions[function.Identifier]);
+                foreach (var statement in function.Children[1].Children)
                 {
-                    var variable = context.Variables[statement.Identifier];
-                    AssignLocation(variable);
+                    if (statement.Kind == AstItemKind.VarDecl)
+                    {
+                        var variable = context.Variables[statement.Identifier];
+                        AssignLocation(variable);
+                    }
+                    else if (statement.Kind == AstItemKind.VarScopeEnd)
+                    {
+                        var variable = context.Variables[statement.Identifier];
+                        FreeLocation(variable);
+                    }
                 }
-                else if (statement.Kind == AstItemKind.VarScopeEnd)
+            }
+        }
+
+        private void AssignFunctionParameterLocations(Function function)
+        {
+            var paramOffset = 0;
+            InitParamRegisters();
+        	foreach (var parameter in function.Parameters)
+            {
+                if (parameter.DataType == DataType.I64)
                 {
-                    var variable = context.Variables[statement.Identifier];
-                    FreeLocation(variable);
+                    if (_freeParameterRRegisters.Count > 0)
+                    {
+                        var group = _freeParameterRRegisters.Pop();
+                        //Also need to pop MM register to keep param position correct!
+                        _freeParameterMMRegisters.Pop();
+
+                        parameter.Location = StorageLocation.AsRegister(Register.GroupToSpecificRegister(group, parameter.DataType));
+                    }
+                    else
+                    {
+                        parameter.Location = StorageLocation.StackFromBase(paramOffset);
+                        paramOffset += parameter.DataType.ByteSize;
+                    }
                 }
+                else if (parameter.DataType == DataType.F32 || parameter.DataType == DataType.F64)
+                {
+                    if (_freeParameterMMRegisters.Count > 0)
+                    {
+                        var group = _freeParameterMMRegisters.Pop();
+                        //Also need to pop R register to keep param position correct!
+                        _freeParameterRRegisters.Pop();
+
+                        parameter.Location = StorageLocation.AsRegister(Register.GroupToSpecificRegister(group, parameter.DataType));
+                    }
+                    else
+                    {
+                        parameter.Location = StorageLocation.StackFromBase(paramOffset);
+                        paramOffset += parameter.DataType.ByteSize;
+                    }
+                }
+                else if (parameter.DataType.IsVector)
+                {
+                    if (function.IsExtern)
+                    {
+                        //Win64, put vector in memory and pass pointer at runtime
+                        parameter.Location = StorageLocation.Heap();
+                    }
+                    else
+                    {
+                        //This differs from Win64 calling convention. The register are there, why not use them?
+                        if (_freeParameterMMRegisters.Count > 0)
+                        {
+                            var group = _freeParameterMMRegisters.Pop();
+                            //Also need to pop R register to keep param position correct!
+                            _freeParameterRRegisters.Pop();
+
+                            parameter.Location = StorageLocation.AsRegister(Register.GroupToSpecificRegister(group, parameter.DataType));
+                        }
+                        else
+                        {
+                            parameter.Location = StorageLocation.StackFromBase(paramOffset);
+                            paramOffset += parameter.DataType.ByteSize;
+                        }
+                    }
+                }
+                else
+                    throw new Exception("Unknown data type: " + parameter.DataType);
             }
         }
 
@@ -135,6 +210,21 @@ namespace erc
             //_freeMMRegisters.Push(RegisterGroup.MM2); //parameter passing
             //_freeMMRegisters.Push(RegisterGroup.MM1); //parameter passing
             //_freeMMRegisters.Push(RegisterGroup.MM0); //parameter passing
+        }
+
+        private void InitParamRegisters()
+        {
+            _freeParameterRRegisters.Clear();
+            _freeParameterRRegisters.Push(RegisterGroup.R9);
+            _freeParameterRRegisters.Push(RegisterGroup.R8);
+            _freeParameterRRegisters.Push(RegisterGroup.D);
+            _freeParameterRRegisters.Push(RegisterGroup.C);
+
+            _freeParameterMMRegisters.Clear();
+            _freeParameterMMRegisters.Push(RegisterGroup.MM3);
+            _freeParameterMMRegisters.Push(RegisterGroup.MM2);
+            _freeParameterMMRegisters.Push(RegisterGroup.MM1);
+            _freeParameterMMRegisters.Push(RegisterGroup.MM0);
         }
 
     }

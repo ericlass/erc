@@ -48,6 +48,12 @@ namespace erc
             {
                 value = ReadWord(iterator);
                 type = TokenType.Word;
+
+                //Handle special reserved words
+                if (value == "let")
+                    type = TokenType.Let;
+                else if (value == "fn")
+                    type = TokenType.Fn;
             }
             else if (IsDigit(c))
             {
