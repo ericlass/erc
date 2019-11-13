@@ -1,4 +1,5 @@
 ﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -9,7 +10,7 @@ namespace erc
     {
         private const string CodeHeader =
             "format PE64 NX GUI 6.0\n" +
-            "entry start\n" +
+            "entry fn_main\n" +
             "include 'win64a.inc'\n\n" +
             "section '.data' data readable writeable\n";
 
@@ -47,13 +48,9 @@ namespace erc
             GenerateDataSection(context.AST, dataEntries);
 
             var codeLines = new List<Operation>();
-            foreach (var statement in context.AST.Children)
+            foreach (var function in context.AST.Children)
             {
-                if (statement.Kind != AstItemKind.VarScopeEnd)
-                {
-                    //codeLines.Add(new Operation(DataType.I64, Instruction.NOP));
-                    codeLines.AddRange(GenerateStatement(statement));
-                }
+                codeLines.AddRange(GenerateFunction(function));
             }
 
             StringBuilder builder = new StringBuilder();
@@ -72,94 +69,12 @@ namespace erc
             return builder.ToString();
         }
 
-        private void GenerateDataSection(AstItem item, List<Tuple<int, string>> entries)
-        {
-            if (!item.DataGenerated)
-            {
-                if (item.Kind == AstItemKind.Immediate)
-                {
-                    if (item.DataType == DataType.I64)
-                    {
-                        entries.Add(new Tuple<int, string>(item.DataType.ByteSize, item.Identifier + " dq " + item.Value));
-                    }
-                    else if (item.DataType == DataType.F32)
-                    {
-                        float fVal = (float)item.Value;
-                        entries.Add(new Tuple<int, string>(item.DataType.ByteSize, item.Identifier + " dd " + fVal.ToString("0.0", CultureInfo.InvariantCulture)));
-                    }
-                    else if (item.DataType == DataType.F64)
-                    {
-                        var dVal = (double)item.Value;
-                        entries.Add(new Tuple<int, string>(item.DataType.ByteSize, item.Identifier + " dq " + dVal.ToString("0.0", CultureInfo.InvariantCulture)));
-                    }
-                    else
-                        throw new Exception("Unsupported type for immediates: " + item.DataType);
-
-                    item.DataGenerated = true;
-                }
-                else if (item.Kind == AstItemKind.Vector)
-                {
-                    if (IsFullImmediateVector(item))
-                    {
-                        var dataLine = item.Identifier;
-
-                        if (item.DataType == DataType.IVEC2Q || item.DataType == DataType.IVEC4Q)
-                        {
-                            dataLine += " dq ";
-                            dataLine += String.Join(",", item.Children.ConvertAll<string>((a) => a.Value.ToString()));
-                        }
-                        else if (item.DataType == DataType.VEC4F || item.DataType == DataType.VEC8F)
-                        {
-                            dataLine += " dd ";
-                            dataLine += String.Join(",", item.Children.ConvertAll<string>((a) =>
-                            {
-                                var fVal = (float)a.Value;
-                                return fVal.ToString("0.0", CultureInfo.InvariantCulture);
-                            }));
-                        }
-                        else if (item.DataType == DataType.VEC2D || item.DataType == DataType.VEC4D)
-                        {
-                            dataLine += " dq ";
-                            dataLine += String.Join(",", item.Children.ConvertAll<string>((a) =>
-                            {
-                                var dVal = (double)a.Value;
-                                return dVal.ToString("0.0", CultureInfo.InvariantCulture);
-                            }));
-                        }
-                        else
-                            throw new Exception("Incorrect data type for vector AST item: " + item.DataType);
-
-                        entries.Add(new Tuple<int, string>(item.DataType.ByteSize, dataLine));
-
-                        item.Children.ForEach((c) => c.DataGenerated = true);
-                    }
-                    else
-                    {
-                        //Vectors that are not full-immediate need to be generated at runtime, not at compile time in data section
-                    }
-                }
-            }
-
-            foreach (var child in item.Children)
-            {
-                GenerateDataSection(child, entries);
-            }
-        }
-
-        private bool IsFullImmediateVector(AstItem vector)
-        {
-            if (vector.Kind != AstItemKind.Vector)
-                throw new Exception("Only vector items are expected!");
-
-            return vector.Children.TrueForAll((i) => i.Kind == AstItemKind.Immediate);
-        }
-
         private List<Operation> GenerateFunction(AstItem function)
         {
             if (function.Kind != AstItemKind.FunctionDecl)
                 throw new Exception("Given AST item must be a FunctionDecl!");
 
-            var parameters = function.Children[0];
+            //var parameters = function.Children[0];
             var statements = function.Children[1];
 
             var result = new List<Operation>();
@@ -167,13 +82,13 @@ namespace erc
             _currentFunction = _context.Functions[function.Identifier];
 
             var labelName = "fn_" + function.Identifier;
-            //TODO: Add function label in ASM code
+            result.Add(new Operation(DataType.I64, Instruction.V_LABEL, StorageLocation.Label(labelName)));
 
-            foreach (var statement in function.Children[1].Children)
+            foreach (var statement in statements.Children)
             {
                 if (statement.Kind != AstItemKind.VarScopeEnd)
                 {
-                    //result.Add(new Operation(DataType.I64, Instruction.NOP));
+                    //result.Add(new Operation(DataType.I64, Instruction.V_COMMENT, StorageLocation.Label(statement.SourceLine)));
                     result.AddRange(GenerateStatement(statement));
                 }
             }
@@ -264,7 +179,6 @@ namespace erc
 
                 case AstItemKind.FunctionCall:
                     return GenerateFunctionCall(expression, targetLocation);
-                    break;
 
                 case AstItemKind.Expression:
                     var ops = GenerateExpressionOperations(expression.Children);
@@ -377,7 +291,7 @@ namespace erc
 
                     case AstItemKind.FunctionCall:
                         ops.AddRange(GenerateFunctionCall(item, item.DataType.Accumulator));
-                        Push(item.DataType, item.DataType.Accumulator);
+                        ops.AddRange(Push(item.DataType, item.DataType.Accumulator));
                         break;
 
                     case AstItemKind.AddOp:
@@ -571,6 +485,88 @@ namespace erc
                 ["mulop_vec4d"] = Instruction.VMULPD,
                 ["divop_vec4d"] = Instruction.VDIVPD,
             };
+        }
+
+        private void GenerateDataSection(AstItem item, List<Tuple<int, string>> entries)
+        {
+            if (!item.DataGenerated)
+            {
+                if (item.Kind == AstItemKind.Immediate)
+                {
+                    if (item.DataType == DataType.I64)
+                    {
+                        entries.Add(new Tuple<int, string>(item.DataType.ByteSize, item.Identifier + " dq " + item.Value));
+                    }
+                    else if (item.DataType == DataType.F32)
+                    {
+                        float fVal = (float)item.Value;
+                        entries.Add(new Tuple<int, string>(item.DataType.ByteSize, item.Identifier + " dd " + fVal.ToString("0.0", CultureInfo.InvariantCulture)));
+                    }
+                    else if (item.DataType == DataType.F64)
+                    {
+                        var dVal = (double)item.Value;
+                        entries.Add(new Tuple<int, string>(item.DataType.ByteSize, item.Identifier + " dq " + dVal.ToString("0.0", CultureInfo.InvariantCulture)));
+                    }
+                    else
+                        throw new Exception("Unsupported type for immediates: " + item.DataType);
+
+                    item.DataGenerated = true;
+                }
+                else if (item.Kind == AstItemKind.Vector)
+                {
+                    if (IsFullImmediateVector(item))
+                    {
+                        var dataLine = item.Identifier;
+
+                        if (item.DataType == DataType.IVEC2Q || item.DataType == DataType.IVEC4Q)
+                        {
+                            dataLine += " dq ";
+                            dataLine += String.Join(",", item.Children.ConvertAll<string>((a) => a.Value.ToString()));
+                        }
+                        else if (item.DataType == DataType.VEC4F || item.DataType == DataType.VEC8F)
+                        {
+                            dataLine += " dd ";
+                            dataLine += String.Join(",", item.Children.ConvertAll<string>((a) =>
+                            {
+                                var fVal = (float)a.Value;
+                                return fVal.ToString("0.0", CultureInfo.InvariantCulture);
+                            }));
+                        }
+                        else if (item.DataType == DataType.VEC2D || item.DataType == DataType.VEC4D)
+                        {
+                            dataLine += " dq ";
+                            dataLine += String.Join(",", item.Children.ConvertAll<string>((a) =>
+                            {
+                                var dVal = (double)a.Value;
+                                return dVal.ToString("0.0", CultureInfo.InvariantCulture);
+                            }));
+                        }
+                        else
+                            throw new Exception("Incorrect data type for vector AST item: " + item.DataType);
+
+                        entries.Add(new Tuple<int, string>(item.DataType.ByteSize, dataLine));
+
+                        item.Children.ForEach((c) => c.DataGenerated = true);
+                    }
+                    else
+                    {
+                        //Vectors that are not full-immediate need to be generated at runtime, not at compile time in data section
+                    }
+                }
+            }
+
+            foreach (var child in item.Children)
+            {
+                GenerateDataSection(child, entries);
+            }
+        }
+
+        private bool IsFullImmediateVector(AstItem vector)
+        {
+            if (vector.Kind != AstItemKind.Vector)
+                throw new Exception("Only vector items are expected!");
+
+            return vector.Children.TrueForAll((i) => i.Kind == AstItemKind.Immediate);
         }
 
     }
