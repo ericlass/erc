@@ -24,3 +24,7 @@ fn main() {
 
 	let xyz = <d, e> + <e, d>;
 }
+
+fn add(pa: vec4d, pb: vec4d): vec4d {
+	ret pa + pb;
+}

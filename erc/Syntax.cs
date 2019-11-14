@@ -7,6 +7,7 @@ namespace erc
     public class Syntax
     {
         private CompilerContext _context;
+        private Function _currentFunction;
 
         public Syntax()
         {
@@ -63,20 +64,14 @@ namespace erc
             var next = tokens.Pop();
             DataType returnType = DataType.VOID;
             List<AstItem> statements = new List<AstItem>();
+
             if (next.TokenType == TokenType.TypeOperator)
             {
                 returnType = ReadDataType(tokens);
-                var block = tokens.Pop();
-                var ahead = tokens.Current();
-                if (block.TokenType == TokenType.CurlyBracketOpen)
-                {
-                    if (ahead.TokenType != TokenType.CurlyBracketClose)
-                        statements = ReadStatements(tokens);
-                }
-                else
-                    throw new Exception("Expected '{', found " + block);
+                next = tokens.Pop();
             }
-            else if (next.TokenType == TokenType.CurlyBracketOpen)
+
+            if (next.TokenType == TokenType.CurlyBracketOpen)
                 statements = ReadStatements(tokens);
             else
                 throw new Exception("Expected ':' or '{', found " + next);
@@ -148,6 +143,11 @@ namespace erc
             {
                 case TokenType.Let:
                     result = ReadVarDecl(tokens);
+                    break;
+
+                case TokenType.Ret:
+                    tokens.Pop();
+                    result = ReadExpression(tokens, TokenType.StatementTerminator);
                     break;
 
                 case TokenType.Word:

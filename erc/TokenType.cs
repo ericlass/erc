@@ -17,6 +17,7 @@ namespace erc
         CurlyBracketOpen,
         CurlyBracketClose,
         Let,
-        Fn
+        Fn,
+        Ret
     }
 }

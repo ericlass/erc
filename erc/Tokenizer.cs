@@ -54,6 +54,8 @@ namespace erc
                     type = TokenType.Let;
                 else if (value == "fn")
                     type = TokenType.Fn;
+                else if (value == "ret")
+                    type = TokenType.Ret;
             }
             else if (IsDigit(c))
             {
