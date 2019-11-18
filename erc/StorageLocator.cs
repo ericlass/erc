@@ -21,17 +21,17 @@ namespace erc
 
             foreach (var function in context.AST.Children)
             {
-                AssignFunctionParameterLocations(context.Functions[function.Identifier]);
+                AssignFunctionParameterLocations(context.GetFunction(function.Identifier));
                 foreach (var statement in function.Children[1].Children)
                 {
                     if (statement.Kind == AstItemKind.VarDecl)
                     {
-                        var variable = context.Variables[statement.Identifier];
+                        var variable = context.GetVariable(statement.Identifier);
                         AssignLocation(variable);
                     }
                     else if (statement.Kind == AstItemKind.VarScopeEnd)
                     {
-                        var variable = context.Variables[statement.Identifier];
+                        var variable = context.GetVariable(statement.Identifier);
                         FreeLocation(variable);
                     }
                 }

@@ -79,7 +79,7 @@ namespace erc
 
             var result = new List<Operation>();
 
-            _currentFunction = _context.Functions[function.Identifier];
+            _currentFunction = _context.GetFunction(function.Identifier);
 
             var labelName = "fn_" + function.Identifier;
             result.Add(new Operation(DataType.I64, Instruction.V_LABEL, StorageLocation.Label(labelName)));
@@ -117,7 +117,7 @@ namespace erc
 
         private List<Operation> GenerateVarDecl(AstItem statement)
         {
-            var variable = _context.Variables[statement.Identifier];
+            var variable = _context.GetVariable(statement.Identifier);
             return GenerateExpression(statement.Children[0], variable.Location);
         }
 
@@ -126,14 +126,72 @@ namespace erc
             //TODO: Is it allowed to overwrite values of parameters?
             //var location = GetVariableOrParameterLocation(expression.Identifier);
 
-            var variable = _context.Variables[statement.Identifier];
+            var variable = _context.GetVariable(statement.Identifier);
             return GenerateExpression(statement.Children[0], variable.Location);
         }
 
         private List<Operation> GenerateFunctionCall(AstItem funcCall, StorageLocation targetLocation)
         {
+            /*
+        	- Registers to save
+            	- Always
+                	- R: A, BP, 10, 11
+                	- MM: 4, 5, 6
+            	- If in use
+                	- R: C, D, 8, 9, 12, 13, 14, 15
+                	- MM: 0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15
+        	*/
+
             var result = new List<Operation>();
-            var function = _context.Functions[funcCall.Identifier];
+            var function = _context.GetFunction(funcCall.Identifier);
+
+            //List of registers that need to be restored, pre-filled with the ones that always need to be saved/restored
+            var savedRegisters = new List<Tuple<Register, DataType>>() {
+                new Tuple<Register,DataType>(Register.RBP, DataType.I64),
+                new Tuple<Register,DataType>(Register.RSP, DataType.I64),
+                new Tuple<Register,DataType>(Register.RAX, DataType.I64),
+                new Tuple<Register,DataType>(Register.R10, DataType.I64),
+                new Tuple<Register,DataType>(Register.R11, DataType.I64),
+                new Tuple<Register,DataType>(Register.YMM4, DataType.VEC4D),
+                new Tuple<Register,DataType>(Register.YMM5, DataType.VEC4D),
+                new Tuple<Register,DataType>(Register.YMM6, DataType.VEC4D)
+            };
+
+            //Create new stack frame aligned to 32 bytes
+            result.AddRange(Push(DataType.I64, StorageLocation.AsRegister(Register.RBP)));
+            result.AddRange(Push(DataType.I64, StorageLocation.AsRegister(Register.RSP)));
+            result.Add(new Operation(DataType.I64, Instruction.AND_IMM, StorageLocation.AsRegister(Register.RSP), StorageLocation.Immediate(-32)));
+            result.AddRange(Move(DataType.I64, StorageLocation.AsRegister(Register.RSP), StorageLocation.AsRegister(Register.RBP)));
+
+            //Push mandatory registers
+            result.AddRange(Push(DataType.I64, StorageLocation.AsRegister(Register.RAX)));
+            result.AddRange(Push(DataType.I64, StorageLocation.AsRegister(Register.R10)));
+            result.AddRange(Push(DataType.I64, StorageLocation.AsRegister(Register.R11)));
+
+            result.AddRange(Push(DataType.VEC4D, StorageLocation.AsRegister(Register.YMM4)));
+            result.AddRange(Push(DataType.VEC4D, StorageLocation.AsRegister(Register.YMM5)));
+            result.AddRange(Push(DataType.VEC4D, StorageLocation.AsRegister(Register.YMM6)));
+
+            //Push parameter registers of current function
+            foreach (var funcParam in _currentFunction.Parameters)
+            {
+                if (funcParam.Location.Kind == StorageLocationKind.Register)
+                {
+                    result.AddRange(Push(funcParam.DataType, funcParam.Location));
+                    savedRegisters.Add(new Tuple<Register, DataType>(funcParam.Location.Register, funcParam.DataType));
+                }
+            }
+
+            //Push variable registers
+            //Assuming that "_context.AllVariables" returns all variables declarded in the current functions scope until now
+            foreach (var variable in _context.AllVariables)
+            {
+                if (variable.Location.Kind == StorageLocationKind.Register)
+                {
+                    result.AddRange(Push(variable.DataType, variable.Location));
+                    savedRegisters.Add(new Tuple<Register, DataType>(variable.Location.Register, variable.DataType));
+                }
+            }
 
             //Generate parameter value in desired locations
             for (int i = 0; i < function.Parameters.Count; i++)
@@ -150,6 +208,11 @@ namespace erc
             //Move result value (if exists) to target location (if required)
             if (function.ReturnType != DataType.VOID && targetLocation != null && function.ReturnLocation != targetLocation)
                 result.AddRange(Move(function.ReturnType, function.ReturnLocation, targetLocation));
+
+            //Restore saved registers in reverse order from stack
+            savedRegisters.Reverse();
+            foreach (var register in savedRegisters)
+                result.AddRange(Pop(register.Item2, StorageLocation.AsRegister(register.Item1)));
 
             return result;
         }
@@ -252,7 +315,7 @@ namespace erc
             {
                 var child = expression.Children[i];
                 //TODO: OPTIMIZE - When expression is immediate or variable, it is not required to go through the accumulator.
-                //             	You can directly "push" the register or memory location to the stack.
+                //        		 You can directly "push" the register or memory location to the stack.
                 operations.AddRange(GenerateExpression(child, accumulator));
                 operations.AddRange(Push(expression.DataType.ElementType, accumulator));
             }
@@ -333,9 +396,9 @@ namespace erc
         private StorageLocation GetVariableOrParameterLocation(string name)
         {
             //Variables take precedence over parameters
-            if (_context.Variables.ContainsKey(name))
+            var variable = _context.GetVariable(name);
+            if (variable != null)
             {
-                var variable = _context.Variables[name];
                 return variable.Location;
             }
             else if (_currentFunction != null)

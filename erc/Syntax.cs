@@ -80,12 +80,12 @@ namespace erc
             if (next.TokenType != TokenType.CurlyBracketClose)
                 throw new Exception("Expected '}', found " + next);
 
-            if (_context.Functions.ContainsKey(name.Value))
+            if (_context.GetFunction(name.Value) != null)
                 throw new Exception("Function with name '" + name.Value + "' already defined!");
 
             var funcParams = parameters.ConvertAll((p) => new FunctionParameter(p.Identifier, p.DataType));
             var function = new Function(name.Value, returnType, funcParams);
-            _context.Functions.Add(function.Name, function);
+            _context.AddFunction(function);
 
             return AstItem.FunctionDecl(name.Value, returnType, parameters, statements);
         }
@@ -179,10 +179,9 @@ namespace erc
         {
             var name = tokens.Pop();
 
-            if (!_context.Functions.ContainsKey(name.Value))
+            var function = _context.GetFunction(name.Value);
+            if (function == null)
                 throw new Exception("Undeclared function: " + name.Value);
-
-            var function = _context.Functions[name.Value];
 
             var bracket = tokens.Pop();
             if (bracket.TokenType != TokenType.RoundBracketOpen)
@@ -249,7 +248,7 @@ namespace erc
             if (name.TokenType != TokenType.Word)
                 throw new Exception("Expected identifier, found " + name);
 
-            if (_context.Variables.ContainsKey(name.Value))
+            if (_context.GetVariable(name.Value) != null)
                 throw new Exception("Variable already defined: " + name.Value);
 
             var op = tokens.Pop();
@@ -265,7 +264,7 @@ namespace erc
                 Name = name.Value
             };
 
-            _context.Variables.Add(name.Value, variable);
+            _context.AddVariable(variable);
 
             var terminator = tokens.Pop();
             if (terminator.TokenType != TokenType.StatementTerminator)
@@ -280,7 +279,8 @@ namespace erc
             if (name.TokenType != TokenType.Word)
                 throw new Exception("Expected identifier, found " + name);
 
-            if (!_context.Variables.ContainsKey(name.Value))
+            var variable = _context.GetVariable(name.Value);
+            if (variable == null)
                 throw new Exception("Variable not defined: " + name.Value);
 
             var op = tokens.Pop();
@@ -288,7 +288,6 @@ namespace erc
                 throw new Exception("Expected assignment operator, found " + name);
 
             var expression = ReadExpression(tokens, TokenType.StatementTerminator);
-            var variable = _context.Variables[name.Value];
             var expType = DataTypeOfExpression(expression);
             if (expType != variable.DataType)
                 throw new Exception("Incompatible data types: " + variable.DataType + " <> " + expType);
@@ -340,10 +339,11 @@ namespace erc
 
                 case AstItemKind.Variable:
                     var varName = expressionItem.Identifier;
-                    if (!_context.Variables.ContainsKey(varName))
+                    var variable = _context.GetVariable(varName);
+                    if (variable == null)
                         throw new Exception("Variable not declared: " + varName);
 
-                    return _context.Variables[varName].DataType;
+                    return variable.DataType;
 
                 case AstItemKind.Vector:
                     var subType = FindDataTypeOfExpression(expressionItem.Children[0]);
@@ -470,10 +470,8 @@ namespace erc
                 }
                 else
                 {
-                    Variable variable = null;
-                    if (_context.Variables.ContainsKey(token.Value))
-                        variable = _context.Variables[token.Value];
-                    else
+                    Variable variable = _context.GetVariable(token.Value);
+                    if (variable == null)
                         throw new Exception("Undefined variable: " + token);
 
                     result = AstItem.Variable(token.Value, variable.DataType);
