@@ -7,9 +7,10 @@ namespace erc
     {
         public string Name { get; set; }
         public Scope Parent { get; set; }
+        public Dictionary<string, Scope> Children { get; set; } = new Dictionary<string, Scope>();
 
-        private Dictionary<string, Variable> _variables = new Dictionary<string, Variable>();
-        public Dictionary<string, Function> _functions { get; set; } = new Dictionary<string, Function>();
+        private Dictionary<string, Symbol> _symbols = new Dictionary<string, Symbol>();
+        private Dictionary<string, Function> _functions { get; set; } = new Dictionary<string, Function>();
 
         public Scope(string name, Scope parent)
         {
@@ -25,12 +26,12 @@ namespace erc
                 return Name;
         }
 
-        public string GetVariableScopeName(string name)
+        public string GetSymbolScopeName(string name)
         {
-            if (_variables.ContainsKey(name))
+            if (_symbols.ContainsKey(name))
                 return GetFullScopeName();
             else if (Parent != null)
-                return Parent.GetVariableScopeName(name);
+                return Parent.GetSymbolScopeName(name);
             else
                 return null;
         }
@@ -49,6 +50,8 @@ namespace erc
         {
             if (_functions.ContainsKey(name))
                 return _functions[name];
+            else if (Parent != null)
+                return Parent.GetFunction(name);
             else
                 return null;
         }
@@ -61,7 +64,7 @@ namespace erc
         public void AddFunction(Function function)
         {
             if (FunctionExists(function.Name))
-                throw new Exception("Function '" + function + "' already declared in scope '" + GetVariableScopeName(function.Name) + "'!");
+                throw new Exception("Function '" + function + "' already declared in scope '" + GetSymbolScopeName(function.Name) + "'!");
 
             _functions.Add(function.Name, function);
         }
@@ -71,32 +74,33 @@ namespace erc
             _functions.Remove(function.Name);
         }
 
-        public Variable GetVariable(string name)
+        public Symbol GetSymbol(string name)
         {
-            if (_variables.ContainsKey(name))
-                return _variables[name];
+            if (_symbols.ContainsKey(name))
+                return _symbols[name];
             else if (Parent != null)
-                return Parent.GetVariable(name);
+                return Parent.GetSymbol(name);
             else
                 return null;
         }
 
-        public bool VariableExists(string name)
+        public bool SymbolExists(string name)
         {
-            return GetVariable(name) != null;
+            return GetSymbol(name) != null;
         }
 
-        public void AddVariable(Variable variable)
+        public void AddSymbol(Symbol symbol)
         {
-            if (VariableExists(variable.Name))
-                throw new Exception("Variable '" + variable + "' already declared in scope '" + GetVariableScopeName(variable.Name) + "'!");
+            if (SymbolExists(symbol.Name))
+                throw new Exception("Symbol '" + symbol + "' already declared in scope '" + GetSymbolScopeName(symbol.Name) + "'!");
 
-            _variables.Add(variable.Name, variable);
+            _symbols.Add(symbol.Name, symbol);
         }
 
-        public void RemoveVariable(string name)
+        public void RemoveSymbol(string name)
         {
-            _variables.Remove(name);
+            _symbols.Remove(name);
         }
+
     }
 }

@@ -24,7 +24,8 @@ namespace erc
         ParameterList,
         StatementList,
         FunctionDecl,
-        FunctionCall
+        FunctionCall,
+        Return
         //EqualsOp,
         //NotEqualsOp,
         //LessThanOp,
@@ -297,6 +298,11 @@ namespace erc
         public static AstItem FunctionCall(string name, DataType returnType, List<AstItem> parameterValues)
         {
             return new AstItem { Kind = AstItemKind.FunctionCall, DataType = returnType, Identifier = name, Children = parameterValues };
+        }
+
+        public static AstItem Return(DataType dataType, AstItem value)
+        {
+            return new AstItem { Kind = AstItemKind.Return, DataType = dataType, Children = new List<AstItem> { value } };
         }
 
     }

@@ -16,10 +16,13 @@ namespace erc
         public void Analyze(CompilerContext context)
         {
             _context = context;
+            _context.ResetScope();
+
             var tokens = new SimpleIterator<Token>(context.Tokens);
             var result = AstItem.Programm();
 
             result.Children = Read(tokens);
+            ValidateFunctionCalls(result);
 
             context.AST = result;
         }
@@ -54,8 +57,11 @@ namespace erc
             if (name.TokenType != TokenType.Word)
                 throw new Exception("Expected identifier, found " + name);
 
+            if (_context.CurrentScope.FunctionExists(name.Value))
+                throw new Exception("Function with name '" + name.Value + "' already defined!");
+
             var openBracket = tokens.Pop();
-            List<AstItem> parameters = new List<AstItem>();
+            List<AstItem> parameters = null;
             if (openBracket.TokenType == TokenType.RoundBracketOpen)
                 parameters = ReadFuncParameters(tokens);
             else
@@ -71,21 +77,28 @@ namespace erc
                 next = tokens.Pop();
             }
 
+            var funcParams = parameters.ConvertAll((p) => new Symbol(p.Identifier, SymbolKind.Parameter, p.DataType));
+            var function = new Function(name.Value, returnType, funcParams);
+            _context.CurrentScope.AddFunction(function);
+            _currentFunction = function;            
+
+            //Enter new scope for the function
+            _context.EnterScope(name.Value);
+
+            //Add all parameters in scope
+            funcParams.ForEach((p) => _context.CurrentScope.AddSymbol(p));
+
             if (next.TokenType == TokenType.CurlyBracketOpen)
                 statements = ReadStatements(tokens);
             else
                 throw new Exception("Expected ':' or '{', found " + next);
 
+            _context.LeaveScope();
+            _currentFunction = null;
+
             next = tokens.Pop();
             if (next.TokenType != TokenType.CurlyBracketClose)
                 throw new Exception("Expected '}', found " + next);
-
-            if (_context.GetFunction(name.Value) != null)
-                throw new Exception("Function with name '" + name.Value + "' already defined!");
-
-            var funcParams = parameters.ConvertAll((p) => new FunctionParameter(p.Identifier, p.DataType));
-            var function = new Function(name.Value, returnType, funcParams);
-            _context.AddFunction(function);
 
             return AstItem.FunctionDecl(name.Value, returnType, parameters, statements);
         }
@@ -146,14 +159,27 @@ namespace erc
                     break;
 
                 case TokenType.Ret:
+                    //Pop "ret"
                     tokens.Pop();
-                    result = ReadExpression(tokens, TokenType.StatementTerminator);
+
+                    var value = ReadExpression(tokens, TokenType.StatementTerminator);
+                    if (value.DataType != _currentFunction.ReturnType)
+                        throw new Exception("Invalid return type! Expected " + _currentFunction.ReturnType + ", got " + value.DataType + " at " + token);
+
+                    result = AstItem.Return(value.DataType, value);
+
+                    //Pop ";"
+                    tokens.Pop();
                     break;
 
                 case TokenType.Word:
                     var next = tokens.Next();
                     if (next.TokenType == TokenType.RoundBracketOpen)
+                    {
                         result = ReadFuncCall(tokens);
+                        //Pop ";"
+                        tokens.Pop();
+                    }
                     else if (next.TokenType == TokenType.AssigmnentOperator)
                         result = ReadAssignment(tokens);
                     else
@@ -177,37 +203,54 @@ namespace erc
 
         private AstItem ReadFuncCall(SimpleIterator<Token> tokens)
         {
-            var name = tokens.Pop();
+            //No validation of called function here!
+            //We might be calling a function that has not been defined yet, but will be later.
 
-            var function = _context.GetFunction(name.Value);
-            if (function == null)
-                throw new Exception("Undeclared function: " + name.Value);
+            var name = tokens.Pop();
 
             var bracket = tokens.Pop();
             if (bracket.TokenType != TokenType.RoundBracketOpen)
                 throw new Exception("Unexcepted token after function name! Expected '(', found: " + bracket);
 
             var paramValues = ReadTokenList(tokens, TokenType.Comma, TokenType.RoundBracketClose);
-            if (paramValues.Count != function.Parameters.Count)
-                throw new Exception("Invalid number of arguments to function '" + function.Name + "'! Expected: " + function.Parameters.Count + ", given: " + paramValues.Count);
-
             var paramExpressions = new List<AstItem>(paramValues.Count);
             foreach (var valueTokens in paramValues)
             {
                 var expression = ReadExpression(new SimpleIterator<Token>(valueTokens), null);
                 paramExpressions.Add(expression);
-            }
+            }            
 
-            for (int i = 0; i < paramExpressions.Count; i++)
+            //Set return type void here, real type will be set later
+            return AstItem.FunctionCall(name.Value, DataType.VOID, paramExpressions);
+        }
+
+        private void ValidateFunctionCalls(AstItem item)
+        {
+            if (item.Kind == AstItemKind.FunctionCall)
             {
-                var expression = paramExpressions[i];
-                var parameter = function.Parameters[i];
+                var function = _context.CurrentScope.GetFunction(item.Identifier);
+                if (function == null)
+                    throw new Exception("Undeclared function: " + item.Identifier);
 
-                if (expression.DataType != parameter.DataType)
-                    throw new Exception("Invalid type for parameter '" + parameter.Name + "'! Expected: " + parameter.DataType + ", given: " + expression.DataType);
+                if (item.Children.Count != function.Parameters.Count)
+                    throw new Exception("Invalid number of arguments to function '" + function.Name + "'! Expected: " + function.Parameters.Count + ", given: " + item.Children.Count);
+
+                for (int i = 0; i < item.Children.Count; i++)
+                {
+                    var expression = item.Children[i];
+                    var parameter = function.Parameters[i];
+
+                    if (expression.DataType != parameter.DataType)
+                        throw new Exception("Invalid type for parameter '" + parameter.Name + "'! Expected: " + parameter.DataType + ", given: " + expression.DataType);
+                }
+
+                item.DataType = function.ReturnType;
             }
 
-            return AstItem.FunctionCall(function.Name, function.ReturnType, paramExpressions);
+            foreach (var child in item.Children)
+            {
+                ValidateFunctionCalls(child);
+            }
         }
 
         private List<List<Token>> ReadTokenList(SimpleIterator<Token> tokens, TokenType separator, TokenType terminator)
@@ -215,7 +258,7 @@ namespace erc
             var result = new List<List<Token>>();
             var expTokens = new List<Token>();
 
-            var token = tokens.Current();
+            var token = tokens.Pop();
             if (token.TokenType == terminator)
                 return result;
 
@@ -248,7 +291,7 @@ namespace erc
             if (name.TokenType != TokenType.Word)
                 throw new Exception("Expected identifier, found " + name);
 
-            if (_context.GetVariable(name.Value) != null)
+            if (_context.CurrentScope.SymbolExists(name.Value))
                 throw new Exception("Variable already defined: " + name.Value);
 
             var op = tokens.Pop();
@@ -258,13 +301,9 @@ namespace erc
             var expression = ReadExpression(tokens, TokenType.StatementTerminator);
             var dataType = DataTypeOfExpression(expression);
 
-            var variable = new Variable
-            {
-                DataType = dataType,
-                Name = name.Value
-            };
+            var variable = new Symbol(name.Value, SymbolKind.Variable, dataType);
 
-            _context.AddVariable(variable);
+            _context.CurrentScope.AddSymbol(variable);
 
             var terminator = tokens.Pop();
             if (terminator.TokenType != TokenType.StatementTerminator)
@@ -279,9 +318,12 @@ namespace erc
             if (name.TokenType != TokenType.Word)
                 throw new Exception("Expected identifier, found " + name);
 
-            var variable = _context.GetVariable(name.Value);
+            var variable = _context.CurrentScope.GetSymbol(name.Value);
             if (variable == null)
                 throw new Exception("Variable not defined: " + name.Value);
+
+            if (variable.Kind != SymbolKind.Variable)
+                throw new Exception("Cannot assign value to symbol: " + variable);
 
             var op = tokens.Pop();
             if (op.TokenType != TokenType.AssigmnentOperator || op.Value != "=")
@@ -339,7 +381,7 @@ namespace erc
 
                 case AstItemKind.Variable:
                     var varName = expressionItem.Identifier;
-                    var variable = _context.GetVariable(varName);
+                    var variable = _context.CurrentScope.GetSymbol(varName);
                     if (variable == null)
                         throw new Exception("Variable not declared: " + varName);
 
@@ -470,7 +512,7 @@ namespace erc
                 }
                 else
                 {
-                    Variable variable = _context.GetVariable(token.Value);
+                    var variable = _context.CurrentScope.GetSymbol(token.Value);
                     if (variable == null)
                         throw new Exception("Undefined variable: " + token);
 

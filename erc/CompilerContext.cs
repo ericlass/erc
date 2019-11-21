@@ -9,39 +9,37 @@ namespace erc
         public List<Token> Tokens { get; set; }
         public AstItem AST { get; set; }
 
-        private Scope _scope = new Scope("root", null);
+        public Scope CurrentScope { get; set; } = new Scope("root", null);
+
+        public void ResetScope()
+        {
+            while (CurrentScope.Parent != null)
+                CurrentScope = CurrentScope.Parent;
+        }
 
         public void EnterScope(string name)
         {
-            _scope = new Scope(_scope.Name + "_" + name, _scope);
+            Scope newScope = null;
+
+            if (CurrentScope.Children.ContainsKey(name))
+            {
+                newScope = CurrentScope.Children[name];
+            }
+            else
+            {
+                newScope = new Scope(name, CurrentScope);
+                CurrentScope.Children.Add(name, newScope);
+            }
+
+            CurrentScope = newScope;
         }
 
         public void LeaveScope()
         {
-            if (_scope.Parent == null)
-                throw new Exception("Cannot leave " + _scope.Name + " scope!");
+            if (CurrentScope.Parent == null)
+                throw new Exception("Cannot leave " + CurrentScope.Name + " scope!");
 
-            _scope = _scope.Parent;
-        }
-
-        public Variable GetVariable(string name)
-        {
-            return _scope.GetVariable(name);
-        }
-
-        public void AddVariable(Variable variable)
-        {
-            _scope.AddVariable(variable);
-        }
-
-        public Function GetFunction(string name)
-        {
-            return _scope.GetFunction(name);
-        }
-
-        public void AddFunction(Function function)
-        {
-            _scope.AddFunction(function);
+            CurrentScope = CurrentScope.Parent;
         }
 
     }

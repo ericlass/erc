@@ -1,5 +1,4 @@
 ﻿using System;
-using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
@@ -40,6 +39,7 @@ namespace erc
         public string Generate(CompilerContext context)
         {
             _context = context;
+            _context.ResetScope();
 
             //InitMovementGenerators();
             InitInstructionMap();
@@ -79,10 +79,13 @@ namespace erc
 
             var result = new List<Operation>();
 
-            _currentFunction = _context.GetFunction(function.Identifier);
+            _currentFunction = _context.CurrentScope.GetFunction(function.Identifier);
 
+            result.Add(new Operation(DataType.I64, Instruction.V_COMMENT, StorageLocation.Label("")));
             var labelName = "fn_" + function.Identifier;
             result.Add(new Operation(DataType.I64, Instruction.V_LABEL, StorageLocation.Label(labelName)));
+
+            _context.EnterScope(_currentFunction.Name);
 
             foreach (var statement in statements.Children)
             {
@@ -93,6 +96,7 @@ namespace erc
                 }
             }
 
+            _context.LeaveScope();
             _currentFunction = null;
 
             return result;
@@ -110,6 +114,9 @@ namespace erc
 
                 case AstItemKind.FunctionCall:
                     return GenerateFunctionCall(statement, null);
+
+                case AstItemKind.Return:
+                    return GenerateReturn(statement);
             }
 
             return new List<Operation>();
@@ -117,16 +124,14 @@ namespace erc
 
         private List<Operation> GenerateVarDecl(AstItem statement)
         {
-            var variable = _context.GetVariable(statement.Identifier);
+            var variable = _context.CurrentScope.GetSymbol(statement.Identifier);
             return GenerateExpression(statement.Children[0], variable.Location);
         }
 
         private List<Operation> GenerateAssignment(AstItem statement)
         {
-            //TODO: Is it allowed to overwrite values of parameters?
-            //var location = GetVariableOrParameterLocation(expression.Identifier);
-
-            var variable = _context.GetVariable(statement.Identifier);
+            //No need to check if variable was already declared. Correct scope is already check by Syntax analysis!
+            var variable = _context.CurrentScope.GetSymbol(statement.Identifier);
             return GenerateExpression(statement.Children[0], variable.Location);
         }
 
@@ -143,7 +148,7 @@ namespace erc
         	*/
 
             var result = new List<Operation>();
-            var function = _context.GetFunction(funcCall.Identifier);
+            var function = _context.CurrentScope.GetFunction(funcCall.Identifier);
 
             //List of registers that need to be restored, pre-filled with the ones that always need to be saved/restored
             var savedRegisters = new List<Tuple<Register, DataType>>() {
@@ -184,14 +189,14 @@ namespace erc
 
             //Push variable registers
             //Assuming that "_context.AllVariables" returns all variables declarded in the current functions scope until now
-            foreach (var variable in _context.AllVariables)
+            /*foreach (var variable in _context.AllVariables)
             {
                 if (variable.Location.Kind == StorageLocationKind.Register)
                 {
                     result.AddRange(Push(variable.DataType, variable.Location));
                     savedRegisters.Add(new Tuple<Register, DataType>(variable.Location.Register, variable.DataType));
                 }
-            }
+            }*/
 
             //Generate parameter value in desired locations
             for (int i = 0; i < function.Parameters.Count; i++)
@@ -217,6 +222,19 @@ namespace erc
             return result;
         }
 
+        private List<Operation> GenerateReturn(AstItem statement)
+        {
+            if (statement.Kind != AstItemKind.Return)
+                throw new Exception("Expected return statement, got " + statement);
+
+            var result = new List<Operation>();
+            result.AddRange(GenerateExpression(statement.Children[0], _currentFunction.ReturnLocation));
+
+            result.Add(new Operation(DataType.VOID, Instruction.RET));
+
+            return result;
+        }
+
         private List<Operation> GenerateExpression(AstItem expression, StorageLocation targetLocation)
         {
             switch (expression.Kind)
@@ -237,8 +255,8 @@ namespace erc
                     }
 
                 case AstItemKind.Variable:
-                    var location = GetVariableOrParameterLocation(expression.Identifier);
-                    return Move(expression.DataType, location, targetLocation);
+                    var variable = _context.CurrentScope.GetSymbol(expression.Identifier);
+                    return Move(expression.DataType, variable.Location, targetLocation);
 
                 case AstItemKind.FunctionCall:
                     return GenerateFunctionCall(expression, targetLocation);
@@ -348,8 +366,8 @@ namespace erc
                         break;
 
                     case AstItemKind.Variable:
-                        var location = GetVariableOrParameterLocation(item.Identifier);
-                        ops.Add(new Operation(item.DataType, Instruction.PUSH, location));
+                        var variable = _context.CurrentScope.GetSymbol(item.Identifier);
+                        ops.Add(new Operation(item.DataType, Instruction.PUSH, variable.Location));
                         break;
 
                     case AstItemKind.FunctionCall:
@@ -391,24 +409,6 @@ namespace erc
 
             ops.RemoveAt(ops.Count - 1);
             return ops;
-        }
-
-        private StorageLocation GetVariableOrParameterLocation(string name)
-        {
-            //Variables take precedence over parameters
-            var variable = _context.GetVariable(name);
-            if (variable != null)
-            {
-                return variable.Location;
-            }
-            else if (_currentFunction != null)
-            {
-                var parameter = _currentFunction.Parameters.Find((p) => p.Name == name);
-                if (parameter != null)
-                    return parameter.Location;
-            }
-
-            throw new Exception("Expected variable or function parameter, found unknown identifier '" + name + "'!");
         }
 
         private Instruction GetInstruction(AstItemKind kind, DataType dataType)

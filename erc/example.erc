@@ -23,6 +23,8 @@ fn main() {
 	let abc = <1.0, d * 2.0, (2.0 * d) + 3.0, d / 4.0>;
 
 	let xyz = <d, e> + <e, d>;
+
+	add(x6, x6);
 }
 
 fn add(pa: vec4d, pb: vec4d): vec4d {

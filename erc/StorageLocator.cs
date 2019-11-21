@@ -21,21 +21,40 @@ namespace erc
 
             foreach (var function in context.AST.Children)
             {
-                AssignFunctionParameterLocations(context.GetFunction(function.Identifier));
+                var funcDecl = context.CurrentScope.GetFunction(function.Identifier);
+                AssignFunctionParameterLocations(funcDecl);
+                AssignFunctionReturnLocation(funcDecl);
+
+                context.EnterScope(function.Identifier);
                 foreach (var statement in function.Children[1].Children)
                 {
                     if (statement.Kind == AstItemKind.VarDecl)
                     {
-                        var variable = context.GetVariable(statement.Identifier);
+                        var variable = context.CurrentScope.GetSymbol(statement.Identifier);
                         AssignLocation(variable);
                     }
                     else if (statement.Kind == AstItemKind.VarScopeEnd)
                     {
-                        var variable = context.GetVariable(statement.Identifier);
+                        var variable = context.CurrentScope.GetSymbol(statement.Identifier);
                         FreeLocation(variable);
                     }
                 }
+                context.LeaveScope();
             }
+        }
+
+        private void AssignFunctionReturnLocation(Function function)
+        {
+            if (function.ReturnType == DataType.I64)
+                function.ReturnLocation = StorageLocation.AsRegister(Register.RAX);
+            else if (function.ReturnType == DataType.F32 || function.ReturnType == DataType.F64)
+                function.ReturnLocation = StorageLocation.AsRegister(Register.XMM0);
+            else if (function.ReturnType == DataType.IVEC2Q || function.ReturnType == DataType.VEC4F || function.ReturnType == DataType.VEC2D)
+                function.ReturnLocation = StorageLocation.AsRegister(Register.XMM0);
+            else if (function.ReturnType == DataType.IVEC4Q || function.ReturnType == DataType.VEC8F || function.ReturnType == DataType.VEC4D)
+                function.ReturnLocation = StorageLocation.AsRegister(Register.YMM0);
+            else if (function.ReturnType != DataType.VOID)
+                throw new Exception("Unknown function return type: " + function.ReturnType);
         }
 
         private void AssignFunctionParameterLocations(Function function)
@@ -106,7 +125,7 @@ namespace erc
             }
         }
 
-        private void AssignLocation(Variable variable)
+        private void AssignLocation(Symbol variable)
         {
             var dataType = variable.DataType;
             var register = GetMatchingRegister(dataType);
@@ -159,7 +178,7 @@ namespace erc
             return Register.GroupToSpecificRegister(group, dataType);
         }
 
-        private void FreeLocation(Variable variable)
+        private void FreeLocation(Symbol variable)
         {
             var location = variable.Location;
             if (location.Kind == StorageLocationKind.Register)
