@@ -9,18 +9,22 @@ namespace erc
     {
         private const string CodeHeader =
             "format PE64 NX GUI 6.0\n" +
-            "entry fn_main\n" +
+            "entry start\n" +
             "include 'win64a.inc'\n\n" +
             "section '.data' data readable writeable\n";
 
         private const string CodeSection =
             "section '.text' code readable executable\n" +
-            "start:\n";
+            "start:\n" +
+            "push rbp\n" +
+            "mov rbp, rsp\n" +
+            "call fn_main\n" +
+            "pop rbp\n" +
+            "xor ecx,ecx\n" +
+            "call [ExitProcess]\n";
 
-        private const string CodeFooter =
-            "\nxor ecx,ecx\n" +
-            "call [ExitProcess]\n\n" +
-            "section '.idata' import data readable writeable\n" +
+        private const string ImportSection =
+            "\nsection '.idata' import data readable writeable\n" +
             "library kernel32,'KERNEL32.DLL'\n\n" +
             "import kernel32,\\\n" +
             "  ExitProcess,'ExitProcess'\n";
@@ -64,7 +68,7 @@ namespace erc
             builder.AppendLine(CodeSection);
             codeLines.ForEach((l) => builder.AppendLine(l.ToString().ToLower()));
 
-            builder.AppendLine(CodeFooter);
+            builder.AppendLine(ImportSection);
 
             return builder.ToString();
         }
@@ -91,13 +95,18 @@ namespace erc
             {
                 if (statement.Kind != AstItemKind.VarScopeEnd)
                 {
-                    //result.Add(new Operation(DataType.I64, Instruction.V_COMMENT, StorageLocation.Label(statement.SourceLine)));
+                    result.Add(new Operation(DataType.I64, Instruction.V_COMMENT, StorageLocation.Label(statement.SourceLine)));
                     result.AddRange(GenerateStatement(statement));
                 }
             }
 
             _context.LeaveScope();
             _currentFunction = null;
+
+            //Add return as last instruction, if required
+            var last = result[result.Count - 1];
+            if (last.Instruction != Instruction.RET)
+                result.Add(new Operation(DataType.VOID, Instruction.RET));
 
             return result;
         }
@@ -162,13 +171,10 @@ namespace erc
                 new Tuple<Register,DataType>(Register.YMM6, DataType.VEC4D)
             };
 
-            //Create new stack frame aligned to 32 bytes
+            //Push mandatory registers
             result.AddRange(Push(DataType.I64, StorageLocation.AsRegister(Register.RBP)));
             result.AddRange(Push(DataType.I64, StorageLocation.AsRegister(Register.RSP)));
-            result.Add(new Operation(DataType.I64, Instruction.AND_IMM, StorageLocation.AsRegister(Register.RSP), StorageLocation.Immediate(-32)));
-            result.AddRange(Move(DataType.I64, StorageLocation.AsRegister(Register.RSP), StorageLocation.AsRegister(Register.RBP)));
-
-            //Push mandatory registers
+                        
             result.AddRange(Push(DataType.I64, StorageLocation.AsRegister(Register.RAX)));
             result.AddRange(Push(DataType.I64, StorageLocation.AsRegister(Register.R10)));
             result.AddRange(Push(DataType.I64, StorageLocation.AsRegister(Register.R11)));
@@ -207,8 +213,15 @@ namespace erc
                 result.AddRange(GenerateExpression(expression, parameter.Location));
             }
 
+            //Add 32 bytes shadow space
+            result.Add(new Operation(DataType.I64, Instruction.SUB_IMM, StorageLocation.AsRegister(Register.RSP), StorageLocation.Immediate(32)));
+            result.AddRange(Move(DataType.I64, StorageLocation.AsRegister(Register.RSP), StorageLocation.AsRegister(Register.RBP)));
+
             //Finally, call function
-            result.Add(new Operation(function.ReturnType, Instruction.CALL, StorageLocation.Label(function.Name)));
+            result.Add(new Operation(function.ReturnType, Instruction.CALL, StorageLocation.Label("fn_" + function.Name)));
+
+            //Remove shadow space
+            result.Add(new Operation(DataType.I64, Instruction.ADD_IMM, StorageLocation.AsRegister(Register.RSP), StorageLocation.Immediate(32)));
 
             //Move result value (if exists) to target location (if required)
             if (function.ReturnType != DataType.VOID && targetLocation != null && function.ReturnLocation != targetLocation)
@@ -434,7 +447,11 @@ namespace erc
                             if (source != target)
                             {
                                 //Transform pop to direct move in-place
-                                popOp.Instruction = popOp.DataType.MoveInstruction;
+                                if (source.IsStack() || target.IsStack())
+                                    popOp.Instruction = popOp.DataType.MoveInstructionUnaligned;
+                                else 
+                                    popOp.Instruction = popOp.DataType.MoveInstructionAligned;
+
                                 popOp.Operand1 = target;
                                 popOp.Operand2 = source;
 
@@ -471,11 +488,11 @@ namespace erc
                                     var register = TakeIntermediateRegister(popOp.DataType);
                                     if (register != null)
                                     {
-                                        pushOp.Instruction = pushOp.DataType.MoveInstruction;
+                                        pushOp.Instruction = pushOp.DataType.MoveInstructionAligned;
                                         pushOp.Operand2 = pushOp.Operand1;
                                         pushOp.Operand1 = register;
 
-                                        popOp.Instruction = popOp.DataType.MoveInstruction;
+                                        popOp.Instruction = popOp.DataType.MoveInstructionAligned;
                                         popOp.Operand2 = register;
                                     }
                                     else

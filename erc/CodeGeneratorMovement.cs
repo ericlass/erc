@@ -14,7 +14,13 @@ namespace erc
         /// <returns>The list of operations required to move the value.</returns>
         public List<Operation> Move(DataType dataType, StorageLocation source, StorageLocation target)
         {
-            var instruction = dataType.MoveInstruction;
+            //Values on stack are not align, so need to distinguish
+            Instruction instruction = null;
+            if (source.IsStack() || target.IsStack())
+                instruction = dataType.MoveInstructionUnaligned;
+            else
+                instruction = dataType.MoveInstructionAligned;
+
             var result = new List<Operation>();
 
             if ((source.Kind == StorageLocationKind.StackFromBase || source.Kind == StorageLocationKind.StackFromTop || source.Kind == StorageLocationKind.DataSection) && (target.Kind == StorageLocationKind.StackFromBase || target.Kind == StorageLocationKind.StackFromTop))
@@ -51,7 +57,7 @@ namespace erc
             else
             {
                 result.Add(new Operation(dataType, Instruction.SUB_IMM, StorageLocation.AsRegister(Register.RSP), StorageLocation.Immediate(dataType.ByteSize)));
-                result.Add(new Operation(dataType, dataType.MoveInstruction, StorageLocation.StackFromTop(0), source));
+                result.Add(new Operation(dataType, dataType.MoveInstructionUnaligned, StorageLocation.StackFromTop(0), source));
             }
 
             return result;
@@ -76,7 +82,7 @@ namespace erc
             }
             else
             {
-                result.Add(new Operation(dataType, dataType.MoveInstruction, target, StorageLocation.StackFromTop(0)));
+                result.Add(new Operation(dataType, dataType.MoveInstructionUnaligned, target, StorageLocation.StackFromTop(0)));
                 result.Add(new Operation(dataType, Instruction.ADD_IMM, StorageLocation.AsRegister(Register.RSP), StorageLocation.Immediate(dataType.ByteSize)));
             }
 

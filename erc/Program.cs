@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Windows.Forms;
 
 namespace erc
 {
     class Program
     {
+        [STAThread]
         static void Main(string[] args)
         {
             var stopWatch = new Stopwatch();
@@ -59,6 +61,8 @@ namespace erc
             Console.WriteLine("CODE");
             Console.WriteLine("==========");
             Console.WriteLine(finalCode);
+
+            Clipboard.SetText(finalCode);
 
             Console.WriteLine("Compilation took: " + compilationTime + " ms");
 

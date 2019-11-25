@@ -19,6 +19,11 @@ namespace erc
         public long Address { get; set; } //For stack: offset from base, for heap: memory address (pointer)
         public string DataName { get; set; } //For immediates that are stored in the executables data section, the name of the entry
 
+        public bool IsStack()
+        {
+            return Kind == StorageLocationKind.StackFromBase || Kind == StorageLocationKind.StackFromTop;
+        }
+
         public string ToCode()
         {
             switch (Kind)

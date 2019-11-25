@@ -62,8 +62,11 @@ namespace erc
         });
 
         public static Instruction VMOVDQA = new Instruction("VMOVDQA", 2, true);
+        public static Instruction VMOVDQU = new Instruction("VMOVDQU", 2, true);
         public static Instruction VMOVAPS = new Instruction("VMOVAPS", 2, true);
+        public static Instruction VMOVUPS = new Instruction("VMOVUPS", 2, true);
         public static Instruction VMOVAPD = new Instruction("VMOVAPD", 2, true);
+        public static Instruction VMOVUPD = new Instruction("VMOVUPD", 2, true);
 
         public static Instruction ADD = new Instruction("ADD", 2);
         public static Instruction ADD_IMM = new Instruction("ADD", 2, (instr, op1, op2, op3) => instr.Name + " " + op1.ToCode() + ", " + op2.Address);
@@ -107,7 +110,7 @@ namespace erc
 
         public static Instruction VPSLLDQ = new Instruction("VPSLLDQ", 3);
 
-        public static Instruction CALL = new Instruction("CALL", 1, (instr, op1, op2, op3) => instr.Name + " " + op1.ToCode());
+        public static Instruction CALL = new Instruction("CALL", 1, (instr, op1, op2, op3) => instr.Name + " " + op1.DataName);
         public static Instruction RET = new Instruction("RET", 0);
 
         public static Instruction V_LABEL = new Instruction("V_LABEL", 1, (instr, op1, op2, op3) => op1.DataName + ":");

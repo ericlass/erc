@@ -18,7 +18,8 @@ namespace erc
         public StorageLocation TempRegister1 { get; private set; }
         public StorageLocation TempRegister2 { get; private set; }
         public StorageLocation ConstructionRegister { get; private set; }
-        public Instruction MoveInstruction { get; private set; }
+        public Instruction MoveInstructionAligned { get; private set; }
+        public Instruction MoveInstructionUnaligned { get; private set; }
         //public bool IsReference { get; private set; }
 
         private DataType()
@@ -134,7 +135,8 @@ namespace erc
             Accumulator = StorageLocation.AsRegister(Register.RAX),
             TempRegister1 = StorageLocation.AsRegister(Register.R10),
             TempRegister2 = StorageLocation.AsRegister(Register.R11),
-            MoveInstruction = Instruction.MOV
+            MoveInstructionAligned = Instruction.MOV,
+            MoveInstructionUnaligned = Instruction.MOV
         };
 
         public static DataType F32 = new DataType
@@ -147,7 +149,8 @@ namespace erc
             Accumulator = StorageLocation.AsRegister(Register.XMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
             TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
-            MoveInstruction = Instruction.VMOVSS
+            MoveInstructionAligned = Instruction.VMOVSS,
+            MoveInstructionUnaligned = Instruction.VMOVSS
         };
 
         public static DataType F64 = new DataType
@@ -160,7 +163,8 @@ namespace erc
             Accumulator = StorageLocation.AsRegister(Register.XMM4),
             TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
             TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
-            MoveInstruction = Instruction.VMOVSD
+            MoveInstructionAligned = Instruction.VMOVSD,
+            MoveInstructionUnaligned = Instruction.VMOVSD
         };
 
         public static DataType IVEC2Q = new DataType
@@ -175,7 +179,8 @@ namespace erc
             TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
             TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
             ConstructionRegister = StorageLocation.AsRegister(Register.XMM7),
-            MoveInstruction = Instruction.VMOVDQA
+            MoveInstructionAligned = Instruction.VMOVDQA,
+            MoveInstructionUnaligned = Instruction.VMOVDQU
         };
 
         public static DataType IVEC4Q = new DataType
@@ -190,7 +195,8 @@ namespace erc
             TempRegister1 = StorageLocation.AsRegister(Register.YMM5),
             TempRegister2 = StorageLocation.AsRegister(Register.YMM6),
             ConstructionRegister = StorageLocation.AsRegister(Register.YMM7),
-            MoveInstruction = Instruction.VMOVDQA
+            MoveInstructionAligned = Instruction.VMOVDQA,
+            MoveInstructionUnaligned = Instruction.VMOVDQU
         };
 
         public static DataType VEC4F = new DataType
@@ -205,7 +211,8 @@ namespace erc
             TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
             TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
             ConstructionRegister = StorageLocation.AsRegister(Register.XMM7),
-            MoveInstruction = Instruction.VMOVAPS
+            MoveInstructionAligned = Instruction.VMOVAPS,
+            MoveInstructionUnaligned = Instruction.VMOVUPS
         };
 
         public static DataType VEC8F = new DataType
@@ -220,7 +227,8 @@ namespace erc
             TempRegister1 = StorageLocation.AsRegister(Register.YMM5),
             TempRegister2 = StorageLocation.AsRegister(Register.YMM6),
             ConstructionRegister = StorageLocation.AsRegister(Register.YMM7),
-            MoveInstruction = Instruction.VMOVAPS
+            MoveInstructionAligned = Instruction.VMOVAPS,
+            MoveInstructionUnaligned = Instruction.VMOVUPS
         };
 
         public static DataType VEC2D = new DataType
@@ -235,7 +243,8 @@ namespace erc
             TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
             TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
             ConstructionRegister = StorageLocation.AsRegister(Register.XMM7),
-            MoveInstruction = Instruction.VMOVAPD
+            MoveInstructionAligned = Instruction.VMOVAPD,
+            MoveInstructionUnaligned = Instruction.VMOVUPD
         };
 
         public static DataType VEC4D = new DataType
@@ -250,7 +259,8 @@ namespace erc
             TempRegister1 = StorageLocation.AsRegister(Register.YMM5),
             TempRegister2 = StorageLocation.AsRegister(Register.YMM6),
             ConstructionRegister = StorageLocation.AsRegister(Register.YMM7),
-            MoveInstruction = Instruction.VMOVAPD
+            MoveInstructionAligned = Instruction.VMOVAPD,
+            MoveInstructionUnaligned = Instruction.VMOVUPD
         };
 
         /*

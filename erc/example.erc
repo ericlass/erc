@@ -1,5 +1,15 @@
 
 fn main() {
+	let x6 = <1.0, 2.0, 3.0, 4.0>;
+	add(x6, x6);
+}
+
+fn add(pa: vec4d, pb: vec4d): vec4d {
+	ret pa + pb;
+}
+
+fn types()
+{
 	let a = (5+(7-3))*8;
 	 let b = 1.5f ;
 	let c=b;
@@ -23,10 +33,4 @@ fn main() {
 	let abc = <1.0, d * 2.0, (2.0 * d) + 3.0, d / 4.0>;
 
 	let xyz = <d, e> + <e, d>;
-
-	add(x6, x6);
-}
-
-fn add(pa: vec4d, pb: vec4d): vec4d {
-	ret pa + pb;
 }
