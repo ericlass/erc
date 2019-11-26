@@ -109,6 +109,8 @@ namespace erc
                     return Kind + ": \"" + Identifier + "\" (" + DataType + ")";
 
                 case AstItemKind.VarScopeEnd:
+                case AstItemKind.FunctionCall:
+                case AstItemKind.FunctionDecl:
                     return Kind + ": \"" + Identifier + "\"";
 
                 case AstItemKind.Immediate:
@@ -158,60 +160,40 @@ namespace erc
             return new AstItem(AstItemKind.Programm);
         }
 
-        public static AstItem VarDecl(string varName, DataType dataType, AstItem expression)
+        public static AstItem VarDecl(string varName, AstItem expression)
         {
             var result = new AstItem(AstItemKind.VarDecl);
             result.Identifier = varName;
-            result.DataType = dataType;
             result.Children.Add(expression);
             return result;
         }
 
-        public static AstItem Assignment(string varName, DataType dataType, AstItem expression)
+        public static AstItem Assignment(string varName, AstItem expression)
         {
             var result = new AstItem(AstItemKind.Assignment);
             result.Identifier = varName;
-            result.DataType = dataType;
             result.Children.Add(expression);
             return result;
         }
 
-        private static AstItem Immediate(object value, DataType dataType)
+        public static AstItem Immediate(object value)
         {
             var result = new AstItem(AstItemKind.Immediate);
-            result.DataType = dataType;
             result.Value = value;
             return result;
         }
 
-        public static AstItem Immediate(long value)
-        {
-            return Immediate(value, DataType.I64);
-        }
-
-        public static AstItem Immediate(float value)
-        {
-            return Immediate(value, DataType.F32);
-        }
-
-        public static AstItem Immediate(double value)
-        {
-            return Immediate(value, DataType.F64);
-        }
-
-        public static AstItem Variable(string varName, DataType dataType)
+        public static AstItem Variable(string varName)
         {
             var result = new AstItem(AstItemKind.Variable);
             result.Identifier = varName;
-            result.DataType = dataType;
             return result;
         }
 
-        public static AstItem Vector(List<AstItem> values, DataType dataType)
+        public static AstItem Vector(List<AstItem> values)
         {
             var result = new AstItem(AstItemKind.Vector);
             result.Children.AddRange(values);
-            result.DataType = dataType;
             return result;
         }
 
@@ -295,9 +277,9 @@ namespace erc
             return new AstItem { Kind = AstItemKind.FunctionDecl, Identifier = name, DataType = returnType, Children = new List<AstItem>() { paramList, statementList } };
         }
 
-        public static AstItem FunctionCall(string name, DataType returnType, List<AstItem> parameterValues)
+        public static AstItem FunctionCall(string name, List<AstItem> parameterValues)
         {
-            return new AstItem { Kind = AstItemKind.FunctionCall, DataType = returnType, Identifier = name, Children = parameterValues };
+            return new AstItem { Kind = AstItemKind.FunctionCall, Identifier = name, Children = parameterValues };
         }
 
         public static AstItem Return(DataType dataType, AstItem value)

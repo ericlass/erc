@@ -22,8 +22,12 @@ namespace erc
             var tokenizer = new Tokenizer();
             tokenizer.Tokenize(context);
 
-            var syntax = new Syntax();
+            //var syntax = new Syntax();
+            var syntax = new SyntaxAnalysis();
             syntax.Analyze(context);
+
+            var semantic = new SemanticAnalysis();
+            semantic.Analyze(context);
 
             var processor = new PostProcessor();
             processor.Process(context);
@@ -31,8 +35,9 @@ namespace erc
             var locator = new StorageLocator();
             locator.Locate(context);
 
-            var generator = new CodeGenerator();
-            string finalCode = generator.Generate(context);
+            //var generator = new CodeGenerator();
+            //string finalCode = generator.Generate(context);
+            string finalCode = "none";
 
             stopWatch.Stop();
             var compilationTime = stopWatch.ElapsedMilliseconds;

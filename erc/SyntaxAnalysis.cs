@@ -1,29 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 
 namespace erc
 {
-    public class Syntax
+    public class SyntaxAnalysis
     {
-        /*private CompilerContext _context;
-        private Function _currentFunction;
+        private CompilerContext _context;
 
-        public Syntax()
+        public SyntaxAnalysis()
         {
         }
 
         public void Analyze(CompilerContext context)
         {
             _context = context;
-            _context.ResetScope();
 
             var tokens = new SimpleIterator<Token>(context.Tokens);
             var result = AstItem.Programm();
-
             result.Children = Read(tokens);
-            ValidateFunctionCalls(result);
-
             context.AST = result;
         }
 
@@ -77,24 +71,10 @@ namespace erc
                 next = tokens.Pop();
             }
 
-            var funcParams = parameters.ConvertAll((p) => new Symbol(p.Identifier, SymbolKind.Parameter, p.DataType));
-            var function = new Function(name.Value, returnType, funcParams);
-            _context.CurrentScope.AddFunction(function);
-            _currentFunction = function;            
-
-            //Enter new scope for the function
-            _context.EnterScope(name.Value);
-
-            //Add all parameters in scope
-            funcParams.ForEach((p) => _context.CurrentScope.AddSymbol(p));
-
             if (next.TokenType == TokenType.CurlyBracketOpen)
                 statements = ReadStatements(tokens);
             else
                 throw new Exception("Expected ':' or '{', found " + next);
-
-            _context.LeaveScope();
-            _currentFunction = null;
 
             next = tokens.Pop();
             if (next.TokenType != TokenType.CurlyBracketClose)
@@ -146,10 +126,9 @@ namespace erc
 
         private AstItem ReadStatement(SimpleIterator<Token> tokens)
         {
-            var token = tokens.Current();
-
             AstItem result = null;
 
+            var token = tokens.Current();
             tokens.StartCapture();
 
             switch (token.TokenType)
@@ -163,9 +142,6 @@ namespace erc
                     tokens.Pop();
 
                     var value = ReadExpression(tokens, TokenType.StatementTerminator);
-                    if (value.DataType != _currentFunction.ReturnType)
-                        throw new Exception("Invalid return type! Expected " + _currentFunction.ReturnType + ", got " + value.DataType + " at " + token);
-
                     result = AstItem.Return(value.DataType, value);
 
                     //Pop ";"
@@ -203,9 +179,6 @@ namespace erc
 
         private AstItem ReadFuncCall(SimpleIterator<Token> tokens)
         {
-            //No validation of called function here!
-            //We might be calling a function that has not been defined yet, but will be later.
-
             var name = tokens.Pop();
 
             var bracket = tokens.Pop();
@@ -218,39 +191,9 @@ namespace erc
             {
                 var expression = ReadExpression(new SimpleIterator<Token>(valueTokens), null);
                 paramExpressions.Add(expression);
-            }            
-
-            //Set return type void here, real type will be set later
-            return AstItem.FunctionCall(name.Value, DataType.VOID, paramExpressions);
-        }
-
-        private void ValidateFunctionCalls(AstItem item)
-        {
-            if (item.Kind == AstItemKind.FunctionCall)
-            {
-                var function = _context.CurrentScope.GetFunction(item.Identifier);
-                if (function == null)
-                    throw new Exception("Undeclared function: " + item.Identifier);
-
-                if (item.Children.Count != function.Parameters.Count)
-                    throw new Exception("Invalid number of arguments to function '" + function.Name + "'! Expected: " + function.Parameters.Count + ", given: " + item.Children.Count);
-
-                for (int i = 0; i < item.Children.Count; i++)
-                {
-                    var expression = item.Children[i];
-                    var parameter = function.Parameters[i];
-
-                    if (expression.DataType != parameter.DataType)
-                        throw new Exception("Invalid type for parameter '" + parameter.Name + "'! Expected: " + parameter.DataType + ", given: " + expression.DataType);
-                }
-
-                item.DataType = function.ReturnType;
             }
 
-            foreach (var child in item.Children)
-            {
-                ValidateFunctionCalls(child);
-            }
+            return AstItem.FunctionCall(name.Value, paramExpressions);
         }
 
         private List<List<Token>> ReadTokenList(SimpleIterator<Token> tokens, TokenType separator, TokenType terminator)
@@ -291,25 +234,17 @@ namespace erc
             if (name.TokenType != TokenType.Word)
                 throw new Exception("Expected identifier, found " + name);
 
-            if (_context.CurrentScope.SymbolExists(name.Value))
-                throw new Exception("Variable already defined: " + name.Value);
-
             var op = tokens.Pop();
-            if (op.TokenType != TokenType.AssigmnentOperator || op.Value != "=")
+            if (op.TokenType != TokenType.AssigmnentOperator)
                 throw new Exception("Expected assignment operator, found " + name);
 
             var expression = ReadExpression(tokens, TokenType.StatementTerminator);
-            var dataType = DataTypeOfExpression(expression);
-
-            var variable = new Symbol(name.Value, SymbolKind.Variable, dataType);
-
-            _context.CurrentScope.AddSymbol(variable);
 
             var terminator = tokens.Pop();
             if (terminator.TokenType != TokenType.StatementTerminator)
                 throw new Exception("Expected statement terminator, found " + name);
 
-            return AstItem.VarDecl(variable.Name, variable.DataType, expression);
+            return AstItem.VarDecl(name.Value, expression);
         }
 
         private AstItem ReadAssignment(SimpleIterator<Token> tokens)
@@ -318,27 +253,17 @@ namespace erc
             if (name.TokenType != TokenType.Word)
                 throw new Exception("Expected identifier, found " + name);
 
-            var variable = _context.CurrentScope.GetSymbol(name.Value);
-            if (variable == null)
-                throw new Exception("Variable not defined: " + name.Value);
-
-            if (variable.Kind != SymbolKind.Variable)
-                throw new Exception("Cannot assign value to symbol: " + variable);
-
             var op = tokens.Pop();
-            if (op.TokenType != TokenType.AssigmnentOperator || op.Value != "=")
+            if (op.TokenType != TokenType.AssigmnentOperator)
                 throw new Exception("Expected assignment operator, found " + name);
 
             var expression = ReadExpression(tokens, TokenType.StatementTerminator);
-            var expType = DataTypeOfExpression(expression);
-            if (expType != variable.DataType)
-                throw new Exception("Incompatible data types: " + variable.DataType + " <> " + expType);
 
             var terminator = tokens.Pop();
             if (terminator.TokenType != TokenType.StatementTerminator)
                 throw new Exception("Expected statement terminator, found " + name);
 
-            return AstItem.Assignment(variable.Name, variable.DataType, expression);
+            return AstItem.Assignment(name.Value, expression);
         }
 
         private DataType ReadDataType(SimpleIterator<Token> tokens)
@@ -351,64 +276,9 @@ namespace erc
             var result = DataType.GetAllValues().Find((t) => t.Name == name);
 
             if (result == null)
-                throw new Exception("Unkown type: " + name);
+                throw new Exception("Unknown type: " + name);
 
             return result;
-        }
-
-        private DataType DataTypeOfExpression(AstItem expressionItem)
-        {
-            var dt = FindDataTypeOfExpression(expressionItem);
-            if (dt == null)
-                throw new Exception("Could not determine data type of expression: " + expressionItem);
-
-            return dt;
-        }
-
-        private DataType FindDataTypeOfExpression(AstItem expressionItem)
-        {
-            switch (expressionItem.Kind)
-            {
-                case AstItemKind.Immediate:
-                    if (expressionItem.Value is long)
-                        return DataType.I64;
-                    else if (expressionItem.Value is float)
-                        return DataType.F32;
-                    else if (expressionItem.Value is double)
-                        return DataType.F64;
-                    else
-                        throw new Exception("Unknown immediate value: " + expressionItem.Value);
-
-                case AstItemKind.Variable:
-                    var varName = expressionItem.Identifier;
-                    var variable = _context.CurrentScope.GetSymbol(varName);
-                    if (variable == null)
-                        throw new Exception("Variable not declared: " + varName);
-
-                    return variable.DataType;
-
-                case AstItemKind.Vector:
-                    var subType = FindDataTypeOfExpression(expressionItem.Children[0]);
-                    if (subType.IsVector)
-                        throw new Exception("Vectors of vectors are not allowed!");
-
-                    var vectorSize = expressionItem.Children.Count;
-                    var vectorType = DataType.GetVectorType(subType, vectorSize);
-
-                    if (vectorType == DataType.VOID)
-                        throw new Exception("Vectors of " + subType + " cannot have length " + vectorSize);
-
-                    return vectorType;
-            }
-
-            foreach (var item in expressionItem.Children)
-            {
-                var current = FindDataTypeOfExpression(item);
-                if (current != null)
-                    return current;
-            }
-
-            return null;
         }
 
         private AstItem ReadExpression(SimpleIterator<Token> tokens, Nullable<TokenType> terminator)
@@ -507,31 +377,13 @@ namespace erc
             {
                 var next = tokens.Next();
                 if (next != null && next.TokenType == TokenType.RoundBracketOpen)
-                {
                     result = ReadFuncCall(tokens);
-                }
                 else
-                {
-                    var variable = _context.CurrentScope.GetSymbol(token.Value);
-                    if (variable == null)
-                        throw new Exception("Undefined variable: " + token);
-
-                    result = AstItem.Variable(token.Value, variable.DataType);
-                }
+                    result = AstItem.Variable(token.Value);
             }
             else if (token.TokenType == TokenType.Number)
             {
-                var dataType = GuessDataType(token);
-                var value = ParseNumber(token.Value, dataType);
-
-                if (value is long)
-                    result = AstItem.Immediate((long)value);
-                else if (value is float)
-                    result = AstItem.Immediate((float)value);
-                else if (value is double)
-                    result = AstItem.Immediate((double)value);
-                else
-                    throw new Exception("Unexpected number value type: " + value.GetType());
+                result = AstItem.Immediate(token.Value);
             }
             else if (token.TokenType == TokenType.Vector)
             {
@@ -541,27 +393,7 @@ namespace erc
                     var valExp = ReadExpression(new SimpleIterator<Token>(vals), null);
                     values.Add(valExp);
                 }
-
-                var subType = DataTypeOfExpression(values[0]);
-                var vectorType = DataType.GetVectorType(subType, values.Count);
-                if (vectorType == DataType.VOID)
-                    throw new Exception("Not a valid vector type: " + subType + " x " + values.Count);
-
-                result = AstItem.Vector(values, vectorType);
-
-                //Check that all expressions have the same data type!
-                if (values.Count > 0)
-                {
-                    var firstType = DataTypeOfExpression(values[0]);
-                    for (int i = 1; i < values.Count; i++)
-                    {
-                        var currentType = DataTypeOfExpression(values[i]);
-                        if (firstType != currentType)
-                        {
-                            throw new Exception("All expressions in vector must be of same type: " + result);
-                        }
-                    }
-                }
+                result = AstItem.Vector(values);
             }
 
             return result;
@@ -579,53 +411,6 @@ namespace erc
                 default:
                     throw new Exception("Unsupported math operator: " + op);
             }
-        }
-
-        private DataType GuessDataType(Token token)
-        {
-            if (token.TokenType == TokenType.Number)
-            {
-                var value = token.Value;
-                if (!value.Contains("."))
-                    return DataType.I64;
-
-                var last = value[value.Length - 1];
-
-                if (last == 'f')
-                    return DataType.F32;
-
-                return DataType.F64;
-            }
-
-            throw new Exception("Cannot guess data type of: " + token);
-        }
-
-        private object ParseNumber(string str, DataType dataType)
-        {
-            var last = str[str.Length - 1];
-
-            if (dataType == DataType.F32)
-            {
-                if (last == 'f')
-                    return float.Parse(str.Substring(0, str.Length - 1), CultureInfo.InvariantCulture);
-                else
-                    return float.Parse(str, CultureInfo.InvariantCulture);
-            }
-
-            if (dataType == DataType.F64)
-            {
-                if (last == 'd')
-                    return double.Parse(str.Substring(0, str.Length - 1), CultureInfo.InvariantCulture);
-                else
-                    return double.Parse(str, CultureInfo.InvariantCulture);
-            }
-
-            if (dataType == DataType.I64)
-            {
-                return long.Parse(str);
-            }
-
-            throw new Exception("Unsupported number type: " + dataType + " for value " + str);
         }
 
         /// <summary>
@@ -724,7 +509,7 @@ namespace erc
                 default:
                     throw new Exception("Not an operator: " + op);
             }
-        }*/
+        }
 
     }
 }

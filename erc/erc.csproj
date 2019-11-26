@@ -57,12 +57,14 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Register.cs" />
     <Compile Include="Scope.cs" />
+    <Compile Include="SemanticAnalysis.cs" />
     <Compile Include="SimpleIterator.cs" />
     <Compile Include="StorageLocation.cs" />
     <Compile Include="StorageLocator.cs" />
     <Compile Include="StringIterator.cs" />
     <Compile Include="SymbolKind.cs" />
     <Compile Include="Syntax.cs" />
+    <Compile Include="SyntaxAnalysis.cs" />
     <Compile Include="Token.cs" />
     <Compile Include="Tokenizer.cs" />
     <Compile Include="TokenType.cs" />
