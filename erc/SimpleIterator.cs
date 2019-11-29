@@ -63,6 +63,11 @@ namespace erc
             _position += 1;
         }
 
+        public void StepBack()
+        {
+            _position -= 1;
+        }
+
         public bool HasMore()
         {
             return _position < _items.Count;

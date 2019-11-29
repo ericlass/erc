@@ -17,12 +17,11 @@ namespace erc
             _context = context;
             _context.ResetScope();
 
-            AddAllFunctionsInScope(_context.AST);
-            ConvertImmediates(_context.AST);
+            AddAllFunctionsToScope(_context.AST);
             Check(_context.AST);
         }
 
-        private void AddAllFunctionsInScope(AstItem item)
+        private void AddAllFunctionsToScope(AstItem item)
         {
             foreach (var funcItem in item.Children)
             {
@@ -33,23 +32,6 @@ namespace erc
                 var funcParams = parameters.ConvertAll((p) => new Symbol(p.Identifier, SymbolKind.Parameter, p.DataType));
                 var function = new Function(funcItem.Identifier, funcItem.DataType, funcParams);
                 _context.CurrentScope.AddFunction(function);
-            }
-        }
-
-        private void ConvertImmediates(AstItem item)
-        {
-            if (item.Kind == AstItemKind.Immediate)
-            {
-                var numStr = (string)item.Value;
-                var dataType = GuessDataType(numStr);
-                var value = ParseNumber(numStr, dataType);
-                item.Value = value;
-                item.DataType = dataType;
-            }
-
-            foreach (var child in item.Children)
-            {
-                ConvertImmediates(child);
             }
         }
 
@@ -67,8 +49,10 @@ namespace erc
                 throw new Exception("Expected function declaration, got " + item);
 
             _currentFunction = _context.CurrentScope.GetFunction(item.Identifier);
-            _context.EnterScope(item.Identifier);
+            if (_currentFunction == null)
+                throw new Exception("Function not found in scope: " + item);
 
+            _context.EnterScope(_currentFunction.Name);
             _currentFunction.Parameters.ForEach((p) => _context.CurrentScope.AddSymbol(p));
 
             foreach (var statement in item.Children[1].Children)
@@ -88,9 +72,7 @@ namespace erc
                 if (variable != null)
                     throw new Exception("Variable already declared: " + item);
 
-                var dataType = DataTypeOfExpression(item.Children[0]);
-                CheckExpressionDataTypes(item, dataType);
-                //TODO: Validate function calls inside of expression
+                var dataType = CheckExpression(item.Children[0]);
                 item.DataType = dataType;
 
                 variable = new Symbol(item.Identifier, SymbolKind.Variable, dataType);
@@ -102,10 +84,10 @@ namespace erc
                 if (variable == null)
                     throw new Exception("Variable not declared: " + item);
 
-                var dataType = DataTypeOfExpression(item.Children[0]);
-                CheckExpressionDataTypes(item, dataType);
-                //TODO: Validate function calls inside of expression
-                item.DataType = dataType;
+                if (!variable.IsAssignable)
+                    throw new Exception("Cannot assign to symbol: " + variable);
+
+                item.DataType = CheckExpression(item.Children[0]);
             }
             else if (item.Kind == AstItemKind.FunctionCall)
             {
@@ -120,125 +102,141 @@ namespace erc
                 {
                     var expression = item.Children[i];
                     var parameter = function.Parameters[i];
-                    CheckExpressionDataTypes(expression, parameter.DataType);
-                    //TODO: Validate function calls inside of expression
+
+                    var dataType = CheckExpression(expression);
+                    if (dataType != parameter.DataType)
+                        throw new Exception("Invalid data type for parameter " + parameter + "! Expected: " + parameter.DataType + ", found: " + dataType);
+
+                    expression.DataType = dataType;
                 }
 
                 item.DataType = function.ReturnType;
             }
             else if (item.Kind == AstItemKind.Return)
             {
-                var dataType = DataTypeOfExpression(item);
-                CheckExpressionDataTypes(item, dataType);
+                var dataType = CheckExpression(item.Children[0]);
 
                 if (dataType != _currentFunction.ReturnType)
-                    throw new Exception("Invalid data type! Expected " + _currentFunction.ReturnType + ", found " + dataType);
+                    throw new Exception("Invalid return data type! Expected " + _currentFunction.ReturnType + ", found " + dataType);
+
+                item.DataType = dataType;
             }
             else
                 throw new Exception("Unknown statement: " + item);
         }
 
-        private void CheckExpressionDataTypes(AstItem item, DataType expectedType)
+        private DataType CheckExpression(AstItem expression)
         {
-            var dataType = item.DataType;
-            if (dataType == null)
+            if (expression.Kind == AstItemKind.Immediate)
             {
-                dataType = FindDataTypeOfExpression(item);
-                item.DataType = dataType;
+                var numStr = (string)expression.Value;
+                var dataType = FindNumerDataType(numStr);
+                var value = ParseNumber(numStr, dataType);
+
+                expression.Value = value;
+                expression.DataType = dataType;
             }
-
-            if (dataType != null && dataType != expectedType && dataType != expectedType.ElementType)
-                throw new Exception("Invalid data type in expression: Expected " + expectedType + ", found " + dataType + ", at " + item);
-
-            foreach (var child in item.Children)
+            else if (expression.Kind == AstItemKind.Vector)
             {
-                CheckExpressionDataTypes(child, expectedType);
-            }
-        }
+                DataType subType = null;
+            	foreach (var child in expression.Children)
+                {
+                    var childType = CheckExpression(child);
 
-        private DataType DataTypeOfExpression(AstItem expressionItem)
-        {
-            var dt = FindDataTypeOfExpression(expressionItem);
-            if (dt == null)
-                throw new Exception("Could not determine data type of expression: " + expressionItem);
-
-            return dt;
-        }
-
-        private DataType FindDataTypeOfExpression(AstItem expressionItem)
-        {
-            var dataType = DataTypeOfExpressionItem(expressionItem);
-
-            if (dataType != null)
-            {
-                expressionItem.DataType = dataType;
-                return dataType;
-            }
-
-            foreach (var item in expressionItem.Children)
-            {
-                var current = FindDataTypeOfExpression(item);
-                if (current != null)
-                    return current;
-            }
-
-            return null;
-        }
-
-        private DataType DataTypeOfExpressionItem(AstItem expressionItem)
-        {
-            DataType dataType = null;
-
-            switch (expressionItem.Kind)
-            {
-                case AstItemKind.Immediate:
-                    if (expressionItem.Value is long)
-                        dataType = DataType.I64;
-                    else if (expressionItem.Value is float)
-                        dataType = DataType.F32;
-                    else if (expressionItem.Value is double)
-                        dataType = DataType.F64;
+                    if (subType == null)
+                    {
+                        subType = childType;
+                        if (subType.IsVector)
+                            throw new Exception("Vectors of vectors are not allowed!");
+                    }
                     else
-                        throw new Exception("Unknown immediate value: " + expressionItem.Value);
-                    break;
+                    {
+                        if (subType != childType)
+                            throw new Exception("All items in a vector have to have the same type! Expected: " + subType + ", found: " + childType);
+                    }
+                }
 
-                case AstItemKind.Variable:
-                    var varName = expressionItem.Identifier;
-                    var variable = _context.CurrentScope.GetSymbol(varName);
-                    if (variable == null)
-                        throw new Exception("Variable not declared: " + varName);
+                var vectorSize = expression.Children.Count;
+                var vectorType = DataType.GetVectorType(subType, vectorSize);
 
-                    dataType = variable.DataType;
-                    break;
+                if (vectorType == DataType.VOID)
+                    throw new Exception("Vectors of " + subType + " cannot have length " + vectorSize);
 
-                case AstItemKind.FunctionCall:
-                    var funcName = expressionItem.Identifier;
-                    var function = _context.CurrentScope.GetFunction(funcName);
-                    if (function == null)
-                        throw new Exception("Function not declared: " + funcName);
-
-                    dataType = function.ReturnType;
-                    break;
-
-                case AstItemKind.Vector:
-                    var subType = FindDataTypeOfExpression(expressionItem.Children[0]);
-                    if (subType.IsVector)
-                        throw new Exception("Vectors of vectors are not allowed!");
-
-                    var vectorSize = expressionItem.Children.Count;
-                    var vectorType = DataType.GetVectorType(subType, vectorSize);
-
-                    if (vectorType == DataType.VOID)
-                        throw new Exception("Vectors of " + subType + " cannot have length " + vectorSize);
-
-                    dataType = vectorType;
-                    break;
+                expression.DataType = vectorType;
             }
+            else if (expression.Kind == AstItemKind.Variable)
+            {
+                var variable = _context.CurrentScope.GetSymbol(expression.Identifier);
+                if (variable == null)
+                    throw new Exception("Undeclared variable: " + expression.Identifier);
 
-            return dataType;
+                expression.DataType = variable.DataType;
+            }
+            else if (expression.Kind == AstItemKind.FunctionCall)
+            {
+                var function = _context.CurrentScope.GetFunction(expression.Identifier);
+                if (function == null)
+                    throw new Exception("Undeclared function: " + expression.Identifier);
+
+                if (expression.Children.Count != function.Parameters.Count)
+                    throw new Exception("Invalid number of arguments to function '" + function.Name + "'! Expected: " + function.Parameters.Count + ", given: " + expression.Children.Count);
+
+                for (int i = 0; i < expression.Children.Count; i++)
+                {
+                    var paramExpression = expression.Children[i];
+                    var parameter = function.Parameters[i];
+
+                    var dataType = CheckExpression(paramExpression);
+                    if (dataType != parameter.DataType)
+                        throw new Exception("Invalid data type for parameter " + parameter + "! Expected: " + parameter.DataType + ", found: " + dataType);
+
+                    paramExpression.DataType = dataType;
+                }
+
+                expression.DataType = function.ReturnType;
+            }
+            else if (expression.Kind == AstItemKind.Expression)
+            {
+                DataType expressionType = null;
+                foreach (var expItem in expression.Children)
+                {
+                    DataType itemType = null;
+                    if (expItem.Kind == AstItemKind.AddOp || expItem.Kind == AstItemKind.SubOp || expItem.Kind == AstItemKind.MulOp || expItem.Kind == AstItemKind.DivOp)
+                    {
+                        if (expressionType == null)
+                            throw new Exception("Invalid expression, no value before operator " + expItem + " in expression: " + expression);
+
+                        itemType = expressionType;
+                    }
+                    else
+                    {
+                        itemType = CheckExpression(expItem);
+                    }
+
+                    if (expressionType == null)
+                    {
+                        expressionType = itemType;
+                    }
+                    else
+                    {
+                        if (expressionType != itemType)
+                            throw new Exception("All items in an expression have to have the same type! Expected: " + expressionType + ", found: " + itemType);
+                    }
+
+                    expItem.DataType = expressionType;
+                }
+                expression.DataType = expressionType;
+            }
+            else
+                throw new Exception("Unsupported expression item: " + expression);
+
+            if (expression.DataType == null)
+                throw new Exception("Could not determine data type for expression: " + expression);
+
+            return expression.DataType;
         }
 
-        private DataType GuessDataType(string value)
+        private DataType FindNumerDataType(string value)
         {
             if (!value.Contains("."))
                 return DataType.I64;
@@ -280,4 +278,5 @@ namespace erc
         }
 
     }
+
 }

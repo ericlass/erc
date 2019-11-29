@@ -37,7 +37,7 @@ namespace erc
         /// <param name="scope">The scope to check.</param>
         public void CreateVariableScopeNodes(AstItem scope)
         {
-            var statements = scope.Children;
+            var statements = scope.Children[1].Children;
             var varNames = new List<string>();
             var alreadyFound = new HashSet<string>();
             for (int i = statements.Count - 1; i >= 0; i--)

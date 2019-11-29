@@ -102,5 +102,10 @@ namespace erc
             _symbols.Remove(name);
         }
 
+        public List<Symbol> GetAllSymbols()
+        {
+            return new List<Symbol>(_symbols.Values);
+        }
+
     }
 }

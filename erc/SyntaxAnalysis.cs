@@ -314,8 +314,6 @@ namespace erc
             {
                 //Math Expression
                 var expItemsInfix = new List<AstItem>();
-                DataType expDataType = null;
-
                 var token = tokenIter.Current();
                 while (token != null)
                 {
@@ -326,16 +324,6 @@ namespace erc
                         case TokenType.Vector:
                             var operandItem = ReadSingleAstItem(tokenIter);
                             expItemsInfix.Add(operandItem);
-
-                            if (expDataType == null)
-                            {
-                                expDataType = operandItem.DataType;
-                            }
-                            else
-                            {
-                                if (expDataType != operandItem.DataType)
-                                    throw new Exception("All operands in an expressions must have the same data type! " + token + " has data type " + operandItem.DataType + " instead of " + expDataType);
-                            }
                             break;
 
                         case TokenType.MathOperator:
@@ -359,8 +347,6 @@ namespace erc
                     token = tokenIter.Current();
                 }
 
-                expItemsInfix.ForEach((a) => a.DataType = expDataType);
-
                 //Convert to postfix
                 result = InfixToPostfix(expItemsInfix);
             }
@@ -377,7 +363,11 @@ namespace erc
             {
                 var next = tokens.Next();
                 if (next != null && next.TokenType == TokenType.RoundBracketOpen)
+                {
                     result = ReadFuncCall(tokens);
+                    //HACK: Make sure this is not required. After ReadFuncCall iterator points at token after the ")", but all other cases in here point to the last token itself
+                    tokens.StepBack();
+                }
                 else
                     result = AstItem.Variable(token.Value);
             }
@@ -427,7 +417,7 @@ namespace erc
             //Convert infix to postfix
             foreach (var item in infix)
             {
-                if (item.Kind == AstItemKind.Immediate || item.Kind == AstItemKind.Variable || item.Kind == AstItemKind.Vector)
+                if (item.Kind == AstItemKind.Immediate || item.Kind == AstItemKind.Variable || item.Kind == AstItemKind.Vector || item.Kind == AstItemKind.FunctionCall)
                 {
                     output.Add(item);
                 }

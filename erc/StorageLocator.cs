@@ -17,10 +17,10 @@ namespace erc
 
         public void Locate(CompilerContext context)
         {
-            Init();
-
             foreach (var function in context.AST.Children)
             {
+                InitRegisters();
+
                 var funcDecl = context.CurrentScope.GetFunction(function.Identifier);
                 AssignFunctionParameterLocations(funcDecl);
                 AssignFunctionReturnLocation(funcDecl);
@@ -201,18 +201,15 @@ namespace erc
             }
         }
 
-        private void Init()
+        private void InitRegisters()
         {
+            _freeRRegisters.Clear();
             _freeRRegisters.Push(RegisterGroup.R15);
             _freeRRegisters.Push(RegisterGroup.R14);
             _freeRRegisters.Push(RegisterGroup.R13);
             _freeRRegisters.Push(RegisterGroup.R12);
-            //_freeRRegisters.Push(RegisterGroup.R11); //used for arithmetic
-            //_freeRRegisters.Push(RegisterGroup.R10); //used for arithmetic
-            //_freeRRegisters.Push(RegisterGroup.R9); //parameter passing
-            //_freeRRegisters.Push(RegisterGroup.R8); //parameter passing
-            //_freeRRegisters.Push(RegisterGroup.A); //used as accumulator
 
+            _freeMMRegisters.Clear();
             _freeMMRegisters.Push(RegisterGroup.MM15);
             _freeMMRegisters.Push(RegisterGroup.MM14);
             _freeMMRegisters.Push(RegisterGroup.MM13);
@@ -221,14 +218,6 @@ namespace erc
             _freeMMRegisters.Push(RegisterGroup.MM10);
             _freeMMRegisters.Push(RegisterGroup.MM9);
             _freeMMRegisters.Push(RegisterGroup.MM8);
-            //_freeMMRegisters.Push(RegisterGroup.MM7); //used for constructing vectors
-            //_freeMMRegisters.Push(RegisterGroup.MM6); //used for arithmetic
-            //_freeMMRegisters.Push(RegisterGroup.MM5); //used for arithmetic
-            //_freeMMRegisters.Push(RegisterGroup.MM4); //used as accumulator
-            //_freeMMRegisters.Push(RegisterGroup.MM3); //parameter passing
-            //_freeMMRegisters.Push(RegisterGroup.MM2); //parameter passing
-            //_freeMMRegisters.Push(RegisterGroup.MM1); //parameter passing
-            //_freeMMRegisters.Push(RegisterGroup.MM0); //parameter passing
         }
 
         private void InitParamRegisters()

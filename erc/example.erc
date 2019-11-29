@@ -1,7 +1,7 @@
 
 fn main() {
 	let x6 = <1.0, 2.0, 3.0, 4.0>;
-	add(x6, x6);
+	let k2 = add(x6, x6) + add(x6, x6);
 }
 
 fn add(pa: vec4d, pb: vec4d): vec4d {

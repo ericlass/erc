@@ -35,26 +35,19 @@ namespace erc
             var locator = new StorageLocator();
             locator.Locate(context);
 
-            //var generator = new CodeGenerator();
-            //string finalCode = generator.Generate(context);
-            string finalCode = "none";
+            var generator = new CodeGenerator();
+            string finalCode = generator.Generate(context);
+            //string finalCode = "none";
 
             stopWatch.Stop();
             var compilationTime = stopWatch.ElapsedMilliseconds;
             
-            Console.WriteLine("TOKENS");
+            /*Console.WriteLine("TOKENS");
             Console.WriteLine("======");
             foreach (var token in context.Tokens)
             {
                 Console.WriteLine(token);
-            }
-
-            /*
-            Console.WriteLine();
-            Console.WriteLine("STORAGE");
-            Console.WriteLine("=======");
-            var locator = new StorageLocator();
-            locator.Locate(context);*/
+            }*/
 
             Console.WriteLine();
             Console.WriteLine("AST");
