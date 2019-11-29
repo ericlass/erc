@@ -115,6 +115,9 @@ namespace erc
 
         public static Instruction V_LABEL = new Instruction("V_LABEL", 1, (instr, op1, op2, op3) => op1.DataName + ":");
         public static Instruction V_COMMENT = new Instruction("V_COMMENT", 1, (instr, op1, op2, op3) => "; " + op1.DataName);
+        public static Instruction V_PUSH = new Instruction("V_PUSH", 1);
+        public static Instruction V_POP = new Instruction("V_POP", 1);
 
     }
 }
+

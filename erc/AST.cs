@@ -47,6 +47,14 @@ namespace erc
         public List<AstItem> Children { get => _children; set => _children = value; }
         public bool DataGenerated { get; set; } = false; //Used to track which immediates have already been generated in the data section
 
+        public bool IsOperator
+        {
+            get
+            {
+                return Kind == AstItemKind.AddOp || Kind == AstItemKind.SubOp || Kind == AstItemKind.MulOp || Kind == AstItemKind.DivOp;
+            }
+        }
+
         public AstItem()
         {
         }

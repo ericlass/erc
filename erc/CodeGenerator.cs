@@ -33,6 +33,7 @@ namespace erc
         private long _immCounter = 0;
         private Dictionary<string, Instruction> _instructionMap = null;
         private Function _currentFunction = null;
+        private Optimizer _optimizer = new Optimizer();
 
         private string GetImmName()
         {
@@ -108,6 +109,8 @@ namespace erc
             if (last.Instruction != Instruction.RET)
                 result.Add(new Operation(DataType.VOID, Instruction.RET));
 
+            _optimizer.Optimize(result);
+
             return result;
         }
 
@@ -171,7 +174,7 @@ namespace erc
                 new Tuple<Register,DataType>(Register.YMM6, DataType.VEC4D)
             };
 
-            result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("save mandatory registers")));
+            //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("save mandatory registers")));
             //Push mandatory registers
             result.AddRange(Push(DataType.I64, StorageLocation.AsRegister(Register.RBP)));
             result.AddRange(Push(DataType.I64, StorageLocation.AsRegister(Register.RSP)));
@@ -184,11 +187,15 @@ namespace erc
             result.AddRange(Push(DataType.VEC4D, StorageLocation.AsRegister(Register.YMM5)));
             result.AddRange(Push(DataType.VEC4D, StorageLocation.AsRegister(Register.YMM6)));
 
-            result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("save parameter registers")));
+            var calledFunctionParameterRegisters = function.Parameters
+                .FindAll((p) => p.Location.Kind == StorageLocationKind.Register)
+                .ConvertAll((p) => p.Location.Register);
+
+            //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("save parameter registers")));
             //Push parameter registers of current function
             foreach (var funcParam in _currentFunction.Parameters)
             {
-                if (funcParam.Location.Kind == StorageLocationKind.Register)
+                if (funcParam.Location.Kind == StorageLocationKind.Register && calledFunctionParameterRegisters.Contains(funcParam.Location.Register))
                 {
                     result.AddRange(Push(funcParam.DataType, funcParam.Location));
                     savedRegisters.Add(new Tuple<Register, DataType>(funcParam.Location.Register, funcParam.DataType));
@@ -196,7 +203,7 @@ namespace erc
             }
 
             //Push variable registers
-            result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("save variable registers")));
+            //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("save variable registers")));
             //Assuming that "_context.AllVariables" returns all variables declarded in the current functions scope until now
             foreach (var variable in _context.CurrentScope.GetAllSymbols())
             {
@@ -213,11 +220,11 @@ namespace erc
                 //Assuming that AST item has as many children as function has parameters, as this is checked before
                 var parameter = function.Parameters[i];
                 var expression = funcCall.Children[i];
-                result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("parameter expression " + (i + 1))));
+                //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("parameter expression " + (i + 1))));
                 result.AddRange(GenerateExpression(expression, parameter.Location));
             }
 
-            result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("create shadow space")));
+            //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("create shadow space")));
             //Add 32 bytes shadow space
             result.Add(new Operation(DataType.I64, Instruction.SUB_IMM, StorageLocation.AsRegister(Register.RSP), StorageLocation.Immediate(32)));
             result.AddRange(Move(DataType.I64, StorageLocation.AsRegister(Register.RSP), StorageLocation.AsRegister(Register.RBP)));
@@ -226,13 +233,13 @@ namespace erc
             result.Add(new Operation(function.ReturnType, Instruction.CALL, StorageLocation.Label("fn_" + function.Name)));
 
             //Remove shadow space
-            result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("delete shadow space")));
+            //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("delete shadow space")));
             result.Add(new Operation(DataType.I64, Instruction.ADD_IMM, StorageLocation.AsRegister(Register.RSP), StorageLocation.Immediate(32)));
 
             //Move result value (if exists) to target location (if required)
             if (function.ReturnType != DataType.VOID && targetLocation != null && function.ReturnLocation != targetLocation)
             {
-                result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("move result value")));
+                //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("move result value")));
                 result.AddRange(Move(function.ReturnType, function.ReturnLocation, targetLocation));
             }
 
@@ -240,7 +247,7 @@ namespace erc
             savedRegisters.Reverse();
             foreach (var register in savedRegisters)
             {
-                result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("restore register " + register.Item1)));
+                //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("restore register " + register.Item1)));
                 result.AddRange(Pop(register.Item2, StorageLocation.AsRegister(register.Item1)));
             }
 
@@ -375,13 +382,13 @@ namespace erc
                 switch (item.Kind)
                 {
                     case AstItemKind.Immediate:
-                        ops.Add(new Operation(item.DataType, Instruction.PUSH, StorageLocation.DataSection(item.Identifier)));
+                        ops.Add(new Operation(item.DataType, Instruction.V_PUSH, StorageLocation.DataSection(item.Identifier)));
                         break;
 
                     case AstItemKind.Vector:
                         if (IsFullImmediateVector(item))
                         {
-                            ops.Add(new Operation(item.DataType, Instruction.PUSH, StorageLocation.DataSection(item.Identifier)));
+                            ops.Add(new Operation(item.DataType, Instruction.V_PUSH, StorageLocation.DataSection(item.Identifier)));
                         }
                         else
                         {
@@ -392,7 +399,7 @@ namespace erc
 
                     case AstItemKind.Variable:
                         var variable = _context.CurrentScope.GetSymbol(item.Identifier);
-                        ops.Add(new Operation(item.DataType, Instruction.PUSH, variable.Location));
+                        ops.Add(new Operation(item.DataType, Instruction.V_PUSH, variable.Location));
                         break;
 
                     case AstItemKind.FunctionCall:
@@ -411,20 +418,20 @@ namespace erc
 
                         if (instruction.NumOperands == 3)
                         {
-                            ops.Add(new Operation(item.DataType, Instruction.POP, operand2));
-                            ops.Add(new Operation(item.DataType, Instruction.POP, operand1));
+                            ops.Add(new Operation(item.DataType, Instruction.V_POP, operand2));
+                            ops.Add(new Operation(item.DataType, Instruction.V_POP, operand1));
                             ops.Add(new Operation(item.DataType, instruction, accumulator, operand1, operand2));
                         }
                         else if (instruction.NumOperands == 2)
                         {
-                            ops.Add(new Operation(item.DataType, Instruction.POP, operand1));
-                            ops.Add(new Operation(item.DataType, Instruction.POP, accumulator));
+                            ops.Add(new Operation(item.DataType, Instruction.V_POP, operand1));
+                            ops.Add(new Operation(item.DataType, Instruction.V_POP, accumulator));
                             ops.Add(new Operation(item.DataType, instruction, accumulator, operand1));
                         }
                         else
                             throw new Exception("Invalid number of instruction operands: " + instruction);
 
-                        ops.Add(new Operation(item.DataType, Instruction.PUSH, accumulator));
+                        ops.Add(new Operation(item.DataType, Instruction.V_PUSH, accumulator));
                         break;
 
                     default:
@@ -447,12 +454,12 @@ namespace erc
             for (int i = 0; i < ops.Count; i++)
             {
                 var popOp = ops[i];
-                if (popOp.Instruction == Instruction.POP)
+                if (popOp.Instruction == Instruction.V_POP)
                 {
                     for (int j = i; j >= 0; j--)
                     {
                         var pushOp = ops[j];
-                        if (pushOp.Instruction == Instruction.PUSH)
+                        if (pushOp.Instruction == Instruction.V_PUSH)
                         {
                             var source = pushOp.Operand1;
                             var target = popOp.Operand1;
@@ -520,6 +527,8 @@ namespace erc
             }
 
             ops.RemoveAll((a) => a.Instruction == Instruction.NOP);
+            ops.ForEach((o) => { if (o.Instruction == Instruction.V_PUSH) o.Instruction = Instruction.PUSH; });
+            ops.ForEach((o) => { if (o.Instruction == Instruction.V_POP) o.Instruction = Instruction.POP; });
         }
 
         public StorageLocation TakeIntermediateRegister(DataType dataType)

@@ -22,6 +22,8 @@ namespace erc
                 instruction = dataType.MoveInstructionAligned;
 
             var result = new List<Operation>();
+            if (source == target)
+                return result;
 
             if ((source.Kind == StorageLocationKind.StackFromBase || source.Kind == StorageLocationKind.StackFromTop || source.Kind == StorageLocationKind.DataSection) && (target.Kind == StorageLocationKind.StackFromBase || target.Kind == StorageLocationKind.StackFromTop))
             {

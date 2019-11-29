@@ -51,6 +51,7 @@
     <Compile Include="Function.cs" />
     <Compile Include="Instruction.cs" />
     <Compile Include="Operation.cs" />
+    <Compile Include="Optimizer.cs" />
     <Compile Include="PostProcessor.cs" />
     <Compile Include="DataType.cs" />
     <Compile Include="Program.cs" />
