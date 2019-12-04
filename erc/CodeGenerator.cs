@@ -294,7 +294,8 @@ namespace erc
                     return GenerateFunctionCall(expression, targetLocation);
 
                 case AstItemKind.Expression:
-                    var ops = GenerateExpressionOperations(expression.Children);
+                    //var ops = GenerateExpressionOperations(expression.Children);
+                    var ops = GenerateExpressionOperations2(expression.Children, targetLocation);
                     CollapsePushPop(ops);
                     //It is possible that some push/pops remain. For vectors, these must be converted to moves.
                     GenerateVectorPushPops(ops);
@@ -371,6 +372,138 @@ namespace erc
             }
 
             return operations;
+        }
+
+        private List<Operation> GenerateExpressionOperations2(List<AstItem> items, StorageLocation targetLocation)
+        {
+            //x y 5 z * / - 10 +
+
+            var result = new List<Operation>();
+            for (int i = 0; i < items.Count; i++)
+            {
+                var item = items[i];
+
+                var target = targetLocation;
+                if (target == null)
+                    target = item.DataType.Accumulator;
+
+                var instruction = GetInstruction(item.Kind, item.DataType);
+
+                if (item.IsOperator)
+                {
+                    var operand1 = items[i - 2];
+                    var operand2 = items[i - 1];
+
+                    //TODO: If operand 1 or 2 is an operator, we need to v_pop an intermediate value from the stack
+
+                    if (instruction.NumOperands == 2)
+                    {
+                        var operand1Location = GetOperandLocation(result, operand1, target);
+                        if (operand1Location != target)
+                            result.AddRange(Move(item.DataType, operand1Location, target));
+
+                        var operand2Location = PrepareOperandLocation(result, operand2, item.DataType.TempRegister2);
+
+                        result.Add(new Operation(item.DataType, instruction, target, operand2Location));
+                    }
+                    else if (instruction.NumOperands == 3)
+                    {
+                        var operand1Location = PrepareOperandLocation(result, operand1, item.DataType.TempRegister1);
+                        var operand2Location = PrepareOperandLocation(result, operand1, item.DataType.TempRegister2);
+                        result.Add(new Operation(item.DataType, instruction, target, operand1Location, operand2Location));
+                    }
+                    else
+                        throw new Exception("Invalid number of instruction operands: " + instruction);
+
+                    result.Add(new Operation(item.DataType, Instruction.V_PUSH, target));
+
+                    //Remove the two operands from the expression
+                    items.RemoveAt(i - 2);
+                    items.RemoveAt(i - 2);
+
+                    i = i - 2;
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Make sure an operand for a processing instruction is in a usable location (= register).
+        /// </summary>
+        /// <param name="output">Add additional operations here.</param>
+        /// <param name="operand">The operand.</param>
+        /// <param name="defaultLocation">The location to use when the operand is not in a register.</param>
+        /// <returns>The usable location. Either the current location, if it is usable, or the given default location.</returns>
+        private StorageLocation PrepareOperandLocation(List<Operation> output, AstItem operand, StorageLocation defaultLocation)
+        {
+            if (defaultLocation.Kind != StorageLocationKind.Register)
+                throw new Exception("Excepted register, got " + defaultLocation);
+
+            var result = defaultLocation;
+
+            if (operand.Kind == AstItemKind.Immediate)
+            {
+                output.AddRange(Move(operand.DataType, StorageLocation.DataSection(operand.Identifier), defaultLocation));
+            }
+            else if (operand.Kind == AstItemKind.Vector)
+            {
+                if (IsFullImmediateVector(operand))
+                    output.AddRange(Move(operand.DataType, StorageLocation.DataSection(operand.Identifier), defaultLocation));
+                else
+                    output.AddRange(GenerateVectorWithExpressions(operand, defaultLocation));
+            }
+            else if (operand.Kind == AstItemKind.Variable)
+            {
+                var variable = _context.CurrentScope.GetSymbol(operand.Identifier);
+                if (variable.Location.Kind == StorageLocationKind.Register)
+                    result = variable.Location;
+                else
+                    output.AddRange(Move(variable.DataType, variable.Location, defaultLocation));
+            }
+            else if (operand.Kind == AstItemKind.FunctionCall)
+            {
+                output.AddRange(GenerateFunctionCall(operand, defaultLocation));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Gets the current location of an operand.
+        /// </summary>
+        /// <param name="output"></param>
+        /// <param name="operand"></param>
+        /// <param name="defaultLocation"></param>
+        /// <returns>The current location of the operand. If it has no location, it is moved to the default location and that is returned.</returns>
+        private StorageLocation GetOperandLocation(List<Operation> output, AstItem operand, StorageLocation defaultLocation)
+        {
+            var result = defaultLocation;
+
+            if (operand.Kind == AstItemKind.Immediate)
+            {
+                result = StorageLocation.DataSection(operand.Identifier);
+            }
+            else if (operand.Kind == AstItemKind.Vector)
+            {
+                if (IsFullImmediateVector(operand))
+                    result = StorageLocation.DataSection(operand.Identifier);
+                else
+                {
+                    output.AddRange(GenerateVectorWithExpressions(operand, defaultLocation));
+                }
+            }
+            else if (operand.Kind == AstItemKind.Variable)
+            {
+                var variable = _context.CurrentScope.GetSymbol(operand.Identifier);
+                result = variable.Location;
+            }
+            else if (operand.Kind == AstItemKind.FunctionCall)
+            {
+                output.AddRange(GenerateFunctionCall(operand, defaultLocation));
+            }
+
+            return result;
         }
 
         private List<Operation> GenerateExpressionOperations(List<AstItem> items)
