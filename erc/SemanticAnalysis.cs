@@ -6,7 +6,6 @@ namespace erc
     public class SemanticAnalysis
     {
         private CompilerContext _context;
-        private Function _currentFunction;
 
         public SemanticAnalysis()
         {
@@ -15,7 +14,6 @@ namespace erc
         public void Analyze(CompilerContext context)
         {
             _context = context;
-            _context.ResetScope();
 
             AddAllFunctionsToScope(_context.AST);
             Check(_context.AST);
@@ -31,7 +29,7 @@ namespace erc
                 var parameters = funcItem.Children[0].Children;
                 var funcParams = parameters.ConvertAll((p) => new Symbol(p.Identifier, SymbolKind.Parameter, p.DataType));
                 var function = new Function(funcItem.Identifier, funcItem.DataType, funcParams);
-                _context.CurrentScope.AddFunction(function);
+                _context.AddFunction(function);
             }
         }
 
@@ -48,27 +46,27 @@ namespace erc
             if (item.Kind != AstItemKind.FunctionDecl)
                 throw new Exception("Expected function declaration, got " + item);
 
-            _currentFunction = _context.CurrentScope.GetFunction(item.Identifier);
-            if (_currentFunction == null)
+            var currentFunction = _context.GetFunction(item.Identifier);
+            if (currentFunction == null)
                 throw new Exception("Function not found in scope: " + item);
 
-            _context.EnterScope(_currentFunction.Name);
-            _currentFunction.Parameters.ForEach((p) => _context.CurrentScope.AddSymbol(p));
+            _context.EnterFunction(currentFunction);
+            _context.EnterBlock();
 
             foreach (var statement in item.Children[1].Children)
             {
                 CheckStatement(statement);
             }
 
-            _context.LeaveScope();
-            _currentFunction = null;
+            _context.LeaveBlock();
+            _context.LeaveFunction();
         }
 
         private void CheckStatement(AstItem item)
         {
             if (item.Kind == AstItemKind.VarDecl)
             {
-                var variable = _context.CurrentScope.GetSymbol(item.Identifier);
+                var variable = _context.GetSymbol(item.Identifier);
                 if (variable != null)
                     throw new Exception("Variable already declared: " + item);
 
@@ -76,11 +74,11 @@ namespace erc
                 item.DataType = dataType;
 
                 variable = new Symbol(item.Identifier, SymbolKind.Variable, dataType);
-                _context.CurrentScope.AddSymbol(variable);
+                _context.AddVariable(variable);
             }
             else if (item.Kind == AstItemKind.Assignment)
             {
-                var variable = _context.CurrentScope.GetSymbol(item.Identifier);
+                var variable = _context.GetSymbol(item.Identifier);
                 if (variable == null)
                     throw new Exception("Variable not declared: " + item);
 
@@ -91,7 +89,7 @@ namespace erc
             }
             else if (item.Kind == AstItemKind.FunctionCall)
             {
-                var function = _context.CurrentScope.GetFunction(item.Identifier);
+                var function = _context.GetFunction(item.Identifier);
                 if (function == null)
                     throw new Exception("Undeclared function: " + item.Identifier);
 
@@ -116,8 +114,8 @@ namespace erc
             {
                 var dataType = CheckExpression(item.Children[0]);
 
-                if (dataType != _currentFunction.ReturnType)
-                    throw new Exception("Invalid return data type! Expected " + _currentFunction.ReturnType + ", found " + dataType);
+                if (dataType != _context.CurrentFunction.ReturnType)
+                    throw new Exception("Invalid return data type! Expected " + _context.CurrentFunction.ReturnType + ", found " + dataType);
 
                 item.DataType = dataType;
             }
@@ -166,7 +164,7 @@ namespace erc
             }
             else if (expression.Kind == AstItemKind.Variable)
             {
-                var variable = _context.CurrentScope.GetSymbol(expression.Identifier);
+                var variable = _context.GetSymbol(expression.Identifier);
                 if (variable == null)
                     throw new Exception("Undeclared variable: " + expression.Identifier);
 
@@ -174,7 +172,7 @@ namespace erc
             }
             else if (expression.Kind == AstItemKind.FunctionCall)
             {
-                var function = _context.CurrentScope.GetFunction(expression.Identifier);
+                var function = _context.GetFunction(expression.Identifier);
                 if (function == null)
                     throw new Exception("Undeclared function: " + expression.Identifier);
 

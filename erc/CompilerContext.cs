@@ -9,37 +9,117 @@ namespace erc
         public List<Token> Tokens { get; set; }
         public AstItem AST { get; set; }
 
-        public Scope CurrentScope { get; set; } = new Scope("root", null);
+        private ProgramScope _programScope = new ProgramScope();
+        private FunctionScope _functionScope = null;
+        private BlockScope _blockScope = null;
 
         public void ResetScope()
         {
-            while (CurrentScope.Parent != null)
-                CurrentScope = CurrentScope.Parent;
+            _functionScope = null;
+            _blockScope = null;
         }
 
-        public void EnterScope(string name)
+        public void EnterFunction(Function function)
         {
-            Scope newScope = null;
+            if (_functionScope != null)
+                throw new Exception("Already in function!");
 
-            if (CurrentScope.Children.ContainsKey(name))
-            {
-                newScope = CurrentScope.Children[name];
-            }
-            else
-            {
-                newScope = new Scope(name, CurrentScope);
-                CurrentScope.Children.Add(name, newScope);
-            }
-
-            CurrentScope = newScope;
+            _functionScope = new FunctionScope(function);
         }
 
-        public void LeaveScope()
+        public void LeaveFunction()
         {
-            if (CurrentScope.Parent == null)
-                throw new Exception("Cannot leave " + CurrentScope.Name + " scope!");
+            if (_functionScope == null)
+                throw new Exception("Trying to leave non-existing function scope!");
 
-            CurrentScope = CurrentScope.Parent;
+            _functionScope = null;
+            _blockScope = null;
+        }
+
+        public void EnterBlock()
+        {
+            if (_functionScope == null)
+                throw new Exception("Cannot enter block if not inside function!");
+
+            _blockScope = new BlockScope(_blockScope);
+        }
+
+        public void LeaveBlock()
+        {
+            if (_blockScope == null)
+                throw new Exception("Trying to leave non-existing block scope!");
+
+            _blockScope = _blockScope.Parent;
+        }
+
+        public Symbol GetSymbol(string name)
+        {
+            Symbol result = null;
+
+            if (_blockScope != null)
+                result = _blockScope.GetVariabe(name);
+
+            if (result == null && _functionScope != null)
+                result = _functionScope.GetParameter(name);
+
+            return result;
+        }
+
+        public List<Symbol> GetAllVariables()
+        {
+            return _blockScope.GetAllVariables();
+        }
+
+        public void AddVariable(Symbol variable)
+        {
+            if (_blockScope == null)
+                throw new Exception("Cannot add variable, not inside block!");
+
+            _blockScope.AddVariable(variable);
+        }
+
+        public void RemoveVariable(Symbol variable)
+        {
+            if (_blockScope == null)
+                throw new Exception("Cannot remove variable, not inside block!");
+
+            _blockScope.RemoveVariable(variable.Name);
+        }
+
+        public Function GetFunction(string name)
+        {
+            return _programScope.GetFunction(name);
+        }
+
+        public List<Symbol> GetAllFunctionParameters()
+        {
+            return new List<Symbol>(_functionScope.Function.Parameters);
+        }
+
+        public Function CurrentFunction
+        {
+            get
+            {
+                if (_functionScope == null)
+                    throw new Exception("Not in function currently!");
+
+                return _functionScope.Function;
+            }
+        }
+
+        public bool FunctionExists(string name)
+        {
+            return _programScope.GetFunction(name) != null;
+        }
+
+        public void AddFunction(Function function)
+        {
+            _programScope.AddFunction(function);
+        }
+
+        public void RemoveFunction(string name)
+        {
+            _programScope.RemoveFunction(name);
         }
 
     }

@@ -5,16 +5,12 @@ namespace erc
 {
     public class SyntaxAnalysis
     {
-        private CompilerContext _context;
-
         public SyntaxAnalysis()
         {
         }
 
         public void Analyze(CompilerContext context)
         {
-            _context = context;
-
             var tokens = new SimpleIterator<Token>(context.Tokens);
             var result = AstItem.Programm();
             result.Children = Read(tokens);
@@ -50,9 +46,6 @@ namespace erc
             var name = tokens.Pop();
             if (name.TokenType != TokenType.Word)
                 throw new Exception("Expected identifier, found " + name);
-
-            if (_context.CurrentScope.FunctionExists(name.Value))
-                throw new Exception("Function with name '" + name.Value + "' already defined!");
 
             var openBracket = tokens.Pop();
             List<AstItem> parameters = null;

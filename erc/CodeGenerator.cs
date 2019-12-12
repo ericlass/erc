@@ -32,7 +32,6 @@ namespace erc
         private CompilerContext _context = null;
         private long _immCounter = 0;
         private Dictionary<string, Instruction> _instructionMap = null;
-        private Function _currentFunction = null;
         private Optimizer _optimizer = new Optimizer();
 
         private string GetImmName()
@@ -44,7 +43,6 @@ namespace erc
         public string Generate(CompilerContext context)
         {
             _context = context;
-            _context.ResetScope();
 
             //InitMovementGenerators();
             InitInstructionMap();
@@ -84,13 +82,14 @@ namespace erc
 
             var result = new List<Operation>();
 
-            _currentFunction = _context.CurrentScope.GetFunction(function.Identifier);
+            var currentFunction = _context.GetFunction(function.Identifier);
 
             result.Add(new Operation(DataType.I64, Instruction.V_COMMENT, StorageLocation.Label("")));
             var labelName = "fn_" + function.Identifier;
             result.Add(new Operation(DataType.I64, Instruction.V_LABEL, StorageLocation.Label(labelName)));
 
-            _context.EnterScope(_currentFunction.Name);
+            _context.EnterFunction(currentFunction);
+            _context.EnterBlock();
 
             foreach (var statement in statements.Children)
             {
@@ -101,8 +100,8 @@ namespace erc
                 }
             }
 
-            _context.LeaveScope();
-            _currentFunction = null;
+            _context.LeaveBlock();
+            _context.LeaveFunction();
 
             //Add return as last instruction, if required
             var last = result[result.Count - 1];
@@ -136,31 +135,21 @@ namespace erc
 
         private List<Operation> GenerateVarDecl(AstItem statement)
         {
-            var variable = _context.CurrentScope.GetSymbol(statement.Identifier);
+            var variable = _context.GetSymbol(statement.Identifier);
             return GenerateExpression(statement.Children[0], variable.Location);
         }
 
         private List<Operation> GenerateAssignment(AstItem statement)
         {
-            //No need to check if variable was already declared. Correct scope is already check by Syntax analysis!
-            var variable = _context.CurrentScope.GetSymbol(statement.Identifier);
+            //No need to check if variable was already declared or declared. That is already check by syntax analysis!
+            var variable = _context.GetSymbol(statement.Identifier);
             return GenerateExpression(statement.Children[0], variable.Location);
         }
 
         private List<Operation> GenerateFunctionCall(AstItem funcCall, StorageLocation targetLocation)
         {
-            /*
-        	- Registers to save
-            	- Always
-                	- R: A, BP, 10, 11
-                	- MM: 4, 5, 6
-            	- If in use
-                	- R: C, D, 8, 9, 12, 13, 14, 15
-                	- MM: 0, 1, 2, 3, 8, 9, 10, 11, 12, 13, 14, 15
-        	*/
-
             var result = new List<Operation>();
-            var function = _context.CurrentScope.GetFunction(funcCall.Identifier);
+            var function = _context.GetFunction(funcCall.Identifier);
 
             //List of registers that need to be restored, pre-filled with the ones that always need to be saved/restored
             var savedRegisters = new List<Tuple<Register, DataType>>() {
@@ -193,7 +182,7 @@ namespace erc
 
             //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("save parameter registers")));
             //Push parameter registers of current function
-            foreach (var funcParam in _currentFunction.Parameters)
+            foreach (var funcParam in _context.GetAllFunctionParameters())
             {
                 if (funcParam.Location.Kind == StorageLocationKind.Register && calledFunctionParameterRegisters.Contains(funcParam.Location.Register))
                 {
@@ -204,8 +193,8 @@ namespace erc
 
             //Push variable registers
             //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("save variable registers")));
-            //Assuming that "_context.AllVariables" returns all variables declarded in the current functions scope until now
-            foreach (var variable in _context.CurrentScope.GetAllSymbols())
+            //Assuming that "_context.GetAllVariables" returns all variables declarded in the current functions scope until now
+            foreach (var variable in _context.GetAllVariables())
             {
                 if (variable.Location.Kind == StorageLocationKind.Register)
                 {
@@ -260,7 +249,7 @@ namespace erc
                 throw new Exception("Expected return statement, got " + statement);
 
             var result = new List<Operation>();
-            result.AddRange(GenerateExpression(statement.Children[0], _currentFunction.ReturnLocation));
+            result.AddRange(GenerateExpression(statement.Children[0], _context.CurrentFunction.ReturnLocation));
 
             result.Add(new Operation(DataType.VOID, Instruction.RET));
 
@@ -287,7 +276,7 @@ namespace erc
                     }
 
                 case AstItemKind.Variable:
-                    var variable = _context.CurrentScope.GetSymbol(expression.Identifier);
+                    var variable = _context.GetSymbol(expression.Identifier);
                     return Move(expression.DataType, variable.Location, targetLocation);
 
                 case AstItemKind.FunctionCall:
@@ -487,7 +476,7 @@ namespace erc
             }
             else if (operand.Kind == AstItemKind.Variable)
             {
-                var variable = _context.CurrentScope.GetSymbol(operand.Identifier);
+                var variable = _context.GetSymbol(operand.Identifier);
                 if (variable.Location.Kind == StorageLocationKind.Register)
                     result = variable.Location;
                 else
@@ -527,7 +516,7 @@ namespace erc
             }
             else if (operand.Kind == AstItemKind.Variable)
             {
-                var variable = _context.CurrentScope.GetSymbol(operand.Identifier);
+                var variable = _context.GetSymbol(operand.Identifier);
                 result = variable.Location;
             }
             else if (operand.Kind == AstItemKind.FunctionCall)
@@ -563,7 +552,7 @@ namespace erc
                         break;
 
                     case AstItemKind.Variable:
-                        var variable = _context.CurrentScope.GetSymbol(item.Identifier);
+                        var variable = _context.GetSymbol(item.Identifier);
                         ops.Add(new Operation(item.DataType, Instruction.V_PUSH, variable.Location));
                         break;
 
