@@ -61,6 +61,16 @@ namespace erc
             return null;
         }
 
+        public List<Register> GetAllUsed()
+        {
+            var result = new List<Register>();
+            foreach (var group in _used)
+            {
+                result.Add(Register.GroupToFullSizeRegister(group));
+            }
+            return result;
+        }
+
     }
 
 }

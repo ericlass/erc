@@ -24,26 +24,6 @@ namespace erc
                 var funcDecl = context.GetFunction(function.Identifier);
                 AssignFunctionParameterLocations(funcDecl);
                 AssignFunctionReturnLocation(funcDecl);
-
-                context.EnterFunction(funcDecl);
-                context.EnterBlock();
-
-                foreach (var statement in function.Children[1].Children)
-                {
-                    if (statement.Kind == AstItemKind.VarDecl)
-                    {
-                        var variable = context.GetSymbol(statement.Identifier);
-                        AssignLocation(variable);
-                    }
-                    else if (statement.Kind == AstItemKind.VarScopeEnd)
-                    {
-                        var variable = context.GetSymbol(statement.Identifier);
-                        FreeLocation(variable);
-                    }
-                }
-
-                context.LeaveBlock();
-                context.LeaveFunction();
             }
         }
 

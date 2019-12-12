@@ -11,21 +11,17 @@ namespace erc
     /// </summary>
     public class FunctionScope
     {
-        private Function _function = null;
         private Dictionary<string, Symbol> _parameters = new Dictionary<string, Symbol>();
 
         public RegisterPool RegisterPool { get; } = new RegisterPool();
 
         public FunctionScope(Function function)
         {
-            _function = function;
-            _function.Parameters.ForEach((p) => _parameters.Add(p.Name, p));
+            Function = function;
+            Function.Parameters.ForEach((p) => _parameters.Add(p.Name, p));
         }
 
-        public Function Function
-        {
-            get { return _function; }
-        }
+        public Function Function { get; } = null;
 
         public Symbol GetParameter(string name)
         {

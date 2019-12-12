@@ -44,7 +44,6 @@ namespace erc
         {
             _context = context;
 
-            //InitMovementGenerators();
             InitInstructionMap();
 
             var dataEntries = new List<Tuple<int, string>>();
@@ -91,6 +90,13 @@ namespace erc
             _context.EnterFunction(currentFunction);
             _context.EnterBlock();
 
+            //Mark used parameter registers as used
+            foreach (var parameter in currentFunction.Parameters)
+            {
+                if (parameter.Location.Kind == StorageLocationKind.Register)
+                    _context.RegisterPool.Use(parameter.Location.Register);
+            }
+
             foreach (var statement in statements.Children)
             {
                 if (statement.Kind != AstItemKind.VarScopeEnd)
@@ -98,6 +104,13 @@ namespace erc
                     //result.Add(new Operation(DataType.I64, Instruction.V_COMMENT, StorageLocation.Label(statement.SourceLine)));
                     result.AddRange(GenerateStatement(statement));
                 }
+            }
+
+            //Free parameter registers
+            foreach (var parameter in currentFunction.Parameters)
+            {
+                if (parameter.Location.Kind == StorageLocationKind.Register)
+                    _context.RegisterPool.Free(parameter.Location.Register);
             }
 
             _context.LeaveBlock();
@@ -128,6 +141,14 @@ namespace erc
 
                 case AstItemKind.Return:
                     return GenerateReturn(statement);
+
+                case AstItemKind.VarScopeEnd:
+                    var variable = _context.GetSymbol(statement.Identifier);
+                    if (variable.Location.Kind == StorageLocationKind.Register)
+                        _context.RegisterPool.Free(variable.Location.Register);
+
+                    _context.RemoveVariable(variable);
+                    break;
             }
 
             return new List<Operation>();
@@ -135,8 +156,20 @@ namespace erc
 
         private List<Operation> GenerateVarDecl(AstItem statement)
         {
-            var variable = _context.GetSymbol(statement.Identifier);
-            return GenerateExpression(statement.Children[0], variable.Location);
+            Register register = _context.RegisterPool.GetFreeRegister(statement.DataType);
+            if (register == null)
+                throw new Exception("No register left for variable declaration: " + statement);
+
+            _context.RegisterPool.Use(register);
+
+            var location = StorageLocation.AsRegister(register);
+            var operations = GenerateExpression(statement.Children[0], location);
+
+            var variable = new Symbol(statement.Identifier, SymbolKind.Variable, statement.DataType);
+            variable.Location = location;
+            _context.AddVariable(variable);
+
+            return operations;
         }
 
         private List<Operation> GenerateAssignment(AstItem statement)
@@ -152,58 +185,28 @@ namespace erc
             var function = _context.GetFunction(funcCall.Identifier);
 
             //List of registers that need to be restored, pre-filled with the ones that always need to be saved/restored
-            var savedRegisters = new List<Tuple<Register, DataType>>() {
-                new Tuple<Register,DataType>(Register.RBP, DataType.I64),
-                new Tuple<Register,DataType>(Register.RSP, DataType.I64),
-                new Tuple<Register,DataType>(Register.RAX, DataType.I64),
-                new Tuple<Register,DataType>(Register.R10, DataType.I64),
-                new Tuple<Register,DataType>(Register.R11, DataType.I64),
-                new Tuple<Register,DataType>(Register.YMM4, DataType.VEC4D),
-                new Tuple<Register,DataType>(Register.YMM5, DataType.VEC4D),
-                new Tuple<Register,DataType>(Register.YMM6, DataType.VEC4D)
-            };
+            var savedRegisters = new List<Register>();
 
             //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("save mandatory registers")));
-            //Push mandatory registers
-            result.AddRange(Push(DataType.I64, StorageLocation.AsRegister(Register.RBP)));
-            result.AddRange(Push(DataType.I64, StorageLocation.AsRegister(Register.RSP)));
-                        
-            result.AddRange(Push(DataType.I64, StorageLocation.AsRegister(Register.RAX)));
-            result.AddRange(Push(DataType.I64, StorageLocation.AsRegister(Register.R10)));
-            result.AddRange(Push(DataType.I64, StorageLocation.AsRegister(Register.R11)));
-
-            result.AddRange(Push(DataType.VEC4D, StorageLocation.AsRegister(Register.YMM4)));
-            result.AddRange(Push(DataType.VEC4D, StorageLocation.AsRegister(Register.YMM5)));
-            result.AddRange(Push(DataType.VEC4D, StorageLocation.AsRegister(Register.YMM6)));
-
-            var calledFunctionParameterRegisters = function.Parameters
-                .FindAll((p) => p.Location.Kind == StorageLocationKind.Register)
-                .ConvertAll((p) => p.Location.Register);
+            //Push used registers
+            foreach (var register in _context.RegisterPool.GetAllUsed())
+            {
+                result.AddRange(Push(Register.GetDefaultDataType(register), StorageLocation.AsRegister(register)));
+                savedRegisters.Add(register);
+            }
 
             //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("save parameter registers")));
             //Push parameter registers of current function
-            foreach (var funcParam in _context.GetAllFunctionParameters())
+            foreach (var funcParam in _context.CurrentFunction.Parameters)
             {
-                if (funcParam.Location.Kind == StorageLocationKind.Register && calledFunctionParameterRegisters.Contains(funcParam.Location.Register))
+                if (funcParam.Location.Kind == StorageLocationKind.Register)
                 {
                     result.AddRange(Push(funcParam.DataType, funcParam.Location));
-                    savedRegisters.Add(new Tuple<Register, DataType>(funcParam.Location.Register, funcParam.DataType));
+                    savedRegisters.Add(funcParam.Location.Register);
                 }
             }
 
-            //Push variable registers
-            //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("save variable registers")));
-            //Assuming that "_context.GetAllVariables" returns all variables declarded in the current functions scope until now
-            foreach (var variable in _context.GetAllVariables())
-            {
-                if (variable.Location.Kind == StorageLocationKind.Register)
-                {
-                    result.AddRange(Push(variable.DataType, variable.Location));
-                    savedRegisters.Add(new Tuple<Register, DataType>(variable.Location.Register, variable.DataType));
-                }
-            }
-
-            //Generate parameter value in desired locations
+            //Generate parameter values in desired locations
             for (int i = 0; i < function.Parameters.Count; i++)
             {
                 //Assuming that AST item has as many children as function has parameters, as this is checked before
@@ -237,7 +240,7 @@ namespace erc
             foreach (var register in savedRegisters)
             {
                 //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("restore register " + register.Item1)));
-                result.AddRange(Pop(register.Item2, StorageLocation.AsRegister(register.Item1)));
+                result.AddRange(Pop(Register.GetDefaultDataType(register), StorageLocation.AsRegister(register)));
             }
 
             return result;
@@ -284,7 +287,7 @@ namespace erc
 
                 case AstItemKind.Expression:
                     //var ops = GenerateExpressionOperations(expression.Children);
-                    var ops = GenerateExpressionOperations2(expression.Children, targetLocation);
+                    var ops = GenerateExpressionOperations(expression.Children, targetLocation);
                     CollapsePushPop(ops);
                     //It is possible that some push/pops remain. For vectors, these must be converted to moves.
                     GenerateVectorPushPops(ops);
@@ -363,7 +366,7 @@ namespace erc
             return operations;
         }
 
-        private List<Operation> GenerateExpressionOperations2(List<AstItem> items, StorageLocation targetLocation)
+        private List<Operation> GenerateExpressionOperations(List<AstItem> items, StorageLocation targetLocation)
         {
             //x y 5 z * / - 10 +
             //x y * / - 10 +
@@ -525,76 +528,6 @@ namespace erc
             }
 
             return result;
-        }
-
-        private List<Operation> GenerateExpressionOperations(List<AstItem> items)
-        {
-            var ops = new List<Operation>();
-
-            foreach (var item in items)
-            {
-                switch (item.Kind)
-                {
-                    case AstItemKind.Immediate:
-                        ops.Add(new Operation(item.DataType, Instruction.V_PUSH, StorageLocation.DataSection(item.Identifier)));
-                        break;
-
-                    case AstItemKind.Vector:
-                        if (IsFullImmediateVector(item))
-                        {
-                            ops.Add(new Operation(item.DataType, Instruction.V_PUSH, StorageLocation.DataSection(item.Identifier)));
-                        }
-                        else
-                        {
-                            var target = item.DataType.ConstructionRegister;
-                            ops.AddRange(GenerateVectorWithExpressionsOnStack(item));
-                        }
-                        break;
-
-                    case AstItemKind.Variable:
-                        var variable = _context.GetSymbol(item.Identifier);
-                        ops.Add(new Operation(item.DataType, Instruction.V_PUSH, variable.Location));
-                        break;
-
-                    case AstItemKind.FunctionCall:
-                        ops.AddRange(GenerateFunctionCall(item, item.DataType.Accumulator));
-                        ops.AddRange(Push(item.DataType, item.DataType.Accumulator));
-                        break;
-
-                    case AstItemKind.AddOp:
-                    case AstItemKind.SubOp:
-                    case AstItemKind.MulOp:
-                    case AstItemKind.DivOp:
-                        var accumulator = item.DataType.Accumulator;
-                        var operand1 = item.DataType.TempRegister1;
-                        var operand2 = item.DataType.TempRegister2;
-                        var instruction = GetInstruction(item.Kind, item.DataType);
-
-                        if (instruction.NumOperands == 3)
-                        {
-                            ops.Add(new Operation(item.DataType, Instruction.V_POP, operand2));
-                            ops.Add(new Operation(item.DataType, Instruction.V_POP, operand1));
-                            ops.Add(new Operation(item.DataType, instruction, accumulator, operand1, operand2));
-                        }
-                        else if (instruction.NumOperands == 2)
-                        {
-                            ops.Add(new Operation(item.DataType, Instruction.V_POP, operand1));
-                            ops.Add(new Operation(item.DataType, Instruction.V_POP, accumulator));
-                            ops.Add(new Operation(item.DataType, instruction, accumulator, operand1));
-                        }
-                        else
-                            throw new Exception("Invalid number of instruction operands: " + instruction);
-
-                        ops.Add(new Operation(item.DataType, Instruction.V_PUSH, accumulator));
-                        break;
-
-                    default:
-                        throw new Exception("Unexpected item in expression: " + item);
-                }
-            }
-
-            ops.RemoveAt(ops.Count - 1);
-            return ops;
         }
 
         private Instruction GetInstruction(AstItemKind kind, DataType dataType)

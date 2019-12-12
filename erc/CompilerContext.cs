@@ -91,11 +91,6 @@ namespace erc
             return _programScope.GetFunction(name);
         }
 
-        public List<Symbol> GetAllFunctionParameters()
-        {
-            return new List<Symbol>(_functionScope.Function.Parameters);
-        }
-
         public Function CurrentFunction
         {
             get
@@ -120,6 +115,17 @@ namespace erc
         public void RemoveFunction(string name)
         {
             _programScope.RemoveFunction(name);
+        }
+
+        public RegisterPool RegisterPool
+        {
+            get
+            {
+                if (_functionScope == null)
+                    throw new Exception("Not in function, cannot get register pool!");
+
+                return _functionScope.RegisterPool;
+            }
         }
 
     }

@@ -125,6 +125,91 @@ namespace erc
             return found[0];
         }
 
+        public static Register GroupToFullSizeRegister(RegisterGroup group)
+        {
+            switch (group)
+            {
+                case RegisterGroup.A:
+                    return RAX;
+                case RegisterGroup.B:
+                    return RBX;
+                case RegisterGroup.C:
+                    return RCX;
+                case RegisterGroup.D:
+                    return RDX;
+                case RegisterGroup.BP:
+                    return RBP;
+                case RegisterGroup.SP:
+                    return RSP;
+                case RegisterGroup.SI:
+                    return RSI;
+                case RegisterGroup.DI:
+                    return RDI;
+                case RegisterGroup.R8:
+                    return R8;
+                case RegisterGroup.R9:
+                    return R9;
+                case RegisterGroup.R10:
+                    return R10;
+                case RegisterGroup.R11:
+                    return R11;
+                case RegisterGroup.R12:
+                    return R12;
+                case RegisterGroup.R13:
+                    return R13;
+                case RegisterGroup.R14:
+                    return R14;
+                case RegisterGroup.R15:
+                    return R15;
+                case RegisterGroup.MM0:
+                    return YMM0;
+                case RegisterGroup.MM1:
+                    return YMM1;
+                case RegisterGroup.MM2:
+                    return YMM2;
+                case RegisterGroup.MM3:
+                    return YMM3;
+                case RegisterGroup.MM4:
+                    return YMM4;
+                case RegisterGroup.MM5:
+                    return YMM5;
+                case RegisterGroup.MM6:
+                    return YMM6;
+                case RegisterGroup.MM7:
+                    return YMM7;
+                case RegisterGroup.MM8:
+                    return YMM8;
+                case RegisterGroup.MM9:
+                    return YMM9;
+                case RegisterGroup.MM10:
+                    return YMM10;
+                case RegisterGroup.MM11:
+                    return YMM11;
+                case RegisterGroup.MM12:
+                    return YMM12;
+                case RegisterGroup.MM13:
+                    return YMM13;
+                case RegisterGroup.MM14:
+                    return YMM14;
+                case RegisterGroup.MM15:
+                    return YMM15;
+                default:
+                    throw new Exception("Unknown register group: " + group);
+            }
+        }
+
+        public static DataType GetDefaultDataType(Register register)
+        {
+            if (register.ByteSize == 8)
+                return DataType.I64;
+            else if (register.ByteSize == 16)
+                return DataType.VEC2D;
+            else if (register.ByteSize == 32)
+                return DataType.VEC4D;
+            else
+                throw new Exception("Unknown register size: " + register);
+        }
+
         /*********************************************/
         /**************** R REGISTERS ****************/
         /*********************************************/
