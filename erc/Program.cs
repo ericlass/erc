@@ -22,7 +22,6 @@ namespace erc
             var tokenizer = new Tokenizer();
             tokenizer.Tokenize(context);
 
-            //var syntax = new Syntax();
             var syntax = new SyntaxAnalysis();
             syntax.Analyze(context);
 

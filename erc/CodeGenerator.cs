@@ -301,10 +301,10 @@ namespace erc
                     GenerateVectorPushPops(ops);
 
                     //Move value from accumulator to targetLocation
-                    if (targetLocation != expression.DataType.Accumulator)
+                    /*if (targetLocation != expression.DataType.Accumulator)
                     {
                         ops.AddRange(Move(expression.DataType, expression.DataType.Accumulator, targetLocation));
-                    }
+                    }*/
 
                     return ops;
 
@@ -319,14 +319,14 @@ namespace erc
             for (int i = ops.Count - 1; i >= 0; i--)
             {
                 var op = ops[i];
-                if (op.DataType.IsVector)
+                if (op.DataType.IsVector || op.DataType == DataType.F32 || op.DataType == DataType.F64)
                 {
-                    if (op.Instruction == Instruction.PUSH)
+                    if (op.Instruction == Instruction.PUSH || op.Instruction == Instruction.V_PUSH)
                     {
                         ops.RemoveAt(i);
                         ops.InsertRange(i, Push(op.DataType, op.Operand1));
                     }
-                    else if (op.Instruction == Instruction.POP)
+                    else if (op.Instruction == Instruction.POP || op.Instruction == Instruction.V_POP)
                     {
                         ops.RemoveAt(i);
                         ops.InsertRange(i, Pop(op.DataType, op.Operand1));
@@ -377,39 +377,67 @@ namespace erc
         private List<Operation> GenerateExpressionOperations2(List<AstItem> items, StorageLocation targetLocation)
         {
             //x y 5 z * / - 10 +
+            //x y * / - 10 +
+            //x / - 10 +
+            //- 10 +
+            //+
+
+            //Create copy of list so original is not modified
+            var terms = new List<AstItem>(items);
 
             var result = new List<Operation>();
-            for (int i = 0; i < items.Count; i++)
+            for (int i = 0; i < terms.Count; i++)
             {
-                var item = items[i];
+                var item = terms[i];
 
                 var target = targetLocation;
                 if (target == null)
                     target = item.DataType.Accumulator;
 
-                var instruction = GetInstruction(item.Kind, item.DataType);
-
                 if (item.IsOperator)
                 {
-                    var operand1 = items[i - 2];
-                    var operand2 = items[i - 1];
+                    var instruction = GetInstruction(item.Kind, item.DataType);
+                    var operand1 = terms[i - 2];
+                    var operand2 = terms[i - 1];
 
-                    //TODO: If operand 1 or 2 is an operator, we need to v_pop an intermediate value from the stack
+                    //If operand 1 or 2 is an operator, we need to V_POP an intermediate value from the stack
+                    StorageLocation operand2Location = null;
+                    if (operand2.IsOperator)
+                    {
+                        result.Add(new Operation(item.DataType, Instruction.V_POP, item.DataType.TempRegister2));
+                        operand2Location = item.DataType.TempRegister2;
+                    }
+                    else
+                        operand2Location = PrepareOperandLocation(result, operand2, item.DataType.TempRegister2);
 
                     if (instruction.NumOperands == 2)
                     {
-                        var operand1Location = GetOperandLocation(result, operand1, target);
-                        if (operand1Location != target)
-                            result.AddRange(Move(item.DataType, operand1Location, target));
-
-                        var operand2Location = PrepareOperandLocation(result, operand2, item.DataType.TempRegister2);
+                        StorageLocation operand1Location = null;
+                        if (operand1.IsOperator)
+                        {
+                            result.Add(new Operation(item.DataType, Instruction.V_POP, target));
+                            operand1Location = target;
+                        }
+                        else
+                        {
+                            operand1Location = GetOperandLocation(result, operand1, target);
+                            if (operand1Location != target)
+                                result.AddRange(Move(item.DataType, operand1Location, target));
+                        }
 
                         result.Add(new Operation(item.DataType, instruction, target, operand2Location));
                     }
                     else if (instruction.NumOperands == 3)
                     {
-                        var operand1Location = PrepareOperandLocation(result, operand1, item.DataType.TempRegister1);
-                        var operand2Location = PrepareOperandLocation(result, operand1, item.DataType.TempRegister2);
+                        StorageLocation operand1Location = null;
+                        if (operand1.IsOperator)
+                        {
+                            result.Add(new Operation(item.DataType, Instruction.V_POP, item.DataType.TempRegister1));
+                            operand1Location = item.DataType.TempRegister1;
+                        }
+                        else
+                            operand1Location = PrepareOperandLocation(result, operand1, item.DataType.TempRegister1);
+
                         result.Add(new Operation(item.DataType, instruction, target, operand1Location, operand2Location));
                     }
                     else
@@ -417,14 +445,18 @@ namespace erc
 
                     result.Add(new Operation(item.DataType, Instruction.V_PUSH, target));
 
-                    //Remove the two operands from the expression
-                    items.RemoveAt(i - 2);
-                    items.RemoveAt(i - 2);
+                    //Remove the two operands from the expression, do not remove the current operator
+                    //as it is required to know later that a value must be popped from stack
+                    terms.RemoveAt(i - 2);
+                    terms.RemoveAt(i - 2);
 
+                    //-2 should be correct because next iteration of loop will increment it
+                    //anyways and it will then point to the next item in the expression.
                     i = i - 2;
                 }
             }
 
+            result.RemoveAt(result.Count - 1);
             return result;
         }
 
@@ -433,7 +465,7 @@ namespace erc
         /// </summary>
         /// <param name="output">Add additional operations here.</param>
         /// <param name="operand">The operand.</param>
-        /// <param name="defaultLocation">The location to use when the operand is not in a register.</param>
+        /// <param name="defaultLocation">The location to use when the operand is not in a register. Must be a register!</param>
         /// <returns>The usable location. Either the current location, if it is usable, or the given default location.</returns>
         private StorageLocation PrepareOperandLocation(List<Operation> output, AstItem operand, StorageLocation defaultLocation)
         {
@@ -474,7 +506,7 @@ namespace erc
         /// </summary>
         /// <param name="output"></param>
         /// <param name="operand"></param>
-        /// <param name="defaultLocation"></param>
+        /// <param name="defaultLocation">The location to use when the operand has no location at the moment.</param>
         /// <returns>The current location of the operand. If it has no location, it is moved to the default location and that is returned.</returns>
         private StorageLocation GetOperandLocation(List<Operation> output, AstItem operand, StorageLocation defaultLocation)
         {
