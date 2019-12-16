@@ -333,6 +333,7 @@ namespace erc
 
             //Save current stack pointer
             operations.AddRange(Move(DataType.I64, StorageLocation.AsRegister(Register.RSP), StorageLocation.AsRegister(Register.RSI)));
+            _context.RegisterPool.Use(Register.RSI);
 
             //Align stack correctly
             operations.Add(new Operation(DataType.I64, Instruction.AND_IMM, StorageLocation.AsRegister(Register.RSP), StorageLocation.Immediate(expression.DataType.ByteSize * -1)));
@@ -344,6 +345,7 @@ namespace erc
             operations.AddRange(Move(expression.DataType, StorageLocation.StackFromTop(0), targetLocation));
             //Restore stack pointer
             operations.AddRange(Move(DataType.I64, StorageLocation.AsRegister(Register.RSI), StorageLocation.AsRegister(Register.RSP)));
+            _context.RegisterPool.Free(Register.RSI);
 
             return operations;
         }
@@ -351,6 +353,7 @@ namespace erc
         private List<Operation> GenerateVectorWithExpressionsOnStack(AstItem expression)
         {
             var accumulator = expression.DataType.ElementType.Accumulator;
+
             var operations = new List<Operation>();
 
             //Generate single items on stack
@@ -368,24 +371,27 @@ namespace erc
 
         private List<Operation> GenerateExpressionOperations(List<AstItem> items, StorageLocation targetLocation)
         {
+            //Example of algorithm:
             //x y 5 z * / - 10 +
             //x y * / - 10 +
             //x / - 10 +
             //- 10 +
             //+
 
+            //a = 5 + test(x - y);
+            //5 test(x-y) +
+
             //Create copy of list so original is not modified
             var terms = new List<AstItem>(items);
+
+            var target = targetLocation;
+            if (target == null || target.Kind != StorageLocationKind.Register)
+                target = terms[0].DataType.Accumulator;
 
             var result = new List<Operation>();
             for (int i = 0; i < terms.Count; i++)
             {
                 var item = terms[i];
-
-                var target = targetLocation;
-                if (target == null)
-                    target = item.DataType.Accumulator;
-
                 if (item.IsOperator)
                 {
                     var instruction = GetInstruction(item.Kind, item.DataType);
@@ -393,7 +399,7 @@ namespace erc
                     var operand2 = terms[i - 1];
 
                     //If operand 1 or 2 is an operator, we need to V_POP an intermediate value from the stack
-                    StorageLocation operand2Location = null;
+                    StorageLocation operand2Location;
                     if (operand2.IsOperator)
                     {
                         result.Add(new Operation(item.DataType, Instruction.V_POP, item.DataType.TempRegister2));
@@ -402,17 +408,18 @@ namespace erc
                     else
                         operand2Location = PrepareOperandLocation(result, operand2, item.DataType.TempRegister2);
 
+                    //Only need to save operand2. operand1 will never be overwritten between its creation and usage as arithmetic instruction directly follows.
+                    _context.RegisterPool.Use(operand2Location.Register);
+
                     if (instruction.NumOperands == 2)
                     {
-                        StorageLocation operand1Location = null;
                         if (operand1.IsOperator)
                         {
                             result.Add(new Operation(item.DataType, Instruction.V_POP, target));
-                            operand1Location = target;
                         }
                         else
                         {
-                            operand1Location = GetOperandLocation(result, operand1, target);
+                            var operand1Location = GetOperandLocation(result, operand1, target);
                             if (operand1Location != target)
                                 result.AddRange(Move(item.DataType, operand1Location, target));
                         }
@@ -421,12 +428,10 @@ namespace erc
                     }
                     else if (instruction.NumOperands == 3)
                     {
-                        StorageLocation operand1Location = null;
+                        var operand1Location = item.DataType.TempRegister1;
+
                         if (operand1.IsOperator)
-                        {
                             result.Add(new Operation(item.DataType, Instruction.V_POP, item.DataType.TempRegister1));
-                            operand1Location = item.DataType.TempRegister1;
-                        }
                         else
                             operand1Location = PrepareOperandLocation(result, operand1, item.DataType.TempRegister1);
 
@@ -434,6 +439,8 @@ namespace erc
                     }
                     else
                         throw new Exception("Invalid number of instruction operands: " + instruction);
+
+                    _context.RegisterPool.Free(operand2Location.Register);
 
                     result.Add(new Operation(item.DataType, Instruction.V_PUSH, target));
 
@@ -444,7 +451,7 @@ namespace erc
 
                     //-2 should be correct because next iteration of loop will increment it
                     //anyways and it will then point to the next item in the expression.
-                    i = i - 2;
+                    i -= 2;
                 }
             }
 
