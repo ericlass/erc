@@ -99,11 +99,8 @@ namespace erc
 
             foreach (var statement in statements.Children)
             {
-                if (statement.Kind != AstItemKind.VarScopeEnd)
-                {
-                    //result.Add(new Operation(DataType.I64, Instruction.V_COMMENT, StorageLocation.Label(statement.SourceLine)));
-                    result.AddRange(GenerateStatement(statement));
-                }
+                //result.Add(new Operation(DataType.I64, Instruction.V_COMMENT, StorageLocation.Label(statement.SourceLine)));
+                result.AddRange(GenerateStatement(statement));
             }
 
             //Free parameter registers
@@ -144,10 +141,15 @@ namespace erc
 
                 case AstItemKind.VarScopeEnd:
                     var variable = _context.GetSymbol(statement.Identifier);
-                    if (variable.Location.Kind == StorageLocationKind.Register)
-                        _context.RegisterPool.Free(variable.Location.Register);
 
-                    _context.RemoveVariable(variable);
+                    if (variable.Kind == SymbolKind.Variable)
+                    {
+                        if (variable.Location.Kind == StorageLocationKind.Register)
+                            _context.RegisterPool.Free(variable.Location.Register);
+
+                        _context.RemoveVariable(variable);
+                    }
+                        
                     break;
             }
 
@@ -156,18 +158,19 @@ namespace erc
 
         private List<Operation> GenerateVarDecl(AstItem statement)
         {
+            var operations = GenerateExpression(statement.Children[0], statement.DataType.Accumulator);
+
             Register register = _context.RegisterPool.GetFreeRegister(statement.DataType);
             if (register == null)
                 throw new Exception("No register left for variable declaration: " + statement);
 
             _context.RegisterPool.Use(register);
 
-            var location = StorageLocation.AsRegister(register);
-            var operations = GenerateExpression(statement.Children[0], location);
-
             var variable = new Symbol(statement.Identifier, SymbolKind.Variable, statement.DataType);
-            variable.Location = location;
+            variable.Location = StorageLocation.AsRegister(register);
             _context.AddVariable(variable);
+
+            operations.AddRange(Move(statement.DataType, statement.DataType.Accumulator, variable.Location));
 
             return operations;
         }
@@ -199,7 +202,7 @@ namespace erc
             //Push parameter registers of current function
             foreach (var funcParam in _context.CurrentFunction.Parameters)
             {
-                if (funcParam.Location.Kind == StorageLocationKind.Register)
+                if (funcParam.Location.Kind == StorageLocationKind.Register && !savedRegisters.Contains(funcParam.Location.Register))
                 {
                     result.AddRange(Push(funcParam.DataType, funcParam.Location));
                     savedRegisters.Add(funcParam.Location.Register);
@@ -252,7 +255,18 @@ namespace erc
                 throw new Exception("Expected return statement, got " + statement);
 
             var result = new List<Operation>();
-            result.AddRange(GenerateExpression(statement.Children[0], _context.CurrentFunction.ReturnLocation));
+            var function = _context.CurrentFunction;
+
+            var returnLocation = function.ReturnLocation;
+            //The return location might be in use by a parameter, so put return value somewhere else in this case.
+            if (returnLocation.Kind == StorageLocationKind.Register && _context.RegisterPool.IsUsed(returnLocation.Register))
+                returnLocation = function.ReturnType.Accumulator;
+
+            result.AddRange(GenerateExpression(statement.Children[0], returnLocation));
+
+            //If value is not in correct location, move it there
+            if (returnLocation != function.ReturnLocation)
+                result.AddRange(Move(function.ReturnType, returnLocation, function.ReturnLocation));
 
             result.Add(new Operation(DataType.VOID, Instruction.RET));
 
@@ -286,87 +300,15 @@ namespace erc
                     return GenerateFunctionCall(expression, targetLocation);
 
                 case AstItemKind.Expression:
-                    //var ops = GenerateExpressionOperations(expression.Children);
                     var ops = GenerateExpressionOperations(expression.Children, targetLocation);
                     CollapsePushPop(ops);
                     //It is possible that some push/pops remain. For vectors, these must be converted to moves.
                     GenerateVectorPushPops(ops);
-
-                    //Move value from accumulator to targetLocation
-                    /*if (targetLocation != expression.DataType.Accumulator)
-                    {
-                        ops.AddRange(Move(expression.DataType, expression.DataType.Accumulator, targetLocation));
-                    }*/
-
                     return ops;
 
                 default:
                     return new List<Operation>();
             }
-        }
-
-        //Replace PUSH and POP of vectors with corresponding moves
-        private void GenerateVectorPushPops(List<Operation> ops)
-        {
-            for (int i = ops.Count - 1; i >= 0; i--)
-            {
-                var op = ops[i];
-                if (op.DataType.IsVector || op.DataType == DataType.F32 || op.DataType == DataType.F64)
-                {
-                    if (op.Instruction == Instruction.PUSH || op.Instruction == Instruction.V_PUSH)
-                    {
-                        ops.RemoveAt(i);
-                        ops.InsertRange(i, Push(op.DataType, op.Operand1));
-                    }
-                    else if (op.Instruction == Instruction.POP || op.Instruction == Instruction.V_POP)
-                    {
-                        ops.RemoveAt(i);
-                        ops.InsertRange(i, Pop(op.DataType, op.Operand1));
-                    }
-                }
-            }
-        }
-
-        private List<Operation> GenerateVectorWithExpressions(AstItem expression, StorageLocation targetLocation)
-        {
-            var operations = new List<Operation>();
-
-            //Save current stack pointer
-            operations.AddRange(Move(DataType.I64, StorageLocation.AsRegister(Register.RSP), StorageLocation.AsRegister(Register.RSI)));
-            _context.RegisterPool.Use(Register.RSI);
-
-            //Align stack correctly
-            operations.Add(new Operation(DataType.I64, Instruction.AND_IMM, StorageLocation.AsRegister(Register.RSP), StorageLocation.Immediate(expression.DataType.ByteSize * -1)));
-
-            //Generate vector on stack
-            operations.AddRange(GenerateVectorWithExpressionsOnStack(expression));
-
-            //Move final vector to target
-            operations.AddRange(Move(expression.DataType, StorageLocation.StackFromTop(0), targetLocation));
-            //Restore stack pointer
-            operations.AddRange(Move(DataType.I64, StorageLocation.AsRegister(Register.RSI), StorageLocation.AsRegister(Register.RSP)));
-            _context.RegisterPool.Free(Register.RSI);
-
-            return operations;
-        }
-
-        private List<Operation> GenerateVectorWithExpressionsOnStack(AstItem expression)
-        {
-            var accumulator = expression.DataType.ElementType.Accumulator;
-
-            var operations = new List<Operation>();
-
-            //Generate single items on stack
-            for (int i = expression.Children.Count - 1; i >= 0; i--)
-            {
-                var child = expression.Children[i];
-                //TODO: OPTIMIZE - When expression is immediate or variable, it is not required to go through the accumulator.
-                //        		 You can directly "push" the register or memory location to the stack.
-                operations.AddRange(GenerateExpression(child, accumulator));
-                operations.AddRange(Push(expression.DataType.ElementType, accumulator));
-            }
-
-            return operations;
         }
 
         private List<Operation> GenerateExpressionOperations(List<AstItem> items, StorageLocation targetLocation)
@@ -409,7 +351,8 @@ namespace erc
                         operand2Location = PrepareOperandLocation(result, operand2, item.DataType.TempRegister2);
 
                     //Only need to save operand2. operand1 will never be overwritten between its creation and usage as arithmetic instruction directly follows.
-                    _context.RegisterPool.Use(operand2Location.Register);
+                    if (operand2Location == item.DataType.TempRegister2)
+                        _context.RegisterPool.Use(operand2Location.Register);
 
                     if (instruction.NumOperands == 2)
                     {
@@ -440,7 +383,8 @@ namespace erc
                     else
                         throw new Exception("Invalid number of instruction operands: " + instruction);
 
-                    _context.RegisterPool.Free(operand2Location.Register);
+                    if (operand2Location == item.DataType.TempRegister2)
+                        _context.RegisterPool.Free(operand2Location.Register);
 
                     result.Add(new Operation(item.DataType, Instruction.V_PUSH, target));
 
@@ -449,13 +393,17 @@ namespace erc
                     terms.RemoveAt(i - 2);
                     terms.RemoveAt(i - 2);
 
-                    //-2 should be correct because next iteration of loop will increment it
+                    //-2 is correct because next iteration of loop will increment i
                     //anyways and it will then point to the next item in the expression.
                     i -= 2;
                 }
             }
 
             result.RemoveAt(result.Count - 1);
+
+            if (target != targetLocation)
+                result.AddRange(Move(items[0].DataType, target, targetLocation));
+
             return result;
         }
 
@@ -537,6 +485,70 @@ namespace erc
             return result;
         }
 
+        //Replace PUSH and POP of vectors with corresponding moves
+        private void GenerateVectorPushPops(List<Operation> ops)
+        {
+            for (int i = ops.Count - 1; i >= 0; i--)
+            {
+                var op = ops[i];
+                if (op.DataType.IsVector || op.DataType == DataType.F32 || op.DataType == DataType.F64)
+                {
+                    if (op.Instruction == Instruction.PUSH || op.Instruction == Instruction.V_PUSH)
+                    {
+                        ops.RemoveAt(i);
+                        ops.InsertRange(i, Push(op.DataType, op.Operand1));
+                    }
+                    else if (op.Instruction == Instruction.POP || op.Instruction == Instruction.V_POP)
+                    {
+                        ops.RemoveAt(i);
+                        ops.InsertRange(i, Pop(op.DataType, op.Operand1));
+                    }
+                }
+            }
+        }
+
+        private List<Operation> GenerateVectorWithExpressions(AstItem expression, StorageLocation targetLocation)
+        {
+            var operations = new List<Operation>();
+
+            //Save current stack pointer
+            operations.AddRange(Move(DataType.I64, StorageLocation.AsRegister(Register.RSP), StorageLocation.AsRegister(Register.RSI)));
+            _context.RegisterPool.Use(Register.RSI);
+
+            //Align stack correctly
+            operations.Add(new Operation(DataType.I64, Instruction.AND_IMM, StorageLocation.AsRegister(Register.RSP), StorageLocation.Immediate(expression.DataType.ByteSize * -1)));
+
+            //Generate vector on stack
+            operations.AddRange(GenerateVectorWithExpressionsOnStack(expression));
+
+            //Move final vector to target
+            operations.AddRange(Move(expression.DataType, StorageLocation.StackFromTop(0), targetLocation));
+            //Restore stack pointer
+            operations.AddRange(Move(DataType.I64, StorageLocation.AsRegister(Register.RSI), StorageLocation.AsRegister(Register.RSP)));
+            _context.RegisterPool.Free(Register.RSI);
+
+            return operations;
+        }
+
+        private List<Operation> GenerateVectorWithExpressionsOnStack(AstItem expression)
+        {
+            var accumulator = expression.DataType.ElementType.Accumulator;
+
+            var operations = new List<Operation>();
+
+            //Generate single items on stack
+            for (int i = expression.Children.Count - 1; i >= 0; i--)
+            {
+                var child = expression.Children[i];
+                //TODO: OPTIMIZE - When expression is immediate or variable, it is not required to go through the accumulator.
+                //        		 You can directly "push" the register or memory location to the stack.
+                operations.AddRange(GenerateExpression(child, accumulator));
+                operations.AddRange(Push(expression.DataType.ElementType, accumulator));
+            }
+
+            return operations;
+        }
+
         private Instruction GetInstruction(AstItemKind kind, DataType dataType)
         {
             var key = kind + "_" + dataType.Name;
@@ -562,7 +574,7 @@ namespace erc
                                 //Transform pop to direct move in-place
                                 if (source.IsStack() || target.IsStack())
                                     popOp.Instruction = popOp.DataType.MoveInstructionUnaligned;
-                                else 
+                                else
                                     popOp.Instruction = popOp.DataType.MoveInstructionAligned;
 
                                 popOp.Operand1 = target;
