@@ -49,6 +49,51 @@ namespace erc
             }
         }
 
+        public static bool operator ==(StorageLocation a, StorageLocation b)
+        {
+            return a?.Kind == b?.Kind && a?.Register == b?.Register && a?.Address == b?.Address && a?.DataName == b?.DataName;
+        }
+
+        public static bool operator !=(StorageLocation a, StorageLocation b)
+        {
+            return a?.Kind != b?.Kind || a?.Register != b?.Register || a?.Address != b?.Address || a?.DataName != b?.DataName;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null)
+                return false;
+
+            if (obj is StorageLocation)
+            {
+                var b = obj as StorageLocation;
+                return this.Kind == b.Kind && this.Register == b.Register && this.Address == b.Address && this.DataName == b.DataName;
+            }
+
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            switch (Kind)
+            {
+                case StorageLocationKind.Register:
+                    return Kind.GetHashCode() | Register.Name.GetHashCode();
+
+                case StorageLocationKind.StackFromBase:
+                case StorageLocationKind.StackFromTop:
+                case StorageLocationKind.Heap:
+                    return Kind.GetHashCode() | (int)Address;
+
+                case StorageLocationKind.DataSection:
+                case StorageLocationKind.Label:
+                    return Kind.GetHashCode() | DataName.GetHashCode();
+
+                default:
+                    return base.GetHashCode();
+            }
+        }
+
         public override string ToString()
         {
             switch (Kind)

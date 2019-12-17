@@ -190,7 +190,7 @@ namespace erc
             //List of registers that need to be restored, pre-filled with the ones that always need to be saved/restored
             var savedRegisters = new List<Register>();
 
-            //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("save mandatory registers")));
+            result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("save used registers")));
             //Push used registers
             foreach (var register in _context.RegisterPool.GetAllUsed())
             {
@@ -198,7 +198,7 @@ namespace erc
                 savedRegisters.Add(register);
             }
 
-            //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("save parameter registers")));
+            result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("save parameter registers")));
             //Push parameter registers of current function
             foreach (var funcParam in _context.CurrentFunction.Parameters)
             {
@@ -294,7 +294,10 @@ namespace erc
 
                 case AstItemKind.Variable:
                     var variable = _context.GetSymbol(expression.Identifier);
-                    return Move(expression.DataType, variable.Location, targetLocation);
+                    if (variable.Location != targetLocation)
+                        return Move(expression.DataType, variable.Location, targetLocation);
+                    else
+                        return new List<Operation>();
 
                 case AstItemKind.FunctionCall:
                     return GenerateFunctionCall(expression, targetLocation);
