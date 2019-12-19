@@ -5,7 +5,7 @@ fn main() {
 }
 
 fn add(pa: vec4d, pb: vec4d): vec4d {
-	ret pa + pb;
+	ret pa + pb * pa;
 }
 
 fn types()
