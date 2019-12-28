@@ -262,6 +262,20 @@ namespace erc
             MoveInstructionAligned = Instruction.VMOVAPD,
             MoveInstructionUnaligned = Instruction.VMOVUPD
         };
+        
+        public static DataType BOOL = new DataType
+        {
+            Name = "bool",
+            ByteSize = 1,
+            IsVector = false,
+            NumElements = 1,
+            OperandSize = "byte",
+            Accumulator = StorageLocation.AsRegister(Register.AL),
+            TempRegister1 = StorageLocation.AsRegister(Register.R10B),
+            TempRegister2 = StorageLocation.AsRegister(Register.R11B),
+            MoveInstructionAligned = Instruction.MOV,
+            MoveInstructionUnaligned = Instruction.MOV
+        };
 
         /*
         public static RawDataType Pointer(RawDataType subType)

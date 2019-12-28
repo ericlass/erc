@@ -13,6 +13,15 @@ namespace erc
         };
         private HashSet<char> _mathOps = new HashSet<char> { '+', '-', '*', '/' };
         private HashSet<char> _whiteSpaces = new HashSet<char> { ' ', '\t', '\r', '\n' };
+        
+        private Dictionary<string, TokenType> _reservedWordTypes = new Dictionary<string, TokenType>() {
+            ["let"] = TokenType.Let,
+            ["fn"] = TokenType.Fn,
+            ["ret"] = TokenType.Ret,
+            ["true"] = TokenType.True,
+            ["false"] = TokenType.False,
+            ["if"] = TokenType.False
+        };
 
         public void Tokenize(CompilerContext context)
         {
@@ -50,12 +59,8 @@ namespace erc
                 type = TokenType.Word;
 
                 //Handle special reserved words
-                if (value == "let")
-                    type = TokenType.Let;
-                else if (value == "fn")
-                    type = TokenType.Fn;
-                else if (value == "ret")
-                    type = TokenType.Ret;
+                if (_reservedWordTypes.ContainsKey(value))
+                    type = _reservedWordTypes[value];
             }
             else if (IsDigit(c))
             {

@@ -21,8 +21,17 @@ namespace erc
         {
             if (item.Kind == AstItemKind.Immediate || item.Kind == AstItemKind.Vector)
             {
-                item.Identifier = "imm_" + _immCounter;
-                _immCounter += 1;
+                //Booleans get fixed names as they can only have two values
+                if (item.DataType == DataType.BOOL)
+                {
+                    var boolVal = (bool)item.Value;
+                    item.Identifier = boolVal ? "imm_bool_true" : "imm_bool_false";
+                }
+                else
+                {
+                    item.Identifier = "imm_" + _immCounter;
+                    _immCounter += 1;
+                }
             }
 
             foreach (var child in item.Children)

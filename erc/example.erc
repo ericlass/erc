@@ -8,6 +8,10 @@ fn add(pa: vec4d, pb: vec4d): vec4d {
 	ret pa + pb * pa;
 }
 
+fn boolean() {
+	let test = true;
+}
+
 fn types()
 {
 	let a = 5*6+7*8;

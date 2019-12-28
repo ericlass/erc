@@ -86,6 +86,9 @@ namespace erc
                     throw new Exception("Cannot assign to symbol: " + variable);
 
                 item.DataType = CheckExpression(item.Children[0]);
+                
+                if (variable.DataType != item.DataType)
+                    throw new Exception("Cannot assign value of type " + item.DataType + " to variable " + variable);
             }
             else if (item.Kind == AstItemKind.FunctionCall)
             {
@@ -127,9 +130,9 @@ namespace erc
         {
             if (expression.Kind == AstItemKind.Immediate)
             {
-                var numStr = (string)expression.Value;
-                var dataType = FindNumerDataType(numStr);
-                var value = ParseNumber(numStr, dataType);
+                var valueStr = (string)expression.Value;
+                var dataType = FindImmediateType(valueStr);
+                var value = ParseImmediate(valueStr, dataType);
 
                 expression.Value = value;
                 expression.DataType = dataType;
@@ -233,6 +236,14 @@ namespace erc
 
             return expression.DataType;
         }
+        
+        private DataType FindImmediateType(string value)
+        {
+            if (value == "true" || value == "false")
+                return DataType.BOOL;
+                
+            return FindNumerDataType(value);
+        }
 
         private DataType FindNumerDataType(string value)
         {
@@ -245,6 +256,21 @@ namespace erc
                 return DataType.F32;
 
             return DataType.F64;
+        }
+        
+        private object ParseImmediate(string str, DataType dataType)
+        {
+            if (dataType == DataType.BOOL)
+            {
+                if (str == "true")
+                    return true;
+                else if (str == "false")
+                    return false;
+                else
+                    throw new Exception("Unknown boolean value: " + str);
+            }
+            else
+                return ParseNumber(str, dataType);
         }
 
         private object ParseNumber(string str, DataType dataType)

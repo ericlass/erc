@@ -47,6 +47,8 @@ namespace erc
             InitInstructionMap();
 
             var dataEntries = new List<Tuple<int, string>>();
+            dataEntries.Add(new Tuple<int, string>(DataType.BOOL.ByteSize, "imm_bool_false db 0"));
+            dataEntries.Add(new Tuple<int, string>(DataType.BOOL.ByteSize, "imm_bool_true db 1"));
             GenerateDataSection(context.AST, dataEntries);
 
             var codeLines = new List<Operation>();
@@ -716,6 +718,10 @@ namespace erc
                     {
                         var dVal = (double)item.Value;
                         entries.Add(new Tuple<int, string>(item.DataType.ByteSize, item.Identifier + " dq " + dVal.ToString("0.0", CultureInfo.InvariantCulture)));
+                    }
+                    else if (item.DataType == DataType.BOOL)
+                    {
+                        //Nothing to do for BOOL here, they get fixed values
                     }
                     else
                         throw new Exception("Unsupported type for immediates: " + item.DataType);

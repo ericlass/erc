@@ -362,7 +362,9 @@ namespace erc
                     tokens.StepBack();
                 }
                 else
+                {
                     result = AstItem.Variable(token.Value);
+                }
             }
             else if (token.TokenType == TokenType.Number)
             {
@@ -378,6 +380,12 @@ namespace erc
                 }
                 result = AstItem.Vector(values);
             }
+            else if (token.TokenType == TokenType.True || token.TokenType == TokenType.False)
+            {
+                result = AstItem.Immediate(token.Value);
+            }
+            else
+                throw new Exception("Unexpected token type in expression: " + token);
 
             return result;
         }

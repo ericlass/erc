@@ -18,6 +18,8 @@ namespace erc
         CurlyBracketClose,
         Let,
         Fn,
-        Ret
+        Ret,
+        True,
+        False
     }
 }
