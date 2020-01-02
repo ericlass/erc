@@ -144,6 +144,11 @@ namespace erc
             return new StorageLocation { Kind = StorageLocationKind.Heap };
         }
 
+        public static StorageLocation Heap(long offset)
+        {
+            return new StorageLocation { Kind = StorageLocationKind.Heap, Address = offset };
+        }
+
         internal static StorageLocation Label(string label)
         {
             return new StorageLocation { Kind = StorageLocationKind.Label, DataName = label };

@@ -51,6 +51,9 @@
     <Compile Include="CompilerContext.cs" />
     <Compile Include="Function.cs" />
     <Compile Include="FunctionScope.cs" />
+    <Compile Include="HeapChunk.cs" />
+    <Compile Include="HeapFreeEntry.cs" />
+    <Compile Include="HeapManager.cs" />
     <Compile Include="Instruction.cs" />
     <Compile Include="Operation.cs" />
     <Compile Include="Optimizer.cs" />
