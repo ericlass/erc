@@ -99,9 +99,9 @@ namespace erc
         {
             if (_allValues == null)
             {
-                _allValues = new List<DataType>();
                 var regType = typeof(DataType);
                 var fields = regType.GetFields(BindingFlags.Public | BindingFlags.Static);
+                _allValues = new List<DataType>(fields.Length);
                 foreach (var field in fields)
                 {
                     _allValues.Add(field.GetValue(null) as DataType);

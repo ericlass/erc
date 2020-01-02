@@ -55,7 +55,9 @@
     <Compile Include="HeapFreeEntry.cs" />
     <Compile Include="HeapManager.cs" />
     <Compile Include="Instruction.cs" />
+    <Compile Include="LogLevel.cs" />
     <Compile Include="Operation.cs" />
+    <Compile Include="Operator.cs" />
     <Compile Include="Optimizer.cs" />
     <Compile Include="PostProcessor.cs" />
     <Compile Include="DataType.cs" />
@@ -67,11 +69,11 @@
     <Compile Include="Scope.cs" />
     <Compile Include="SemanticAnalysis.cs" />
     <Compile Include="SimpleIterator.cs" />
+    <Compile Include="SimpleLogger.cs" />
     <Compile Include="StorageLocation.cs" />
     <Compile Include="StorageLocator.cs" />
     <Compile Include="StringIterator.cs" />
     <Compile Include="SymbolKind.cs" />
-    <Compile Include="Syntax.cs" />
     <Compile Include="SyntaxAnalysis.cs" />
     <Compile Include="Token.cs" />
     <Compile Include="Tokenizer.cs" />

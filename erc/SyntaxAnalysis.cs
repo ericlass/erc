@@ -315,6 +315,8 @@ namespace erc
                         case TokenType.Word:
                         case TokenType.Number:
                         case TokenType.Vector:
+                        case TokenType.True:
+                        case TokenType.False:
                             var operandItem = ReadSingleAstItem(tokenIter);
                             expItemsInfix.Add(operandItem);
                             break;
@@ -392,16 +394,11 @@ namespace erc
 
         private AstItemKind ParseOperator(string op)
         {
-            switch (op)
-            {
-                case "+": return AstItemKind.AddOp;
-                case "-": return AstItemKind.SubOp;
-                case "*": return AstItemKind.MulOp;
-                case "/": return AstItemKind.DivOp;
+            var oper = Operator.Parse(op);
+            if (oper == null)
+                throw new Exception("Unsupported math operator: " + op);
 
-                default:
-                    throw new Exception("Unsupported math operator: " + op);
-            }
+            return oper.AstKind;
         }
 
         /// <summary>
@@ -483,23 +480,11 @@ namespace erc
         /// <returns>The precedence.</returns>
         private int OperatorPrecedence(AstItem op)
         {
-            switch (op.Kind)
-            {
-                case AstItemKind.RoundBracketOpen:
-                case AstItemKind.RoundBracketClose:
-                    return 11;
+            var oper = Operator.FindByAstKind(op.Kind);
+            if (oper == null)
+                throw new Exception("Not an operator: " + op);
 
-                case AstItemKind.AddOp:
-                case AstItemKind.SubOp:
-                    return 12;
-
-                case AstItemKind.MulOp:
-                case AstItemKind.DivOp:
-                    return 13;
-
-                default:
-                    throw new Exception("Not an operator: " + op);
-            }
+            return oper.Precedence;
         }
 
     }

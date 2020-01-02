@@ -18,6 +18,10 @@ namespace erc
         SubOp,
         MulOp,
         DivOp,
+        AndBoolOp,
+        OrBoolOp,
+        AndBitOp,
+        OrBitOp,
         RoundBracketOpen,
         RoundBracketClose,
         Parameter,
@@ -51,7 +55,16 @@ namespace erc
         {
             get
             {
-                return Kind == AstItemKind.AddOp || Kind == AstItemKind.SubOp || Kind == AstItemKind.MulOp || Kind == AstItemKind.DivOp;
+                return
+                    Kind == AstItemKind.AddOp ||
+                    Kind == AstItemKind.SubOp ||
+                    Kind == AstItemKind.MulOp ||
+                    Kind == AstItemKind.DivOp ||
+                    Kind == AstItemKind.AndBoolOp ||
+                    Kind == AstItemKind.OrBoolOp ||
+                    Kind == AstItemKind.AndBitOp ||
+                    Kind == AstItemKind.OrBitOp
+                    ;
             }
         }
 
@@ -88,6 +101,10 @@ namespace erc
                 case AstItemKind.SubOp:
                 case AstItemKind.MulOp:
                 case AstItemKind.DivOp:
+                case AstItemKind.AndBoolOp:
+                case AstItemKind.OrBoolOp:
+                case AstItemKind.AndBitOp:
+                case AstItemKind.OrBitOp:
                     return Kind + ": " + String.Join(", ", Children);
 
                 case AstItemKind.Parameter:

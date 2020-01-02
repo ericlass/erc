@@ -11,7 +11,6 @@ namespace erc
             'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
             'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'
         };
-        private HashSet<char> _mathOps = new HashSet<char> { '+', '-', '*', '/' };
         private HashSet<char> _whiteSpaces = new HashSet<char> { ' ', '\t', '\r', '\n' };
         
         private Dictionary<string, TokenType> _reservedWordTypes = new Dictionary<string, TokenType>() {
@@ -66,12 +65,6 @@ namespace erc
             {
                 value = ReadNumber(iterator);
                 type = TokenType.Number;
-            }
-            else if (IsMathOp(c))
-            {
-                value = c.ToString();
-                type = TokenType.MathOperator;
-                iterator.Step();
             }
             else if (c == '=')
             {
@@ -128,7 +121,29 @@ namespace erc
             }
             else
             {
-                throw new Exception("Unexpected character '" + c + "' at (" + startLine + "," + startColumn + ")");
+                var figure = c.ToString() + iterator.Next().ToString();
+                var op = Operator.Parse(figure);
+                if (op != null)
+                {
+                    value = c.ToString();
+                    type = TokenType.MathOperator;
+                    iterator.Step();
+                }
+                else
+                {
+                    figure = c.ToString();
+                    op = Operator.Parse(figure);
+                    if (op != null)
+                    {
+                        value = figure;
+                        type = TokenType.MathOperator;
+                        iterator.Step();
+                    }
+                    else
+                    {
+                        throw new Exception("Unexpected character '" + c + "' at (" + startLine + "," + startColumn + ")");
+                    }
+                }
             }
 
             if (value != null || values != null)
@@ -264,11 +279,6 @@ namespace erc
         private bool IsDigit(char c)
         {
             return _digits.Contains(c);
-        }
-
-        private bool IsMathOp(char c)
-        {
-            return _mathOps.Contains(c);
         }
 
         private bool IsWhiteSpace(char c)

@@ -53,14 +53,40 @@ namespace erc
             _context.EnterFunction(currentFunction);
             _context.EnterBlock();
 
-            foreach (var statement in item.Children[1].Children)
+            var statements = item.Children[1].Children;
+            foreach (var statement in statements)
             {
                 CheckStatement(statement);
+            }
+
+            //Check that function that should return a value has a return statement
+            if (currentFunction.ReturnType != null && currentFunction.ReturnType != DataType.VOID)
+            {
+                var returnIndex = -1;
+                for (int i = statements.Count - 1; i >= 0; i--)
+                {
+                    if (statements[i].Kind == AstItemKind.Return)
+                    {
+                        returnIndex = i;
+                        break;
+                    }
+                }
+
+                if (returnIndex < 0)
+                {
+                    throw new Exception("Return statement required, but none found in function: " + currentFunction);
+                }
+                else if (returnIndex < statements.Count - 1)
+                {
+                    _context.Logger.Warn("Statements found after return statement, will not be compiled. In function: " + currentFunction);
+                    //TODO: Those can also be removed so no code is generated for them.
+                }
             }
 
             _context.LeaveBlock();
             _context.LeaveFunction();
         }
+
 
         private void CheckStatement(AstItem item)
         {
@@ -202,7 +228,7 @@ namespace erc
                 foreach (var expItem in expression.Children)
                 {
                     DataType itemType = null;
-                    if (expItem.Kind == AstItemKind.AddOp || expItem.Kind == AstItemKind.SubOp || expItem.Kind == AstItemKind.MulOp || expItem.Kind == AstItemKind.DivOp)
+                    if (expItem.IsOperator)
                     {
                         if (expressionType == null)
                             throw new Exception("Invalid expression, no value before operator " + expItem + " in expression: " + expression);

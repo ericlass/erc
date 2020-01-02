@@ -77,6 +77,8 @@ namespace erc
         public static Instruction AND = new Instruction("AND", 2);
         public static Instruction AND_IMM = new Instruction("AND", 2, (instr, op1, op2, op3) => instr.Name + " " + op1.ToCode() + ", " + op2.Address);
 
+        public static Instruction OR = new Instruction("OR", 2);
+
         //Special behavior for MUL which expects the first operand to be in the accumulator and only takes the second operand as parameter
         //This here works because for two operand syntax the first operand is already in the accumulator
         public static Instruction MUL = new Instruction("MUL", 2, (instr, op1, op2, op3) => instr.Name + " " + op2.ToCode());
