@@ -35,8 +35,8 @@ namespace erc
             locator.Locate(context);
 
             var generator = new CodeGenerator();
-            string finalCode = generator.Generate(context);
-            //string finalCode = "none";
+            //string finalCode = generator.Generate(context);
+            string finalCode = "none";
 
             stopWatch.Stop();
             var compilationTime = stopWatch.ElapsedMilliseconds;

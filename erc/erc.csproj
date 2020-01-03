@@ -49,12 +49,14 @@
     <Compile Include="CodeGenerator.cs" />
     <Compile Include="CodeGeneratorMovement.cs" />
     <Compile Include="CompilerContext.cs" />
+    <Compile Include="DefaultOpGenerator.cs" />
     <Compile Include="Function.cs" />
     <Compile Include="FunctionScope.cs" />
     <Compile Include="HeapChunk.cs" />
     <Compile Include="HeapFreeEntry.cs" />
     <Compile Include="HeapManager.cs" />
     <Compile Include="Instruction.cs" />
+    <Compile Include="IOpGenerator.cs" />
     <Compile Include="LogLevel.cs" />
     <Compile Include="Operation.cs" />
     <Compile Include="Operator.cs" />

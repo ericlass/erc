@@ -8,14 +8,18 @@ namespace erc
     {
         public string Figure { get; set; }
         public int Precedence { get; set; }
-        public DataType[] CompatibleTypes { get; set; }
-        public AstItemKind AstKind { get; set; }
+        public Dictionary<DataType, IOpGenerator> GeneratorMap { get; set; }
 
         private static List<Operator> _allValues = null;
 
         public bool IsCompatible(DataType dataType)
         {
-            return Array.Exists(CompatibleTypes, (t) => t == dataType);
+            return GeneratorMap.ContainsKey(dataType);
+        }
+
+        public List<Operation> Generate(List<AstItem> operands, StorageLocation target)
+        {
+            return GeneratorMap[operands[0].DataType].Generate(operands, target);
         }
 
         public static List<Operator> GetAllValues()
@@ -36,106 +40,190 @@ namespace erc
 
         public static Operator Parse(string str)
         {
-            foreach (var op in GetAllValues())
-            {
-                if (op.Figure == str)
-                    return op;
-            }
-
-            return null;
+            var allValues = GetAllValues();
+            return allValues.Find((o) => o.Figure == str);
         }
 
-        public static Operator FindByAstKind(AstItemKind kind)
+        public static bool operator ==(Operator a, Operator b)
         {
-            foreach (var op in GetAllValues())
-            {
-                if (op.AstKind == kind)
-                    return op;
-            }
+            return a?.Figure == b?.Figure;
+        }
 
-            return null;
+        public static bool operator !=(Operator a, Operator b)
+        {
+            return a?.Figure != b?.Figure;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null)
+                return false;
+
+            if (!(obj is Operator))
+                return false;
+
+            return (obj as Operator).Figure == Figure;
+        }
+
+        public override int GetHashCode()
+        {
+            return Figure.GetHashCode();
         }
 
         public static Operator MUL = new Operator
         {
             Figure = "*",
             Precedence = 20,
-            CompatibleTypes = new[] { DataType.I64, DataType.F32, DataType.F64, DataType.IVEC2Q, DataType.IVEC4Q, DataType.VEC4F, DataType.VEC8F, DataType.VEC2D, DataType.VEC4D },
-            AstKind = AstItemKind.MulOp
+            GeneratorMap = new Dictionary<DataType, IOpGenerator>() {
+                { DataType.I64, new DefaultOpGenerator(Instruction.IMUL) },
+                { DataType.F32, new DefaultOpGenerator(Instruction.MULSS) },
+                { DataType.F64, new DefaultOpGenerator(Instruction.MULSD) },
+                { DataType.IVEC2Q, new DefaultOpGenerator(Instruction.PMULQ) },
+                { DataType.IVEC4Q, new DefaultOpGenerator(Instruction.VPMULQ) },
+                { DataType.VEC4F, new DefaultOpGenerator(Instruction.MULPS) },
+                { DataType.VEC8F, new DefaultOpGenerator(Instruction.VMULPS) },
+                { DataType.VEC2D, new DefaultOpGenerator(Instruction.MULPD) },
+                { DataType.VEC4D, new DefaultOpGenerator(Instruction.VMULPD) },
+            }
         };
 
         public static Operator DIV = new Operator
         {
             Figure = "/",
             Precedence = 20,
-            CompatibleTypes = new[] { DataType.I64, DataType.F32, DataType.F64, DataType.IVEC2Q, DataType.IVEC4Q, DataType.VEC4F, DataType.VEC8F, DataType.VEC2D, DataType.VEC4D },
-            AstKind = AstItemKind.DivOp
+            GeneratorMap = new Dictionary<DataType, IOpGenerator>() {
+                { DataType.I64, new DefaultOpGenerator(Instruction.IDIV) },
+                { DataType.F32, new DefaultOpGenerator(Instruction.DIVSS) },
+                { DataType.F64, new DefaultOpGenerator(Instruction.DIVSD) },
+                { DataType.IVEC2Q, new DefaultOpGenerator(Instruction.PDIVQ) },
+                { DataType.IVEC4Q, new DefaultOpGenerator(Instruction.VPDIVQ) },
+                { DataType.VEC4F, new DefaultOpGenerator(Instruction.DIVPS) },
+                { DataType.VEC8F, new DefaultOpGenerator(Instruction.VDIVPS) },
+                { DataType.VEC2D, new DefaultOpGenerator(Instruction.DIVPD) },
+                { DataType.VEC4D, new DefaultOpGenerator(Instruction.VDIVPD) },
+            }
+        };
+
+        public static Operator MODULO = new Operator
+        {
+            Figure = "%",
+            Precedence = 20,
+            GeneratorMap = new Dictionary<DataType, IOpGenerator>() {
+                { DataType.I64, new DefaultOpGenerator(Instruction.IMUL) },
+                { DataType.F32, new DefaultOpGenerator(Instruction.MULSS) },
+                { DataType.F64, new DefaultOpGenerator(Instruction.MULSD) },
+                { DataType.IVEC2Q, new DefaultOpGenerator(Instruction.PMULQ) },
+                { DataType.IVEC4Q, new DefaultOpGenerator(Instruction.VPMULQ) },
+                { DataType.VEC4F, new DefaultOpGenerator(Instruction.MULPS) },
+                { DataType.VEC8F, new DefaultOpGenerator(Instruction.VMULPS) },
+                { DataType.VEC2D, new DefaultOpGenerator(Instruction.MULPD) },
+                { DataType.VEC4D, new DefaultOpGenerator(Instruction.VMULPD) },
+            }
         };
 
         public static Operator ADD = new Operator
         {
             Figure = "+",
             Precedence = 19,
-            CompatibleTypes = new[] { DataType.I64, DataType.F32, DataType.F64, DataType.IVEC2Q, DataType.IVEC4Q, DataType.VEC4F, DataType.VEC8F, DataType.VEC2D, DataType.VEC4D },
-            AstKind = AstItemKind.AddOp
+            GeneratorMap = new Dictionary<DataType, IOpGenerator>() {
+                { DataType.I64, new DefaultOpGenerator(Instruction.ADD) },
+                { DataType.F32, new DefaultOpGenerator(Instruction.ADDSS) },
+                { DataType.F64, new DefaultOpGenerator(Instruction.ADDSD) },
+                { DataType.IVEC2Q, new DefaultOpGenerator(Instruction.PADDQ) },
+                { DataType.IVEC4Q, new DefaultOpGenerator(Instruction.VPADDQ) },
+                { DataType.VEC4F, new DefaultOpGenerator(Instruction.ADDPS) },
+                { DataType.VEC8F, new DefaultOpGenerator(Instruction.VADDPS) },
+                { DataType.VEC2D, new DefaultOpGenerator(Instruction.ADDPD) },
+                { DataType.VEC4D, new DefaultOpGenerator(Instruction.VADDPD) },
+            }
         };
 
         public static Operator SUB = new Operator
         {
             Figure = "-",
             Precedence = 19,
-            CompatibleTypes = new[] { DataType.I64, DataType.F32, DataType.F64, DataType.IVEC2Q, DataType.IVEC4Q, DataType.VEC4F, DataType.VEC8F, DataType.VEC2D, DataType.VEC4D },
-            AstKind = AstItemKind.SubOp
+            GeneratorMap = new Dictionary<DataType, IOpGenerator>() {
+                { DataType.I64, new DefaultOpGenerator(Instruction.SUB) },
+                { DataType.F32, new DefaultOpGenerator(Instruction.SUBSS) },
+                { DataType.F64, new DefaultOpGenerator(Instruction.SUBSD) },
+                { DataType.IVEC2Q, new DefaultOpGenerator(Instruction.PSUBQ) },
+                { DataType.IVEC4Q, new DefaultOpGenerator(Instruction.VPSUBQ) },
+                { DataType.VEC4F, new DefaultOpGenerator(Instruction.SUBPS) },
+                { DataType.VEC8F, new DefaultOpGenerator(Instruction.VSUBPS) },
+                { DataType.VEC2D, new DefaultOpGenerator(Instruction.SUBPD) },
+                { DataType.VEC4D, new DefaultOpGenerator(Instruction.VSUBPD) },
+            }
         };
 
         public static Operator AND_BIT = new Operator
         {
             Figure = "&",
             Precedence = 15,
-            CompatibleTypes = new[] { DataType.I64, DataType.F32, DataType.F64, DataType.IVEC2Q, DataType.IVEC4Q, DataType.VEC4F, DataType.VEC8F, DataType.VEC2D, DataType.VEC4D },
-            AstKind = AstItemKind.AndBitOp
+            GeneratorMap = new Dictionary<DataType, IOpGenerator>() {
+                { DataType.I64, new DefaultOpGenerator(Instruction.AND) },
+                { DataType.F32, new DefaultOpGenerator(Instruction.PAND) }, //TODO: Not sure if this is correct. Is there a specific instruction for scalar values?
+                { DataType.F64, new DefaultOpGenerator(Instruction.PAND) }, //TODO: Not sure if this is correct. Is there a specific instruction for scalar values?
+                { DataType.IVEC2Q, new DefaultOpGenerator(Instruction.PAND) },
+                { DataType.IVEC4Q, new DefaultOpGenerator(Instruction.VPAND) },
+                { DataType.VEC4F, new DefaultOpGenerator(Instruction.PAND) },
+                { DataType.VEC8F, new DefaultOpGenerator(Instruction.VPAND) },
+                { DataType.VEC2D, new DefaultOpGenerator(Instruction.PAND) },
+                { DataType.VEC4D, new DefaultOpGenerator(Instruction.VPAND) },
+            }
         };
 
         public static Operator OR_BIT = new Operator
         {
             Figure = "|",
             Precedence = 14,
-            CompatibleTypes = new[] { DataType.I64, DataType.F32, DataType.F64, DataType.IVEC2Q, DataType.IVEC4Q, DataType.VEC4F, DataType.VEC8F, DataType.VEC2D, DataType.VEC4D },
-            AstKind = AstItemKind.OrBitOp
+            GeneratorMap = new Dictionary<DataType, IOpGenerator>() {
+                { DataType.I64, new DefaultOpGenerator(Instruction.OR) },
+                { DataType.F32, new DefaultOpGenerator(Instruction.POR) }, //TODO: Not sure if this is correct. Is there a specific instruction for scalar values?
+                { DataType.F64, new DefaultOpGenerator(Instruction.POR) }, //TODO: Not sure if this is correct. Is there a specific instruction for scalar values?
+                { DataType.IVEC2Q, new DefaultOpGenerator(Instruction.POR) },
+                { DataType.IVEC4Q, new DefaultOpGenerator(Instruction.VPOR) },
+                { DataType.VEC4F, new DefaultOpGenerator(Instruction.POR) },
+                { DataType.VEC8F, new DefaultOpGenerator(Instruction.VPOR) },
+                { DataType.VEC2D, new DefaultOpGenerator(Instruction.POR) },
+                { DataType.VEC4D, new DefaultOpGenerator(Instruction.VPOR) },
+            }
         };
 
         public static Operator AND_BOOL = new Operator
         {
             Figure = "&&",
             Precedence = 12,
-            CompatibleTypes = new[] { DataType.BOOL },
-            AstKind = AstItemKind.AndBoolOp
+            GeneratorMap = new Dictionary<DataType, IOpGenerator>() {
+                { DataType.BOOL, new DefaultOpGenerator(Instruction.AND) },
+            }
         };
 
         public static Operator OR_BOOL = new Operator
         {
             Figure = "||",
             Precedence = 11,
-            CompatibleTypes = new[] { DataType.BOOL },
-            AstKind = AstItemKind.OrBoolOp
+            GeneratorMap = new Dictionary<DataType, IOpGenerator>() {
+                { DataType.BOOL, new DefaultOpGenerator(Instruction.OR) },
+            }
         };
 
+        //Only required for expression parsing, no code generated
         public static Operator ROUND_BRACKET_OPEN = new Operator
         {
             Figure = "(",
             Precedence = 1,
-            CompatibleTypes = new DataType[0],
-            AstKind = AstItemKind.RoundBracketOpen
+            GeneratorMap = new Dictionary<DataType, IOpGenerator>()
         };
 
+        //Only required for expression parsing, no code generated
         public static Operator ROUND_BRACKET_CLOSE = new Operator
         {
             Figure = ")",
             Precedence = 1,
-            CompatibleTypes = new DataType[0],
-            AstKind = AstItemKind.RoundBracketClose
+            GeneratorMap = new Dictionary<DataType, IOpGenerator>()
         };
 
     }
+
 
 }

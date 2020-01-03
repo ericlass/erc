@@ -339,7 +339,7 @@ namespace erc
             for (int i = 0; i < terms.Count; i++)
             {
                 var item = terms[i];
-                if (item.IsOperator)
+                if (item.Kind == AstItemKind.Operator)
                 {
                     var instruction = GetInstruction(item.Kind, item.DataType);
                     var operand1 = terms[i - 2];
@@ -347,7 +347,7 @@ namespace erc
 
                     //If operand 1 or 2 is an operator, we need to V_POP an intermediate value from the stack
                     StorageLocation operand2Location;
-                    if (operand2.IsOperator)
+                    if (operand2.Kind == AstItemKind.Operator)
                     {
                         result.Add(new Operation(item.DataType, Instruction.V_POP, item.DataType.TempRegister2));
                         operand2Location = item.DataType.TempRegister2;
@@ -361,7 +361,7 @@ namespace erc
 
                     if (instruction.NumOperands == 2)
                     {
-                        if (operand1.IsOperator)
+                        if (operand1.Kind == AstItemKind.Operator)
                         {
                             result.Add(new Operation(item.DataType, Instruction.V_POP, target));
                         }
@@ -378,7 +378,7 @@ namespace erc
                     {
                         var operand1Location = item.DataType.TempRegister1;
 
-                        if (operand1.IsOperator)
+                        if (operand1.Kind == AstItemKind.Operator)
                             result.Add(new Operation(item.DataType, Instruction.V_POP, item.DataType.TempRegister1));
                         else
                             operand1Location = PrepareOperandLocation(result, operand1, item.DataType.TempRegister1);

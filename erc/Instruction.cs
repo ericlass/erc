@@ -82,8 +82,43 @@ namespace erc
         //Special behavior for MUL which expects the first operand to be in the accumulator and only takes the second operand as parameter
         //This here works because for two operand syntax the first operand is already in the accumulator
         public static Instruction MUL = new Instruction("MUL", 2, (instr, op1, op2, op3) => instr.Name + " " + op2.ToCode());
-
         public static Instruction DIV = new Instruction("DIV", 2);
+
+        public static Instruction IMUL = new Instruction("IMUL", 2, (instr, op1, op2, op3) => instr.Name + " " + op2.ToCode());
+        public static Instruction IDIV = new Instruction("IDIV", 2);
+
+        //##### Legacy SSE instructions for XMM registers #####
+
+        public static Instruction ADDSS = new Instruction("ADDSS", 2);
+        public static Instruction SUBSS = new Instruction("SUBSS", 2);
+        public static Instruction MULSS = new Instruction("MULSS", 2);
+        public static Instruction DIVSS = new Instruction("DIVSS", 2);
+
+        public static Instruction ADDSD = new Instruction("ADDSD", 2);
+        public static Instruction SUBSD = new Instruction("SUBSD", 2);
+        public static Instruction MULSD = new Instruction("MULSD", 2);
+        public static Instruction DIVSD = new Instruction("DIVSD", 2);
+
+        public static Instruction PADDQ = new Instruction("PADDQ", 2);
+        public static Instruction PSUBQ = new Instruction("PSUBQ", 2);
+        public static Instruction PMULQ = new Instruction("PMULQ", 2);
+        public static Instruction PDIVQ = new Instruction("PDIVQ", 2);
+
+        public static Instruction ADDPS = new Instruction("ADDPS", 2);
+        public static Instruction SUBPS = new Instruction("SUBPS", 2);
+        public static Instruction MULPS = new Instruction("MULPS", 2);
+        public static Instruction DIVPS = new Instruction("DIVPS", 2);
+
+        public static Instruction ADDPD = new Instruction("ADDPD", 2);
+        public static Instruction SUBPD = new Instruction("SUBPD", 2);
+        public static Instruction MULPD = new Instruction("MULPD", 2);
+        public static Instruction DIVPD = new Instruction("DIVPD", 2);
+
+        public static Instruction PAND = new Instruction("PAND", 2);
+        public static Instruction POR = new Instruction("POR", 2);
+        public static Instruction PXOR = new Instruction("PXOR", 2);
+
+        //##### VEX encdoed SSE instructions for YMM registers #####
 
         public static Instruction VADDSS = new Instruction("VADDSS", 3);
         public static Instruction VSUBSS = new Instruction("VSUBSS", 3);
@@ -109,6 +144,10 @@ namespace erc
         public static Instruction VSUBPD = new Instruction("VSUBPD", 3);
         public static Instruction VMULPD = new Instruction("VMULPD", 3);
         public static Instruction VDIVPD = new Instruction("VDIVPD", 3);
+
+        public static Instruction VPAND = new Instruction("VPAND", 3);
+        public static Instruction VPOR = new Instruction("VPOR", 3);
+        public static Instruction VPXOR = new Instruction("VPXOR", 3);
 
         public static Instruction VPSLLDQ = new Instruction("VPSLLDQ", 3);
 

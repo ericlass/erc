@@ -228,7 +228,7 @@ namespace erc
                 foreach (var expItem in expression.Children)
                 {
                     DataType itemType = null;
-                    if (expItem.IsOperator)
+                    if (expItem.Kind == AstItemKind.Operator)
                     {
                         if (expressionType == null)
                             throw new Exception("Invalid expression, no value before operator " + expItem + " in expression: " + expression);

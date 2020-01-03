@@ -14,16 +14,7 @@ namespace erc
         VarScopeEnd,
         Vector,
         Expression,
-        AddOp,
-        SubOp,
-        MulOp,
-        DivOp,
-        AndBoolOp,
-        OrBoolOp,
-        AndBitOp,
-        OrBitOp,
-        RoundBracketOpen,
-        RoundBracketClose,
+        Operator,
         Parameter,
         ParameterList,
         StatementList,
@@ -47,26 +38,10 @@ namespace erc
         public DataType DataType { get; set; }
         public string Identifier { get; set; } //Name of variable, function etc.
         public object Value { get; set; } //Value for immediates
+        public Operator Operator { get; set; } //Operator
         public string SourceLine { get; set; } //Source code line, only filled for statements
         public List<AstItem> Children { get => _children; set => _children = value; }
         public bool DataGenerated { get; set; } = false; //Used to track which immediates have already been generated in the data section
-
-        public bool IsOperator
-        {
-            get
-            {
-                return
-                    Kind == AstItemKind.AddOp ||
-                    Kind == AstItemKind.SubOp ||
-                    Kind == AstItemKind.MulOp ||
-                    Kind == AstItemKind.DivOp ||
-                    Kind == AstItemKind.AndBoolOp ||
-                    Kind == AstItemKind.OrBoolOp ||
-                    Kind == AstItemKind.AndBitOp ||
-                    Kind == AstItemKind.OrBitOp
-                    ;
-            }
-        }
 
         public AstItem()
         {
@@ -97,15 +72,8 @@ namespace erc
                 case AstItemKind.Variable:
                     return Kind + ": " + DataType + "(" + Identifier + ")";
 
-                case AstItemKind.AddOp:
-                case AstItemKind.SubOp:
-                case AstItemKind.MulOp:
-                case AstItemKind.DivOp:
-                case AstItemKind.AndBoolOp:
-                case AstItemKind.OrBoolOp:
-                case AstItemKind.AndBitOp:
-                case AstItemKind.OrBitOp:
-                    return Kind + ": " + String.Join(", ", Children);
+                case AstItemKind.Operator:
+                    return Kind + ": " + Operator.Figure;
 
                 case AstItemKind.Parameter:
                     return Kind + ": " + Identifier + "(" + DataType + ")";
@@ -140,6 +108,9 @@ namespace erc
 
                 case AstItemKind.Immediate:
                     return Kind + ": " + ImmediateValueToString() + " (" + DataType + ")";
+
+                case AstItemKind.Operator:
+                    return Kind + ": " + this.Operator.Figure;
 
                 default:
                     return Kind.ToString();
@@ -232,47 +203,9 @@ namespace erc
             };
         }
 
-        private static AstItem ArithmeticOp(AstItemKind op, AstItem op1, AstItem op2)
-        {
-            var result = new AstItem(op);
-            result.Children.Add(op1);
-            result.Children.Add(op2);
-            return result;
-        }
-
-        public static AstItem AddOp(AstItem op1, AstItem op2)
-        {
-            return ArithmeticOp(AstItemKind.AddOp, op1, op2);
-        }
-
-        public static AstItem SubOp(AstItem op1, AstItem op2)
-        {
-            return ArithmeticOp(AstItemKind.SubOp, op1, op2);
-        }
-
-        public static AstItem MulOp(AstItem op1, AstItem op2)
-        {
-            return ArithmeticOp(AstItemKind.MulOp, op1, op2);
-        }
-
-        public static AstItem DivOp(AstItem op1, AstItem op2)
-        {
-            return ArithmeticOp(AstItemKind.DivOp, op1, op2);
-        }
-
         public static AstItem VarScopeEnd(string varName)
         {
             return new AstItem { Kind = AstItemKind.VarScopeEnd, Identifier = varName };
-        }
-
-        public static AstItem RoundBracketOpen()
-        {
-            return new AstItem { Kind = AstItemKind.RoundBracketOpen };
-        }
-
-        public static AstItem RoundBracketClose()
-        {
-            return new AstItem { Kind = AstItemKind.RoundBracketClose };
         }
 
         public static AstItem Parameter(string name, DataType dataType)
@@ -310,6 +243,11 @@ namespace erc
         public static AstItem Return(DataType dataType, AstItem value)
         {
             return new AstItem { Kind = AstItemKind.Return, DataType = dataType, Children = new List<AstItem> { value } };
+        }
+
+        public static AstItem AsOperator(Operator oper)
+        {
+            return new AstItem { Kind = AstItemKind.Operator, Operator = oper };
         }
 
     }

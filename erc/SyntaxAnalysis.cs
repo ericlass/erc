@@ -322,16 +322,15 @@ namespace erc
                             break;
 
                         case TokenType.MathOperator:
-                            var operatorItem = new AstItem(ParseOperator(token.Value));
-                            expItemsInfix.Add(operatorItem);
+                            expItemsInfix.Add(AstItem.AsOperator(ParseOperator(token.Value)));
                             break;
 
                         case TokenType.RoundBracketOpen:
-                            expItemsInfix.Add(AstItem.RoundBracketOpen());
+                            expItemsInfix.Add(AstItem.AsOperator(ParseOperator(token.Value)));
                             break;
 
                         case TokenType.RoundBracketClose:
-                            expItemsInfix.Add(AstItem.RoundBracketClose());
+                            expItemsInfix.Add(AstItem.AsOperator(ParseOperator(token.Value)));
                             break;
 
                         default:
@@ -392,13 +391,13 @@ namespace erc
             return result;
         }
 
-        private AstItemKind ParseOperator(string op)
+        private Operator ParseOperator(string op)
         {
             var oper = Operator.Parse(op);
             if (oper == null)
                 throw new Exception("Unsupported math operator: " + op);
 
-            return oper.AstKind;
+            return oper;
         }
 
         /// <summary>
@@ -419,20 +418,20 @@ namespace erc
                 {
                     output.Add(item);
                 }
-                else if (item.Kind == AstItemKind.RoundBracketOpen)
+                else if (item.Operator == Operator.ROUND_BRACKET_OPEN)
                 {
                     stack.Push(item);
                 }
-                else if (item.Kind == AstItemKind.RoundBracketClose)
+                else if (item.Operator == Operator.ROUND_BRACKET_CLOSE)
                 {
                     cbuffer = stack.Pop();
-                    while (cbuffer.Kind != AstItemKind.RoundBracketOpen)
+                    while (cbuffer.Operator != Operator.ROUND_BRACKET_OPEN)
                     {
                         output.Add(cbuffer);
                         cbuffer = stack.Pop();
                     }
                 }
-                else
+                else if (item.Kind == AstItemKind.Operator)
                 {
                     if (stack.Count != 0 && Predecessor(stack.Peek(), item))
                     {
@@ -451,6 +450,8 @@ namespace erc
                     else
                         stack.Push(item);
                 }
+                else
+                    throw new Exception("Unexpected Ast item in expression: " + item);
             }
 
             while (stack.Count > 0)
@@ -470,21 +471,7 @@ namespace erc
         /// <returns></returns>
         private bool Predecessor(AstItem firstOperator, AstItem secondOperator)
         {
-            return OperatorPrecedence(firstOperator) >= OperatorPrecedence(secondOperator);
-        }
-
-        /// <summary>
-        /// Gets the precedence for the given operator.
-        /// </summary>
-        /// <param name="op">The operator.</param>
-        /// <returns>The precedence.</returns>
-        private int OperatorPrecedence(AstItem op)
-        {
-            var oper = Operator.FindByAstKind(op.Kind);
-            if (oper == null)
-                throw new Exception("Not an operator: " + op);
-
-            return oper.Precedence;
+            return firstOperator.Operator.Precedence >= secondOperator.Operator.Precedence;
         }
 
     }

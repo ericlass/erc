@@ -125,8 +125,10 @@ namespace erc
                 var op = Operator.Parse(figure);
                 if (op != null)
                 {
-                    value = c.ToString();
+                    value = figure;
                     type = TokenType.MathOperator;
+                    //Step twice to also remove second character
+                    iterator.Step();
                     iterator.Step();
                 }
                 else
