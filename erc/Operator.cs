@@ -17,9 +17,9 @@ namespace erc
             return GeneratorMap.ContainsKey(dataType);
         }
 
-        public List<Operation> Generate(List<AstItem> operands, StorageLocation target)
+        public List<Operation> Generate(DataType dataType, StorageLocation target, StorageLocation operand1, StorageLocation operand2)
         {
-            return GeneratorMap[operands[0].DataType].Generate(operands, target);
+            return GeneratorMap[dataType].Generate(dataType, target, operand1, operand2);
         }
 
         public static List<Operator> GetAllValues()

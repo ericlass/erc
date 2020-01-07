@@ -151,7 +151,7 @@ namespace erc
 
                         _context.RemoveVariable(variable);
                     }
-                        
+
                     break;
             }
 
@@ -341,55 +341,22 @@ namespace erc
                 var item = terms[i];
                 if (item.Kind == AstItemKind.Operator)
                 {
-                    var instruction = GetInstruction(item.Kind, item.DataType);
                     var operand1 = terms[i - 2];
                     var operand2 = terms[i - 1];
 
-                    //If operand 1 or 2 is an operator, we need to V_POP an intermediate value from the stack
-                    StorageLocation operand2Location;
-                    if (operand2.Kind == AstItemKind.Operator)
-                    {
-                        result.Add(new Operation(item.DataType, Instruction.V_POP, item.DataType.TempRegister2));
-                        operand2Location = item.DataType.TempRegister2;
-                    }
-                    else
-                        operand2Location = PrepareOperandLocation(result, operand2, item.DataType.TempRegister2);
+                    var op1Location = GetOperandLocation(result, operand1, item.DataType.TempRegister1);
 
-                    //Only need to save operand2. operand1 will never be overwritten between its creation and usage as arithmetic instruction directly follows.
-                    if (operand2Location == item.DataType.TempRegister2)
-                        _context.RegisterPool.Use(operand2Location.Register);
+                    //Only need to save operand1. operand2 will never be overwritten between its creation and usage in arithmetic instruction, which directly follows.
+                    if (op1Location == item.DataType.TempRegister1)
+                        _context.RegisterPool.Use(op1Location.Register);
 
-                    if (instruction.NumOperands == 2)
-                    {
-                        if (operand1.Kind == AstItemKind.Operator)
-                        {
-                            result.Add(new Operation(item.DataType, Instruction.V_POP, target));
-                        }
-                        else
-                        {
-                            var operand1Location = GetOperandLocation(result, operand1, target);
-                            if (operand1Location != target)
-                                result.AddRange(Move(item.DataType, operand1Location, target));
-                        }
+                    var op2Location = GetOperandLocation(result, operand2, item.DataType.TempRegister2);
 
-                        result.Add(new Operation(item.DataType, instruction, target, operand2Location));
-                    }
-                    else if (instruction.NumOperands == 3)
-                    {
-                        var operand1Location = item.DataType.TempRegister1;
+                    result.AddRange(item.Operator.Generate(item.DataType, target, op1Location, op2Location));
 
-                        if (operand1.Kind == AstItemKind.Operator)
-                            result.Add(new Operation(item.DataType, Instruction.V_POP, item.DataType.TempRegister1));
-                        else
-                            operand1Location = PrepareOperandLocation(result, operand1, item.DataType.TempRegister1);
-
-                        result.Add(new Operation(item.DataType, instruction, target, operand1Location, operand2Location));
-                    }
-                    else
-                        throw new Exception("Invalid number of instruction operands: " + instruction);
-
-                    if (operand2Location == item.DataType.TempRegister2)
-                        _context.RegisterPool.Free(operand2Location.Register);
+                    //Free usage of temp register, if required
+                    if (op1Location == item.DataType.TempRegister1)
+                        _context.RegisterPool.Free(op1Location.Register);
 
                     result.Add(new Operation(item.DataType, Instruction.V_PUSH, target));
 
@@ -404,51 +371,11 @@ namespace erc
                 }
             }
 
+            //Remove trailing push, not required
             result.RemoveAt(result.Count - 1);
 
             if (target != targetLocation)
                 result.AddRange(Move(items[0].DataType, target, targetLocation));
-
-            return result;
-        }
-
-        /// <summary>
-        /// Make sure an operand for a processing instruction is in a usable location (= register).
-        /// </summary>
-        /// <param name="output">Add additional operations here.</param>
-        /// <param name="operand">The operand.</param>
-        /// <param name="defaultLocation">The location to use when the operand is not in a register. Must be a register!</param>
-        /// <returns>The usable location. Either the current location, if it is usable, or the given default location.</returns>
-        private StorageLocation PrepareOperandLocation(List<Operation> output, AstItem operand, StorageLocation defaultLocation)
-        {
-            if (defaultLocation.Kind != StorageLocationKind.Register)
-                throw new Exception("Excepted register, got " + defaultLocation);
-
-            var result = defaultLocation;
-
-            if (operand.Kind == AstItemKind.Immediate)
-            {
-                output.AddRange(Move(operand.DataType, StorageLocation.DataSection(operand.Identifier), defaultLocation));
-            }
-            else if (operand.Kind == AstItemKind.Vector)
-            {
-                if (IsFullImmediateVector(operand))
-                    output.AddRange(Move(operand.DataType, StorageLocation.DataSection(operand.Identifier), defaultLocation));
-                else
-                    output.AddRange(GenerateVectorWithExpressions(operand, defaultLocation));
-            }
-            else if (operand.Kind == AstItemKind.Variable)
-            {
-                var variable = _context.GetSymbol(operand.Identifier);
-                if (variable.Location.Kind == StorageLocationKind.Register)
-                    result = variable.Location;
-                else
-                    output.AddRange(Move(variable.DataType, variable.Location, defaultLocation));
-            }
-            else if (operand.Kind == AstItemKind.FunctionCall)
-            {
-                output.AddRange(GenerateFunctionCall(operand, defaultLocation));
-            }
 
             return result;
         }
@@ -485,6 +412,10 @@ namespace erc
             else if (operand.Kind == AstItemKind.FunctionCall)
             {
                 output.AddRange(GenerateFunctionCall(operand, defaultLocation));
+            }
+            else if (operand.Kind == AstItemKind.Operator)
+            {
+                output.Add(new Operation(operand.DataType, Instruction.V_POP, defaultLocation));
             }
 
             return result;

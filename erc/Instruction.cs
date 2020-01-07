@@ -81,10 +81,10 @@ namespace erc
 
         //Special behavior for MUL which expects the first operand to be in the accumulator and only takes the second operand as parameter
         //This here works because for two operand syntax the first operand is already in the accumulator
-        public static Instruction MUL = new Instruction("MUL", 2, (instr, op1, op2, op3) => instr.Name + " " + op2.ToCode());
+        public static Instruction MUL = new Instruction("MUL", 1);
         public static Instruction DIV = new Instruction("DIV", 2);
 
-        public static Instruction IMUL = new Instruction("IMUL", 2, (instr, op1, op2, op3) => instr.Name + " " + op2.ToCode());
+        public static Instruction IMUL = new Instruction("IMUL", 1);
         public static Instruction IDIV = new Instruction("IDIV", 2);
 
         //##### Legacy SSE instructions for XMM registers #####

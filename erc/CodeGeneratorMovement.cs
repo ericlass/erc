@@ -12,7 +12,7 @@ namespace erc
         /// <param name="source">The source location.</param>
         /// <param name="target">The target location.</param>
         /// <returns>The list of operations required to move the value.</returns>
-        public List<Operation> Move(DataType dataType, StorageLocation source, StorageLocation target)
+        public static List<Operation> Move(DataType dataType, StorageLocation source, StorageLocation target)
         {
             //Values on stack are not align, so need to distinguish
             Instruction instruction = null;
