@@ -234,6 +234,8 @@ namespace erc
                             throw new Exception("Invalid expression, no value before operator " + expItem + " in expression: " + expression);
 
                         itemType = expressionType;
+                        if (!expItem.Operator.IsCompatible(itemType))
+                            throw new Exception("Operator " + expItem.Operator.Figure + " is not compatible with data type " + itemType);
                     }
                     else
                     {

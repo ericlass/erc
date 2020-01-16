@@ -50,6 +50,7 @@
     <Compile Include="CodeGeneratorMovement.cs" />
     <Compile Include="CompilerContext.cs" />
     <Compile Include="DefaultOpGenerator.cs" />
+    <Compile Include="EqualsOpGenerator.cs" />
     <Compile Include="Function.cs" />
     <Compile Include="FunctionScope.cs" />
     <Compile Include="HeapChunk.cs" />

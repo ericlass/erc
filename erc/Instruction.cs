@@ -44,6 +44,8 @@ namespace erc
         public static Instruction POP = new Instruction("POP", 1);
 
         public static Instruction MOV = new Instruction("MOV", 2);
+        public static Instruction CMOVE = new Instruction("CMOVE", 2);
+        public static Instruction CMOVNE = new Instruction("CMOVNE", 2);
 
         public static Instruction VMOVSS = new Instruction("VMOVSS", 2, (instr, op1, op2, op3) => 
         {
@@ -79,13 +81,15 @@ namespace erc
 
         public static Instruction OR = new Instruction("OR", 2);
 
-        //Special behavior for MUL which expects the first operand to be in the accumulator and only takes the second operand as parameter
-        //This here works because for two operand syntax the first operand is already in the accumulator
         public static Instruction MUL = new Instruction("MUL", 1);
         public static Instruction DIV = new Instruction("DIV", 2);
 
         public static Instruction IMUL = new Instruction("IMUL", 1);
         public static Instruction IDIV = new Instruction("IDIV", 2);
+
+        //##### Comparison Instructions #####
+
+        public static Instruction CMP = new Instruction("CMP", 2);
 
         //##### Legacy SSE instructions for XMM registers #####
 

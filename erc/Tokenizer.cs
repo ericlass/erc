@@ -11,6 +11,7 @@ namespace erc
             'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
             'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'
         };
+        private HashSet<char> _identifierChars = new HashSet<char> { '_' };
         private HashSet<char> _whiteSpaces = new HashSet<char> { ' ', '\t', '\r', '\n' };
         
         private Dictionary<string, TokenType> _reservedWordTypes = new Dictionary<string, TokenType>() {
@@ -66,7 +67,7 @@ namespace erc
                 value = ReadNumber(iterator);
                 type = TokenType.Number;
             }
-            else if (c == '=')
+            else if (c == '=' && iterator.Next() != '=')
             {
                 value = c.ToString();
                 type = TokenType.AssigmnentOperator;
@@ -265,7 +266,7 @@ namespace erc
 
         private bool IsIdentifierChar(char c)
         {
-            return IsLetter(c) || IsDigit(c);
+            return IsLetter(c) || IsDigit(c) || _identifierChars.Contains(c);
         }
 
         private bool IsLetter(char c)

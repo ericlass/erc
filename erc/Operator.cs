@@ -155,6 +155,15 @@ namespace erc
             }
         };
 
+        public static Operator EQUALS = new Operator
+        {
+            Figure = "==",
+            Precedence = 16,
+            GeneratorMap = new Dictionary<DataType, IOpGenerator>() {
+                { DataType.I64, new EqualsOpGenerator() }
+            }
+        };
+
         public static Operator AND_BIT = new Operator
         {
             Figure = "&",
