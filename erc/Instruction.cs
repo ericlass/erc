@@ -2,7 +2,7 @@
 
 namespace erc
 {
-    public delegate string GeneratorFunc(Instruction instr, StorageLocation op1, StorageLocation op2, StorageLocation op3);
+    public delegate string GeneratorFunc(Instruction instr, Operand op1, Operand op2, Operand op3);
 
     public class Instruction
     {
@@ -49,7 +49,7 @@ namespace erc
 
         public static Instruction VMOVSS = new Instruction("VMOVSS", 2, (instr, op1, op2, op3) => 
         {
-            if (op1.Kind == StorageLocationKind.Register && op2.Kind == StorageLocationKind.Register)
+            if (op1.Kind == OperandKind.Register && op2.Kind == OperandKind.Register)
                 return instr.Name + " " + op1.ToCode() + ", " + op2.ToCode() + ", " + op2.ToCode();
             else
                 return instr.Name + " " + op1.ToCode() + ", " + op2.ToCode();
@@ -57,7 +57,7 @@ namespace erc
 
         public static Instruction VMOVSD = new Instruction("VMOVSD", 2, (instr, op1, op2, op3) => 
         {
-            if (op1.Kind == StorageLocationKind.Register && op2.Kind == StorageLocationKind.Register)
+            if (op1.Kind == OperandKind.Register && op2.Kind == OperandKind.Register)
                 return instr.Name + " " + op1.ToCode() + ", " + op2.ToCode() + ", " + op2.ToCode();
             else
                 return instr.Name + " " + op1.ToCode() + ", " + op2.ToCode();
@@ -155,11 +155,11 @@ namespace erc
 
         public static Instruction VPSLLDQ = new Instruction("VPSLLDQ", 3);
 
-        public static Instruction CALL = new Instruction("CALL", 1, (instr, op1, op2, op3) => instr.Name + " " + op1.DataName);
+        public static Instruction CALL = new Instruction("CALL", 1);
         public static Instruction RET = new Instruction("RET", 0);
 
-        public static Instruction V_LABEL = new Instruction("V_LABEL", 1, (instr, op1, op2, op3) => op1.DataName + ":");
-        public static Instruction V_COMMENT = new Instruction("V_COMMENT", 1, (instr, op1, op2, op3) => "; " + op1.DataName);
+        public static Instruction V_LABEL = new Instruction("V_LABEL", 1, (instr, op1, op2, op3) => op1.LabelName + ":");
+        public static Instruction V_COMMENT = new Instruction("V_COMMENT", 1, (instr, op1, op2, op3) => "; " + op1.LabelName);
         public static Instruction V_PUSH = new Instruction("V_PUSH", 1);
         public static Instruction V_POP = new Instruction("V_POP", 1);
 

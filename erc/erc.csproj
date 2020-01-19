@@ -73,7 +73,7 @@
     <Compile Include="SemanticAnalysis.cs" />
     <Compile Include="SimpleIterator.cs" />
     <Compile Include="SimpleLogger.cs" />
-    <Compile Include="StorageLocation.cs" />
+    <Compile Include="Operand.cs" />
     <Compile Include="StorageLocator.cs" />
     <Compile Include="StringIterator.cs" />
     <Compile Include="SymbolKind.cs" />

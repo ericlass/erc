@@ -14,10 +14,10 @@ namespace erc
         public int NumElements { get; private set; }
         public string OperandSize { get; private set; }
         public DataType ElementType { get; private set; }
-        public StorageLocation Accumulator { get; private set; }
-        public StorageLocation TempRegister1 { get; private set; }
-        public StorageLocation TempRegister2 { get; private set; }
-        public StorageLocation ConstructionRegister { get; private set; }
+        public Operand Accumulator { get; private set; }
+        public Operand TempRegister1 { get; private set; }
+        public Operand TempRegister2 { get; private set; }
+        public Operand ConstructionRegister { get; private set; }
         public Instruction MoveInstructionAligned { get; private set; }
         public Instruction MoveInstructionUnaligned { get; private set; }
         //public bool IsReference { get; private set; }
@@ -132,9 +132,9 @@ namespace erc
             IsVector = false,
             NumElements = 1,
             OperandSize = "qword",
-            Accumulator = StorageLocation.AsRegister(Register.RAX),
-            TempRegister1 = StorageLocation.AsRegister(Register.R10),
-            TempRegister2 = StorageLocation.AsRegister(Register.R11),
+            Accumulator = Operand.AsRegister(Register.RAX),
+            TempRegister1 = Operand.AsRegister(Register.R10),
+            TempRegister2 = Operand.AsRegister(Register.R11),
             MoveInstructionAligned = Instruction.MOV,
             MoveInstructionUnaligned = Instruction.MOV
         };
@@ -146,9 +146,9 @@ namespace erc
             IsVector = false,
             NumElements = 1,
             OperandSize = "dword",
-            Accumulator = StorageLocation.AsRegister(Register.XMM4),
-            TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
-            TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
+            Accumulator = Operand.AsRegister(Register.XMM4),
+            TempRegister1 = Operand.AsRegister(Register.XMM5),
+            TempRegister2 = Operand.AsRegister(Register.XMM6),
             MoveInstructionAligned = Instruction.VMOVSS,
             MoveInstructionUnaligned = Instruction.VMOVSS
         };
@@ -160,9 +160,9 @@ namespace erc
             IsVector = false,
             NumElements = 1,
             OperandSize = "qword",
-            Accumulator = StorageLocation.AsRegister(Register.XMM4),
-            TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
-            TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
+            Accumulator = Operand.AsRegister(Register.XMM4),
+            TempRegister1 = Operand.AsRegister(Register.XMM5),
+            TempRegister2 = Operand.AsRegister(Register.XMM6),
             MoveInstructionAligned = Instruction.VMOVSD,
             MoveInstructionUnaligned = Instruction.VMOVSD
         };
@@ -175,10 +175,10 @@ namespace erc
             NumElements = 2,
             ElementType = I64,
             OperandSize = "dqword",
-            Accumulator = StorageLocation.AsRegister(Register.XMM4),
-            TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
-            TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
-            ConstructionRegister = StorageLocation.AsRegister(Register.XMM7),
+            Accumulator = Operand.AsRegister(Register.XMM4),
+            TempRegister1 = Operand.AsRegister(Register.XMM5),
+            TempRegister2 = Operand.AsRegister(Register.XMM6),
+            ConstructionRegister = Operand.AsRegister(Register.XMM7),
             MoveInstructionAligned = Instruction.VMOVDQA,
             MoveInstructionUnaligned = Instruction.VMOVDQU
         };
@@ -191,10 +191,10 @@ namespace erc
             NumElements = 4,
             ElementType = I64,
             OperandSize = "qqword",
-            Accumulator = StorageLocation.AsRegister(Register.YMM4),
-            TempRegister1 = StorageLocation.AsRegister(Register.YMM5),
-            TempRegister2 = StorageLocation.AsRegister(Register.YMM6),
-            ConstructionRegister = StorageLocation.AsRegister(Register.YMM7),
+            Accumulator = Operand.AsRegister(Register.YMM4),
+            TempRegister1 = Operand.AsRegister(Register.YMM5),
+            TempRegister2 = Operand.AsRegister(Register.YMM6),
+            ConstructionRegister = Operand.AsRegister(Register.YMM7),
             MoveInstructionAligned = Instruction.VMOVDQA,
             MoveInstructionUnaligned = Instruction.VMOVDQU
         };
@@ -207,10 +207,10 @@ namespace erc
             NumElements = 4,
             ElementType = F32,
             OperandSize = "dqword",
-            Accumulator = StorageLocation.AsRegister(Register.XMM4),
-            TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
-            TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
-            ConstructionRegister = StorageLocation.AsRegister(Register.XMM7),
+            Accumulator = Operand.AsRegister(Register.XMM4),
+            TempRegister1 = Operand.AsRegister(Register.XMM5),
+            TempRegister2 = Operand.AsRegister(Register.XMM6),
+            ConstructionRegister = Operand.AsRegister(Register.XMM7),
             MoveInstructionAligned = Instruction.VMOVAPS,
             MoveInstructionUnaligned = Instruction.VMOVUPS
         };
@@ -223,10 +223,10 @@ namespace erc
             NumElements = 8,
             ElementType = F32,
             OperandSize = "qqword",
-            Accumulator = StorageLocation.AsRegister(Register.YMM4),
-            TempRegister1 = StorageLocation.AsRegister(Register.YMM5),
-            TempRegister2 = StorageLocation.AsRegister(Register.YMM6),
-            ConstructionRegister = StorageLocation.AsRegister(Register.YMM7),
+            Accumulator = Operand.AsRegister(Register.YMM4),
+            TempRegister1 = Operand.AsRegister(Register.YMM5),
+            TempRegister2 = Operand.AsRegister(Register.YMM6),
+            ConstructionRegister = Operand.AsRegister(Register.YMM7),
             MoveInstructionAligned = Instruction.VMOVAPS,
             MoveInstructionUnaligned = Instruction.VMOVUPS
         };
@@ -239,10 +239,10 @@ namespace erc
             NumElements = 2,
             ElementType = F64,
             OperandSize = "dqword",
-            Accumulator = StorageLocation.AsRegister(Register.XMM4),
-            TempRegister1 = StorageLocation.AsRegister(Register.XMM5),
-            TempRegister2 = StorageLocation.AsRegister(Register.XMM6),
-            ConstructionRegister = StorageLocation.AsRegister(Register.XMM7),
+            Accumulator = Operand.AsRegister(Register.XMM4),
+            TempRegister1 = Operand.AsRegister(Register.XMM5),
+            TempRegister2 = Operand.AsRegister(Register.XMM6),
+            ConstructionRegister = Operand.AsRegister(Register.XMM7),
             MoveInstructionAligned = Instruction.VMOVAPD,
             MoveInstructionUnaligned = Instruction.VMOVUPD
         };
@@ -255,10 +255,10 @@ namespace erc
             NumElements = 4,
             ElementType = F64,
             OperandSize = "qqword",
-            Accumulator = StorageLocation.AsRegister(Register.YMM4),
-            TempRegister1 = StorageLocation.AsRegister(Register.YMM5),
-            TempRegister2 = StorageLocation.AsRegister(Register.YMM6),
-            ConstructionRegister = StorageLocation.AsRegister(Register.YMM7),
+            Accumulator = Operand.AsRegister(Register.YMM4),
+            TempRegister1 = Operand.AsRegister(Register.YMM5),
+            TempRegister2 = Operand.AsRegister(Register.YMM6),
+            ConstructionRegister = Operand.AsRegister(Register.YMM7),
             MoveInstructionAligned = Instruction.VMOVAPD,
             MoveInstructionUnaligned = Instruction.VMOVUPD
         };
@@ -270,9 +270,9 @@ namespace erc
             IsVector = false,
             NumElements = 1,
             OperandSize = "byte",
-            Accumulator = StorageLocation.AsRegister(Register.AL),
-            TempRegister1 = StorageLocation.AsRegister(Register.R10B),
-            TempRegister2 = StorageLocation.AsRegister(Register.R11B),
+            Accumulator = Operand.AsRegister(Register.AL),
+            TempRegister1 = Operand.AsRegister(Register.R10B),
+            TempRegister2 = Operand.AsRegister(Register.R11B),
             MoveInstructionAligned = Instruction.MOV,
             MoveInstructionUnaligned = Instruction.MOV
         };

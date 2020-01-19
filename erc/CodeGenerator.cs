@@ -85,9 +85,9 @@ namespace erc
 
             var currentFunction = _context.GetFunction(function.Identifier);
 
-            result.Add(new Operation(DataType.I64, Instruction.V_COMMENT, StorageLocation.Label("")));
+            result.Add(new Operation(DataType.I64, Instruction.V_COMMENT, Operand.Label("")));
             var labelName = "fn_" + function.Identifier;
-            result.Add(new Operation(DataType.I64, Instruction.V_LABEL, StorageLocation.Label(labelName)));
+            result.Add(new Operation(DataType.I64, Instruction.V_LABEL, Operand.Label(labelName)));
 
             _context.EnterFunction(currentFunction);
             _context.EnterBlock();
@@ -95,20 +95,20 @@ namespace erc
             //Mark used parameter registers as used
             foreach (var parameter in currentFunction.Parameters)
             {
-                if (parameter.Location.Kind == StorageLocationKind.Register)
+                if (parameter.Location.Kind == OperandKind.Register)
                     _context.RegisterPool.Use(parameter.Location.Register);
             }
 
             foreach (var statement in statements.Children)
             {
-                //result.Add(new Operation(DataType.I64, Instruction.V_COMMENT, StorageLocation.Label(statement.SourceLine)));
+                //result.Add(new Operation(DataType.I64, Instruction.V_COMMENT, Operand.Label(statement.SourceLine)));
                 result.AddRange(GenerateStatement(statement));
             }
 
             //Free parameter registers
             foreach (var parameter in currentFunction.Parameters)
             {
-                if (parameter.Location.Kind == StorageLocationKind.Register)
+                if (parameter.Location.Kind == OperandKind.Register)
                     _context.RegisterPool.Free(parameter.Location.Register);
             }
 
@@ -146,7 +146,7 @@ namespace erc
 
                     if (variable.Kind == SymbolKind.Variable)
                     {
-                        if (variable.Location.Kind == StorageLocationKind.Register)
+                        if (variable.Location.Kind == OperandKind.Register)
                             _context.RegisterPool.Free(variable.Location.Register);
 
                         _context.RemoveVariable(variable);
@@ -169,7 +169,7 @@ namespace erc
             _context.RegisterPool.Use(register);
 
             var variable = new Symbol(statement.Identifier, SymbolKind.Variable, statement.DataType);
-            variable.Location = StorageLocation.AsRegister(register);
+            variable.Location = Operand.AsRegister(register);
             _context.AddVariable(variable);
 
             operations.AddRange(Move(statement.DataType, statement.DataType.Accumulator, variable.Location));
@@ -184,7 +184,7 @@ namespace erc
             return GenerateExpression(statement.Children[0], variable.Location);
         }
 
-        private List<Operation> GenerateFunctionCall(AstItem funcCall, StorageLocation targetLocation)
+        private List<Operation> GenerateFunctionCall(AstItem funcCall, Operand targetLocation)
         {
             var result = new List<Operation>();
             var function = _context.GetFunction(funcCall.Identifier);
@@ -192,19 +192,19 @@ namespace erc
             //List of registers that need to be restored, pre-filled with the ones that always need to be saved/restored
             var savedRegisters = new List<Register>();
 
-            result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("save used registers")));
+            result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, Operand.Label("save used registers")));
             //Push used registers
             foreach (var register in _context.RegisterPool.GetAllUsed())
             {
-                result.AddRange(Push(Register.GetDefaultDataType(register), StorageLocation.AsRegister(register)));
+                result.AddRange(Push(Register.GetDefaultDataType(register), Operand.AsRegister(register)));
                 savedRegisters.Add(register);
             }
 
-            result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("save parameter registers")));
+            result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, Operand.Label("save parameter registers")));
             //Push parameter registers of current function
             foreach (var funcParam in _context.CurrentFunction.Parameters)
             {
-                if (funcParam.Location.Kind == StorageLocationKind.Register && !savedRegisters.Contains(funcParam.Location.Register))
+                if (funcParam.Location.Kind == OperandKind.Register && !savedRegisters.Contains(funcParam.Location.Register))
                 {
                     result.AddRange(Push(funcParam.DataType, funcParam.Location));
                     savedRegisters.Add(funcParam.Location.Register);
@@ -217,26 +217,26 @@ namespace erc
                 //Assuming that AST item has as many children as function has parameters, as this is checked before
                 var parameter = function.Parameters[i];
                 var expression = funcCall.Children[i];
-                //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("parameter expression " + (i + 1))));
+                //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, Operand.Label("parameter expression " + (i + 1))));
                 result.AddRange(GenerateExpression(expression, parameter.Location));
             }
 
-            //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("create shadow space")));
+            //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, Operand.Label("create shadow space")));
             //Add 32 bytes shadow space
-            result.Add(new Operation(DataType.I64, Instruction.SUB_IMM, StorageLocation.AsRegister(Register.RSP), StorageLocation.Immediate(32)));
-            result.AddRange(Move(DataType.I64, StorageLocation.AsRegister(Register.RSP), StorageLocation.AsRegister(Register.RBP)));
+            result.Add(new Operation(DataType.I64, Instruction.SUB_IMM, Operand.AsRegister(Register.RSP), Operand.Immediate(32)));
+            result.AddRange(Move(DataType.I64, Operand.AsRegister(Register.RSP), Operand.AsRegister(Register.RBP)));
 
             //Finally, call function
-            result.Add(new Operation(function.ReturnType, Instruction.CALL, StorageLocation.Label("fn_" + function.Name)));
+            result.Add(new Operation(function.ReturnType, Instruction.CALL, Operand.Label("fn_" + function.Name)));
 
             //Remove shadow space
-            //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("delete shadow space")));
-            result.Add(new Operation(DataType.I64, Instruction.ADD_IMM, StorageLocation.AsRegister(Register.RSP), StorageLocation.Immediate(32)));
+            //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, Operand.Label("delete shadow space")));
+            result.Add(new Operation(DataType.I64, Instruction.ADD_IMM, Operand.AsRegister(Register.RSP), Operand.Immediate(32)));
 
             //Move result value (if exists) to target location (if required)
             if (function.ReturnType != DataType.VOID && targetLocation != null && function.ReturnLocation != targetLocation)
             {
-                //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("move result value")));
+                //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, Operand.Label("move result value")));
                 result.AddRange(Move(function.ReturnType, function.ReturnLocation, targetLocation));
             }
 
@@ -244,8 +244,8 @@ namespace erc
             savedRegisters.Reverse();
             foreach (var register in savedRegisters)
             {
-                //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, StorageLocation.Label("restore register " + register.Item1)));
-                result.AddRange(Pop(Register.GetDefaultDataType(register), StorageLocation.AsRegister(register)));
+                //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, Operand.Label("restore register " + register.Item1)));
+                result.AddRange(Pop(Register.GetDefaultDataType(register), Operand.AsRegister(register)));
             }
 
             return result;
@@ -261,7 +261,7 @@ namespace erc
 
             var returnLocation = function.ReturnLocation;
             //The return location might be in use by a parameter, so put return value somewhere else in this case.
-            if (returnLocation.Kind == StorageLocationKind.Register && _context.RegisterPool.IsUsed(returnLocation.Register))
+            if (returnLocation.Kind == OperandKind.Register && _context.RegisterPool.IsUsed(returnLocation.Register))
                 returnLocation = function.ReturnType.Accumulator;
 
             result.AddRange(GenerateExpression(statement.Children[0], returnLocation));
@@ -275,18 +275,18 @@ namespace erc
             return result;
         }
 
-        private List<Operation> GenerateExpression(AstItem expression, StorageLocation targetLocation)
+        private List<Operation> GenerateExpression(AstItem expression, Operand targetLocation)
         {
             switch (expression.Kind)
             {
                 case AstItemKind.Immediate:
-                    var src = StorageLocation.DataSection(expression.Identifier);
+                    var src = Operand.DataSection(expression.Identifier);
                     return Move(expression.DataType, src, targetLocation);
 
                 case AstItemKind.Vector:
                     if (IsFullImmediateVector(expression))
                     {
-                        src = StorageLocation.DataSection(expression.Identifier);
+                        src = Operand.DataSection(expression.Identifier);
                         return Move(expression.DataType, src, targetLocation);
                     }
                     else
@@ -316,7 +316,7 @@ namespace erc
             }
         }
 
-        private List<Operation> GenerateExpressionOperations(List<AstItem> items, StorageLocation targetLocation)
+        private List<Operation> GenerateExpressionOperations(List<AstItem> items, Operand targetLocation)
         {
             //Example of algorithm:
             //x y 5 z * / - 10 +
@@ -332,7 +332,7 @@ namespace erc
             var terms = new List<AstItem>(items);
 
             var target = targetLocation;
-            if (target == null || target.Kind != StorageLocationKind.Register)
+            if (target == null || target.Kind != OperandKind.Register)
                 target = terms[0].DataType.Accumulator;
 
             var result = new List<Operation>();
@@ -387,18 +387,18 @@ namespace erc
         /// <param name="operand"></param>
         /// <param name="defaultLocation">The location to use when the operand has no location at the moment.</param>
         /// <returns>The current location of the operand. If it has no location, it is moved to the default location and that is returned.</returns>
-        private StorageLocation GetOperandLocation(List<Operation> output, AstItem operand, StorageLocation defaultLocation)
+        private Operand GetOperandLocation(List<Operation> output, AstItem operand, Operand defaultLocation)
         {
             var result = defaultLocation;
 
             if (operand.Kind == AstItemKind.Immediate)
             {
-                result = StorageLocation.DataSection(operand.Identifier);
+                result = Operand.DataSection(operand.Identifier);
             }
             else if (operand.Kind == AstItemKind.Vector)
             {
                 if (IsFullImmediateVector(operand))
-                    result = StorageLocation.DataSection(operand.Identifier);
+                    result = Operand.DataSection(operand.Identifier);
                 else
                 {
                     output.AddRange(GenerateVectorWithExpressions(operand, defaultLocation));
@@ -443,24 +443,24 @@ namespace erc
             }
         }
 
-        private List<Operation> GenerateVectorWithExpressions(AstItem expression, StorageLocation targetLocation)
+        private List<Operation> GenerateVectorWithExpressions(AstItem expression, Operand targetLocation)
         {
             var operations = new List<Operation>();
 
             //Save current stack pointer
-            operations.AddRange(Move(DataType.I64, StorageLocation.AsRegister(Register.RSP), StorageLocation.AsRegister(Register.RSI)));
+            operations.AddRange(Move(DataType.I64, Operand.AsRegister(Register.RSP), Operand.AsRegister(Register.RSI)));
             _context.RegisterPool.Use(Register.RSI);
 
             //Align stack correctly
-            operations.Add(new Operation(DataType.I64, Instruction.AND_IMM, StorageLocation.AsRegister(Register.RSP), StorageLocation.Immediate(expression.DataType.ByteSize * -1)));
+            operations.Add(new Operation(DataType.I64, Instruction.AND_IMM, Operand.AsRegister(Register.RSP), Operand.Immediate(expression.DataType.ByteSize * -1)));
 
             //Generate vector on stack
             operations.AddRange(GenerateVectorWithExpressionsOnStack(expression));
 
             //Move final vector to target
-            operations.AddRange(Move(expression.DataType, StorageLocation.StackFromTop(0), targetLocation));
+            operations.AddRange(Move(expression.DataType, Operand.StackFromTop(0), targetLocation));
             //Restore stack pointer
-            operations.AddRange(Move(DataType.I64, StorageLocation.AsRegister(Register.RSI), StorageLocation.AsRegister(Register.RSP)));
+            operations.AddRange(Move(DataType.I64, Operand.AsRegister(Register.RSI), Operand.AsRegister(Register.RSP)));
             _context.RegisterPool.Free(Register.RSI);
 
             return operations;
@@ -573,7 +573,7 @@ namespace erc
             ops.ForEach((o) => { if (o.Instruction == Instruction.V_POP) o.Instruction = Instruction.POP; });
         }
 
-        public StorageLocation TakeIntermediateRegister(DataType dataType)
+        public Operand TakeIntermediateRegister(DataType dataType)
         {
             //TODO: Implement
             return null;

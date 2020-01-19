@@ -6,9 +6,9 @@ namespace erc
     {
         public Instruction Instruction { get; set; } = Instruction.NOP;
         public DataType DataType { get; set; }
-        public StorageLocation Operand1 { get; set; }
-        public StorageLocation Operand2 { get; set; }
-        public StorageLocation Operand3 { get; set; }
+        public Operand Operand1 { get; set; }
+        public Operand Operand2 { get; set; }
+        public Operand Operand3 { get; set; }
 
         public Operation()
         {
@@ -20,14 +20,14 @@ namespace erc
             Instruction = instruction;
         }
 
-        public Operation(DataType dataType, Instruction instruction, StorageLocation operand1)
+        public Operation(DataType dataType, Instruction instruction, Operand operand1)
         {
             DataType = dataType;
             Instruction = instruction;
             Operand1 = operand1;
         }
 
-        public Operation(DataType dataType, Instruction instruction, StorageLocation operand1, StorageLocation operand2)
+        public Operation(DataType dataType, Instruction instruction, Operand operand1, Operand operand2)
         {
             DataType = dataType;
             Instruction = instruction;
@@ -35,7 +35,7 @@ namespace erc
             Operand2 = operand2;
         }
 
-        public Operation(DataType dataType, Instruction instruction, StorageLocation operand1, StorageLocation operand2, StorageLocation operand3)
+        public Operation(DataType dataType, Instruction instruction, Operand operand1, Operand operand2, Operand operand3)
         {
             DataType = dataType;
             Instruction = instruction;
@@ -68,10 +68,10 @@ namespace erc
             return result.ToLower();
         }
 
-        private string OperandToString(StorageLocation operand)
+        private string OperandToString(Operand operand)
         {
             string result = "";
-            if ((operand.Kind == StorageLocationKind.DataSection || operand.Kind == StorageLocationKind.Heap) && Instruction.RequiresOperandSize)
+            if ((operand.Kind == OperandKind.DataSection || operand.Kind == OperandKind.Heap) && Instruction.RequiresOperandSize)
                 result += DataType.OperandSize + " ";
             return result + operand.ToCode();
         }

@@ -8,7 +8,7 @@ namespace erc
         private const long ChunkByteSize = 1024 * 1024; //1MB chunks by default
         public List<HeapChunk> _heapChunks = new List<HeapChunk>();
 
-        public StorageLocation Alloc(DataType dataType)
+        public Operand Alloc(DataType dataType)
         {
             foreach (var chunk in _heapChunks)
             {
@@ -37,9 +37,9 @@ namespace erc
             return null;
         }
 
-        public void Free(DataType dataType, StorageLocation heapLocation)
+        public void Free(DataType dataType, Operand heapLocation)
         {
-            if (heapLocation.Kind != StorageLocationKind.Heap)
+            if (heapLocation.Kind != OperandKind.Heap)
                 throw new Exception("Cannot free storage location from heap: " + heapLocation);
 
             foreach (var chunk in _heapChunks)

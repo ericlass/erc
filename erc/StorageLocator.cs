@@ -30,13 +30,13 @@ namespace erc
         private void AssignFunctionReturnLocation(Function function)
         {
             if (function.ReturnType == DataType.I64)
-                function.ReturnLocation = StorageLocation.AsRegister(Register.RAX);
+                function.ReturnLocation = Operand.AsRegister(Register.RAX);
             else if (function.ReturnType == DataType.F32 || function.ReturnType == DataType.F64)
-                function.ReturnLocation = StorageLocation.AsRegister(Register.XMM0);
+                function.ReturnLocation = Operand.AsRegister(Register.XMM0);
             else if (function.ReturnType == DataType.IVEC2Q || function.ReturnType == DataType.VEC4F || function.ReturnType == DataType.VEC2D)
-                function.ReturnLocation = StorageLocation.AsRegister(Register.XMM0);
+                function.ReturnLocation = Operand.AsRegister(Register.XMM0);
             else if (function.ReturnType == DataType.IVEC4Q || function.ReturnType == DataType.VEC8F || function.ReturnType == DataType.VEC4D)
-                function.ReturnLocation = StorageLocation.AsRegister(Register.YMM0);
+                function.ReturnLocation = Operand.AsRegister(Register.YMM0);
             else if (function.ReturnType != DataType.VOID)
                 throw new Exception("Unknown function return type: " + function.ReturnType);
         }
@@ -55,11 +55,11 @@ namespace erc
                         //Also need to pop MM register to keep param position correct!
                         _freeParameterMMRegisters.Pop();
 
-                        parameter.Location = StorageLocation.AsRegister(Register.GroupToSpecificRegister(group, parameter.DataType));
+                        parameter.Location = Operand.AsRegister(Register.GroupToSpecificRegister(group, parameter.DataType));
                     }
                     else
                     {
-                        parameter.Location = StorageLocation.StackFromBase(paramOffset);
+                        parameter.Location = Operand.StackFromBase(paramOffset);
                         paramOffset += parameter.DataType.ByteSize;
                     }
                 }
@@ -71,11 +71,11 @@ namespace erc
                         //Also need to pop R register to keep param position correct!
                         _freeParameterRRegisters.Pop();
 
-                        parameter.Location = StorageLocation.AsRegister(Register.GroupToSpecificRegister(group, parameter.DataType));
+                        parameter.Location = Operand.AsRegister(Register.GroupToSpecificRegister(group, parameter.DataType));
                     }
                     else
                     {
-                        parameter.Location = StorageLocation.StackFromBase(paramOffset);
+                        parameter.Location = Operand.StackFromBase(paramOffset);
                         paramOffset += parameter.DataType.ByteSize;
                     }
                 }
@@ -84,7 +84,7 @@ namespace erc
                     if (function.IsExtern)
                     {
                         //Win64, put vector in memory and pass pointer at runtime
-                        parameter.Location = StorageLocation.Heap();
+                        parameter.Location = Operand.Heap();
                     }
                     else
                     {
@@ -95,11 +95,11 @@ namespace erc
                             //Also need to pop R register to keep param position correct!
                             _freeParameterRRegisters.Pop();
 
-                            parameter.Location = StorageLocation.AsRegister(Register.GroupToSpecificRegister(group, parameter.DataType));
+                            parameter.Location = Operand.AsRegister(Register.GroupToSpecificRegister(group, parameter.DataType));
                         }
                         else
                         {
-                            parameter.Location = StorageLocation.StackFromBase(paramOffset);
+                            parameter.Location = Operand.StackFromBase(paramOffset);
                             paramOffset += parameter.DataType.ByteSize;
                         }
                     }
@@ -118,7 +118,7 @@ namespace erc
             if (register != null)
             {
                 //Console.WriteLine("Assigning variable " + variable.Name + " to register " + register);
-                variable.Location = new StorageLocation { Kind = StorageLocationKind.Register, Register = register };
+                variable.Location = new Operand { Kind = OperandKind.Register, Register = register };
                 return;
             }
 
@@ -139,7 +139,7 @@ namespace erc
 
             //Otherwise, put on stack
             //Console.WriteLine("Assigning variable " + variable.Name + " to stack offset " + _stackOffset);
-            variable.Location = StorageLocation.StackFromBase(_stackOffset);
+            variable.Location = Operand.StackFromBase(_stackOffset);
             _stackOffset += dataType.ByteSize;
         }
 
@@ -165,7 +165,7 @@ namespace erc
         private void FreeLocation(Symbol variable)
         {
             var location = variable.Location;
-            if (location.Kind == StorageLocationKind.Register)
+            if (location.Kind == OperandKind.Register)
             {
                 //Console.WriteLine("Freeing variable " + variable.Name + " from register " + location.Register);
                 var dataType = variable.DataType;
@@ -178,7 +178,7 @@ namespace erc
 
                 stack.Push(location.Register.Group);
             }
-            else if (location.Kind == StorageLocationKind.StackFromBase || location.Kind == StorageLocationKind.StackFromTop)
+            else if (location.Kind == OperandKind.StackFromBase || location.Kind == OperandKind.StackFromTop)
             {
                 //Nothing to do here. Stack does not need to be cleaned up, just leave it as it is
                 //Console.WriteLine("Freeing variable " + variable.Name + " from stack offset " + location.Address);

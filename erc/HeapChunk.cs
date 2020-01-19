@@ -17,14 +17,14 @@ namespace erc
             _freeList.Add(new HeapFreeEntry(0, size));
         }
 
-        public StorageLocation GetLocation(DataType dataType)
+        public Operand GetLocation(DataType dataType)
         {
             for (int i = 0; i < _freeList.Count; i++)
             {
                 var block = _freeList[i];
                 if (block.Size >= dataType.ByteSize)
                 {
-                    var result = StorageLocation.Heap(_chunkBase + block.Offset);
+                    var result = Operand.Heap(_chunkBase + block.Offset);
 
                     block.Offset += dataType.ByteSize;
                     block.Size -= dataType.ByteSize;
@@ -39,9 +39,9 @@ namespace erc
             return null;
         }
 
-        public void FreeLocation(DataType dataType, StorageLocation heapLocation)
+        public void FreeLocation(DataType dataType, Operand heapLocation)
         {
-            if (heapLocation.Kind != StorageLocationKind.Heap)
+            if (heapLocation.Kind != OperandKind.Heap)
                 return; //No exception
 
             if (!Contains(heapLocation))
@@ -65,9 +65,9 @@ namespace erc
             _freeList.Add(new HeapFreeEntry(start, end - start));
         }
 
-        public bool Contains(StorageLocation location)
+        public bool Contains(Operand location)
         {
-            if (location.Kind != StorageLocationKind.Heap)
+            if (location.Kind != OperandKind.Heap)
                 return false; //No exception
 
             var offset = location.Address - _chunkBase;

@@ -12,10 +12,10 @@ namespace erc
             _instruction = instruction;
         }
 
-        public List<Operation> Generate(DataType dataType, StorageLocation target, StorageLocation operand1, StorageLocation operand2)
+        public List<Operation> Generate(DataType dataType, Operand target, Operand operand1, Operand operand2)
         {
             //General constract: target MUST be a register
-            if (target.Kind != StorageLocationKind.Register)
+            if (target.Kind != OperandKind.Register)
                 throw new Exception("Target location must be a register! Given: " + target);
 
             var result = new List<Operation>();
@@ -27,7 +27,7 @@ namespace erc
 
                     //Move operand2 to register, if required
                     var op2Location = operand2;
-                    if (op2Location.Kind != StorageLocationKind.Register)
+                    if (op2Location.Kind != OperandKind.Register)
                     {
                         op2Location = dataType.TempRegister1;
                         result.AddRange(CodeGenerator.Move(dataType, operand2, op2Location));
@@ -42,7 +42,7 @@ namespace erc
 
                     //Move operand2 to register, if required
                     op2Location = operand2;
-                    if (op2Location.Kind != StorageLocationKind.Register)
+                    if (op2Location.Kind != OperandKind.Register)
                     {
                         op2Location = dataType.TempRegister1;
                         result.AddRange(CodeGenerator.Move(dataType, operand2, op2Location));
@@ -54,7 +54,7 @@ namespace erc
                 case 3:
                     //Move operand1 to register, if required
                     var op1Location = operand1;
-                    if (op1Location.Kind != StorageLocationKind.Register)
+                    if (op1Location.Kind != OperandKind.Register)
                     {
                         op1Location = dataType.TempRegister1;
                         result.AddRange(CodeGenerator.Move(dataType, operand1, op1Location));
@@ -62,7 +62,7 @@ namespace erc
 
                     //Move operand2 to register, if required
                     op2Location = operand2;
-                    if (op2Location.Kind != StorageLocationKind.Register)
+                    if (op2Location.Kind != OperandKind.Register)
                     {
                         op2Location = dataType.TempRegister2;
                         result.AddRange(CodeGenerator.Move(dataType, operand2, op2Location));

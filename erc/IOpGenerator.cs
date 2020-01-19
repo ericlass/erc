@@ -5,6 +5,6 @@ namespace erc
 {
     public interface IOpGenerator
     {
-        List<Operation> Generate(DataType dataType, StorageLocation target, StorageLocation operand1, StorageLocation operand2);
+        List<Operation> Generate(DataType dataType, Operand target, Operand operand1, Operand operand2);
     }
 }
