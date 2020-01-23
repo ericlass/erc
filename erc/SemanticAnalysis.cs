@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 
 namespace erc
@@ -224,37 +225,53 @@ namespace erc
             }
             else if (expression.Kind == AstItemKind.Expression)
             {
-                DataType expressionType = null;
-                foreach (var expItem in expression.Children)
+                //Create copy of list so original is not modified
+                var terms = new List<AstItem>(expression.Children);
+
+                DataType expressionFinalType = null;
+                for (int i = 0; i < terms.Count; i++)
                 {
-                    DataType itemType = null;
-                    if (expItem.Kind == AstItemKind.Operator)
+                    var item = terms[i];
+                    if (item.Kind == AstItemKind.Operator)
                     {
-                        if (expressionType == null)
-                            throw new Exception("Invalid expression, no value before operator " + expItem + " in expression: " + expression);
+                        var operand1 = terms[i - 2];
+                        var operand2 = terms[i - 1];
 
-                        itemType = expressionType;
-                        if (!expItem.Operator.IsCompatible(itemType))
-                            throw new Exception("Operator " + expItem.Operator.Figure + " is not compatible with data type " + itemType);
-                    }
-                    else
-                    {
-                        itemType = CheckExpression(expItem);
-                    }
+                        //Get data type of operand1
+                        DataType op1Type;
+                        if (operand1.Kind == AstItemKind.Operator)
+                            op1Type = operand1.DataType;
+                        else
+                            op1Type = CheckExpression(operand1);
 
-                    if (expressionType == null)
-                    {
-                        expressionType = itemType;
-                    }
-                    else
-                    {
-                        if (expressionType != itemType)
-                            throw new Exception("All items in an expression have to have the same type! Expected: " + expressionType + ", found: " + itemType);
-                    }
+                        //Get data type of operand2
+                        DataType op2Type;
+                        if (operand2.Kind == AstItemKind.Operator)
+                            op2Type = operand2.DataType;
+                        else
+                            op2Type = CheckExpression(operand2);
 
-                    expItem.DataType = expressionType;
+                        //Check if operand types are valid
+                        item.Operator.ValidateOperandTypes(op1Type, op2Type);
+
+                        //Set data type on operator
+                        item.DataType = item.Operator.GetReturnType(op1Type, op2Type);
+
+                        //Overwritten in every iteration. The last operator defines the final data type.
+                        expressionFinalType = item.DataType;
+
+                        //Remove the two operands from the expression, do not remove the current operator
+                        //as it is required to know later that a value must be popped from stack
+                        terms.RemoveAt(i - 2);
+                        terms.RemoveAt(i - 2);
+
+                        //-2 is correct because next iteration of loop will increment i
+                        //anyways and it will then point to the next item in the expression.
+                        i -= 2;
+                    }
                 }
-                expression.DataType = expressionType;
+
+                expression.DataType = expressionFinalType;
             }
             else
                 throw new Exception("Unsupported expression item: " + expression);

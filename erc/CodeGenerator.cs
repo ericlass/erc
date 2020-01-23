@@ -318,16 +318,6 @@ namespace erc
 
         private List<Operation> GenerateExpressionOperations(List<AstItem> items, Operand targetLocation)
         {
-            //Example of algorithm:
-            //x y 5 z * / - 10 +
-            //x y * / - 10 +
-            //x / - 10 +
-            //- 10 +
-            //+
-
-            //a = 5 + test(x - y);
-            //5 test(x-y) +
-
             //Create copy of list so original is not modified
             var terms = new List<AstItem>(items);
 

@@ -391,7 +391,7 @@ namespace erc
             return result;
         }
 
-        private Operator ParseOperator(string op)
+        private IOperator ParseOperator(string op)
         {
             var oper = Operator.Parse(op);
             if (oper == null)

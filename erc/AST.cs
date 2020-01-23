@@ -38,7 +38,7 @@ namespace erc
         public DataType DataType { get; set; }
         public string Identifier { get; set; } //Name of variable, function etc.
         public object Value { get; set; } //Value for immediates
-        public Operator Operator { get; set; } //Operator
+        public IOperator Operator { get; set; } //Operator
         public string SourceLine { get; set; } //Source code line, only filled for statements
         public List<AstItem> Children { get => _children; set => _children = value; }
         public bool DataGenerated { get; set; } = false; //Used to track which immediates have already been generated in the data section
@@ -245,7 +245,7 @@ namespace erc
             return new AstItem { Kind = AstItemKind.Return, DataType = dataType, Children = new List<AstItem> { value } };
         }
 
-        public static AstItem AsOperator(Operator oper)
+        public static AstItem AsOperator(IOperator oper)
         {
             return new AstItem { Kind = AstItemKind.Operator, Operator = oper };
         }
