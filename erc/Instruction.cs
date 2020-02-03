@@ -2,7 +2,7 @@
 
 namespace erc
 {
-    public delegate string GeneratorFunc(Instruction instr, Operand op1, Operand op2, Operand op3);
+    public delegate string GeneratorFunc(Instruction instr, Operand op1, Operand op2, Operand op3, Operand op4);
 
     public class Instruction
     {
@@ -47,7 +47,7 @@ namespace erc
         public static Instruction CMOVE = new Instruction("CMOVE", 2);
         public static Instruction CMOVNE = new Instruction("CMOVNE", 2);
 
-        public static Instruction VMOVSS = new Instruction("VMOVSS", 2, (instr, op1, op2, op3) => 
+        public static Instruction VMOVSS = new Instruction("VMOVSS", 2, (instr, op1, op2, op3, op4) => 
         {
             if (op1.Kind == OperandKind.Register && op2.Kind == OperandKind.Register)
                 return instr.Name + " " + op1.ToCode() + ", " + op2.ToCode() + ", " + op2.ToCode();
@@ -55,7 +55,7 @@ namespace erc
                 return instr.Name + " " + op1.ToCode() + ", " + op2.ToCode();
         });
 
-        public static Instruction VMOVSD = new Instruction("VMOVSD", 2, (instr, op1, op2, op3) => 
+        public static Instruction VMOVSD = new Instruction("VMOVSD", 2, (instr, op1, op2, op3, op4) => 
         {
             if (op1.Kind == OperandKind.Register && op2.Kind == OperandKind.Register)
                 return instr.Name + " " + op1.ToCode() + ", " + op2.ToCode() + ", " + op2.ToCode();
@@ -71,13 +71,13 @@ namespace erc
         public static Instruction VMOVUPD = new Instruction("VMOVUPD", 2, true);
 
         public static Instruction ADD = new Instruction("ADD", 2);
-        public static Instruction ADD_IMM = new Instruction("ADD", 2, (instr, op1, op2, op3) => instr.Name + " " + op1.ToCode() + ", " + op2.Address);
+        public static Instruction ADD_IMM = new Instruction("ADD", 2, (instr, op1, op2, op3, op4) => instr.Name + " " + op1.ToCode() + ", " + op2.Address);
 
         public static Instruction SUB = new Instruction("SUB", 2);
-        public static Instruction SUB_IMM = new Instruction("SUB", 2, (instr, op1, op2, op3) => instr.Name + " " + op1.ToCode() + ", " + op2.Address);
+        public static Instruction SUB_IMM = new Instruction("SUB", 2, (instr, op1, op2, op3, op4) => instr.Name + " " + op1.ToCode() + ", " + op2.Address);
 
         public static Instruction AND = new Instruction("AND", 2);
-        public static Instruction AND_IMM = new Instruction("AND", 2, (instr, op1, op2, op3) => instr.Name + " " + op1.ToCode() + ", " + op2.Address);
+        public static Instruction AND_IMM = new Instruction("AND", 2, (instr, op1, op2, op3, op4) => instr.Name + " " + op1.ToCode() + ", " + op2.Address);
 
         public static Instruction OR = new Instruction("OR", 2);
 
@@ -89,7 +89,27 @@ namespace erc
 
         //##### Comparison Instructions #####
 
+        //Int
         public static Instruction CMP = new Instruction("CMP", 2);
+
+        //Scalar float
+        public static Instruction CMPSS = new Instruction("CMPSS", 3);
+        public static Instruction CMPSD = new Instruction("CMPSD", 3);
+
+        public static Instruction COMISS = new Instruction("COMISS", 2);
+        public static Instruction UCOMISS = new Instruction("UCOMISS", 2);
+        public static Instruction COMISD = new Instruction("COMISD", 2);
+        public static Instruction UCOMISD = new Instruction("UCOMISD", 2);
+
+        //Packed float
+        public static Instruction CMPPS = new Instruction("CMPPS", 3);
+        public static Instruction CMPPD = new Instruction("CMPPD", 3);
+        public static Instruction VCMPPS = new Instruction("VCMPPS", 4);
+        public static Instruction VCMPPD = new Instruction("VCMPPD", 4);
+
+        //Packed int
+        public static Instruction PCMPEQQ = new Instruction("PCMPEQQ", 2);
+        public static Instruction VPCMPEQQ = new Instruction("VPCMPEQQ", 3);
 
         //##### Legacy SSE instructions for XMM registers #####
 
@@ -122,6 +142,9 @@ namespace erc
         public static Instruction POR = new Instruction("POR", 2);
         public static Instruction PXOR = new Instruction("PXOR", 2);
 
+        public static Instruction MOVMSKPS = new Instruction("MOVMSKPS", 2);
+        public static Instruction MOVMSKPD = new Instruction("MOVMSKPD", 2);
+
         //##### VEX encdoed SSE instructions for YMM registers #####
 
         public static Instruction VADDSS = new Instruction("VADDSS", 3);
@@ -153,13 +176,18 @@ namespace erc
         public static Instruction VPOR = new Instruction("VPOR", 3);
         public static Instruction VPXOR = new Instruction("VPXOR", 3);
 
+        public static Instruction VMOVMSKPS = new Instruction("VMOVMSKPS", 2);
+        public static Instruction VMOVMSKPD = new Instruction("VMOVMSKPD", 2);
+
         public static Instruction VPSLLDQ = new Instruction("VPSLLDQ", 3);
+
+        //##### MISC #####
 
         public static Instruction CALL = new Instruction("CALL", 1);
         public static Instruction RET = new Instruction("RET", 0);
 
-        public static Instruction V_LABEL = new Instruction("V_LABEL", 1, (instr, op1, op2, op3) => op1.LabelName + ":");
-        public static Instruction V_COMMENT = new Instruction("V_COMMENT", 1, (instr, op1, op2, op3) => "; " + op1.LabelName);
+        public static Instruction V_LABEL = new Instruction("V_LABEL", 1, (instr, op1, op2, op3, op4) => op1.LabelName + ":");
+        public static Instruction V_COMMENT = new Instruction("V_COMMENT", 1, (instr, op1, op2, op3, op4) => "; " + op1.LabelName);
         public static Instruction V_PUSH = new Instruction("V_PUSH", 1);
         public static Instruction V_POP = new Instruction("V_POP", 1);
 

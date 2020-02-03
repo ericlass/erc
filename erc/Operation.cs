@@ -9,6 +9,7 @@ namespace erc
         public Operand Operand1 { get; set; }
         public Operand Operand2 { get; set; }
         public Operand Operand3 { get; set; }
+        public Operand Operand4 { get; set; }
 
         public Operation()
         {
@@ -44,6 +45,16 @@ namespace erc
             Operand3 = operand3;
         }
 
+        public Operation(DataType dataType, Instruction instruction, Operand operand1, Operand operand2, Operand operand3, Operand operand4)
+        {
+            DataType = dataType;
+            Instruction = instruction;
+            Operand1 = operand1;
+            Operand2 = operand2;
+            Operand3 = operand3;
+            Operand4 = operand4;
+        }
+
         public override string ToString()
         {
             var result = "";
@@ -59,10 +70,13 @@ namespace erc
 
                 if (Operand3 != null)
                     result += ", " + OperandToString(Operand3);
+
+                if (Operand4 != null)
+                    result += ", " + OperandToString(Operand4);
             }
             else
             {
-                result = Instruction.Generator(Instruction, Operand1, Operand2, Operand3);
+                result = Instruction.Generator(Instruction, Operand1, Operand2, Operand3, Operand4);
             }
 
             return result.ToLower();

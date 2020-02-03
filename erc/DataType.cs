@@ -14,6 +14,7 @@ namespace erc
         public int NumElements { get; private set; }
         public string OperandSize { get; private set; }
         public DataType ElementType { get; private set; }
+        public DataTypeGroup Group { get; private set; }
         public Operand Accumulator { get; private set; }
         public Operand TempRegister1 { get; private set; }
         public Operand TempRegister2 { get; private set; }
@@ -132,6 +133,7 @@ namespace erc
             IsVector = false,
             NumElements = 1,
             OperandSize = "qword",
+            Group = DataTypeGroup.ScalarInteger,
             Accumulator = Operand.AsRegister(Register.RAX),
             TempRegister1 = Operand.AsRegister(Register.R10),
             TempRegister2 = Operand.AsRegister(Register.R11),
@@ -146,6 +148,7 @@ namespace erc
             IsVector = false,
             NumElements = 1,
             OperandSize = "dword",
+            Group = DataTypeGroup.ScalarFloat,
             Accumulator = Operand.AsRegister(Register.XMM4),
             TempRegister1 = Operand.AsRegister(Register.XMM5),
             TempRegister2 = Operand.AsRegister(Register.XMM6),
@@ -160,6 +163,7 @@ namespace erc
             IsVector = false,
             NumElements = 1,
             OperandSize = "qword",
+            Group = DataTypeGroup.ScalarFloat,
             Accumulator = Operand.AsRegister(Register.XMM4),
             TempRegister1 = Operand.AsRegister(Register.XMM5),
             TempRegister2 = Operand.AsRegister(Register.XMM6),
@@ -175,6 +179,7 @@ namespace erc
             NumElements = 2,
             ElementType = I64,
             OperandSize = "dqword",
+            Group = DataTypeGroup.VectorInteger,
             Accumulator = Operand.AsRegister(Register.XMM4),
             TempRegister1 = Operand.AsRegister(Register.XMM5),
             TempRegister2 = Operand.AsRegister(Register.XMM6),
@@ -191,6 +196,7 @@ namespace erc
             NumElements = 4,
             ElementType = I64,
             OperandSize = "qqword",
+            Group = DataTypeGroup.VectorInteger,
             Accumulator = Operand.AsRegister(Register.YMM4),
             TempRegister1 = Operand.AsRegister(Register.YMM5),
             TempRegister2 = Operand.AsRegister(Register.YMM6),
@@ -207,6 +213,7 @@ namespace erc
             NumElements = 4,
             ElementType = F32,
             OperandSize = "dqword",
+            Group = DataTypeGroup.VectorFloat,
             Accumulator = Operand.AsRegister(Register.XMM4),
             TempRegister1 = Operand.AsRegister(Register.XMM5),
             TempRegister2 = Operand.AsRegister(Register.XMM6),
@@ -223,6 +230,7 @@ namespace erc
             NumElements = 8,
             ElementType = F32,
             OperandSize = "qqword",
+            Group = DataTypeGroup.VectorFloat,
             Accumulator = Operand.AsRegister(Register.YMM4),
             TempRegister1 = Operand.AsRegister(Register.YMM5),
             TempRegister2 = Operand.AsRegister(Register.YMM6),
@@ -239,6 +247,7 @@ namespace erc
             NumElements = 2,
             ElementType = F64,
             OperandSize = "dqword",
+            Group = DataTypeGroup.VectorFloat,
             Accumulator = Operand.AsRegister(Register.XMM4),
             TempRegister1 = Operand.AsRegister(Register.XMM5),
             TempRegister2 = Operand.AsRegister(Register.XMM6),
@@ -255,6 +264,7 @@ namespace erc
             NumElements = 4,
             ElementType = F64,
             OperandSize = "qqword",
+            Group = DataTypeGroup.VectorFloat,
             Accumulator = Operand.AsRegister(Register.YMM4),
             TempRegister1 = Operand.AsRegister(Register.YMM5),
             TempRegister2 = Operand.AsRegister(Register.YMM6),
@@ -270,6 +280,7 @@ namespace erc
             IsVector = false,
             NumElements = 1,
             OperandSize = "byte",
+            Group = DataTypeGroup.Other,
             Accumulator = Operand.AsRegister(Register.AL),
             TempRegister1 = Operand.AsRegister(Register.R10B),
             TempRegister2 = Operand.AsRegister(Register.R11B),
