@@ -37,6 +37,11 @@ namespace erc
         public static IOperator ADD = new AdditionOperator();
         public static IOperator SUB = new SubtractionOperator();
 
+        public static IOperator LessThan = new RelationalOperator("<", Instruction.CMOVB, Instruction.CMOVGE);
+        public static IOperator LessThanOrEqual = new RelationalOperator("<=", Instruction.CMOVBE, Instruction.CMOVG);
+        public static IOperator GreaterThan = new RelationalOperator(">", Instruction.CMOVG, Instruction.CMOVBE);
+        public static IOperator GreaterThanOrEqual = new RelationalOperator(">=", Instruction.CMOVGE, Instruction.CMOVB);
+
         public static IOperator EQUALS = new EqualityOperator("==", false);
         public static IOperator NOT_EQUALS = new EqualityOperator("!=", true);
 

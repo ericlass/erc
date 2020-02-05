@@ -47,8 +47,8 @@ namespace erc
             InitInstructionMap();
 
             var dataEntries = new List<Tuple<int, string>>();
-            dataEntries.Add(new Tuple<int, string>(DataType.BOOL.ByteSize, "imm_bool_false db 0"));
-            dataEntries.Add(new Tuple<int, string>(DataType.BOOL.ByteSize, "imm_bool_true db 1"));
+            dataEntries.Add(new Tuple<int, string>(DataType.BOOL.ByteSize, "imm_bool_false dw 0"));
+            dataEntries.Add(new Tuple<int, string>(DataType.BOOL.ByteSize, "imm_bool_true dw 1"));
             GenerateDataSection(context.AST, dataEntries);
 
             var codeLines = new List<Operation>();
@@ -342,7 +342,7 @@ namespace erc
 
                     var op2Location = GetOperandLocation(result, operand2, item.DataType.TempRegister2);
 
-                    result.AddRange(item.Operator.Generate(item.DataType, target, op1Location, op2Location));
+                    result.AddRange(item.Operator.Generate(item.DataType, target, op1Location, operand1.DataType, op2Location, operand2.DataType));
 
                     //Free usage of temp register, if required
                     if (op1Location == item.DataType.TempRegister1)

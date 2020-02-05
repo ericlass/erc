@@ -18,7 +18,7 @@ namespace erc
             Precedence = precedence;
         }
 
-        public List<Operation> Generate(DataType dataType, Operand target, Operand operand1, Operand operand2)
+        public List<Operation> Generate(DataType dataType, Operand target, Operand operand1, DataType operand1Type, Operand operand2, DataType operand2Type)
         {
             throw new NotImplementedException();
         }

@@ -276,14 +276,14 @@ namespace erc
         public static DataType BOOL = new DataType
         {
             Name = "bool",
-            ByteSize = 1,
+            ByteSize = 2,
             IsVector = false,
             NumElements = 1,
-            OperandSize = "byte",
+            OperandSize = "word",
             Group = DataTypeGroup.Other,
-            Accumulator = Operand.AsRegister(Register.AL),
-            TempRegister1 = Operand.AsRegister(Register.R10B),
-            TempRegister2 = Operand.AsRegister(Register.R11B),
+            Accumulator = Operand.AsRegister(Register.AX),
+            TempRegister1 = Operand.AsRegister(Register.R10W),
+            TempRegister2 = Operand.AsRegister(Register.R11W),
             MoveInstructionAligned = Instruction.MOV,
             MoveInstructionUnaligned = Instruction.MOV
         };

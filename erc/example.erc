@@ -4,7 +4,8 @@ fn main() {
 }
 
 fn boolean() {
-	let test = true || false;
+	let test = false;
+	test = <5.0f, 5.0f, 5.0f, 5.0f> == <5.0f, 5.0f, 5.0f, 5.0f>;
 }
 
 fn fn_calls() {

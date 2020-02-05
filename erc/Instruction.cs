@@ -46,6 +46,10 @@ namespace erc
         public static Instruction MOV = new Instruction("MOV", 2);
         public static Instruction CMOVE = new Instruction("CMOVE", 2);
         public static Instruction CMOVNE = new Instruction("CMOVNE", 2);
+        public static Instruction CMOVB = new Instruction("CMOVB", 2);
+        public static Instruction CMOVBE = new Instruction("CMOVBE", 2);
+        public static Instruction CMOVG = new Instruction("CMOVG", 2);
+        public static Instruction CMOVGE = new Instruction("CMOVGE", 2);
 
         public static Instruction VMOVSS = new Instruction("VMOVSS", 2, (instr, op1, op2, op3, op4) => 
         {

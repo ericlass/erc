@@ -72,6 +72,7 @@
     <Compile Include="Operation.cs" />
     <Compile Include="operators\NoOpOperator.cs" />
     <Compile Include="operators\Operator.cs" />
+    <Compile Include="operators\RelationalOperator.cs" />
     <Compile Include="operators\SubtractionOperator.cs" />
     <Compile Include="Optimizer.cs" />
     <Compile Include="PostProcessor.cs" />

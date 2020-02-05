@@ -9,7 +9,8 @@ namespace erc
         StackFromTop,
         Heap,
         DataSection,
-        Label
+        Label,
+        Immediate
     }
 
     public class Operand
@@ -46,10 +47,16 @@ namespace erc
                 case OperandKind.Label:
                     return LabelName;
 
+                case OperandKind.Immediate:
+                    return Address.ToString();
+
                 default:
-                    throw new Exception("Unknown storage kind: " + Kind);
+                    throw new Exception("Unknown operand kind: " + Kind);
             }
         }
+
+        public static readonly Operand BooleanTrue = Operand.DataSection("imm_bool_true");
+        public static readonly Operand BooleanFalse = Operand.DataSection("imm_bool_false");
 
         public static bool operator ==(Operand a, Operand b)
         {
@@ -85,6 +92,7 @@ namespace erc
                 case OperandKind.StackFromBase:
                 case OperandKind.StackFromTop:
                 case OperandKind.Heap:
+                case OperandKind.Immediate:
                     return Kind.GetHashCode() | (int)Address;
 
                 case OperandKind.DataSection:
@@ -106,6 +114,7 @@ namespace erc
                 case OperandKind.StackFromBase:
                 case OperandKind.StackFromTop:
                 case OperandKind.Heap:
+                case OperandKind.Immediate:
                     return Kind + "(" + Address + ")";
 
                 case OperandKind.DataSection:
@@ -113,7 +122,7 @@ namespace erc
                     return "(" + LabelName + ")";
 
                 default:
-                    throw new Exception("Unknown storage kind: " + Kind);
+                    throw new Exception("Unknown operand kind: " + Kind);
             }
         }
 
@@ -139,7 +148,7 @@ namespace erc
 
         public static Operand Immediate(long value)
         {
-            return new Operand { Address = value };
+            return new Operand { Kind = OperandKind.Immediate, Address = value };
         }
 
         public static Operand Heap()

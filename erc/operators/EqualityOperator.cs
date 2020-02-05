@@ -33,7 +33,7 @@ namespace erc
             return DataType.BOOL;
         }
 
-        public List<Operation> Generate(DataType dataType, Operand target, Operand operand1, Operand operand2)
+        public List<Operation> Generate(DataType dataType, Operand target, Operand operand1, DataType operand1Type, Operand operand2, DataType operand2Type)
         {
             var result = new List<Operation>();
 
@@ -41,26 +41,62 @@ namespace erc
             var op1Location = operand1;
             if (op1Location.Kind != OperandKind.Register)
             {
-                op1Location = dataType.TempRegister1;
-                result.AddRange(CodeGenerator.Move(dataType, operand1, op1Location));
+                op1Location = operand1Type.TempRegister1;
+                result.AddRange(CodeGenerator.Move(operand1Type, operand1, op1Location));
             }
 
             //Move operand2 to register, if required
             var op2Location = operand2;
             if (op2Location.Kind != OperandKind.Register)
             {
-                op2Location = dataType.TempRegister2;
-                result.AddRange(CodeGenerator.Move(dataType, operand2, op2Location));
+                op2Location = operand2Type.TempRegister2;
+                result.AddRange(CodeGenerator.Move(operand2Type, operand2, op2Location));
             }
 
-            //TODO: Call Generate* function
+            GenerateComparison(operand1Type, target, op1Location, op2Location, result);
 
-            //if (_negate)
-            //TODO: Generate check zero
-            //else
-            //TODO: Generate check non-zero
+            Operand equalValue;
+            Operand notEqualValue;
+            if (_negate)
+            {
+                equalValue = Operand.BooleanFalse;
+                notEqualValue = Operand.BooleanTrue;
+            }
+            else
+            {
+                equalValue = Operand.BooleanTrue;
+                notEqualValue = Operand.BooleanFalse;
+            }
+
+            result.Add(new Operation(DataType.BOOL, Instruction.CMOVE, target, equalValue));
+            result.Add(new Operation(DataType.BOOL, Instruction.CMOVNE, target, notEqualValue));
 
             return result;
+        }
+
+        private void GenerateComparison(DataType dataType, Operand target, Operand operand1, Operand operand2, List<Operation> result)
+        {
+            switch (dataType.Group)
+            {
+                case DataTypeGroup.ScalarInteger:
+                    GenerateScalarIntComparison(dataType, target, operand1, operand2, result);
+                    break;
+
+                case DataTypeGroup.ScalarFloat:
+                    GenerateScalarFloatComparison(dataType, target, operand1, operand2, result);
+                    break;
+
+                case DataTypeGroup.VectorInteger:
+                    GenerateVectorIntComparison(dataType, target, operand1, operand2, result);
+                    break;
+
+                case DataTypeGroup.VectorFloat:
+                    GenerateVectorFloatComparison(dataType, target, operand1, operand2, result);
+                    break;
+
+                default:
+                    throw new Exception("Unknown data type group: " + dataType);
+            }
         }
 
         private void GenerateScalarIntComparison(DataType dataType, Operand target, Operand operand1, Operand operand2, List<Operation> result)
@@ -99,7 +135,6 @@ namespace erc
             else
                 throw new Exception("Expected vector integer type, got: " + dataType);
 
-            //Move operand1 to accumulator so it is not destroyed
             if (cmpInstr.NumOperands == 2)
             {
                 //Need to move operand1 to accumulator so it is not destroyed
@@ -113,7 +148,7 @@ namespace erc
 
             result.Add(new Operation(dataType, maskInstr, DataType.I64.Accumulator, dataType.Accumulator));
 
-            long equalsValue = (2 ^ dataType.NumElements) - 1;
+            long equalsValue = (long)(Math.Pow(2.0, dataType.NumElements)) - 1;
             result.Add(new Operation(dataType, Instruction.CMP, DataType.I64.Accumulator, Operand.Immediate(equalsValue)));
         }
 
@@ -145,7 +180,6 @@ namespace erc
             else
                 throw new Exception("Expected vector float type, got: " + dataType);
 
-            //Move operand1 to accumulator so it is not destroyed
             if (cmpInstr.NumOperands == 3)
             {
                 //Need to move operand1 to accumulator so it is not destroyed
@@ -156,10 +190,10 @@ namespace erc
             {
                 result.Add(new Operation(dataType, cmpInstr, dataType.Accumulator, operand1, operand2, Operand.Immediate(0)));
             }
-            
+
             result.Add(new Operation(dataType, maskInstr, DataType.I64.Accumulator, dataType.Accumulator));
 
-            long equalsValue = (2 ^ dataType.NumElements) - 1;
+            long equalsValue = (long)(Math.Pow(2.0, dataType.NumElements)) - 1;
             result.Add(new Operation(dataType, Instruction.CMP, DataType.I64.Accumulator, Operand.Immediate(equalsValue)));
         }
 
