@@ -6,7 +6,7 @@ namespace erc
     {
         Word,
         AssigmnentOperator,
-        MathOperator,
+        ExpressionOperator,
         Number,
         Vector,
         StatementTerminator,
@@ -19,6 +19,7 @@ namespace erc
         Let,
         Fn,
         Ret,
+        If,
         True,
         False
     }

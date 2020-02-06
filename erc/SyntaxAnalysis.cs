@@ -321,14 +321,8 @@ namespace erc
                             expItemsInfix.Add(operandItem);
                             break;
 
-                        case TokenType.MathOperator:
-                            expItemsInfix.Add(AstItem.AsOperator(ParseOperator(token.Value)));
-                            break;
-
+                        case TokenType.ExpressionOperator:
                         case TokenType.RoundBracketOpen:
-                            expItemsInfix.Add(AstItem.AsOperator(ParseOperator(token.Value)));
-                            break;
-
                         case TokenType.RoundBracketClose:
                             expItemsInfix.Add(AstItem.AsOperator(ParseOperator(token.Value)));
                             break;

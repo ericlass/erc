@@ -20,7 +20,7 @@ namespace erc
             ["ret"] = TokenType.Ret,
             ["true"] = TokenType.True,
             ["false"] = TokenType.False,
-            ["if"] = TokenType.False
+            ["if"] = TokenType.If
         };
 
         public void Tokenize(CompilerContext context)
@@ -127,7 +127,7 @@ namespace erc
                 if (op != null)
                 {
                     value = figure;
-                    type = TokenType.MathOperator;
+                    type = TokenType.ExpressionOperator;
                     //Step twice to also remove second character
                     iterator.Step();
                     iterator.Step();
@@ -139,7 +139,7 @@ namespace erc
                     if (op != null)
                     {
                         value = figure;
-                        type = TokenType.MathOperator;
+                        type = TokenType.ExpressionOperator;
                         iterator.Step();
                     }
                     else
