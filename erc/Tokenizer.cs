@@ -13,8 +13,9 @@ namespace erc
         };
         private HashSet<char> _identifierChars = new HashSet<char> { '_' };
         private HashSet<char> _whiteSpaces = new HashSet<char> { ' ', '\t', '\r', '\n' };
-        
-        private Dictionary<string, TokenType> _reservedWordTypes = new Dictionary<string, TokenType>() {
+
+        private Dictionary<string, TokenType> _reservedWordTypes = new Dictionary<string, TokenType>()
+        {
             ["let"] = TokenType.Let,
             ["fn"] = TokenType.Fn,
             ["ret"] = TokenType.Ret,
@@ -23,8 +24,22 @@ namespace erc
             ["if"] = TokenType.If
         };
 
+        private HashSet<string> _vectorConstructors = new HashSet<string>();
+
+        private void Init()
+        {
+            _vectorConstructors.Clear();
+            _vectorConstructors.Add("vec");
+            foreach (var dataType in DataType.GetAllValues())
+            {
+                if (dataType.IsVector)
+                    _vectorConstructors.Add(dataType.Name);
+            }
+        }
+
         public void Tokenize(CompilerContext context)
         {
+            Init();
             var iterator = new StringIterator(context.Source);
             var result = new List<Token>();
 
@@ -61,6 +76,16 @@ namespace erc
                 //Handle special reserved words
                 if (_reservedWordTypes.ContainsKey(value))
                     type = _reservedWordTypes[value];
+
+                if (!SkipWhiteSpaces(iterator))
+                    return null;
+
+                if (_vectorConstructors.Contains(value) && iterator.Current() == '(')
+                {
+                    value = null;
+                    values = ReadVector(iterator);
+                    type = TokenType.Vector;
+                }
             }
             else if (IsDigit(c))
             {
@@ -78,11 +103,6 @@ namespace erc
                 value = c.ToString();
                 type = TokenType.StatementTerminator;
                 iterator.Step();
-            }
-            else if (c == '<')
-            {
-                values = ReadVector(iterator);
-                type = TokenType.Vector;
             }
             else if (c == '(')
             {
@@ -167,7 +187,7 @@ namespace erc
         private List<List<Token>> ReadVector(StringIterator iterator)
         {
             var result = new List<List<Token>>();
-            //Skip starting "<"
+            //Skip starting "("
             iterator.Step();
 
             if (!SkipWhiteSpaces(iterator))
@@ -177,31 +197,44 @@ namespace erc
 
             var c = iterator.Current();
 
-            if (c == '>')
+            if (c == ')')
             {
                 return result;
             }
 
             var token = ReadToken(iterator);
             var expTokens = new List<Token>();
+            //Used to allow brackets inside expressions
+            var bracketCounter = 0;
+
             while (token != null)
             {
-                expTokens.Add(token);
-
-                if (!SkipWhiteSpaces(iterator))
-                    return null;
-
-                if (iterator.Current() == ',')
+                if (token.TokenType == TokenType.Comma)
                 {
                     result.Add(expTokens);
                     expTokens = new List<Token>();
-                    iterator.Step();
                 }
-                else if (iterator.Current() == '>')
+                else if (token.TokenType == TokenType.RoundBracketOpen)
                 {
-                    result.Add(expTokens);
-                    iterator.Step();
-                    break;
+                    expTokens.Add(token);
+                    bracketCounter += 1;
+                }
+                else if (token.TokenType == TokenType.RoundBracketClose)
+                {
+                    if (bracketCounter == 0)
+                    {
+                        result.Add(expTokens);
+                        break;
+                    }
+                    else
+                    {
+                        expTokens.Add(token);
+                        bracketCounter -= 1;
+                    }
+                }
+                else
+                {
+                    expTokens.Add(token);
                 }
 
                 token = ReadToken(iterator);

@@ -13,6 +13,7 @@ namespace erc
             }
             
             AssignDataNames(context.AST);
+            RemoveUnusedFunctionDecls(context.AST);
         }
 
         private int _immCounter = 0;
@@ -79,6 +80,35 @@ namespace erc
             foreach (var child in item.Children)
             {
                 FindVariables(child, found);
+            }
+        }
+
+        public void RemoveUnusedFunctionDecls(AstItem topItem)
+        {
+            //TODO: This does not work for functions that are called in functions that are not called. Make it work.
+            var calledFunctions = new List<string>();
+            FindFunctionCalls(topItem, calledFunctions);
+
+            for (int i = topItem.Children.Count - 1; i >= 0; i--)
+            {
+                var func = topItem.Children[i];
+                if (func.Kind == AstItemKind.FunctionDecl && !calledFunctions.Contains(func.Identifier))
+                {
+                    topItem.Children.RemoveAt(i);
+                }
+            }
+        }
+
+        public void FindFunctionCalls(AstItem topItem, List<string> result)
+        {
+            if (topItem.Kind == AstItemKind.FunctionCall)
+            {
+                result.Add(topItem.Identifier);
+            }
+
+            foreach (var child in topItem.Children)
+            {
+                FindFunctionCalls(child, result);
             }
         }
 

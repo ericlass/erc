@@ -22,6 +22,13 @@ namespace erc
             var tokenizer = new Tokenizer();
             tokenizer.Tokenize(context);
 
+            /*Console.WriteLine("TOKENS");
+            Console.WriteLine("======");
+            foreach (var token in context.Tokens)
+            {
+                Console.WriteLine(token);
+            }*/
+
             var syntax = new SyntaxAnalysis();
             syntax.Analyze(context);
 
@@ -41,13 +48,6 @@ namespace erc
             stopWatch.Stop();
             var compilationTime = stopWatch.ElapsedMilliseconds;
             
-            /*Console.WriteLine("TOKENS");
-            Console.WriteLine("======");
-            foreach (var token in context.Tokens)
-            {
-                Console.WriteLine(token);
-            }*/
-
             Console.WriteLine();
             Console.WriteLine("AST");
             Console.WriteLine("===");
