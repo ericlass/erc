@@ -160,7 +160,7 @@ namespace erc
                     return null;
 
                 default:
-                    throw new Exception("Unexpected token. Expected 'let' or identifier, found: " + token);
+                    throw new Exception("Unexpected token. Expected 'let', 'ret', '}' or identifier, found: " + token);
             }
 
             var lineTokens = tokens.GetCapture();
@@ -314,9 +314,9 @@ namespace erc
                     {
                         case TokenType.Word:
                         case TokenType.Number:
-                        case TokenType.Vector:
                         case TokenType.True:
                         case TokenType.False:
+                        case TokenType.VectorConstructor:
                             var operandItem = ReadSingleAstItem(tokenIter);
                             expItemsInfix.Add(operandItem);
                             break;
@@ -336,7 +336,10 @@ namespace erc
                 }
 
                 //Convert to postfix
-                result = InfixToPostfix(expItemsInfix);
+                if (expItemsInfix.Count > 1)
+                    result = InfixToPostfix(expItemsInfix);
+                else
+                    result = expItemsInfix[0];
             }
 
             return result;
@@ -352,28 +355,33 @@ namespace erc
                 var next = tokens.Next();
                 if (next != null && next.TokenType == TokenType.RoundBracketOpen)
                 {
-                    result = ReadFuncCall(tokens);
-                    //HACK: Make sure this is not required. After ReadFuncCall iterator points at token after the ")", but all other cases in here point to the last token itself
-                    tokens.StepBack();
+                    var dataType = DataType.FindByName(token.Value);
+                    if (dataType != null && dataType.IsVector)
+                    {
+                        //Vector construction with specific vector type name, i.e. "vec4f(...)"
+                        result = ReadVector(tokens);
+                        tokens.StepBack();
+                    }
+                    else
+                    {
+                        result = ReadFuncCall(tokens);
+                        tokens.StepBack();
+                    }
                 }
                 else
                 {
                     result = AstItem.Variable(token.Value);
                 }
             }
+            else if (token.TokenType == TokenType.VectorConstructor)
+            {
+                //Vector construction with the generic "vec(...)"
+                result = ReadVector(tokens);
+                tokens.StepBack();
+            }
             else if (token.TokenType == TokenType.Number)
             {
                 result = AstItem.Immediate(token.Value);
-            }
-            else if (token.TokenType == TokenType.Vector)
-            {
-                var values = new List<AstItem>();
-                foreach (var vals in token.Values)
-                {
-                    var valExp = ReadExpression(new SimpleIterator<Token>(vals), null);
-                    values.Add(valExp);
-                }
-                result = AstItem.Vector(values);
             }
             else if (token.TokenType == TokenType.True || token.TokenType == TokenType.False)
             {
@@ -383,6 +391,62 @@ namespace erc
                 throw new Exception("Unexpected token type in expression: " + token);
 
             return result;
+        }
+
+        private AstItem ReadVector(SimpleIterator<Token> tokens)
+        {
+            var name = tokens.Pop();
+
+            var bracket = tokens.Pop();
+            if (bracket.TokenType != TokenType.RoundBracketOpen)
+                throw new Exception("Unexcepted token after vector name! Expected '(', found: " + bracket);
+
+            var vectorValues = new List<List<Token>>();
+            var valueTokens = new List<Token>();
+            var bracketCounter = 0;
+            var token = tokens.Pop();
+            while (token != null)
+            {
+                if (token.TokenType == TokenType.RoundBracketOpen)
+                {
+                    bracketCounter += 1;
+                    valueTokens.Add(token);
+                }
+                else if (token.TokenType == TokenType.RoundBracketClose)
+                {
+                    if (bracketCounter <= 0)
+                    {
+                        vectorValues.Add(valueTokens);
+                        break;
+                    }
+                    else
+                    {
+                        bracketCounter -= 1;
+                        valueTokens.Add(token);
+                    }
+                }
+                else if (token.TokenType == TokenType.Comma)
+                {
+                    vectorValues.Add(valueTokens);
+                    valueTokens = new List<Token>();
+                }
+                else
+                {
+                    valueTokens.Add(token);
+                }
+
+                token = tokens.Pop();
+            }
+
+            var paramExpressions = new List<AstItem>(vectorValues.Count);
+            foreach (var values in vectorValues)
+            {
+                var expression = ReadExpression(new SimpleIterator<Token>(values), null);
+                paramExpressions.Add(expression);
+            }
+
+            //Need to pass the name so SemanticAnalysis knows if "vec" or (i.e.) "vec4f" was used
+            return AstItem.Vector(name.Value, paramExpressions);
         }
 
         private IOperator ParseOperator(string op)

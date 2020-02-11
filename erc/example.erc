@@ -4,7 +4,7 @@ fn main() {
 }
 
 fn boolean() {
-	let test = false;
+	let test = 5 < 3;
 	test = vec (5.0f, 5.0f, 5.0f, 5.0f) == vec(5.0f, 5.0f, 5.0f, 5.0f);
 }
 
@@ -35,7 +35,7 @@ fn types()
 	let x3 = vec(1.0f, 2.0f, 3.0f, 4.0f);
 	let x4 = vec(1.0f, 2.0f, 3.0f, 4.0f, 1.0f, 2.0f, 3.0f, 4.0f);
 
-	let x5 = vec(1.0, 2.0);
+	let x5 = vec2d(1.0, 2.0);
 	let x6 = vec(1.0, 2.0, 3.0, 4.0);
 
 	let y = x5 + x5;

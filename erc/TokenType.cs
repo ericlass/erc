@@ -8,7 +8,7 @@ namespace erc
         AssigmnentOperator,
         ExpressionOperator,
         Number,
-        Vector,
+        VectorConstructor,
         StatementTerminator,
         TypeOperator, //Colon
         Comma,

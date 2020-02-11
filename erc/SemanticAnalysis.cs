@@ -113,7 +113,7 @@ namespace erc
                     throw new Exception("Cannot assign to symbol: " + variable);
 
                 item.DataType = CheckExpression(item.Children[0]);
-                
+
                 if (variable.DataType != item.DataType)
                     throw new Exception("Cannot assign value of type " + item.DataType + " to variable " + variable);
             }
@@ -166,31 +166,57 @@ namespace erc
             }
             else if (expression.Kind == AstItemKind.Vector)
             {
-                DataType subType = null;
-            	foreach (var child in expression.Children)
+                if (expression.Identifier == "vec")
                 {
-                    var childType = CheckExpression(child);
+                    //Vector construction with type-inference
+                    DataType subType = null;
+                    foreach (var child in expression.Children)
+                    {
+                        var childType = CheckExpression(child);
 
-                    if (subType == null)
-                    {
-                        subType = childType;
-                        if (subType.IsVector)
-                            throw new Exception("Vectors of vectors are not allowed!");
+                        if (subType == null)
+                        {
+                            subType = childType;
+                            if (subType.IsVector)
+                                throw new Exception("Vectors of vectors are not allowed!");
+                        }
+                        else
+                        {
+                            if (subType != childType)
+                                throw new Exception("All items in a vector have to have the same type! Expected: " + subType + ", found: " + childType);
+                        }
                     }
-                    else
-                    {
-                        if (subType != childType)
-                            throw new Exception("All items in a vector have to have the same type! Expected: " + subType + ", found: " + childType);
-                    }
+
+                    var vectorSize = expression.Children.Count;
+                    var vectorType = DataType.GetVectorType(subType, vectorSize);
+
+                    if (vectorType == DataType.VOID)
+                        throw new Exception("Vectors of " + subType + " cannot have length " + vectorSize);
+
+                    expression.DataType = vectorType;
                 }
+                else
+                {
+                    //Vector construction with specific vector type
+                    var vectorType = DataType.FindByName(expression.Identifier);
+                    if (vectorType == null)
+                        throw new Exception("Unknown vector type: " + expression.Identifier);
 
-                var vectorSize = expression.Children.Count;
-                var vectorType = DataType.GetVectorType(subType, vectorSize);
+                    if (!vectorType.IsVector)
+                        throw new Exception("Expected vector type, got: " + vectorType);
 
-                if (vectorType == DataType.VOID)
-                    throw new Exception("Vectors of " + subType + " cannot have length " + vectorSize);
+                    if (vectorType.NumElements != expression.Children.Count)
+                        throw new Exception("Vector type " + vectorType.Name + " requires " + vectorType.NumElements + " elements, got " + expression.Children.Count);
 
-                expression.DataType = vectorType;
+                    foreach (var child in expression.Children)
+                    {
+                        var childType = CheckExpression(child);
+                        if (childType != vectorType.ElementType)
+                            throw new Exception("Invalid data type in vector constructor for " + vectorType.Name + "! Expected: " + vectorType.ElementType + ", found: " + childType);
+                    }
+
+                    expression.DataType = vectorType;
+                }
             }
             else if (expression.Kind == AstItemKind.Variable)
             {
@@ -281,12 +307,12 @@ namespace erc
 
             return expression.DataType;
         }
-        
+
         private DataType FindImmediateType(string value)
         {
             if (value == "true" || value == "false")
                 return DataType.BOOL;
-                
+
             return FindNumerDataType(value);
         }
 
@@ -302,7 +328,7 @@ namespace erc
 
             return DataType.F64;
         }
-        
+
         private object ParseImmediate(string str, DataType dataType)
         {
             if (dataType == DataType.BOOL)

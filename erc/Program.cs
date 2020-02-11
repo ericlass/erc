@@ -32,6 +32,11 @@ namespace erc
             var syntax = new SyntaxAnalysis();
             syntax.Analyze(context);
 
+            /*Console.WriteLine();
+            Console.WriteLine("AST");
+            Console.WriteLine("===");
+            Console.Write(context.AST.ToTreeString());*/
+
             var semantic = new SemanticAnalysis();
             semantic.Analyze(context);
 

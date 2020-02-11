@@ -186,10 +186,11 @@ namespace erc
             return result;
         }
 
-        public static AstItem Vector(List<AstItem> values)
+        public static AstItem Vector(string name, List<AstItem> values)
         {
             var result = new AstItem(AstItemKind.Vector);
             result.Children.AddRange(values);
+            result.Identifier = name;
             return result;
         }
 

@@ -13,7 +13,7 @@ namespace erc
             }
             
             AssignDataNames(context.AST);
-            RemoveUnusedFunctionDecls(context.AST);
+            //RemoveUnusedFunctionDecls(context.AST);
         }
 
         private int _immCounter = 0;

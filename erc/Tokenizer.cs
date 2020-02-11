@@ -21,25 +21,23 @@ namespace erc
             ["ret"] = TokenType.Ret,
             ["true"] = TokenType.True,
             ["false"] = TokenType.False,
-            ["if"] = TokenType.If
+            ["if"] = TokenType.If,
+            ["vec"] = TokenType.VectorConstructor
         };
 
-        private HashSet<string> _vectorConstructors = new HashSet<string>();
-
-        private void Init()
+        private Dictionary<char, TokenType> _specialCharacterTypes = new Dictionary<char, TokenType>()
         {
-            _vectorConstructors.Clear();
-            _vectorConstructors.Add("vec");
-            foreach (var dataType in DataType.GetAllValues())
-            {
-                if (dataType.IsVector)
-                    _vectorConstructors.Add(dataType.Name);
-            }
-        }
+            [';'] = TokenType.StatementTerminator,
+            ['('] = TokenType.RoundBracketOpen,
+            [')'] = TokenType.RoundBracketClose,
+            ['{'] = TokenType.CurlyBracketOpen,
+            ['}'] = TokenType.CurlyBracketClose,
+            [':'] = TokenType.TypeOperator,
+            [','] = TokenType.Comma,
+        };
 
         public void Tokenize(CompilerContext context)
         {
-            Init();
             var iterator = new StringIterator(context.Source);
             var result = new List<Token>();
 
@@ -62,7 +60,6 @@ namespace erc
 
             var c = iterator.Current();
             string value = null;
-            List<List<Token>> values = null;
             TokenType type;
 
             var startLine = iterator.Line;
@@ -76,16 +73,6 @@ namespace erc
                 //Handle special reserved words
                 if (_reservedWordTypes.ContainsKey(value))
                     type = _reservedWordTypes[value];
-
-                if (!SkipWhiteSpaces(iterator))
-                    return null;
-
-                if (_vectorConstructors.Contains(value) && iterator.Current() == '(')
-                {
-                    value = null;
-                    values = ReadVector(iterator);
-                    type = TokenType.Vector;
-                }
             }
             else if (IsDigit(c))
             {
@@ -98,50 +85,15 @@ namespace erc
                 type = TokenType.AssigmnentOperator;
                 iterator.Step();
             }
-            else if (c == ';')
+            else if (_specialCharacterTypes.ContainsKey(c))
             {
                 value = c.ToString();
-                type = TokenType.StatementTerminator;
-                iterator.Step();
-            }
-            else if (c == '(')
-            {
-                value = c.ToString();
-                type = TokenType.RoundBracketOpen;
-                iterator.Step();
-            }
-            else if (c == ')')
-            {
-                value = c.ToString();
-                type = TokenType.RoundBracketClose;
-                iterator.Step();
-            }
-            else if (c == '{')
-            {
-                value = c.ToString();
-                type = TokenType.CurlyBracketOpen;
-                iterator.Step();
-            }
-            else if (c == '}')
-            {
-                value = c.ToString();
-                type = TokenType.CurlyBracketClose;
-                iterator.Step();
-            }
-            else if (c == ':')
-            {
-                value = c.ToString();
-                type = TokenType.TypeOperator;
-                iterator.Step();
-            }
-            else if (c == ',')
-            {
-                value = c.ToString();
-                type = TokenType.Comma;
+                type = _specialCharacterTypes[c];
                 iterator.Step();
             }
             else
             {
+                //First try to find operator with two characters
                 var figure = c.ToString() + iterator.Next().ToString();
                 var op = Operator.Parse(figure);
                 if (op != null)
@@ -154,6 +106,7 @@ namespace erc
                 }
                 else
                 {
+                    //Try to find operator with only one character
                     figure = c.ToString();
                     op = Operator.Parse(figure);
                     if (op != null)
@@ -169,78 +122,18 @@ namespace erc
                 }
             }
 
-            if (value != null || values != null)
+            if (value != null)
             {
                 return new Token
                 {
                     TokenType = type,
                     Value = value,
-                    Values = values,
                     Line = startLine,
                     Column = startColumn
                 };
             }
 
             return null;
-        }
-
-        private List<List<Token>> ReadVector(StringIterator iterator)
-        {
-            var result = new List<List<Token>>();
-            //Skip starting "("
-            iterator.Step();
-
-            if (!SkipWhiteSpaces(iterator))
-            {
-                return null;
-            }
-
-            var c = iterator.Current();
-
-            if (c == ')')
-            {
-                return result;
-            }
-
-            var token = ReadToken(iterator);
-            var expTokens = new List<Token>();
-            //Used to allow brackets inside expressions
-            var bracketCounter = 0;
-
-            while (token != null)
-            {
-                if (token.TokenType == TokenType.Comma)
-                {
-                    result.Add(expTokens);
-                    expTokens = new List<Token>();
-                }
-                else if (token.TokenType == TokenType.RoundBracketOpen)
-                {
-                    expTokens.Add(token);
-                    bracketCounter += 1;
-                }
-                else if (token.TokenType == TokenType.RoundBracketClose)
-                {
-                    if (bracketCounter == 0)
-                    {
-                        result.Add(expTokens);
-                        break;
-                    }
-                    else
-                    {
-                        expTokens.Add(token);
-                        bracketCounter -= 1;
-                    }
-                }
-                else
-                {
-                    expTokens.Add(token);
-                }
-
-                token = ReadToken(iterator);
-            }
-
-            return result;
         }
 
         private string ReadNumber(StringIterator iterator)
