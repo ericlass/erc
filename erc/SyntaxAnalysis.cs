@@ -155,6 +155,10 @@ namespace erc
                         throw new Exception("Unexpected token after identifier '" + token.Value + "'. Expected '=' or '(', found: " + next);
                     break;
 
+                case TokenType.If:
+                    result = ReadIfStatement(tokens);
+                    break;
+
                 case TokenType.CurlyBracketClose:
                     //End of function
                     return null;
@@ -168,6 +172,79 @@ namespace erc
                 result.SourceLine = String.Join(" ", lineTokens.ConvertAll<string>((a) => a.Value));
 
             return result;
+        }
+
+        private AstItem ReadIfStatement(SimpleIterator<Token> tokens)
+        {
+            var ifWord = tokens.Pop();
+            if (ifWord.TokenType != TokenType.If)
+                throw new Exception("Expected If token, got: " + ifWord);
+
+            var expression = ReadExpression(tokens, TokenType.CurlyBracketOpen);
+
+            var current = tokens.Pop();
+            if (current.TokenType != TokenType.CurlyBracketOpen)
+                throw new Exception("Expected '{' after boolean expression, but got: " + current);
+
+            var statements = ReadStatements(tokens);
+
+            current = tokens.Pop();
+            if (current.TokenType != TokenType.CurlyBracketClose)
+                throw new Exception("Expected '}' after if-statement block, but got: " + current);
+
+            List<AstItem> elseStatements = null;
+            current = tokens.Pop();
+            if (current.TokenType == TokenType.Else)
+            {
+                current = tokens.Pop();
+                if (current.TokenType != TokenType.CurlyBracketOpen)
+                    throw new Exception("Expected '{' after 'else', but got: " + current);
+
+                elseStatements = ReadStatements(tokens);
+
+                current = tokens.Pop();
+                if (current.TokenType != TokenType.CurlyBracketClose)
+                    throw new Exception("Expected '}' after else-statement block, but got: " + current);
+            }
+
+            return AstItem.IfStatement(expression, statements, elseStatements);
+        }
+
+        protected AstItem ReadForLoop(SimpleIterator<Token> tokens)
+        {
+            //for i in 0..5 {...}
+
+            var forWord = tokens.Pop();
+            if (forWord.TokenType != TokenType.For)
+                throw new Exception("Expected FOR token, got: " + forWord);
+
+            var varName = tokens.Pop();
+            if (varName.TokenType != TokenType.Word)
+                throw new Exception("Expected identifier, got: " + varName);
+
+            var inWord = tokens.Pop();
+            if (inWord.TokenType != TokenType.In)
+                throw new Exception("Expected identifier, got: " + inWord);
+
+            var startExpression = ReadExpression(tokens, TokenType.To);
+
+            var toWord = tokens.Pop();
+            if (toWord.TokenType != TokenType.To)
+                throw new Exception("Expected 'to', got: " + toWord);
+
+            var endExpression = ReadExpression(tokens, TokenType.CurlyBracketOpen);
+
+            var current = tokens.Current();
+            if (current.TokenType != TokenType.CurlyBracketOpen)
+                throw new Exception("Expected '{' after for loop definition, but got: " + current);
+
+            var statements = ReadStatements(tokens);
+
+            current = tokens.Current();
+            if (current.TokenType != TokenType.CurlyBracketClose)
+                throw new Exception("Expected '}' after statement block, but got: " + current);
+
+            return AstItem.ForLoop(varName.Value, startExpression, endExpression, statements);
         }
 
         private AstItem ReadFuncCall(SimpleIterator<Token> tokens)

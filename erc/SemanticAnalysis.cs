@@ -149,6 +149,37 @@ namespace erc
 
                 item.DataType = dataType;
             }
+            else if (item.Kind == AstItemKind.If)
+            {
+                var dataType = CheckExpression(item.Children[0]);
+                if (dataType != DataType.BOOL)
+                    throw new Exception("Expression for if statement must return bool, got: " + dataType);
+
+                //if block
+                _context.EnterBlock();
+
+                var statements = item.Children[1].Children;
+                foreach (var statement in statements)
+                {
+                    CheckStatement(statement);
+                }
+
+                _context.LeaveBlock();
+
+                //else block
+                var elseStatements = item.Children[2];
+                if (elseStatements != null)
+                {
+                    _context.EnterBlock();
+
+                    foreach (var statement in elseStatements.Children)
+                    {
+                        CheckStatement(statement);
+                    }
+
+                    _context.LeaveBlock();
+                }
+            }
             else
                 throw new Exception("Unknown statement: " + item);
         }

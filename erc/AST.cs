@@ -20,7 +20,9 @@ namespace erc
         StatementList,
         FunctionDecl,
         FunctionCall,
-        Return
+        Return,
+        If,
+        For
         //EqualsOp,
         //NotEqualsOp,
         //LessThanOp,
@@ -146,7 +148,8 @@ namespace erc
             level += 1;
             foreach (var child in Children)
             {
-                result += child.ToTreeStringRec(level);
+                if (child != null)
+                    result += child.ToTreeStringRec(level);
             }
             return result;
         }
@@ -246,9 +249,26 @@ namespace erc
             return new AstItem { Kind = AstItemKind.Return, DataType = dataType, Children = new List<AstItem> { value } };
         }
 
+        internal static AstItem ForLoop(string varName, AstItem startExpression, AstItem endExpression, List<AstItem> statements)
+        {
+            var statementList = StatementList(statements);
+            return new AstItem { Kind = AstItemKind.FunctionDecl, Identifier = varName, Children = new List<AstItem>() { startExpression, endExpression, statementList } };
+        }
+
         public static AstItem AsOperator(IOperator oper)
         {
             return new AstItem { Kind = AstItemKind.Operator, Operator = oper };
+        }
+
+        public static AstItem IfStatement(AstItem expression, List<AstItem> statements, List<AstItem> elseStatements)
+        {
+            var statementList = StatementList(statements);
+
+            AstItem elseStatementList = null;
+            if (elseStatements != null)
+                elseStatementList = StatementList(elseStatements);
+
+            return new AstItem { Kind = AstItemKind.If, Children = new List<AstItem>() { expression, statementList, elseStatementList } };
         }
 
     }

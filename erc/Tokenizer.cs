@@ -22,7 +22,11 @@ namespace erc
             ["true"] = TokenType.True,
             ["false"] = TokenType.False,
             ["if"] = TokenType.If,
-            ["vec"] = TokenType.VectorConstructor
+            ["else"] = TokenType.Else,
+            ["vec"] = TokenType.VectorConstructor,
+            ["in"] = TokenType.In,
+            ["to"] = TokenType.To,
+            ["for"] = TokenType.For
         };
 
         private Dictionary<char, TokenType> _specialCharacterTypes = new Dictionary<char, TokenType>()
@@ -33,7 +37,7 @@ namespace erc
             ['{'] = TokenType.CurlyBracketOpen,
             ['}'] = TokenType.CurlyBracketClose,
             [':'] = TokenType.TypeOperator,
-            [','] = TokenType.Comma,
+            [','] = TokenType.Comma
         };
 
         public void Tokenize(CompilerContext context)

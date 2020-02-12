@@ -37,7 +37,8 @@ namespace erc
 
             foreach (var child in item.Children)
             {
-                AssignDataNames(child);
+                if (child != null)
+                    AssignDataNames(child);
             }
         }
 
@@ -79,7 +80,8 @@ namespace erc
 
             foreach (var child in item.Children)
             {
-                FindVariables(child, found);
+                if (child != null)
+                    FindVariables(child, found);
             }
         }
 

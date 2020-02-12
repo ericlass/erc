@@ -4,8 +4,15 @@ fn main() {
 }
 
 fn boolean() {
-	let test = 5 < 3;
-	test = vec (5.0f, 5.0f, 5.0f, 5.0f) == vec(5.0f, 5.0f, 5.0f, 5.0f);
+	let test = 5 >= 3;
+	let g = 5;
+	if 1 <= 2 {
+		g = 2;
+		let j = 1.0f;
+	}
+	else {
+		g = 7;
+	}
 }
 
 fn fn_calls() {

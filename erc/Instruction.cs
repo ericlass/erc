@@ -115,6 +115,13 @@ namespace erc
         public static Instruction PCMPEQQ = new Instruction("PCMPEQQ", 2);
         public static Instruction VPCMPEQQ = new Instruction("VPCMPEQQ", 3);
 
+        //##### Jump Instructions #####
+        public static Instruction JMP = new Instruction("JMP", 1);
+        public static Instruction JE = new Instruction("JE", 1);
+        public static Instruction JNE = new Instruction("JNE", 1);
+        public static Instruction JZ = new Instruction("JZ", 1);
+        public static Instruction JNZ = new Instruction("JNZ", 1);
+
         //##### Legacy SSE instructions for XMM registers #####
 
         public static Instruction ADDSS = new Instruction("ADDSS", 2);

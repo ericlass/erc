@@ -20,7 +20,11 @@ namespace erc
         Fn,
         Ret,
         If,
+        Else,
         True,
-        False
+        False,
+        For,
+        In,
+        To
     }
 }

@@ -31,6 +31,7 @@ namespace erc
 
         private CompilerContext _context = null;
         private long _immCounter = 0;
+        private long _ifLabelCounter = 0;
         private Dictionary<string, Instruction> _instructionMap = null;
         private Optimizer _optimizer = new Optimizer();
 
@@ -141,10 +142,13 @@ namespace erc
                 case AstItemKind.Return:
                     return GenerateReturn(statement);
 
+                case AstItemKind.If:
+                    return GenerateIfStatement(statement);
+
                 case AstItemKind.VarScopeEnd:
                     var variable = _context.GetSymbol(statement.Identifier);
 
-                    if (variable.Kind == SymbolKind.Variable)
+                    if (variable != null && variable.Kind == SymbolKind.Variable)
                     {
                         if (variable.Location.Kind == OperandKind.Register)
                             _context.RegisterPool.Free(variable.Location.Register);
@@ -271,6 +275,59 @@ namespace erc
                 result.AddRange(Move(function.ReturnType, returnLocation, function.ReturnLocation));
 
             result.Add(new Operation(DataType.VOID, Instruction.RET));
+
+            return result;
+        }
+
+        private List<Operation> GenerateIfStatement(AstItem statement)
+        {
+            if (statement.Kind != AstItemKind.If)
+                throw new Exception("Expected if statement, got " + statement);
+
+            var expression = statement.Children[0];
+            var ifStatements = statement.Children[1];
+            var elseStatements = statement.Children[2];
+
+            var result = new List<Operation>();
+
+            result.AddRange(GenerateExpression(expression, DataType.BOOL.Accumulator));
+            result.Add(new Operation(DataType.VOID, Instruction.CMP, DataType.BOOL.Accumulator, Operand.Immediate(1)));
+
+            _ifLabelCounter += 1;
+            var endLabel = "if_end_" + _ifLabelCounter;
+
+            if (elseStatements == null)
+            {
+                result.Add(new Operation(DataType.VOID, Instruction.JNE, Operand.Label(endLabel)));
+
+                foreach (var stat in ifStatements.Children)
+                {
+                    result.AddRange(GenerateStatement(stat));
+                }
+
+                result.Add(new Operation(DataType.VOID, Instruction.V_LABEL, Operand.Label(endLabel)));
+            }
+            else
+            {
+                _ifLabelCounter += 1;
+                var elseLabel = "if_else_" + _ifLabelCounter;
+
+                result.Add(new Operation(DataType.VOID, Instruction.JNE, Operand.Label(elseLabel)));
+
+                foreach (var stat in ifStatements.Children)
+                {
+                    result.AddRange(GenerateStatement(stat));
+                }
+                result.Add(new Operation(DataType.VOID, Instruction.JMP, Operand.Label(endLabel)));
+
+                result.Add(new Operation(DataType.VOID, Instruction.V_LABEL, Operand.Label(elseLabel)));
+                foreach (var stat in elseStatements.Children)
+                {
+                    result.AddRange(GenerateStatement(stat));
+                }
+
+                result.Add(new Operation(DataType.VOID, Instruction.V_LABEL, Operand.Label(endLabel)));
+            }
 
             return result;
         }
@@ -694,7 +751,8 @@ namespace erc
 
             foreach (var child in item.Children)
             {
-                GenerateDataSection(child, entries);
+                if (child != null)
+                    GenerateDataSection(child, entries);
             }
         }
 
