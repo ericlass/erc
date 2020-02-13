@@ -31,6 +31,8 @@ namespace erc
         {
             if (function.ReturnType == DataType.I64)
                 function.ReturnLocation = Operand.AsRegister(Register.RAX);
+            else if (function.ReturnType == DataType.BOOL)
+                function.ReturnLocation = DataType.BOOL.Accumulator;
             else if (function.ReturnType == DataType.F32 || function.ReturnType == DataType.F64)
                 function.ReturnLocation = Operand.AsRegister(Register.XMM0);
             else if (function.ReturnType == DataType.IVEC2Q || function.ReturnType == DataType.VEC4F || function.ReturnType == DataType.VEC2D)
@@ -47,7 +49,7 @@ namespace erc
             InitParamRegisters();
         	foreach (var parameter in function.Parameters)
             {
-                if (parameter.DataType == DataType.I64)
+                if (parameter.DataType == DataType.I64 || parameter.DataType == DataType.BOOL)
                 {
                     if (_freeParameterRRegisters.Count > 0)
                     {

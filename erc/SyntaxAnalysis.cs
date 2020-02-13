@@ -11,21 +11,21 @@ namespace erc
 
         public void Analyze(CompilerContext context)
         {
-            var tokens = new SimpleIterator<Token>(context.Tokens);
+            var tokens = new TokenIterator(context.Tokens);
             var result = AstItem.Programm();
             result.Children = Read(tokens);
             context.AST = result;
         }
 
-        private List<AstItem> Read(SimpleIterator<Token> tokens)
+        private List<AstItem> Read(TokenIterator tokens)
         {
             var result = new List<AstItem>();
             var token = tokens.Current();
             while (token != null)
             {
-                switch (token.TokenType)
+                switch (token.Kind)
                 {
-                    case TokenType.Fn:
+                    case TokenKind.Fn:
                         result.Add(ReadFuncDecl(tokens));
                         break;
 
@@ -38,70 +38,94 @@ namespace erc
             return result;
         }
 
-        private AstItem ReadFuncDecl(SimpleIterator<Token> tokens)
+        private AstItem ReadFuncDecl(TokenIterator tokens)
         {
             //Skip "fn"
             tokens.Pop();
 
-            var name = tokens.Pop();
-            if (name.TokenType != TokenType.Word)
-                throw new Exception("Expected identifier, found " + name);
+            var next = tokens.Current();
+            if (next.Kind == TokenKind.Ext)
+                return ReadExternFuncDecl(tokens);
 
-            var openBracket = tokens.Pop();
-            List<AstItem> parameters = null;
-            if (openBracket.TokenType == TokenType.RoundBracketOpen)
-                parameters = ReadFuncParameters(tokens);
-            else
-                throw new Exception("Expected '(', found " + openBracket);
+            var name = tokens.PopExpected(TokenKind.Word);
+            tokens.PopExpected(TokenKind.RoundBracketOpen);
 
-            var next = tokens.Pop();
+            var parameters = ReadFuncParameters(tokens);
+
             DataType returnType = DataType.VOID;
-            List<AstItem> statements = new List<AstItem>();
 
-            if (next.TokenType == TokenType.TypeOperator)
+            next = tokens.Pop();
+            if (next.Kind == TokenKind.TypeOperator)
             {
                 returnType = ReadDataType(tokens);
                 next = tokens.Pop();
             }
 
-            if (next.TokenType == TokenType.CurlyBracketOpen)
-                statements = ReadStatements(tokens);
-            else
+            if (next.Kind != TokenKind.CurlyBracketOpen)
                 throw new Exception("Expected ':' or '{', found " + next);
 
-            next = tokens.Pop();
-            if (next.TokenType != TokenType.CurlyBracketClose)
-                throw new Exception("Expected '}', found " + next);
+            var statements = ReadStatements(tokens);
+
+            tokens.PopExpected(TokenKind.CurlyBracketClose);
 
             return AstItem.FunctionDecl(name.Value, returnType, parameters, statements);
         }
 
-        private List<AstItem> ReadFuncParameters(SimpleIterator<Token> tokens)
+        private AstItem ReadExternFuncDecl(TokenIterator tokens)
+        {
+            tokens.PopExpected(TokenKind.Ext);
+            tokens.PopExpected(TokenKind.RoundBracketOpen);
+
+            var libFnName = tokens.PopExpected(TokenKind.String);
+            tokens.PopExpected(TokenKind.Comma);
+            var libName = tokens.PopExpected(TokenKind.String);
+
+            tokens.PopExpected(TokenKind.RoundBracketClose);
+
+            var name = tokens.PopExpected(TokenKind.Word);
+
+            tokens.PopExpected(TokenKind.RoundBracketOpen);
+
+            var parameters = ReadFuncParameters(tokens);
+
+            var next = tokens.Pop();
+            DataType returnType = DataType.VOID;
+
+            if (next.Kind == TokenKind.TypeOperator)
+            {
+                returnType = ReadDataType(tokens);
+                next = tokens.Pop();
+            }
+
+            tokens.PopExpected(TokenKind.StatementTerminator);
+
+            return AstItem.ExternFunctionDecl(name.Value, returnType, parameters, libFnName.Value, libName.Value);
+        }
+
+        private List<AstItem> ReadFuncParameters(TokenIterator tokens)
         {
             var result = new List<AstItem>();
             var current = tokens.Pop();
-            while (current.TokenType != TokenType.RoundBracketClose)
+            while (current.Kind != TokenKind.RoundBracketClose)
             {
                 var name = current;
-                if (name.TokenType != TokenType.Word)
+                if (name.Kind != TokenKind.Word)
                     throw new Exception("Expected parameter name, found " + name);
 
-                var colon = tokens.Pop();
-                if (colon.TokenType != TokenType.TypeOperator)
-                    throw new Exception("Expected ':', found " + colon);
+                tokens.PopExpected(TokenKind.TypeOperator);
 
                 var dataType = ReadDataType(tokens);
 
                 result.Add(AstItem.Parameter(name.Value, dataType));
 
                 current = tokens.Pop();
-                if (current.TokenType == TokenType.Comma)
+                if (current.Kind == TokenKind.Comma)
                     current = tokens.Pop();
             }
             return result;
         }
 
-        private List<AstItem> ReadStatements(SimpleIterator<Token> tokens)
+        private List<AstItem> ReadStatements(TokenIterator tokens)
         {
             var result = new List<AstItem>();
             var token = tokens.Current();
@@ -117,49 +141,49 @@ namespace erc
             return result;
         }
 
-        private AstItem ReadStatement(SimpleIterator<Token> tokens)
+        private AstItem ReadStatement(TokenIterator tokens)
         {
             AstItem result = null;
 
             var token = tokens.Current();
             tokens.StartCapture();
 
-            switch (token.TokenType)
+            switch (token.Kind)
             {
-                case TokenType.Let:
+                case TokenKind.Let:
                     result = ReadVarDecl(tokens);
                     break;
 
-                case TokenType.Ret:
+                case TokenKind.Ret:
                     //Pop "ret"
                     tokens.Pop();
 
-                    var value = ReadExpression(tokens, TokenType.StatementTerminator);
+                    var value = ReadExpression(tokens, TokenKind.StatementTerminator);
                     result = AstItem.Return(value.DataType, value);
 
                     //Pop ";"
                     tokens.Pop();
                     break;
 
-                case TokenType.Word:
+                case TokenKind.Word:
                     var next = tokens.Next();
-                    if (next.TokenType == TokenType.RoundBracketOpen)
+                    if (next.Kind == TokenKind.RoundBracketOpen)
                     {
                         result = ReadFuncCall(tokens);
                         //Pop ";"
                         tokens.Pop();
                     }
-                    else if (next.TokenType == TokenType.AssigmnentOperator)
+                    else if (next.Kind == TokenKind.AssigmnentOperator)
                         result = ReadAssignment(tokens);
                     else
                         throw new Exception("Unexpected token after identifier '" + token.Value + "'. Expected '=' or '(', found: " + next);
                     break;
 
-                case TokenType.If:
+                case TokenKind.If:
                     result = ReadIfStatement(tokens);
                     break;
 
-                case TokenType.CurlyBracketClose:
+                case TokenKind.CurlyBracketClose:
                     //End of function
                     return null;
 
@@ -174,115 +198,76 @@ namespace erc
             return result;
         }
 
-        private AstItem ReadIfStatement(SimpleIterator<Token> tokens)
+        private AstItem ReadIfStatement(TokenIterator tokens)
         {
-            var ifWord = tokens.Pop();
-            if (ifWord.TokenType != TokenType.If)
-                throw new Exception("Expected If token, got: " + ifWord);
-
-            var expression = ReadExpression(tokens, TokenType.CurlyBracketOpen);
-
-            var current = tokens.Pop();
-            if (current.TokenType != TokenType.CurlyBracketOpen)
-                throw new Exception("Expected '{' after boolean expression, but got: " + current);
-
+            tokens.PopExpected(TokenKind.If);
+            var expression = ReadExpression(tokens, TokenKind.CurlyBracketOpen);
+            tokens.PopExpected(TokenKind.CurlyBracketOpen);
             var statements = ReadStatements(tokens);
-
-            current = tokens.Pop();
-            if (current.TokenType != TokenType.CurlyBracketClose)
-                throw new Exception("Expected '}' after if-statement block, but got: " + current);
+            tokens.PopExpected(TokenKind.CurlyBracketClose);
 
             List<AstItem> elseStatements = null;
-            current = tokens.Pop();
-            if (current.TokenType == TokenType.Else)
+
+            var current = tokens.Current();
+            if (current.Kind == TokenKind.Else)
             {
-                current = tokens.Pop();
-                if (current.TokenType != TokenType.CurlyBracketOpen)
-                    throw new Exception("Expected '{' after 'else', but got: " + current);
-
+                tokens.PopExpected(TokenKind.Else);
+                tokens.PopExpected(TokenKind.CurlyBracketOpen);
                 elseStatements = ReadStatements(tokens);
-
-                current = tokens.Pop();
-                if (current.TokenType != TokenType.CurlyBracketClose)
-                    throw new Exception("Expected '}' after else-statement block, but got: " + current);
+                tokens.PopExpected(TokenKind.CurlyBracketClose);
             }
 
             return AstItem.IfStatement(expression, statements, elseStatements);
         }
 
-        protected AstItem ReadForLoop(SimpleIterator<Token> tokens)
+        protected AstItem ReadForLoop(TokenIterator tokens)
         {
             //for i in 0..5 {...}
-
-            var forWord = tokens.Pop();
-            if (forWord.TokenType != TokenType.For)
-                throw new Exception("Expected FOR token, got: " + forWord);
-
-            var varName = tokens.Pop();
-            if (varName.TokenType != TokenType.Word)
-                throw new Exception("Expected identifier, got: " + varName);
-
-            var inWord = tokens.Pop();
-            if (inWord.TokenType != TokenType.In)
-                throw new Exception("Expected identifier, got: " + inWord);
-
-            var startExpression = ReadExpression(tokens, TokenType.To);
-
-            var toWord = tokens.Pop();
-            if (toWord.TokenType != TokenType.To)
-                throw new Exception("Expected 'to', got: " + toWord);
-
-            var endExpression = ReadExpression(tokens, TokenType.CurlyBracketOpen);
-
-            var current = tokens.Current();
-            if (current.TokenType != TokenType.CurlyBracketOpen)
-                throw new Exception("Expected '{' after for loop definition, but got: " + current);
-
+            tokens.PopExpected(TokenKind.For);
+            var varName = tokens.PopExpected(TokenKind.Word);
+            tokens.PopExpected(TokenKind.In);
+            var startExpression = ReadExpression(tokens, TokenKind.To);
+            tokens.PopExpected(TokenKind.To);
+            var endExpression = ReadExpression(tokens, TokenKind.CurlyBracketOpen);
+            tokens.PopExpected(TokenKind.CurlyBracketOpen);
             var statements = ReadStatements(tokens);
-
-            current = tokens.Current();
-            if (current.TokenType != TokenType.CurlyBracketClose)
-                throw new Exception("Expected '}' after statement block, but got: " + current);
-
+            tokens.PopExpected(TokenKind.CurlyBracketClose);
             return AstItem.ForLoop(varName.Value, startExpression, endExpression, statements);
         }
 
-        private AstItem ReadFuncCall(SimpleIterator<Token> tokens)
+        private AstItem ReadFuncCall(TokenIterator tokens)
         {
-            var name = tokens.Pop();
+            var name = tokens.PopExpected(TokenKind.Word);
+            tokens.PopExpected(TokenKind.RoundBracketOpen);
 
-            var bracket = tokens.Pop();
-            if (bracket.TokenType != TokenType.RoundBracketOpen)
-                throw new Exception("Unexcepted token after function name! Expected '(', found: " + bracket);
-
-            var paramValues = ReadTokenList(tokens, TokenType.Comma, TokenType.RoundBracketClose);
+            var paramValues = ReadTokenList(tokens, TokenKind.Comma, TokenKind.RoundBracketClose);
             var paramExpressions = new List<AstItem>(paramValues.Count);
             foreach (var valueTokens in paramValues)
             {
-                var expression = ReadExpression(new SimpleIterator<Token>(valueTokens), null);
+                var expression = ReadExpression(new TokenIterator(valueTokens), null);
                 paramExpressions.Add(expression);
             }
 
             return AstItem.FunctionCall(name.Value, paramExpressions);
         }
 
-        private List<List<Token>> ReadTokenList(SimpleIterator<Token> tokens, TokenType separator, TokenType terminator)
+        private List<List<Token>> ReadTokenList(TokenIterator tokens, TokenKind separator, TokenKind terminator)
         {
             var result = new List<List<Token>>();
             var expTokens = new List<Token>();
 
             var token = tokens.Pop();
-            if (token.TokenType == terminator)
+            if (token.Kind == terminator)
                 return result;
 
             while (token != null)
             {
-                if (token.TokenType == separator)
+                if (token.Kind == separator)
                 {
                     result.Add(expTokens);
                     expTokens = new List<Token>();
                 }
-                else if (token.TokenType == terminator)
+                else if (token.Kind == terminator)
                 {
                     result.Add(expTokens);
                     break;
@@ -296,51 +281,34 @@ namespace erc
             return result;
         }
 
-        private AstItem ReadVarDecl(SimpleIterator<Token> tokens)
+        private AstItem ReadVarDecl(TokenIterator tokens)
         {
-            var let = tokens.Pop();
+            tokens.PopExpected(TokenKind.Let);
+            var name = tokens.PopExpected(TokenKind.Word);
+            tokens.PopExpected(TokenKind.AssigmnentOperator);
 
-            var name = tokens.Pop();
-            if (name.TokenType != TokenType.Word)
-                throw new Exception("Expected identifier, found " + name);
+            var expression = ReadExpression(tokens, TokenKind.StatementTerminator);
 
-            var op = tokens.Pop();
-            if (op.TokenType != TokenType.AssigmnentOperator)
-                throw new Exception("Expected assignment operator, found " + name);
-
-            var expression = ReadExpression(tokens, TokenType.StatementTerminator);
-
-            var terminator = tokens.Pop();
-            if (terminator.TokenType != TokenType.StatementTerminator)
-                throw new Exception("Expected statement terminator, found " + name);
+            tokens.PopExpected(TokenKind.StatementTerminator);
 
             return AstItem.VarDecl(name.Value, expression);
         }
 
-        private AstItem ReadAssignment(SimpleIterator<Token> tokens)
+        private AstItem ReadAssignment(TokenIterator tokens)
         {
-            var name = tokens.Pop();
-            if (name.TokenType != TokenType.Word)
-                throw new Exception("Expected identifier, found " + name);
+            var name = tokens.PopExpected(TokenKind.Word);
+            tokens.PopExpected(TokenKind.AssigmnentOperator);
 
-            var op = tokens.Pop();
-            if (op.TokenType != TokenType.AssigmnentOperator)
-                throw new Exception("Expected assignment operator, found " + name);
+            var expression = ReadExpression(tokens, TokenKind.StatementTerminator);
 
-            var expression = ReadExpression(tokens, TokenType.StatementTerminator);
-
-            var terminator = tokens.Pop();
-            if (terminator.TokenType != TokenType.StatementTerminator)
-                throw new Exception("Expected statement terminator, found " + name);
+            tokens.PopExpected(TokenKind.StatementTerminator);
 
             return AstItem.Assignment(name.Value, expression);
         }
 
-        private DataType ReadDataType(SimpleIterator<Token> tokens)
+        private DataType ReadDataType(TokenIterator tokens)
         {
-            var typeName = tokens.Pop();
-            if (typeName.TokenType != TokenType.Word)
-                throw new Exception("Expected data type, found " + typeName);
+            var typeName = tokens.PopExpected(TokenKind.Word);
 
             var name = typeName.Value;
             var result = DataType.GetAllValues().Find((t) => t.Name == name);
@@ -351,7 +319,7 @@ namespace erc
             return result;
         }
 
-        private AstItem ReadExpression(SimpleIterator<Token> tokens, Nullable<TokenType> terminator)
+        private AstItem ReadExpression(TokenIterator tokens, Nullable<TokenKind> terminator)
         {
             var expTokens = new List<Token>();
             if (terminator == null)
@@ -361,7 +329,7 @@ namespace erc
             else
             {
                 var tok = tokens.Current();
-                while (tok != null && tok.TokenType != terminator.Value)
+                while (tok != null && tok.Kind != terminator.Value)
                 {
                     expTokens.Add(tok);
                     tokens.Step();
@@ -373,7 +341,7 @@ namespace erc
                 throw new Exception("Expected expression, found " + tokens.Current());
 
             AstItem result = null;
-            var tokenIter = new SimpleIterator<Token>(expTokens);
+            var tokenIter = new TokenIterator(expTokens);
 
             if (expTokens.Count == 1)
             {
@@ -387,20 +355,20 @@ namespace erc
                 var token = tokenIter.Current();
                 while (token != null)
                 {
-                    switch (token.TokenType)
+                    switch (token.Kind)
                     {
-                        case TokenType.Word:
-                        case TokenType.Number:
-                        case TokenType.True:
-                        case TokenType.False:
-                        case TokenType.VectorConstructor:
+                        case TokenKind.Word:
+                        case TokenKind.Number:
+                        case TokenKind.True:
+                        case TokenKind.False:
+                        case TokenKind.VectorConstructor:
                             var operandItem = ReadSingleAstItem(tokenIter);
                             expItemsInfix.Add(operandItem);
                             break;
 
-                        case TokenType.ExpressionOperator:
-                        case TokenType.RoundBracketOpen:
-                        case TokenType.RoundBracketClose:
+                        case TokenKind.ExpressionOperator:
+                        case TokenKind.RoundBracketOpen:
+                        case TokenKind.RoundBracketClose:
                             expItemsInfix.Add(AstItem.AsOperator(ParseOperator(token.Value)));
                             break;
 
@@ -422,15 +390,15 @@ namespace erc
             return result;
         }
 
-        private AstItem ReadSingleAstItem(SimpleIterator<Token> tokens)
+        private AstItem ReadSingleAstItem(TokenIterator tokens)
         {
             AstItem result = null;
             var token = tokens.Current();
 
-            if (token.TokenType == TokenType.Word)
+            if (token.Kind == TokenKind.Word)
             {
                 var next = tokens.Next();
-                if (next != null && next.TokenType == TokenType.RoundBracketOpen)
+                if (next != null && next.Kind == TokenKind.RoundBracketOpen)
                 {
                     var dataType = DataType.FindByName(token.Value);
                     if (dataType != null && dataType.IsVector)
@@ -450,17 +418,17 @@ namespace erc
                     result = AstItem.Variable(token.Value);
                 }
             }
-            else if (token.TokenType == TokenType.VectorConstructor)
+            else if (token.Kind == TokenKind.VectorConstructor)
             {
                 //Vector construction with the generic "vec(...)"
                 result = ReadVector(tokens);
                 tokens.StepBack();
             }
-            else if (token.TokenType == TokenType.Number)
+            else if (token.Kind == TokenKind.Number)
             {
                 result = AstItem.Immediate(token.Value);
             }
-            else if (token.TokenType == TokenType.True || token.TokenType == TokenType.False)
+            else if (token.Kind == TokenKind.True || token.Kind == TokenKind.False)
             {
                 result = AstItem.Immediate(token.Value);
             }
@@ -470,12 +438,12 @@ namespace erc
             return result;
         }
 
-        private AstItem ReadVector(SimpleIterator<Token> tokens)
+        private AstItem ReadVector(TokenIterator tokens)
         {
             var name = tokens.Pop();
 
             var bracket = tokens.Pop();
-            if (bracket.TokenType != TokenType.RoundBracketOpen)
+            if (bracket.Kind != TokenKind.RoundBracketOpen)
                 throw new Exception("Unexcepted token after vector name! Expected '(', found: " + bracket);
 
             var vectorValues = new List<List<Token>>();
@@ -484,12 +452,12 @@ namespace erc
             var token = tokens.Pop();
             while (token != null)
             {
-                if (token.TokenType == TokenType.RoundBracketOpen)
+                if (token.Kind == TokenKind.RoundBracketOpen)
                 {
                     bracketCounter += 1;
                     valueTokens.Add(token);
                 }
-                else if (token.TokenType == TokenType.RoundBracketClose)
+                else if (token.Kind == TokenKind.RoundBracketClose)
                 {
                     if (bracketCounter <= 0)
                     {
@@ -502,7 +470,7 @@ namespace erc
                         valueTokens.Add(token);
                     }
                 }
-                else if (token.TokenType == TokenType.Comma)
+                else if (token.Kind == TokenKind.Comma)
                 {
                     vectorValues.Add(valueTokens);
                     valueTokens = new List<Token>();
@@ -518,7 +486,7 @@ namespace erc
             var paramExpressions = new List<AstItem>(vectorValues.Count);
             foreach (var values in vectorValues)
             {
-                var expression = ReadExpression(new SimpleIterator<Token>(values), null);
+                var expression = ReadExpression(new TokenIterator(values), null);
                 paramExpressions.Add(expression);
             }
 

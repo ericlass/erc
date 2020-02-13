@@ -14,30 +14,31 @@ namespace erc
         private HashSet<char> _identifierChars = new HashSet<char> { '_' };
         private HashSet<char> _whiteSpaces = new HashSet<char> { ' ', '\t', '\r', '\n' };
 
-        private Dictionary<string, TokenType> _reservedWordTypes = new Dictionary<string, TokenType>()
+        private Dictionary<string, TokenKind> _reservedWordTypes = new Dictionary<string, TokenKind>()
         {
-            ["let"] = TokenType.Let,
-            ["fn"] = TokenType.Fn,
-            ["ret"] = TokenType.Ret,
-            ["true"] = TokenType.True,
-            ["false"] = TokenType.False,
-            ["if"] = TokenType.If,
-            ["else"] = TokenType.Else,
-            ["vec"] = TokenType.VectorConstructor,
-            ["in"] = TokenType.In,
-            ["to"] = TokenType.To,
-            ["for"] = TokenType.For
+            ["let"] = TokenKind.Let,
+            ["fn"] = TokenKind.Fn,
+            ["ret"] = TokenKind.Ret,
+            ["true"] = TokenKind.True,
+            ["false"] = TokenKind.False,
+            ["if"] = TokenKind.If,
+            ["else"] = TokenKind.Else,
+            ["vec"] = TokenKind.VectorConstructor,
+            ["in"] = TokenKind.In,
+            ["to"] = TokenKind.To,
+            ["for"] = TokenKind.For,
+            ["ext"] = TokenKind.Ext
         };
 
-        private Dictionary<char, TokenType> _specialCharacterTypes = new Dictionary<char, TokenType>()
+        private Dictionary<char, TokenKind> _specialCharacterTypes = new Dictionary<char, TokenKind>()
         {
-            [';'] = TokenType.StatementTerminator,
-            ['('] = TokenType.RoundBracketOpen,
-            [')'] = TokenType.RoundBracketClose,
-            ['{'] = TokenType.CurlyBracketOpen,
-            ['}'] = TokenType.CurlyBracketClose,
-            [':'] = TokenType.TypeOperator,
-            [','] = TokenType.Comma
+            [';'] = TokenKind.StatementTerminator,
+            ['('] = TokenKind.RoundBracketOpen,
+            [')'] = TokenKind.RoundBracketClose,
+            ['{'] = TokenKind.CurlyBracketOpen,
+            ['}'] = TokenKind.CurlyBracketClose,
+            [':'] = TokenKind.TypeOperator,
+            [','] = TokenKind.Comma
         };
 
         public void Tokenize(CompilerContext context)
@@ -64,7 +65,7 @@ namespace erc
 
             var c = iterator.Current();
             string value = null;
-            TokenType type;
+            TokenKind type;
 
             var startLine = iterator.Line;
             var startColumn = iterator.Column;
@@ -72,7 +73,7 @@ namespace erc
             if (IsLetter(c))
             {
                 value = ReadWord(iterator);
-                type = TokenType.Word;
+                type = TokenKind.Word;
 
                 //Handle special reserved words
                 if (_reservedWordTypes.ContainsKey(value))
@@ -81,12 +82,17 @@ namespace erc
             else if (IsDigit(c))
             {
                 value = ReadNumber(iterator);
-                type = TokenType.Number;
+                type = TokenKind.Number;
+            }
+            else if (c == '"')
+            {
+                value = ReadString(iterator);
+                type = TokenKind.String;
             }
             else if (c == '=' && iterator.Next() != '=')
             {
                 value = c.ToString();
-                type = TokenType.AssigmnentOperator;
+                type = TokenKind.AssigmnentOperator;
                 iterator.Step();
             }
             else if (_specialCharacterTypes.ContainsKey(c))
@@ -103,7 +109,7 @@ namespace erc
                 if (op != null)
                 {
                     value = figure;
-                    type = TokenType.ExpressionOperator;
+                    type = TokenKind.ExpressionOperator;
                     //Step twice to also remove second character
                     iterator.Step();
                     iterator.Step();
@@ -116,7 +122,7 @@ namespace erc
                     if (op != null)
                     {
                         value = figure;
-                        type = TokenType.ExpressionOperator;
+                        type = TokenKind.ExpressionOperator;
                         iterator.Step();
                     }
                     else
@@ -130,7 +136,7 @@ namespace erc
             {
                 return new Token
                 {
-                    TokenType = type,
+                    Kind = type,
                     Value = value,
                     Line = startLine,
                     Column = startColumn
@@ -138,6 +144,24 @@ namespace erc
             }
 
             return null;
+        }
+
+        private string ReadString(StringIterator iterator)
+        {
+            var c = iterator.Current();
+            if (c != '"')
+                throw new Exception("Expected \", got: " + c);
+
+            var result = "";
+            iterator.Step();
+            c = iterator.Current();
+            while (c > 0 && c != '"')
+            {
+                result += c;
+                iterator.Step();
+                c = iterator.Current();
+            }
+            return result;
         }
 
         private string ReadNumber(StringIterator iterator)

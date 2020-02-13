@@ -2,7 +2,7 @@
 
 namespace erc
 {
-    public enum TokenType
+    public enum TokenKind
     {
         Word,
         AssigmnentOperator,
@@ -25,6 +25,8 @@ namespace erc
         False,
         For,
         In,
-        To
+        To,
+        Ext,
+        String
     }
 }

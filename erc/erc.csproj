@@ -92,8 +92,9 @@
     <Compile Include="SymbolKind.cs" />
     <Compile Include="SyntaxAnalysis.cs" />
     <Compile Include="Token.cs" />
+    <Compile Include="TokenIterator.cs" />
     <Compile Include="Tokenizer.cs" />
-    <Compile Include="TokenType.cs" />
+    <Compile Include="TokenKind.cs" />
     <Compile Include="Symbol.cs" />
   </ItemGroup>
   <ItemGroup>

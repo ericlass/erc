@@ -1,9 +1,9 @@
 
 fn main() {
-	boolean();
+	boolean(false);
 }
 
-fn boolean() {
+fn boolean(p1: bool) {
 	let test = 5 >= 3;
 	let g = 5;
 	if 1 <= 2 {

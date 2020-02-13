@@ -19,6 +19,7 @@ namespace erc
         ParameterList,
         StatementList,
         FunctionDecl,
+        ExternFunctionDecl,
         FunctionCall,
         Return,
         If,
@@ -237,6 +238,12 @@ namespace erc
             var statementList = StatementList(statements);
 
             return new AstItem { Kind = AstItemKind.FunctionDecl, Identifier = name, DataType = returnType, Children = new List<AstItem>() { paramList, statementList } };
+        }
+
+        public static AstItem ExternFunctionDecl(string name, DataType returnType, List<AstItem> parameters, string libFnName, string libName)
+        {
+            var paramList = ParameterList(parameters);
+            return new AstItem { Kind = AstItemKind.ExternFunctionDecl, Identifier = name, DataType = returnType, Children = new List<AstItem>() { paramList, Immediate(libFnName), Immediate(libName) } };
         }
 
         public static AstItem FunctionCall(string name, List<AstItem> parameterValues)

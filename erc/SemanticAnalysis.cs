@@ -24,12 +24,14 @@ namespace erc
         {
             foreach (var funcItem in item.Children)
             {
-                if (funcItem.Kind != AstItemKind.FunctionDecl)
+                if (funcItem.Kind != AstItemKind.FunctionDecl && funcItem.Kind != AstItemKind.ExternFunctionDecl)
                     throw new Exception("Expected function declaration, got " + funcItem);
 
                 var parameters = funcItem.Children[0].Children;
                 var funcParams = parameters.ConvertAll((p) => new Symbol(p.Identifier, SymbolKind.Parameter, p.DataType));
                 var function = new Function(funcItem.Identifier, funcItem.DataType, funcParams);
+                function.IsExtern = funcItem.Kind == AstItemKind.ExternFunctionDecl;
+                //This fails if function with same name was already declared
                 _context.AddFunction(function);
             }
         }
@@ -44,12 +46,16 @@ namespace erc
 
         private void CheckFunction(AstItem item)
         {
-            if (item.Kind != AstItemKind.FunctionDecl)
+            if (item.Kind != AstItemKind.FunctionDecl && item.Kind != AstItemKind.ExternFunctionDecl)
                 throw new Exception("Expected function declaration, got " + item);
 
             var currentFunction = _context.GetFunction(item.Identifier);
             if (currentFunction == null)
                 throw new Exception("Function not found in scope: " + item);
+
+            //Nothing more to check for external functions
+            if (currentFunction.IsExtern)
+                return;
 
             _context.EnterFunction(currentFunction);
             _context.EnterBlock();
@@ -88,6 +94,10 @@ namespace erc
             _context.LeaveFunction();
         }
 
+        private void CheckExternFunction(AstItem item)
+        {
+            throw new NotImplementedException();
+        }
 
         private void CheckStatement(AstItem item)
         {
