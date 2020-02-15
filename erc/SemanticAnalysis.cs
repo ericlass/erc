@@ -27,9 +27,13 @@ namespace erc
                 if (funcItem.Kind != AstItemKind.FunctionDecl && funcItem.Kind != AstItemKind.ExternFunctionDecl)
                     throw new Exception("Expected function declaration, got " + funcItem);
 
+                string externalName = null;
+                if (funcItem.Kind == AstItemKind.ExternFunctionDecl)
+                    externalName = funcItem.Value2 as string;
+
                 var parameters = funcItem.Children[0].Children;
                 var funcParams = parameters.ConvertAll((p) => new Symbol(p.Identifier, SymbolKind.Parameter, p.DataType));
-                var function = new Function(funcItem.Identifier, funcItem.DataType, funcParams);
+                var function = new Function(funcItem.Identifier, funcItem.DataType, funcParams, externalName);
                 function.IsExtern = funcItem.Kind == AstItemKind.ExternFunctionDecl;
                 //This fails if function with same name was already declared
                 _context.AddFunction(function);
@@ -152,12 +156,18 @@ namespace erc
             }
             else if (item.Kind == AstItemKind.Return)
             {
-                var dataType = CheckExpression(item.Children[0]);
+                var valueExpression = item.Children[0];
+                var valueType = DataType.VOID;
 
-                if (dataType != _context.CurrentFunction.ReturnType)
-                    throw new Exception("Invalid return data type! Expected " + _context.CurrentFunction.ReturnType + ", found " + dataType);
+                if (valueExpression != null)
+                {
+                    valueType = CheckExpression(valueExpression);
 
-                item.DataType = dataType;
+                    if (valueType != _context.CurrentFunction.ReturnType)
+                        throw new Exception("Invalid return data type! Expected " + _context.CurrentFunction.ReturnType + ", found " + valueType);
+                }
+
+                item.DataType = valueType;
             }
             else if (item.Kind == AstItemKind.If)
             {

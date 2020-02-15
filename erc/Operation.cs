@@ -79,7 +79,7 @@ namespace erc
                 result = Instruction.Generator(Instruction, Operand1, Operand2, Operand3, Operand4);
             }
 
-            return result.ToLower();
+            return result;
         }
 
         private string OperandToString(Operand operand)

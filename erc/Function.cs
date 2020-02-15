@@ -10,12 +10,14 @@ namespace erc
         public DataType ReturnType { get; set; }
         public Operand ReturnLocation { get; set; }
         public bool IsExtern { get; set; }
+        public string ExternalName { get; set; }
 
-        public Function(string name, DataType returnType, List<Symbol> parameters)
+        public Function(string name, DataType returnType, List<Symbol> parameters, string externalName)
         {
             Name = name;
             Parameters = parameters;
             ReturnType = returnType;
+            ExternalName = externalName;
         }
     }
 

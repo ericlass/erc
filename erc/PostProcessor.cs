@@ -9,7 +9,8 @@ namespace erc
         {
             foreach (var function in context.AST.Children)
             {
-                CreateVariableScopeNodes(function);
+                if (function.Kind == AstItemKind.FunctionDecl)
+                    CreateVariableScopeNodes(function);
             }
             
             AssignDataNames(context.AST);

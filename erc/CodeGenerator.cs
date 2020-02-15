@@ -24,32 +24,25 @@ namespace erc
             "call [ExitProcess]\n";
 
         private const string ImportSection =
-            "\nsection '.idata' import data readable writeable\n" +
-            "library kernel32,'KERNEL32.DLL'\n\n" +
-            "import kernel32,\\\n" +
-            "  ExitProcess,'ExitProcess'\n";
+            "\nsection '.idata' import data readable writeable\n";
+
+        private Dictionary<string, List<string>> _importedFunctions = new Dictionary<string, List<string>>();
 
         private CompilerContext _context = null;
-        private long _immCounter = 0;
         private long _ifLabelCounter = 0;
         private Dictionary<string, Instruction> _instructionMap = null;
         private Optimizer _optimizer = new Optimizer();
-
-        private string GetImmName()
-        {
-            _immCounter += 1;
-            return "imm_" + _immCounter;
-        }
 
         public string Generate(CompilerContext context)
         {
             _context = context;
 
             InitInstructionMap();
+            AddImport("Kernel32.dll", "ExitProcess");
 
             var dataEntries = new List<Tuple<int, string>>();
-            dataEntries.Add(new Tuple<int, string>(DataType.BOOL.ByteSize, "imm_bool_false dw 0"));
-            dataEntries.Add(new Tuple<int, string>(DataType.BOOL.ByteSize, "imm_bool_true dw 1"));
+            dataEntries.Add(new Tuple<int, string>(DataType.BOOL.ByteSize, "imm_bool_false dd 0"));
+            dataEntries.Add(new Tuple<int, string>(DataType.BOOL.ByteSize, "imm_bool_true dd 1"));
             GenerateDataSection(context.AST, dataEntries);
 
             var codeLines = new List<Operation>();
@@ -67,24 +60,65 @@ namespace erc
 
             builder.AppendLine();
             builder.AppendLine(CodeSection);
-            codeLines.ForEach((l) => builder.AppendLine(l.ToString().ToLower()));
+            codeLines.ForEach((l) => builder.AppendLine(l.ToString()));
 
             builder.AppendLine(ImportSection);
+
+            var libs = new List<string>();
+            var imports = new List<string>();
+
+            foreach (var library in _importedFunctions)
+            {
+                var libName = library.Key;
+                var internalLibName = libName.Substring(0, libName.LastIndexOf('.'));
+                libs.Add(internalLibName + ",'" + libName + "'");
+
+                if (library.Value.Count > 0)
+                {
+                    var fns = new List<string>();
+                    foreach (var fnName in library.Value)
+                    {
+                        fns.Add("  " + fnName + ",'" + fnName + "'");
+                    }
+                    imports.Add("import " + internalLibName + ",\\\n" + String.Join(",\\\n", fns));
+                }
+            }
+
+            builder.AppendLine("library " + String.Join(",\\\n", libs));
+            builder.AppendLine(String.Join("\n", imports));
 
             return builder.ToString();
         }
 
+        private void AddImport(string libName, string fnName)
+        {
+            var normalized = libName.ToLower();
+
+            List<string> functions = null;
+            if (_importedFunctions.ContainsKey(normalized))
+            {
+                functions = _importedFunctions[normalized];
+            }
+            else
+            {
+                functions = new List<string>();
+                _importedFunctions.Add(normalized, functions);
+            }
+
+            functions.Add(fnName);
+        }
+
         private List<Operation> GenerateFunction(AstItem function)
         {
-            if (function.Kind != AstItemKind.FunctionDecl)
+            if (function.Kind == AstItemKind.ExternFunctionDecl)
+                return GenerateExternalFunction(function);
+            else if (function.Kind != AstItemKind.FunctionDecl)
                 throw new Exception("Given AST item must be a FunctionDecl!");
 
-            //var parameters = function.Children[0];
-            var statements = function.Children[1];
-
-            var result = new List<Operation>();
-
             var currentFunction = _context.GetFunction(function.Identifier);
+
+            var statements = function.Children[1];
+            var result = new List<Operation>();
 
             result.Add(new Operation(DataType.I64, Instruction.V_COMMENT, Operand.Label("")));
             var labelName = "fn_" + function.Identifier;
@@ -124,6 +158,15 @@ namespace erc
             _optimizer.Optimize(result);
 
             return result;
+        }
+
+        private List<Operation> GenerateExternalFunction(AstItem function)
+        {
+            var libName = function.Value as string;
+            var fnName = function.Value2 as string;
+
+            AddImport(libName, fnName);
+            return new List<Operation>();
         }
 
         private List<Operation> GenerateStatement(AstItem statement)
@@ -231,7 +274,10 @@ namespace erc
             result.AddRange(Move(DataType.I64, Operand.AsRegister(Register.RSP), Operand.AsRegister(Register.RBP)));
 
             //Finally, call function
-            result.Add(new Operation(function.ReturnType, Instruction.CALL, Operand.Label("fn_" + function.Name)));
+            if (function.IsExtern)
+                result.Add(new Operation(function.ReturnType, Instruction.CALL, Operand.Label("[" + function.ExternalName + "]")));
+            else
+                result.Add(new Operation(function.ReturnType, Instruction.CALL, Operand.Label("fn_" + function.Name)));
 
             //Remove shadow space
             //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, Operand.Label("delete shadow space")));
@@ -263,16 +309,20 @@ namespace erc
             var result = new List<Operation>();
             var function = _context.CurrentFunction;
 
-            var returnLocation = function.ReturnLocation;
-            //The return location might be in use by a parameter, so put return value somewhere else in this case.
-            if (returnLocation.Kind == OperandKind.Register && _context.RegisterPool.IsUsed(returnLocation.Register))
-                returnLocation = function.ReturnType.Accumulator;
+            if (function.ReturnType != DataType.VOID)
+            {
+                var returnLocation = function.ReturnLocation;
+                //The return location might be in use by a parameter, so put return value somewhere else in this case.
+                if (returnLocation.Kind == OperandKind.Register && _context.RegisterPool.IsUsed(returnLocation.Register))
+                    returnLocation = function.ReturnType.Accumulator;
 
-            result.AddRange(GenerateExpression(statement.Children[0], returnLocation));
+                AstItem valueExpression = statement.Children[0];
+                result.AddRange(GenerateExpression(valueExpression, returnLocation));
 
-            //If value is not in correct location, move it there
-            if (returnLocation != function.ReturnLocation)
-                result.AddRange(Move(function.ReturnType, returnLocation, function.ReturnLocation));
+                //If value is not in correct location, move it there
+                if (returnLocation != function.ReturnLocation)
+                    result.AddRange(Move(function.ReturnType, returnLocation, function.ReturnLocation));
+            }
 
             result.Add(new Operation(DataType.VOID, Instruction.RET));
 

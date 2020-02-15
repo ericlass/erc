@@ -94,7 +94,6 @@ namespace erc
             if (next.Kind == TokenKind.TypeOperator)
             {
                 returnType = ReadDataType(tokens);
-                next = tokens.Pop();
             }
 
             tokens.PopExpected(TokenKind.StatementTerminator);
@@ -158,8 +157,15 @@ namespace erc
                     //Pop "ret"
                     tokens.Pop();
 
-                    var value = ReadExpression(tokens, TokenKind.StatementTerminator);
-                    result = AstItem.Return(value.DataType, value);
+                    var current = tokens.Current();
+                    DataType valueType = DataType.VOID;
+                    AstItem valueExpression = null;
+                    if (current.Kind != TokenKind.StatementTerminator)
+                    {
+                        valueExpression = ReadExpression(tokens, TokenKind.StatementTerminator);
+                        valueType = valueExpression.DataType;
+                    }
+                    result = AstItem.Return(valueType, valueExpression);
 
                     //Pop ";"
                     tokens.Pop();

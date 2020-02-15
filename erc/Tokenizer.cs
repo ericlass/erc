@@ -161,6 +161,7 @@ namespace erc
                 iterator.Step();
                 c = iterator.Current();
             }
+            iterator.Step();
             return result;
         }
 

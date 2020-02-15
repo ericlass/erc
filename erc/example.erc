@@ -1,6 +1,6 @@
 
 fn main() {
-	boolean(false);
+	fn_calls();
 }
 
 fn boolean(p1: bool) {
@@ -15,7 +15,13 @@ fn boolean(p1: bool) {
 	}
 }
 
+fn ext("GetLastError", "Kernel32.dll") last_error(): i64;
+
 fn fn_calls() {
+	let err_code = last_error();
+	if err_code == 0 {
+		ret;
+	}
 	let kx = 5 * (7 + 3);
 	let x6 = vec(1.0, 2.0, 3.0, 4.0);
 	let k2 = add(x6, x6) + add(x6, x6);

@@ -41,6 +41,7 @@ namespace erc
         public DataType DataType { get; set; }
         public string Identifier { get; set; } //Name of variable, function etc.
         public object Value { get; set; } //Value for immediates
+        public object Value2 { get; set; } //Value for immediates
         public IOperator Operator { get; set; } //Operator
         public string SourceLine { get; set; } //Source code line, only filled for statements
         public List<AstItem> Children { get => _children; set => _children = value; }
@@ -243,7 +244,7 @@ namespace erc
         public static AstItem ExternFunctionDecl(string name, DataType returnType, List<AstItem> parameters, string libFnName, string libName)
         {
             var paramList = ParameterList(parameters);
-            return new AstItem { Kind = AstItemKind.ExternFunctionDecl, Identifier = name, DataType = returnType, Children = new List<AstItem>() { paramList, Immediate(libFnName), Immediate(libName) } };
+            return new AstItem { Kind = AstItemKind.ExternFunctionDecl, Identifier = name, DataType = returnType, Value = libName, Value2 = libFnName, Children = new List<AstItem>() { paramList } };
         }
 
         public static AstItem FunctionCall(string name, List<AstItem> parameterValues)
