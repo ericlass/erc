@@ -42,6 +42,8 @@ namespace erc
                 throw new Exception("Target location must be a register! Given: " + target);
 
             var instruction = GetInstruction(dataType);
+            if (instruction == null)
+                throw new Exception("Data type " + dataType + " does not specify an instruction for arithmetic operator: " + Figure);
 
             var result = new List<Operation>();
             switch (instruction.NumOperands)

@@ -51,6 +51,7 @@ namespace erc
         public static Instruction CMOVG = new Instruction("CMOVG", 2);
         public static Instruction CMOVGE = new Instruction("CMOVGE", 2);
 
+        public static Instruction MOVSS = new Instruction("MOVSS", 2);
         public static Instruction VMOVSS = new Instruction("VMOVSS", 2, (instr, op1, op2, op3, op4) => 
         {
             if (op1.Kind == OperandKind.Register && op2.Kind == OperandKind.Register)
@@ -59,6 +60,7 @@ namespace erc
                 return instr.Name + " " + op1.ToCode() + ", " + op2.ToCode();
         });
 
+        public static Instruction MOVSD = new Instruction("MOVSD", 2);
         public static Instruction VMOVSD = new Instruction("VMOVSD", 2, (instr, op1, op2, op3, op4) => 
         {
             if (op1.Kind == OperandKind.Register && op2.Kind == OperandKind.Register)
@@ -67,11 +69,17 @@ namespace erc
                 return instr.Name + " " + op1.ToCode() + ", " + op2.ToCode();
         });
 
+        public static Instruction MOVDQA = new Instruction("MOVDQA", 2, true);
         public static Instruction VMOVDQA = new Instruction("VMOVDQA", 2, true);
+        public static Instruction MOVDQU = new Instruction("MOVDQU", 2, true);
         public static Instruction VMOVDQU = new Instruction("VMOVDQU", 2, true);
+        public static Instruction MOVAPS = new Instruction("MOVAPS", 2, true);
         public static Instruction VMOVAPS = new Instruction("VMOVAPS", 2, true);
+        public static Instruction MOVUPS = new Instruction("MOVUPS", 2, true);
         public static Instruction VMOVUPS = new Instruction("VMOVUPS", 2, true);
+        public static Instruction MOVAPD = new Instruction("MOVAPD", 2, true);
         public static Instruction VMOVAPD = new Instruction("VMOVAPD", 2, true);
+        public static Instruction MOVUPD = new Instruction("MOVUPD", 2, true);
         public static Instruction VMOVUPD = new Instruction("VMOVUPD", 2, true);
 
         public static Instruction ADD = new Instruction("ADD", 2);
