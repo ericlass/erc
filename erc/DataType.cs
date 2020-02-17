@@ -29,7 +29,7 @@ namespace erc
         public Instruction MulInstruction { get; private set; }
         public string ImmediateSize { get; private set; }
         public Func<AstItem, string> ImmediateValueToCode { get; private set; }
-        //public bool IsReference { get; private set; }
+        public bool IsReference { get; private set; }
 
         private DataType()
         {
@@ -290,6 +290,7 @@ namespace erc
             Name = "i64",
             ByteSize = 8,
             IsVector = false,
+            IsSigned = true,
             NumElements = 1,
             OperandSize = "qword",
             ImmediateSize = "dq",
@@ -305,6 +306,8 @@ namespace erc
             DivInstruction = Instruction.IDIV,
             ImmediateValueToCode = (item) => item.Value.ToString()
         };
+
+        /*########## SIGNED FLOATS ##########*/
 
         public static DataType F32 = new DataType
         {
@@ -461,22 +464,37 @@ namespace erc
             ImmediateValueToCode = (item) => ((bool)item.Value) ? "1" : "0"
         };
 
-        /*
-        public static RawDataType Pointer(RawDataType subType)
+        public static DataType Pointer(DataType subType)
         {
             var name = "*" + subType.Name;
-            return new RawDataType
+            var newType = new DataType
             {
                 Name = name,
                 ByteSize = 8,
                 IsVector = false,
+                IsSigned = false,
+                IsReference = true,
                 NumElements = 1,
-                ElementType = subType,
-                IsReference = true
+                OperandSize = "qword",
+                ImmediateSize = "dq",
+                Group = DataTypeGroup.ScalarInteger,
+                Accumulator = Operand.AsRegister(Register.RAX),
+                TempRegister1 = Operand.AsRegister(Register.R10),
+                TempRegister2 = Operand.AsRegister(Register.R11),
+                MoveInstructionAligned = Instruction.MOV,
+                MoveInstructionUnaligned = Instruction.MOV,
+                AddInstruction = Instruction.ADD,
+                SubInstruction = Instruction.SUB,
+                MulInstruction = Instruction.MUL,
+                DivInstruction = Instruction.DIV,
+                ImmediateValueToCode = (item) => item.Value.ToString()
             };
+
+            DataType.GetAllValues().Add(newType);
+            return newType;
         }
 
-        public static RawDataType Array(RawDataType subType)
+        /*public static RawDataType Array(RawDataType subType)
         {
             var name = subType.Name + "[]";
             return new RawDataType
