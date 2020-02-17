@@ -35,9 +35,9 @@ namespace erc
                 function.ReturnLocation = DataType.BOOL.Accumulator;
             else if (function.ReturnType == DataType.F32 || function.ReturnType == DataType.F64)
                 function.ReturnLocation = Operand.AsRegister(Register.XMM0);
-            else if (function.ReturnType == DataType.IVEC2Q || function.ReturnType == DataType.VEC4F || function.ReturnType == DataType.VEC2D)
+            else if (function.ReturnType == DataType.VEC4F || function.ReturnType == DataType.VEC2D)
                 function.ReturnLocation = Operand.AsRegister(Register.XMM0);
-            else if (function.ReturnType == DataType.IVEC4Q || function.ReturnType == DataType.VEC8F || function.ReturnType == DataType.VEC4D)
+            else if (function.ReturnType == DataType.VEC8F || function.ReturnType == DataType.VEC4D)
                 function.ReturnLocation = Operand.AsRegister(Register.YMM0);
             else if (function.ReturnType != DataType.VOID)
                 throw new Exception("Unknown function return type: " + function.ReturnType);

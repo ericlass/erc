@@ -9,8 +9,6 @@ namespace erc
                  DataType.I64,
                  DataType.F32,
                  DataType.F64,
-                 DataType.IVEC2Q,
-                 DataType.IVEC4Q,
                  DataType.VEC4F,
                  DataType.VEC8F,
                  DataType.VEC2D,

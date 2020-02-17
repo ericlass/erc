@@ -142,6 +142,21 @@ namespace erc
         public static Instruction MULSD = new Instruction("MULSD", 2);
         public static Instruction DIVSD = new Instruction("DIVSD", 2);
 
+        public static Instruction PADDB = new Instruction("PADDB", 2);
+        public static Instruction PSUBB = new Instruction("PSUBB", 2);
+        public static Instruction PMULB = new Instruction("PMULB", 2);
+        public static Instruction PDIVB = new Instruction("PDIVB", 2);
+
+        public static Instruction PADDW = new Instruction("PADDW", 2);
+        public static Instruction PSUBW = new Instruction("PSUBW", 2);
+        public static Instruction PMULW = new Instruction("PMULW", 2);
+        public static Instruction PDIVW = new Instruction("PDIVW", 2);
+
+        public static Instruction PADDD = new Instruction("PADDD", 2);
+        public static Instruction PSUBD = new Instruction("PSUBD", 2);
+        public static Instruction PMULD = new Instruction("PMULD", 2);
+        public static Instruction PDIVD = new Instruction("PDIVD", 2);
+
         public static Instruction PADDQ = new Instruction("PADDQ", 2);
         public static Instruction PSUBQ = new Instruction("PSUBQ", 2);
         public static Instruction PMULQ = new Instruction("PMULQ", 2);
@@ -175,6 +190,21 @@ namespace erc
         public static Instruction VSUBSD = new Instruction("VSUBSD", 3);
         public static Instruction VMULSD = new Instruction("VMULSD", 3);
         public static Instruction VDIVSD = new Instruction("VDIVSD", 3);
+
+        public static Instruction VPADDB = new Instruction("VPADDB", 3);
+        public static Instruction VPSUBB = new Instruction("VPSUBB", 3);
+        public static Instruction VPMULB = new Instruction("VPMULB", 3);
+        public static Instruction VPDIVB = new Instruction("VPDIVB", 3);
+
+        public static Instruction VPADDW = new Instruction("VPADDW", 3);
+        public static Instruction VPSUBW = new Instruction("VPSUBW", 3);
+        public static Instruction VPMULW = new Instruction("VPMULW", 3);
+        public static Instruction VPDIVW = new Instruction("VPDIVW", 3);
+
+        public static Instruction VPADDD = new Instruction("VPADDD", 3);
+        public static Instruction VPSUBD = new Instruction("VPSUBD", 3);
+        public static Instruction VPMULD = new Instruction("VPMULD", 3);
+        public static Instruction VPDIVD = new Instruction("VPDIVD", 3);
 
         public static Instruction VPADDQ = new Instruction("VPADDQ", 3);
         public static Instruction VPSUBQ = new Instruction("VPSUBQ", 3);

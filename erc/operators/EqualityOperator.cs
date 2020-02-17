@@ -86,10 +86,6 @@ namespace erc
                     GenerateScalarFloatComparison(dataType, target, operand1, operand2, result);
                     break;
 
-                case DataTypeGroup.VectorInteger:
-                    GenerateVectorIntComparison(dataType, target, operand1, operand2, result);
-                    break;
-
                 case DataTypeGroup.VectorFloat:
                     GenerateVectorFloatComparison(dataType, target, operand1, operand2, result);
                     break;
@@ -115,41 +111,6 @@ namespace erc
                 throw new Exception("Expected scalar float type, got: " + dataType);
 
             result.Add(new Operation(dataType, instruction, operand1, operand2));
-        }
-
-        private void GenerateVectorIntComparison(DataType dataType, Operand target, Operand operand1, Operand operand2, List<Operation> result)
-        {
-            Instruction cmpInstr;
-            Instruction maskInstr;
-
-            if (dataType == DataType.IVEC2Q)
-            {
-                cmpInstr = Instruction.PCMPEQQ;
-                maskInstr = Instruction.MOVMSKPS;
-            }
-            else if (dataType == DataType.IVEC4Q)
-            {
-                cmpInstr = Instruction.VPCMPEQQ;
-                maskInstr = Instruction.VMOVMSKPS;
-            }
-            else
-                throw new Exception("Expected vector integer type, got: " + dataType);
-
-            if (cmpInstr.NumOperands == 2)
-            {
-                //Need to move operand1 to accumulator so it is not destroyed
-                result.AddRange(CodeGenerator.Move(dataType, operand1, dataType.Accumulator));
-                result.Add(new Operation(dataType, cmpInstr, dataType.Accumulator, operand2, Operand.Immediate(0)));
-            }
-            else if (cmpInstr.NumOperands == 3)
-            {
-                result.Add(new Operation(dataType, cmpInstr, dataType.Accumulator, operand1, operand2, Operand.Immediate(0)));
-            }
-
-            result.Add(new Operation(dataType, maskInstr, DataType.I64.Accumulator, dataType.Accumulator));
-
-            long equalsValue = (long)(Math.Pow(2.0, dataType.NumElements)) - 1;
-            result.Add(new Operation(dataType, Instruction.CMP, DataType.I64.Accumulator, Operand.Immediate(equalsValue)));
         }
 
         private void GenerateVectorFloatComparison(DataType dataType, Operand target, Operand operand1, Operand operand2, List<Operation> result)

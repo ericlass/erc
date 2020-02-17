@@ -12,6 +12,7 @@ namespace erc
         public string Name { get; private set; }
         public int ByteSize { get; private set; }
         public bool IsVector { get; private set; }
+        public bool IsSigned { get; private set; }
         public int NumElements { get; private set; }
         public string OperandSize { get; private set; }
         public DataType ElementType { get; private set; }
@@ -44,14 +45,7 @@ namespace erc
 
         public static DataType GetVectorType(DataType dataType, long size)
         {
-            if (dataType == I64)
-            {
-                if (size == 2)
-                    return IVEC2Q;
-                else if (size == 4)
-                    return IVEC4Q;
-            }
-            else if (dataType == F32)
+            if (dataType == F32)
             {
                 if (size == 4)
                     return VEC4F;
@@ -133,6 +127,164 @@ namespace erc
             Name = "void"
         };
 
+        /*########## UNSIGNED INTEGERS ##########*/
+
+        public static DataType U8 = new DataType
+        {
+            Name = "u8",
+            ByteSize = 1,
+            IsVector = false,
+            IsSigned = false,
+            NumElements = 1,
+            OperandSize = "byte",
+            ImmediateSize = "db",
+            Group = DataTypeGroup.ScalarInteger,
+            Accumulator = Operand.AsRegister(Register.AL),
+            TempRegister1 = Operand.AsRegister(Register.R10B),
+            TempRegister2 = Operand.AsRegister(Register.R11B),
+            MoveInstructionAligned = Instruction.MOV,
+            MoveInstructionUnaligned = Instruction.MOV,
+            AddInstruction = Instruction.ADD,
+            SubInstruction = Instruction.SUB,
+            MulInstruction = Instruction.MUL,
+            DivInstruction = Instruction.DIV,
+            ImmediateValueToCode = (item) => item.Value.ToString()
+        };
+
+        public static DataType U16 = new DataType
+        {
+            Name = "u16",
+            ByteSize = 2,
+            IsVector = false,
+            IsSigned = false,
+            NumElements = 1,
+            OperandSize = "word",
+            ImmediateSize = "dw",
+            Group = DataTypeGroup.ScalarInteger,
+            Accumulator = Operand.AsRegister(Register.AX),
+            TempRegister1 = Operand.AsRegister(Register.R10W),
+            TempRegister2 = Operand.AsRegister(Register.R11W),
+            MoveInstructionAligned = Instruction.MOV,
+            MoveInstructionUnaligned = Instruction.MOV,
+            AddInstruction = Instruction.ADD,
+            SubInstruction = Instruction.SUB,
+            MulInstruction = Instruction.MUL,
+            DivInstruction = Instruction.DIV,
+            ImmediateValueToCode = (item) => item.Value.ToString()
+        };
+
+        public static DataType U32 = new DataType
+        {
+            Name = "u32",
+            ByteSize = 4,
+            IsVector = false,
+            IsSigned = false,
+            NumElements = 1,
+            OperandSize = "dword",
+            ImmediateSize = "dd",
+            Group = DataTypeGroup.ScalarInteger,
+            Accumulator = Operand.AsRegister(Register.EAX),
+            TempRegister1 = Operand.AsRegister(Register.R10D),
+            TempRegister2 = Operand.AsRegister(Register.R11D),
+            MoveInstructionAligned = Instruction.MOV,
+            MoveInstructionUnaligned = Instruction.MOV,
+            AddInstruction = Instruction.ADD,
+            SubInstruction = Instruction.SUB,
+            MulInstruction = Instruction.MUL,
+            DivInstruction = Instruction.DIV,
+            ImmediateValueToCode = (item) => item.Value.ToString()
+        };
+
+        public static DataType U64 = new DataType
+        {
+            Name = "u64",
+            ByteSize = 8,
+            IsVector = false,
+            IsSigned = false,
+            NumElements = 1,
+            OperandSize = "qword",
+            ImmediateSize = "dq",
+            Group = DataTypeGroup.ScalarInteger,
+            Accumulator = Operand.AsRegister(Register.RAX),
+            TempRegister1 = Operand.AsRegister(Register.R10),
+            TempRegister2 = Operand.AsRegister(Register.R11),
+            MoveInstructionAligned = Instruction.MOV,
+            MoveInstructionUnaligned = Instruction.MOV,
+            AddInstruction = Instruction.ADD,
+            SubInstruction = Instruction.SUB,
+            MulInstruction = Instruction.MUL,
+            DivInstruction = Instruction.DIV,
+            ImmediateValueToCode = (item) => item.Value.ToString()
+        };
+
+        /*########## SIGNED INTEGERS ##########*/
+
+        public static DataType I8 = new DataType
+        {
+            Name = "i8",
+            ByteSize = 1,
+            IsVector = false,
+            IsSigned = true,
+            NumElements = 1,
+            OperandSize = "byte",
+            ImmediateSize = "db",
+            Group = DataTypeGroup.ScalarInteger,
+            Accumulator = Operand.AsRegister(Register.AL),
+            TempRegister1 = Operand.AsRegister(Register.R10B),
+            TempRegister2 = Operand.AsRegister(Register.R11B),
+            MoveInstructionAligned = Instruction.MOV,
+            MoveInstructionUnaligned = Instruction.MOV,
+            AddInstruction = Instruction.ADD,
+            SubInstruction = Instruction.SUB,
+            MulInstruction = Instruction.IMUL,
+            DivInstruction = Instruction.IDIV,
+            ImmediateValueToCode = (item) => item.Value.ToString()
+        };
+
+        public static DataType I16 = new DataType
+        {
+            Name = "i16",
+            ByteSize = 2,
+            IsVector = false,
+            IsSigned = true,
+            NumElements = 1,
+            OperandSize = "word",
+            ImmediateSize = "dw",
+            Group = DataTypeGroup.ScalarInteger,
+            Accumulator = Operand.AsRegister(Register.AX),
+            TempRegister1 = Operand.AsRegister(Register.R10W),
+            TempRegister2 = Operand.AsRegister(Register.R11W),
+            MoveInstructionAligned = Instruction.MOV,
+            MoveInstructionUnaligned = Instruction.MOV,
+            AddInstruction = Instruction.ADD,
+            SubInstruction = Instruction.SUB,
+            MulInstruction = Instruction.IMUL,
+            DivInstruction = Instruction.IDIV,
+            ImmediateValueToCode = (item) => item.Value.ToString()
+        };
+
+        public static DataType I32 = new DataType
+        {
+            Name = "i32",
+            ByteSize = 4,
+            IsVector = false,
+            IsSigned = true,
+            NumElements = 1,
+            OperandSize = "dword",
+            ImmediateSize = "dd",
+            Group = DataTypeGroup.ScalarInteger,
+            Accumulator = Operand.AsRegister(Register.EAX),
+            TempRegister1 = Operand.AsRegister(Register.R10D),
+            TempRegister2 = Operand.AsRegister(Register.R11D),
+            MoveInstructionAligned = Instruction.MOV,
+            MoveInstructionUnaligned = Instruction.MOV,
+            AddInstruction = Instruction.ADD,
+            SubInstruction = Instruction.SUB,
+            MulInstruction = Instruction.IMUL,
+            DivInstruction = Instruction.IDIV,
+            ImmediateValueToCode = (item) => item.Value.ToString()
+        };
+
         public static DataType I64 = new DataType
         {
             Name = "i64",
@@ -196,51 +348,7 @@ namespace erc
             ImmediateValueToCode = (item) => ((double)item.Value).ToCode()
         };
 
-        public static DataType IVEC2Q = new DataType
-        {
-            Name = "ivec2q",
-            ByteSize = 16,
-            IsVector = true,
-            NumElements = 2,
-            ElementType = I64,
-            OperandSize = "dqword",
-            ImmediateSize = "dq",
-            Group = DataTypeGroup.VectorInteger,
-            Accumulator = Operand.AsRegister(Register.XMM4),
-            TempRegister1 = Operand.AsRegister(Register.XMM5),
-            TempRegister2 = Operand.AsRegister(Register.XMM6),
-            ConstructionRegister = Operand.AsRegister(Register.XMM7),
-            MoveInstructionAligned = Instruction.MOVDQA,
-            MoveInstructionUnaligned = Instruction.MOVDQU,
-            AddInstruction = Instruction.PADDQ,
-            SubInstruction = Instruction.PSUBQ,
-            MulInstruction = Instruction.PMULQ,
-            DivInstruction = Instruction.PDIVQ,
-            ImmediateValueToCode = (item) => String.Join(",", item.Children.ConvertAll<string>((a) => a.Value.ToString()))
-        };
-
-        public static DataType IVEC4Q = new DataType
-        {
-            Name = "ivec4q",
-            ByteSize = 32,
-            IsVector = true,
-            NumElements = 4,
-            ElementType = I64,
-            OperandSize = "qqword",
-            ImmediateSize = "dq",
-            Group = DataTypeGroup.VectorInteger,
-            Accumulator = Operand.AsRegister(Register.YMM4),
-            TempRegister1 = Operand.AsRegister(Register.YMM5),
-            TempRegister2 = Operand.AsRegister(Register.YMM6),
-            ConstructionRegister = Operand.AsRegister(Register.YMM7),
-            MoveInstructionAligned = Instruction.VMOVDQA,
-            MoveInstructionUnaligned = Instruction.VMOVDQU,
-            AddInstruction = Instruction.VPADDQ,
-            SubInstruction = Instruction.VPSUBQ,
-            MulInstruction = Instruction.VPMULQ,
-            DivInstruction = Instruction.VPDIVQ,
-            ImmediateValueToCode = (item) => String.Join(",", item.Children.ConvertAll<string>((a) => a.Value.ToString()))
-        };
+        /*########## FLOAT VECTORS ##########*/
 
         public static DataType VEC4F = new DataType
         {
@@ -333,6 +441,8 @@ namespace erc
             DivInstruction = Instruction.VDIVPD,
             ImmediateValueToCode = (item) => String.Join(",", item.Children.ConvertAll<string>((a) => ((double)a.Value).ToCode()))
         };
+
+        /*########## OTHERS ##########*/
 
         public static DataType BOOL = new DataType
         {

@@ -42,9 +42,6 @@ fn types()
 	let k = e * d;
 	k = k + 2.0;
 
-	let x1 = vec(1, 2);
-	let x2 = vec(1, 2, 3, 4);
-
 	let x3 = vec(1.0f, 2.0f, 3.0f, 4.0f);
 	let x4 = vec(1.0f, 2.0f, 3.0f, 4.0f, 1.0f, 2.0f, 3.0f, 4.0f);
 
