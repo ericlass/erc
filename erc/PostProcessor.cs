@@ -54,7 +54,12 @@ namespace erc
             var alreadyFound = new HashSet<string>();
             for (int i = statements.Count - 1; i >= 0; i--)
             {
-                FindVariables(statements[i], varNames);
+                var statement = statements[i];
+                //TODO: Does not work if variable is declared in parent scope
+                /*if (CreatesNewScope(statement))
+                    CreateVariableScopeNodes(statement);*/
+
+                FindVariables(statement, varNames);
                 foreach (var varName in varNames)
                 {
                     if (!alreadyFound.Contains(varName))
@@ -66,6 +71,16 @@ namespace erc
                 varNames.Clear();
             }
         }
+
+        /// <summary>
+        /// Determines if the given AST item creates a new scope or not.
+        /// </summary>
+        /// <param name="item">The item to check.</param>
+        private bool CreatesNewScope(AstItem item)
+        {
+            return item.Kind == AstItemKind.If;
+        }
+
 
         /// <summary>
         /// Recursily find all mentions of variables in the given AST item and it's children.

@@ -208,147 +208,27 @@ namespace erc
         {
             if (expression.Kind == AstItemKind.Immediate)
             {
-                var valueStr = (string)expression.Value;
-                var dataType = FindImmediateType(valueStr);
-                var value = ParseImmediate(valueStr, dataType);
-
-                expression.Value = value;
-                expression.DataType = dataType;
+                CheckImmediate(expression);
             }
             else if (expression.Kind == AstItemKind.Vector)
             {
-                if (expression.Identifier == "vec")
-                {
-                    //Vector construction with type-inference
-                    DataType subType = null;
-                    foreach (var child in expression.Children)
-                    {
-                        var childType = CheckExpression(child);
-
-                        if (subType == null)
-                        {
-                            subType = childType;
-                            if (subType.IsVector)
-                                throw new Exception("Vectors of vectors are not allowed!");
-                        }
-                        else
-                        {
-                            if (subType != childType)
-                                throw new Exception("All items in a vector have to have the same type! Expected: " + subType + ", found: " + childType);
-                        }
-                    }
-
-                    var vectorSize = expression.Children.Count;
-                    var vectorType = DataType.GetVectorType(subType, vectorSize);
-
-                    if (vectorType == DataType.VOID)
-                        throw new Exception("Vectors of " + subType + " cannot have length " + vectorSize);
-
-                    expression.DataType = vectorType;
-                }
-                else
-                {
-                    //Vector construction with specific vector type
-                    var vectorType = DataType.FindByName(expression.Identifier);
-                    if (vectorType == null)
-                        throw new Exception("Unknown vector type: " + expression.Identifier);
-
-                    if (!vectorType.IsVector)
-                        throw new Exception("Expected vector type, got: " + vectorType);
-
-                    if (vectorType.NumElements != expression.Children.Count)
-                        throw new Exception("Vector type " + vectorType.Name + " requires " + vectorType.NumElements + " elements, got " + expression.Children.Count);
-
-                    foreach (var child in expression.Children)
-                    {
-                        var childType = CheckExpression(child);
-                        if (childType != vectorType.ElementType)
-                            throw new Exception("Invalid data type in vector constructor for " + vectorType.Name + "! Expected: " + vectorType.ElementType + ", found: " + childType);
-                    }
-
-                    expression.DataType = vectorType;
-                }
+                CheckVector(expression);
             }
             else if (expression.Kind == AstItemKind.Variable)
             {
-                var variable = _context.GetSymbol(expression.Identifier);
-                if (variable == null)
-                    throw new Exception("Undeclared variable: " + expression.Identifier);
-
-                expression.DataType = variable.DataType;
+                CheckVariable(expression);
             }
             else if (expression.Kind == AstItemKind.FunctionCall)
             {
-                var function = _context.GetFunction(expression.Identifier);
-                if (function == null)
-                    throw new Exception("Undeclared function: " + expression.Identifier);
-
-                if (expression.Children.Count != function.Parameters.Count)
-                    throw new Exception("Invalid number of arguments to function '" + function.Name + "'! Expected: " + function.Parameters.Count + ", given: " + expression.Children.Count);
-
-                for (int i = 0; i < expression.Children.Count; i++)
-                {
-                    var paramExpression = expression.Children[i];
-                    var parameter = function.Parameters[i];
-
-                    var dataType = CheckExpression(paramExpression);
-                    if (dataType != parameter.DataType)
-                        throw new Exception("Invalid data type for parameter " + parameter + "! Expected: " + parameter.DataType + ", found: " + dataType);
-
-                    paramExpression.DataType = dataType;
-                }
-
-                expression.DataType = function.ReturnType;
+                CheckFunctionCall(expression);
             }
             else if (expression.Kind == AstItemKind.Expression)
             {
-                //Create copy of list so original is not modified
-                var terms = new List<AstItem>(expression.Children);
-
-                DataType expressionFinalType = null;
-                for (int i = 0; i < terms.Count; i++)
-                {
-                    var item = terms[i];
-                    if (item.Kind == AstItemKind.Operator)
-                    {
-                        var operand1 = terms[i - 2];
-                        var operand2 = terms[i - 1];
-
-                        //Get data type of operand1
-                        DataType op1Type;
-                        if (operand1.Kind == AstItemKind.Operator)
-                            op1Type = operand1.DataType;
-                        else
-                            op1Type = CheckExpression(operand1);
-
-                        //Get data type of operand2
-                        DataType op2Type;
-                        if (operand2.Kind == AstItemKind.Operator)
-                            op2Type = operand2.DataType;
-                        else
-                            op2Type = CheckExpression(operand2);
-
-                        //Check if operand types are valid
-                        item.Operator.ValidateOperandTypes(op1Type, op2Type);
-
-                        //Set data type on operator
-                        item.DataType = item.Operator.GetReturnType(op1Type, op2Type);
-
-                        //Overwritten in every iteration. The last operator defines the final data type.
-                        expressionFinalType = item.DataType;
-
-                        //Remove the two operands from the expression, do not remove the current operator
-                        //as it is required to know later that a value must be popped from stack
-                        terms.RemoveAt(i - 2);
-                        terms.RemoveAt(i - 2);
-
-                        //-2 is correct because next iteration of loop will increment i
-                        //anyways and it will then point to the next item in the expression.
-                        i -= 2;
-                    }
-                }
-
-                expression.DataType = expressionFinalType;
+                CheckExpressionItem(expression);
+            }
+            else if (expression.Kind == AstItemKind.NewPointer)
+            {
+                CheckNewPointer(expression);
             }
             else
                 throw new Exception("Unsupported expression item: " + expression);
@@ -359,15 +239,192 @@ namespace erc
             return expression.DataType;
         }
 
+        private void CheckNewPointer(AstItem expression)
+        {
+            if (!expression.DataType.IsPointer)
+                throw new Exception("Datatype for new pointer node must be reference! Found in: " + expression);
+
+            DataType elementType = expression.DataType.ElementType;
+            if (elementType == null)
+                throw new Exception("Pointer type must have element type != null! Found in: " + expression);
+
+            if (elementType.IsPointer)
+                throw new Exception("Cannot have pointer to pointer! Found in: " + expression);
+
+            var amountValue = expression.Value;
+            if (amountValue == null)
+                throw new Exception("No amount given for new operator! Must be non-null.");
+
+            if (!(amountValue is string))
+                throw new Exception("Amount for new operator is expected to be string! Got: " + amountValue.GetType().Name);
+
+            var amountStr = amountValue as string;
+            var amountDataType = FindImmediateType(amountStr);
+            if (amountDataType.Group != DataTypeGroup.ScalarInteger)
+                throw new Exception("Amount value for new pointer must be integer type! Given: " + amountDataType);
+
+            var amount = ParseNumber(amountStr, amountDataType);
+            expression.Value = amount;
+        }
+
+        private void CheckExpressionItem(AstItem expression)
+        {
+            //Create copy of list so original is not modified
+            var terms = new List<AstItem>(expression.Children);
+
+            DataType expressionFinalType = null;
+            for (int i = 0; i < terms.Count; i++)
+            {
+                var item = terms[i];
+                if (item.Kind == AstItemKind.Operator)
+                {
+                    var operand1 = terms[i - 2];
+                    var operand2 = terms[i - 1];
+
+                    //Get data type of operand1
+                    DataType op1Type;
+                    if (operand1.Kind == AstItemKind.Operator)
+                        op1Type = operand1.DataType;
+                    else
+                        op1Type = CheckExpression(operand1);
+
+                    //Get data type of operand2
+                    DataType op2Type;
+                    if (operand2.Kind == AstItemKind.Operator)
+                        op2Type = operand2.DataType;
+                    else
+                        op2Type = CheckExpression(operand2);
+
+                    //Check if operand types are valid
+                    item.Operator.ValidateOperandTypes(op1Type, op2Type);
+
+                    //Set data type on operator
+                    item.DataType = item.Operator.GetReturnType(op1Type, op2Type);
+
+                    //Overwritten in every iteration. The last operator defines the final data type.
+                    expressionFinalType = item.DataType;
+
+                    //Remove the two operands from the expression, do not remove the current operator
+                    //as it is required to know later that a value must be popped from stack
+                    terms.RemoveAt(i - 2);
+                    terms.RemoveAt(i - 2);
+
+                    //-2 is correct because next iteration of loop will increment i
+                    //anyways and it will then point to the next item in the expression.
+                    i -= 2;
+                }
+            }
+
+            expression.DataType = expressionFinalType;
+        }
+
+        private void CheckFunctionCall(AstItem expression)
+        {
+            var function = _context.GetFunction(expression.Identifier);
+            if (function == null)
+                throw new Exception("Undeclared function: " + expression.Identifier);
+
+            if (expression.Children.Count != function.Parameters.Count)
+                throw new Exception("Invalid number of arguments to function '" + function.Name + "'! Expected: " + function.Parameters.Count + ", given: " + expression.Children.Count);
+
+            for (int i = 0; i < expression.Children.Count; i++)
+            {
+                var paramExpression = expression.Children[i];
+                var parameter = function.Parameters[i];
+
+                var dataType = CheckExpression(paramExpression);
+                if (dataType != parameter.DataType)
+                    throw new Exception("Invalid data type for parameter " + parameter + "! Expected: " + parameter.DataType + ", found: " + dataType);
+
+                paramExpression.DataType = dataType;
+            }
+
+            expression.DataType = function.ReturnType;
+        }
+
+        private void CheckVariable(AstItem expression)
+        {
+            var variable = _context.GetSymbol(expression.Identifier);
+            if (variable == null)
+                throw new Exception("Undeclared variable: " + expression.Identifier);
+
+            expression.DataType = variable.DataType;
+        }
+
+        private void CheckVector(AstItem expression)
+        {
+            if (expression.Identifier == "vec")
+            {
+                //Vector construction with type-inference
+                DataType subType = null;
+                foreach (var child in expression.Children)
+                {
+                    var childType = CheckExpression(child);
+
+                    if (subType == null)
+                    {
+                        subType = childType;
+                        if (subType.IsVector)
+                            throw new Exception("Vectors of vectors are not allowed!");
+                    }
+                    else
+                    {
+                        if (subType != childType)
+                            throw new Exception("All items in a vector have to have the same type! Expected: " + subType + ", found: " + childType);
+                    }
+                }
+
+                var vectorSize = expression.Children.Count;
+                var vectorType = DataType.GetVectorType(subType, vectorSize);
+
+                if (vectorType == DataType.VOID)
+                    throw new Exception("Vectors of " + subType + " cannot have length " + vectorSize);
+
+                expression.DataType = vectorType;
+            }
+            else
+            {
+                //Vector construction with specific vector type
+                var vectorType = DataType.FindByName(expression.Identifier);
+                if (vectorType == null)
+                    throw new Exception("Unknown vector type: " + expression.Identifier);
+
+                if (!vectorType.IsVector)
+                    throw new Exception("Expected vector type, got: " + vectorType);
+
+                if (vectorType.NumElements != expression.Children.Count)
+                    throw new Exception("Vector type " + vectorType.Name + " requires " + vectorType.NumElements + " elements, got " + expression.Children.Count);
+
+                foreach (var child in expression.Children)
+                {
+                    var childType = CheckExpression(child);
+                    if (childType != vectorType.ElementType)
+                        throw new Exception("Invalid data type in vector constructor for " + vectorType.Name + "! Expected: " + vectorType.ElementType + ", found: " + childType);
+                }
+
+                expression.DataType = vectorType;
+            }
+        }
+
+        private void CheckImmediate(AstItem expression)
+        {
+            var valueStr = (string)expression.Value;
+            var dataType = FindImmediateType(valueStr);
+            var value = ParseImmediate(valueStr, dataType);
+
+            expression.Value = value;
+            expression.DataType = dataType;
+        }
+
         private DataType FindImmediateType(string value)
         {
             if (value == "true" || value == "false")
                 return DataType.BOOL;
 
-            return FindNumerDataType(value);
+            return FindNumberDataType(value);
         }
 
-        private DataType FindNumerDataType(string value)
+        private DataType FindNumberDataType(string value)
         {
             if (!value.Contains("."))
                 return DataType.I64;

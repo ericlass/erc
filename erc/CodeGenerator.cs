@@ -16,6 +16,8 @@ namespace erc
         private const string CodeSection =
             "section '.text' code readable executable\n" +
             "start:\n" +
+            "call [GetProcessHeap]\n" +
+            "mov [erc_process_heap], rax\n" +
             "push rbp\n" +
             "mov rbp, rsp\n" +
             "call fn_main\n" +
@@ -25,6 +27,8 @@ namespace erc
 
         private const string ImportSection =
             "\nsection '.idata' import data readable writeable\n";
+
+        private const string ProcessHeapImmName = "erc_process_heap";
 
         private Dictionary<string, List<string>> _importedFunctions = new Dictionary<string, List<string>>();
 
@@ -39,8 +43,14 @@ namespace erc
 
             InitInstructionMap();
             AddImport("Kernel32.dll", "ExitProcess");
+            AddImport("Kernel32.dll", "GetProcessHeap");
+            AddImport("Kernel32.dll", "HeapAlloc");
+            AddImport("Kernel32.dll", "HeapFree");
 
             var dataEntries = new List<Tuple<int, string>>();
+            dataEntries.Add(new Tuple<int, string>(DataType.BOOL.ByteSize, "imm_bool_false " + DataType.BOOL.ImmediateSize + " 0"));
+            dataEntries.Add(new Tuple<int, string>(DataType.BOOL.ByteSize, "imm_bool_true " + DataType.BOOL.ImmediateSize + " 1"));
+            dataEntries.Add(new Tuple<int, string>(DataType.U64.ByteSize, ProcessHeapImmName + " " + DataType.U64.ImmediateSize + " 0"));
             GenerateDataSection(context.AST, dataEntries);
 
             var codeLines = new List<Operation>();
@@ -409,6 +419,9 @@ namespace erc
                 case AstItemKind.FunctionCall:
                     return GenerateFunctionCall(expression, targetLocation);
 
+                case AstItemKind.NewPointer:
+                    return GenerateNewPointer(expression, targetLocation);
+
                 case AstItemKind.Expression:
                     var ops = GenerateExpressionOperations(expression.Children, targetLocation);
                     CollapsePushPop(ops);
@@ -419,6 +432,40 @@ namespace erc
                 default:
                     return new List<Operation>();
             }
+        }
+
+        private List<Operation> GenerateNewPointer(AstItem expression, Operand targetLocation)
+        {
+            /*
+            mov rcx, [procHeap]
+            xor rdx, rdx
+            mov r8, 10
+            call [HeapAlloc]
+            mov [heapMem], rax   
+            */
+
+            var result = new List<Operation>();
+            var bytesToReserve = (long)(expression.Value) * expression.DataType.ElementType.ByteSize;
+
+            //Set parameters
+            result.AddRange(Move(expression.DataType, Operand.DataSection(ProcessHeapImmName), Operand.AsRegister(Register.RCX)));
+            result.Add(new Operation(expression.DataType, Instruction.XOR, Operand.AsRegister(Register.RDX), Operand.AsRegister(Register.RDX)));
+            result.AddRange(Move(expression.DataType, Operand.Immediate(bytesToReserve), Operand.AsRegister(Register.R8)));
+
+            //Reserve shadow space
+            result.Add(new Operation(DataType.I64, Instruction.SUB_IMM, Operand.AsRegister(Register.RSP), Operand.Immediate(32)));
+            result.AddRange(Move(DataType.I64, Operand.AsRegister(Register.RSP), Operand.AsRegister(Register.RBP)));
+
+            //Call function
+            result.Add(new Operation(expression.DataType, Instruction.CALL, Operand.Label("[HeapAlloc]")));
+
+            //Remove shadow space
+            result.Add(new Operation(DataType.I64, Instruction.ADD_IMM, Operand.AsRegister(Register.RSP), Operand.Immediate(32)));
+
+            //Move result to target
+            result.AddRange(Move(expression.DataType, Operand.AsRegister(Register.RAX), targetLocation));
+
+            return result;
         }
 
         private List<Operation> GenerateExpressionOperations(List<AstItem> items, Operand targetLocation)
@@ -727,9 +774,6 @@ namespace erc
 
         private void GenerateDataSection(AstItem item, List<Tuple<int, string>> entries)
         {
-            entries.Add(new Tuple<int, string>(DataType.BOOL.ByteSize, "imm_bool_false " + DataType.BOOL.ImmediateSize + " 0"));
-            entries.Add(new Tuple<int, string>(DataType.BOOL.ByteSize, "imm_bool_true " + DataType.BOOL.ImmediateSize + " 1"));
-
             if (!item.DataGenerated)
             {
                 if (item.Kind == AstItemKind.Immediate)

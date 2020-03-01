@@ -29,7 +29,7 @@ namespace erc
 
         private void AssignFunctionReturnLocation(Function function)
         {
-            if (function.ReturnType == DataType.I64)
+            if (function.ReturnType == DataType.I64 || function.ReturnType.IsPointer)
                 function.ReturnLocation = Operand.AsRegister(Register.RAX);
             else if (function.ReturnType == DataType.BOOL)
                 function.ReturnLocation = DataType.BOOL.Accumulator;
@@ -49,7 +49,7 @@ namespace erc
             InitParamRegisters();
         	foreach (var parameter in function.Parameters)
             {
-                if (parameter.DataType == DataType.I64 || parameter.DataType == DataType.BOOL)
+                if (parameter.DataType == DataType.I64 || parameter.DataType == DataType.BOOL || parameter.DataType.IsPointer)
                 {
                     if (_freeParameterRRegisters.Count > 0)
                     {
@@ -111,7 +111,7 @@ namespace erc
             }
         }
 
-        private void AssignLocation(Symbol variable)
+        /*private void AssignLocation(Symbol variable)
         {
             var dataType = variable.DataType;
             var register = GetMatchingRegister(dataType);
@@ -185,7 +185,7 @@ namespace erc
                 //Nothing to do here. Stack does not need to be cleaned up, just leave it as it is
                 //Console.WriteLine("Freeing variable " + variable.Name + " from stack offset " + location.Address);
             }
-        }
+        }*/
 
         private void InitRegisters()
         {

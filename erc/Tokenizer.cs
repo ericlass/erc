@@ -27,7 +27,9 @@ namespace erc
             ["in"] = TokenKind.In,
             ["to"] = TokenKind.To,
             ["for"] = TokenKind.For,
-            ["ext"] = TokenKind.Ext
+            ["ext"] = TokenKind.Ext,
+            ["new"] = TokenKind.New,
+            ["del"] = TokenKind.Del,
         };
 
         private Dictionary<char, TokenKind> _specialCharacterTypes = new Dictionary<char, TokenKind>()

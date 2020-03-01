@@ -27,6 +27,8 @@ namespace erc
         In,
         To,
         Ext,
-        String
+        String,
+        New,
+        Del
     }
 }

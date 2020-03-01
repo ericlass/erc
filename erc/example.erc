@@ -1,6 +1,11 @@
 
 fn main() {
-	fn_calls();
+	pointers();
+}
+
+fn pointers() {
+	let p = new u64;
+	let p2 = new f32(10);
 }
 
 fn boolean(p1: bool) {

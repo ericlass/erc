@@ -29,7 +29,7 @@ namespace erc
         public Instruction MulInstruction { get; private set; }
         public string ImmediateSize { get; private set; }
         public Func<AstItem, string> ImmediateValueToCode { get; private set; }
-        public bool IsReference { get; private set; }
+        public bool IsPointer { get; private set; }
 
         private DataType()
         {
@@ -473,7 +473,8 @@ namespace erc
                 ByteSize = 8,
                 IsVector = false,
                 IsSigned = false,
-                IsReference = true,
+                IsPointer = true,
+                ElementType = subType,
                 NumElements = 1,
                 OperandSize = "qword",
                 ImmediateSize = "dq",

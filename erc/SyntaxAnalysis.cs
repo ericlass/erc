@@ -356,44 +356,71 @@ namespace erc
             }
             else
             {
-                //Math Expression
-                var expItemsInfix = new List<AstItem>();
                 var token = tokenIter.Current();
-                while (token != null)
+                if (token.Kind == TokenKind.New)
                 {
-                    switch (token.Kind)
+                    result = ReadNewPointer(tokenIter);
+                }
+                else
+                {
+                    //Math Expression
+                    var expItemsInfix = new List<AstItem>();
+                    while (token != null)
                     {
-                        case TokenKind.Word:
-                        case TokenKind.Number:
-                        case TokenKind.True:
-                        case TokenKind.False:
-                        case TokenKind.VectorConstructor:
-                            var operandItem = ReadSingleAstItem(tokenIter);
-                            expItemsInfix.Add(operandItem);
-                            break;
+                        switch (token.Kind)
+                        {
+                            case TokenKind.Word:
+                            case TokenKind.Number:
+                            case TokenKind.True:
+                            case TokenKind.False:
+                            case TokenKind.VectorConstructor:
+                                var operandItem = ReadSingleAstItem(tokenIter);
+                                expItemsInfix.Add(operandItem);
+                                break;
 
-                        case TokenKind.ExpressionOperator:
-                        case TokenKind.RoundBracketOpen:
-                        case TokenKind.RoundBracketClose:
-                            expItemsInfix.Add(AstItem.AsOperator(ParseOperator(token.Value)));
-                            break;
+                            case TokenKind.ExpressionOperator:
+                            case TokenKind.RoundBracketOpen:
+                            case TokenKind.RoundBracketClose:
+                                expItemsInfix.Add(AstItem.AsOperator(ParseOperator(token.Value)));
+                                break;
 
-                        default:
-                            throw new Exception("Unexpected expression token: " + token);
+                            default:
+                                throw new Exception("Unexpected expression token: " + token);
+                        }
+
+                        tokenIter.Step();
+                        token = tokenIter.Current();
                     }
 
-                    tokenIter.Step();
-                    token = tokenIter.Current();
+                    //Convert to postfix
+                    if (expItemsInfix.Count > 1)
+                        result = InfixToPostfix(expItemsInfix);
+                    else
+                        result = expItemsInfix[0];
                 }
-
-                //Convert to postfix
-                if (expItemsInfix.Count > 1)
-                    result = InfixToPostfix(expItemsInfix);
-                else
-                    result = expItemsInfix[0];
             }
 
             return result;
+        }
+
+        private AstItem ReadNewPointer(TokenIterator tokens)
+        {
+            tokens.PopExpected(TokenKind.New);
+            var subType = ReadDataType(tokens);
+
+            var dataType = DataType.Pointer(subType);
+
+            var amountStr = "1";
+            var current = tokens.Current();
+            if (current != null && current.Kind == TokenKind.RoundBracketOpen)
+            {
+                tokens.Pop();
+                var amountToken = tokens.PopExpected(TokenKind.Number);
+                amountStr = amountToken.Value;
+                tokens.PopExpected(TokenKind.RoundBracketClose);
+            }
+
+            return AstItem.NewPointer(dataType, amountStr);
         }
 
         private AstItem ReadSingleAstItem(TokenIterator tokens)

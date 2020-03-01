@@ -23,14 +23,9 @@ namespace erc
         FunctionCall,
         Return,
         If,
-        For
-        //EqualsOp,
-        //NotEqualsOp,
-        //LessThanOp,
-        //GreaterThanOp,
-        //AndOp,
-        //OrOp,
-        //If
+        For,
+        NewPointer,
+        DelPointer
     }
 
     public class AstItem
@@ -277,6 +272,16 @@ namespace erc
                 elseStatementList = StatementList(elseStatements);
 
             return new AstItem { Kind = AstItemKind.If, Children = new List<AstItem>() { expression, statementList, elseStatementList } };
+        }
+
+        public static AstItem NewPointer(DataType dataType, object amount)
+        {
+            return new AstItem { Kind = AstItemKind.NewPointer, DataType = dataType, Value = amount };
+        }
+
+        public static AstItem DelPointer(string varName)
+        {
+            return new AstItem { Kind = AstItemKind.DelPointer, DataType = DataType.VOID, Identifier = varName };
         }
 
     }

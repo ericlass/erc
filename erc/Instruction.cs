@@ -92,6 +92,7 @@ namespace erc
         public static Instruction AND_IMM = new Instruction("AND", 2, (instr, op1, op2, op3, op4) => instr.Name + " " + op1.ToCode() + ", " + op2.Address);
 
         public static Instruction OR = new Instruction("OR", 2);
+        public static Instruction XOR = new Instruction("XOR", 2);
 
         public static Instruction MUL = new Instruction("MUL", 1);
         public static Instruction DIV = new Instruction("DIV", 2);
