@@ -436,14 +436,6 @@ namespace erc
 
         private List<Operation> GenerateNewPointer(AstItem expression, Operand targetLocation)
         {
-            /*
-            mov rcx, [procHeap]
-            xor rdx, rdx
-            mov r8, 10
-            call [HeapAlloc]
-            mov [heapMem], rax   
-            */
-
             var result = new List<Operation>();
             var bytesToReserve = (long)(expression.Value) * expression.DataType.ElementType.ByteSize;
 
