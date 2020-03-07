@@ -200,6 +200,17 @@ namespace erc
                     _context.LeaveBlock();
                 }
             }
+            else if (item.Kind == AstItemKind.DelPointer)
+            {
+                var variable = _context.GetSymbol(item.Identifier);
+                if (variable == null)
+                    throw new Exception("Undeclared variable: '" + item.Identifier + "' at: " + item);
+
+                if (!variable.DataType.IsPointer)
+                    throw new Exception("Cannot del non-pointer data type: " + variable.DataType + " at: " + item);
+
+                //TODO: Check that the pointer is one that was created with "new" and not some other self-created one
+            }
             else
                 throw new Exception("Unknown statement: " + item);
         }

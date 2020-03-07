@@ -165,9 +165,7 @@ namespace erc
                         valueType = valueExpression.DataType;
                     }
                     result = AstItem.Return(valueType, valueExpression);
-
-                    //Pop ";"
-                    tokens.Pop();
+                    tokens.PopExpected(TokenKind.StatementTerminator);
                     break;
 
                 case TokenKind.Word:
@@ -175,8 +173,7 @@ namespace erc
                     if (next.Kind == TokenKind.RoundBracketOpen)
                     {
                         result = ReadFuncCall(tokens);
-                        //Pop ";"
-                        tokens.Pop();
+                        tokens.PopExpected(TokenKind.StatementTerminator);
                     }
                     else if (next.Kind == TokenKind.AssigmnentOperator)
                         result = ReadAssignment(tokens);
@@ -186,6 +183,11 @@ namespace erc
 
                 case TokenKind.If:
                     result = ReadIfStatement(tokens);
+                    break;
+
+                case TokenKind.Del:
+                    result = ReadDelStatement(tokens);
+                    tokens.PopExpected(TokenKind.StatementTerminator);
                     break;
 
                 case TokenKind.CurlyBracketClose:
@@ -201,6 +203,13 @@ namespace erc
                 result.SourceLine = String.Join(" ", lineTokens.ConvertAll<string>((a) => a.Value));
 
             return result;
+        }
+
+        private AstItem ReadDelStatement(TokenIterator tokens)
+        {
+            tokens.PopExpected(TokenKind.Del);
+            var varName = tokens.PopExpected(TokenKind.Word);
+            return AstItem.DelPointer(varName.Value);
         }
 
         private AstItem ReadIfStatement(TokenIterator tokens)

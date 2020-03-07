@@ -290,7 +290,9 @@ namespace erc
 
         public static AstItem DelPointer(string varName)
         {
-            return new AstItem { Kind = AstItemKind.DelPointer, DataType = DataType.VOID, Identifier = varName };
+            //Need to create a variable node so the VarScopeEnd is after it
+            var variable = Variable(varName);
+            return new AstItem { Kind = AstItemKind.DelPointer, DataType = DataType.VOID, Identifier = varName, Children = { variable } };
         }
 
     }

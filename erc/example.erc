@@ -6,6 +6,8 @@ fn main() {
 fn pointers() {
 	let p = new u64;
 	let p2 = new f32(10);
+	del p;
+	del p2;
 }
 
 fn boolean(p1: bool) {

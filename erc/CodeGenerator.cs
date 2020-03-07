@@ -192,6 +192,9 @@ namespace erc
                 case AstItemKind.If:
                     return GenerateIfStatement(statement);
 
+                case AstItemKind.DelPointer:
+                    return GenerateDelPointer(statement);
+
                 case AstItemKind.VarScopeEnd:
                     var variable = _context.GetSymbol(statement.Identifier);
 
@@ -429,9 +432,25 @@ namespace erc
             }
         }
 
+        private List<Operation> GenerateDelPointer(AstItem expression)
+        {
+            //Prepare parameter values
+            var heap = new AstItem(AstItemKind.Immediate);
+            heap.DataType = DataType.U64;
+            heap.Identifier = ProcessHeapImmName;
+
+            var flags = AstItem.DirectImmediate(0);
+            var memToFree = AstItem.Variable(expression.Identifier);
+            memToFree.DataType = DataType.U64;
+
+            //Generate internal function call
+            var funcCall = AstItem.FunctionCall("erc_heap_free", new List<AstItem>() { heap, flags, memToFree });
+
+            return GenerateFunctionCall(funcCall, null);
+        }
+
         private List<Operation> GenerateNewPointer(AstItem expression, Operand targetLocation)
         {
-            var result = new List<Operation>();
             var bytesToReserve = (long)(expression.Value) * expression.DataType.ElementType.ByteSize;
 
             //Prepare parameter values
