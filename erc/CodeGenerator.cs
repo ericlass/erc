@@ -7,6 +7,8 @@ namespace erc
 {
     public partial class CodeGenerator
     {
+        private const string ProcessHeapImmName = "erc_process_heap";
+
         private const string CodeHeader =
             "format PE64 NX GUI 6.0\n" +
             "entry start\n" +
@@ -17,7 +19,7 @@ namespace erc
             "section '.text' code readable executable\n" +
             "start:\n" +
             "call [GetProcessHeap]\n" +
-            "mov [erc_process_heap], rax\n" +
+            "mov [" + ProcessHeapImmName + "], rax\n" +
             "push rbp\n" +
             "mov rbp, rsp\n" +
             "call fn_main\n" +
@@ -27,8 +29,6 @@ namespace erc
 
         private const string ImportSection =
             "\nsection '.idata' import data readable writeable\n";
-
-        private const string ProcessHeapImmName = "erc_process_heap";
 
         private Dictionary<string, List<string>> _importedFunctions = new Dictionary<string, List<string>>();
 
@@ -42,10 +42,6 @@ namespace erc
             _context = context;
 
             InitInstructionMap();
-            AddImport("Kernel32.dll", "ExitProcess");
-            AddImport("Kernel32.dll", "GetProcessHeap");
-            AddImport("Kernel32.dll", "HeapAlloc");
-            AddImport("Kernel32.dll", "HeapFree");
 
             var dataEntries = new List<Tuple<int, string>>();
             dataEntries.Add(new Tuple<int, string>(DataType.BOOL.ByteSize, "imm_bool_false " + DataType.BOOL.ImmediateSize + " 0"));
@@ -244,10 +240,9 @@ namespace erc
             var result = new List<Operation>();
             var function = _context.GetFunction(funcCall.Identifier);
 
-            //List of registers that need to be restored, pre-filled with the ones that always need to be saved/restored
+            //List of registers that need to be restored
             var savedRegisters = new List<Register>();
 
-            result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, Operand.Label("save used registers")));
             //Push used registers
             foreach (var register in _context.RegisterPool.GetAllUsed())
             {
@@ -255,7 +250,6 @@ namespace erc
                 savedRegisters.Add(register);
             }
 
-            result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, Operand.Label("save parameter registers")));
             //Push parameter registers of current function
             foreach (var funcParam in _context.CurrentFunction.Parameters)
             {
@@ -272,11 +266,9 @@ namespace erc
                 //Assuming that AST item has as many children as function has parameters, as this is checked before
                 var parameter = function.Parameters[i];
                 var expression = funcCall.Children[i];
-                //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, Operand.Label("parameter expression " + (i + 1))));
                 result.AddRange(GenerateExpression(expression, parameter.Location));
             }
 
-            //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, Operand.Label("create shadow space")));
             //Add 32 bytes shadow space
             result.Add(new Operation(DataType.I64, Instruction.SUB_IMM, Operand.AsRegister(Register.RSP), Operand.Immediate(32)));
             result.AddRange(Move(DataType.I64, Operand.AsRegister(Register.RSP), Operand.AsRegister(Register.RBP)));
@@ -288,13 +280,11 @@ namespace erc
                 result.Add(new Operation(function.ReturnType, Instruction.CALL, Operand.Label("fn_" + function.Name)));
 
             //Remove shadow space
-            //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, Operand.Label("delete shadow space")));
             result.Add(new Operation(DataType.I64, Instruction.ADD_IMM, Operand.AsRegister(Register.RSP), Operand.Immediate(32)));
 
             //Move result value (if exists) to target location (if required)
             if (function.ReturnType != DataType.VOID && targetLocation != null && function.ReturnLocation != targetLocation)
             {
-                //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, Operand.Label("move result value")));
                 result.AddRange(Move(function.ReturnType, function.ReturnLocation, targetLocation));
             }
 
@@ -302,7 +292,6 @@ namespace erc
             savedRegisters.Reverse();
             foreach (var register in savedRegisters)
             {
-                //result.Add(new Operation(DataType.VOID, Instruction.V_COMMENT, Operand.Label("restore register " + register.Item1)));
                 result.AddRange(Pop(Register.GetDefaultDataType(register), Operand.AsRegister(register)));
             }
 
@@ -398,6 +387,12 @@ namespace erc
                     var src = Operand.DataSection(expression.Identifier);
                     return Move(expression.DataType, src, targetLocation);
 
+                case AstItemKind.DirectImmediate:
+                    return new List<Operation>()
+                    {
+                        new Operation(expression.DataType, expression.DataType.MoveInstructionUnaligned, targetLocation, Operand.Immediate((long)expression.Value))
+                    };
+
                 case AstItemKind.Vector:
                     if (IsFullImmediateVector(expression))
                     {
@@ -439,25 +434,18 @@ namespace erc
             var result = new List<Operation>();
             var bytesToReserve = (long)(expression.Value) * expression.DataType.ElementType.ByteSize;
 
-            //Set parameters
-            result.AddRange(Move(expression.DataType, Operand.DataSection(ProcessHeapImmName), Operand.AsRegister(Register.RCX)));
-            result.Add(new Operation(expression.DataType, Instruction.XOR, Operand.AsRegister(Register.RDX), Operand.AsRegister(Register.RDX)));
-            result.AddRange(Move(expression.DataType, Operand.Immediate(bytesToReserve), Operand.AsRegister(Register.R8)));
+            //Prepare parameter values
+            var heap = new AstItem(AstItemKind.Immediate);
+            heap.DataType = DataType.U64;
+            heap.Identifier = ProcessHeapImmName;
 
-            //Reserve shadow space
-            result.Add(new Operation(DataType.I64, Instruction.SUB_IMM, Operand.AsRegister(Register.RSP), Operand.Immediate(32)));
-            result.AddRange(Move(DataType.I64, Operand.AsRegister(Register.RSP), Operand.AsRegister(Register.RBP)));
+            var flags = AstItem.DirectImmediate(0);
+            var numBytes = AstItem.DirectImmediate(bytesToReserve);
 
-            //Call function
-            result.Add(new Operation(expression.DataType, Instruction.CALL, Operand.Label("[HeapAlloc]")));
+            //Generate internal function call
+            var funcCall = AstItem.FunctionCall("erc_heap_alloc", new List<AstItem>() { heap, flags, numBytes });
 
-            //Remove shadow space
-            result.Add(new Operation(DataType.I64, Instruction.ADD_IMM, Operand.AsRegister(Register.RSP), Operand.Immediate(32)));
-
-            //Move result to target
-            result.AddRange(Move(expression.DataType, Operand.AsRegister(Register.RAX), targetLocation));
-
-            return result;
+            return GenerateFunctionCall(funcCall, targetLocation);
         }
 
         private List<Operation> GenerateExpressionOperations(List<AstItem> items, Operand targetLocation)

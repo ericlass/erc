@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Reflection;
 using System.Windows.Forms;
 
 namespace erc
@@ -14,7 +15,7 @@ namespace erc
 
             stopWatch.Start();
 
-            var src = File.ReadAllText("example.erc");
+            var src = File.ReadAllText("example.erc") + "\n\n\n" + ReadInternalLib();
 
             var context = new CompilerContext();
             context.Source = src;
@@ -71,6 +72,13 @@ namespace erc
             Console.WriteLine();
             Console.Write("Press Enter to close");
             Console.Read();
+        }
+
+        private static string ReadInternalLib()
+        {
+            var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("erc.internal_lib.erc");
+            var reader = new StreamReader(stream);
+            return reader.ReadToEnd();
         }
 
     }

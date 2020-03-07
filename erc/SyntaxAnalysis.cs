@@ -94,9 +94,8 @@ namespace erc
             if (next.Kind == TokenKind.TypeOperator)
             {
                 returnType = ReadDataType(tokens);
+                tokens.PopExpected(TokenKind.StatementTerminator);
             }
-
-            tokens.PopExpected(TokenKind.StatementTerminator);
 
             return AstItem.ExternFunctionDecl(name.Value, returnType, parameters, libFnName.Value, libName.Value);
         }

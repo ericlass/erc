@@ -60,9 +60,6 @@
     <Compile Include="operators\EqualityOperator.cs" />
     <Compile Include="Function.cs" />
     <Compile Include="FunctionScope.cs" />
-    <Compile Include="HeapChunk.cs" />
-    <Compile Include="HeapFreeEntry.cs" />
-    <Compile Include="HeapManager.cs" />
     <Compile Include="Instruction.cs" />
     <Compile Include="operators\IOperator.cs" />
     <Compile Include="operators\IUnaryOperator.cs" />
@@ -103,6 +100,7 @@
     <None Include="example.erc">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <EmbeddedResource Include="internal_lib.erc" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

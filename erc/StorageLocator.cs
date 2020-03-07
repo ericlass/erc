@@ -11,8 +11,6 @@ namespace erc
         private Stack<RegisterGroup> _freeParameterRRegisters = new Stack<RegisterGroup>();
         private Stack<RegisterGroup> _freeParameterMMRegisters = new Stack<RegisterGroup>();
 
-        private long _stackOffset = 0;
-
         //Heap? not here, dynamically at runtime
 
         public void Locate(CompilerContext context)
@@ -29,11 +27,13 @@ namespace erc
 
         private void AssignFunctionReturnLocation(Function function)
         {
-            if (function.ReturnType == DataType.I64 || function.ReturnType.IsPointer)
+            if (function.ReturnType.Group == DataTypeGroup.ScalarInteger)
+                function.ReturnLocation = Operand.AsRegister(Register.GroupToSpecificRegister(RegisterGroup.A, function.ReturnType));
+            else if (function.ReturnType.IsPointer)
                 function.ReturnLocation = Operand.AsRegister(Register.RAX);
             else if (function.ReturnType == DataType.BOOL)
                 function.ReturnLocation = DataType.BOOL.Accumulator;
-            else if (function.ReturnType == DataType.F32 || function.ReturnType == DataType.F64)
+            else if (function.ReturnType.Group == DataTypeGroup.ScalarFloat)
                 function.ReturnLocation = Operand.AsRegister(Register.XMM0);
             else if (function.ReturnType == DataType.VEC4F || function.ReturnType == DataType.VEC2D)
                 function.ReturnLocation = Operand.AsRegister(Register.XMM0);
@@ -49,7 +49,7 @@ namespace erc
             InitParamRegisters();
         	foreach (var parameter in function.Parameters)
             {
-                if (parameter.DataType == DataType.I64 || parameter.DataType == DataType.BOOL || parameter.DataType.IsPointer)
+                if (parameter.DataType.Group == DataTypeGroup.ScalarInteger || parameter.DataType == DataType.BOOL || parameter.DataType.IsPointer)
                 {
                     if (_freeParameterRRegisters.Count > 0)
                     {
@@ -110,82 +110,6 @@ namespace erc
                     throw new Exception("Unknown data type: " + parameter.DataType);
             }
         }
-
-        /*private void AssignLocation(Symbol variable)
-        {
-            var dataType = variable.DataType;
-            var register = GetMatchingRegister(dataType);
-
-            //If register found, use it
-            if (register != null)
-            {
-                //Console.WriteLine("Assigning variable " + variable.Name + " to register " + register);
-                variable.Location = new Operand { Kind = OperandKind.Register, Register = register };
-                return;
-            }
-
-            //Align stack offset according to data type (natural alignment), assuming RBP is always aligned to 32 bytes so offset 0 is already aligned
-            if (_stackOffset > 0 && dataType.ByteSize > 1)
-            {
-                var prevOffset = _stackOffset;
-
-                var div = _stackOffset / dataType.ByteSize;
-                var mod = _stackOffset % dataType.ByteSize;
-                if (mod > 0)
-                    div += 1;
-
-                _stackOffset = div * dataType.ByteSize;
-
-                //Console.WriteLine("Aligning stack offset " + prevOffset + " to " + _stackOffset + " to " + dataType.ByteSize + " bytes");
-            }
-
-            //Otherwise, put on stack
-            //Console.WriteLine("Assigning variable " + variable.Name + " to stack offset " + _stackOffset);
-            variable.Location = Operand.StackFromBase(_stackOffset);
-            _stackOffset += dataType.ByteSize;
-        }
-
-        private Register GetMatchingRegister(DataType dataType)
-        {
-            Stack<RegisterGroup> stack = null;
-
-            if (dataType == DataType.I64)
-                stack = _freeRRegisters;
-            else
-                stack = _freeMMRegisters;
-
-            if (stack == null)
-                throw new Exception("Unknown data type: " + dataType);
-
-            if (stack.Count == 0)
-                return null;
-
-            var group = stack.Pop();
-            return Register.GroupToSpecificRegister(group, dataType);
-        }
-
-        private void FreeLocation(Symbol variable)
-        {
-            var location = variable.Location;
-            if (location.Kind == OperandKind.Register)
-            {
-                //Console.WriteLine("Freeing variable " + variable.Name + " from register " + location.Register);
-                var dataType = variable.DataType;
-                Stack<RegisterGroup> stack = null;
-
-                if (dataType == DataType.I64)
-                    stack = _freeRRegisters;
-                else
-                    stack = _freeMMRegisters;
-
-                stack.Push(location.Register.Group);
-            }
-            else if (location.Kind == OperandKind.StackFromBase || location.Kind == OperandKind.StackFromTop)
-            {
-                //Nothing to do here. Stack does not need to be cleaned up, just leave it as it is
-                //Console.WriteLine("Freeing variable " + variable.Name + " from stack offset " + location.Address);
-            }
-        }*/
 
         private void InitRegisters()
         {
