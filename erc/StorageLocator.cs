@@ -86,7 +86,7 @@ namespace erc
                     if (function.IsExtern)
                     {
                         //Win64, put vector in memory and pass pointer at runtime
-                        parameter.Location = Operand.Heap();
+                        parameter.Location = Operand.HeapFixedAddress();
                     }
                     else
                     {

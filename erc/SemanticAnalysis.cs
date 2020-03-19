@@ -241,6 +241,10 @@ namespace erc
             {
                 CheckNewPointer(expression);
             }
+            else if (expression.Kind == AstItemKind.IndexAccess)
+            {
+                CheckIndexAccess(expression);
+            }
             else
                 throw new Exception("Unsupported expression item: " + expression);
 
@@ -248,6 +252,29 @@ namespace erc
                 throw new Exception("Could not determine data type for expression: " + expression);
 
             return expression.DataType;
+        }
+
+        private void CheckIndexAccess(AstItem expression)
+        {
+            var symbol = _context.RequireSymbol(expression.Identifier);
+            Assert.Check(symbol.DataType.IsPointer, "Index access can only be done on pointer types. Type use: " + symbol.DataType);
+
+            var indexExpression = expression.Children[0];
+            var indexExpType = CheckExpression(indexExpression);
+            
+            if (indexExpression.Kind == AstItemKind.Immediate)
+            {
+                var index = (long)indexExpression.Value;
+                if (index < 0)
+                    throw new Exception("Cannot use negativ index values for index access!");
+            }
+            else
+            {
+                if (indexExpType.Group != DataTypeGroup.ScalarInteger || indexExpType.IsSigned)
+                    throw new Exception("Index for index access must by unsigned integer type, got: " + indexExpType);
+            }
+
+            expression.DataType = symbol.DataType.ElementType;
         }
 
         private void CheckNewPointer(AstItem expression)

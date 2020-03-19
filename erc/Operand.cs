@@ -7,7 +7,8 @@ namespace erc
         Register,
         StackFromBase,
         StackFromTop,
-        Heap,
+        HeapFixedAddress,
+        HeapAddressInRegister,
         DataSection,
         Label,
         Immediate
@@ -38,8 +39,11 @@ namespace erc
                 case OperandKind.StackFromTop:
                     return "[RSP+" + Address + "]";
 
-                case OperandKind.Heap:
+                case OperandKind.HeapFixedAddress:
                     return "[" + Address + "]";
+
+                case OperandKind.HeapAddressInRegister:
+                    return "[" + Register + "]";
 
                 case OperandKind.DataSection:
                     return "[" + LabelName + "]";
@@ -91,7 +95,7 @@ namespace erc
 
                 case OperandKind.StackFromBase:
                 case OperandKind.StackFromTop:
-                case OperandKind.Heap:
+                case OperandKind.HeapFixedAddress:
                 case OperandKind.Immediate:
                     return Kind.GetHashCode() | (int)Address;
 
@@ -109,11 +113,12 @@ namespace erc
             switch (Kind)
             {
                 case OperandKind.Register:
+                case OperandKind.HeapAddressInRegister:
                     return Kind + "(" + Register + ")";
 
                 case OperandKind.StackFromBase:
                 case OperandKind.StackFromTop:
-                case OperandKind.Heap:
+                case OperandKind.HeapFixedAddress:
                 case OperandKind.Immediate:
                     return Kind + "(" + Address + ")";
 
@@ -151,14 +156,19 @@ namespace erc
             return new Operand { Kind = OperandKind.Immediate, Address = value };
         }
 
-        public static Operand Heap()
+        public static Operand HeapFixedAddress()
         {
-            return new Operand { Kind = OperandKind.Heap };
+            return new Operand { Kind = OperandKind.HeapFixedAddress };
         }
 
-        public static Operand Heap(long offset)
+        public static Operand HeapFixedAddress(long offset)
         {
-            return new Operand { Kind = OperandKind.Heap, Address = offset };
+            return new Operand { Kind = OperandKind.HeapFixedAddress, Address = offset };
+        }
+
+        public static Operand HeapAddressInRegister(Register register)
+        {
+            return new Operand { Kind = OperandKind.HeapAddressInRegister, Register = register };
         }
 
         internal static Operand Label(string label)

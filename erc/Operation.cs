@@ -85,7 +85,7 @@ namespace erc
         private string OperandToString(Operand operand)
         {
             string result = "";
-            if ((operand.Kind == OperandKind.DataSection || operand.Kind == OperandKind.Heap) && Instruction.RequiresOperandSize)
+            if ((operand.Kind == OperandKind.DataSection || operand.Kind == OperandKind.HeapFixedAddress) && Instruction.RequiresOperandSize)
                 result += DataType.OperandSize + " ";
             return result + operand.ToCode();
         }

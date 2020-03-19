@@ -365,9 +365,14 @@ namespace erc
             else
             {
                 var token = tokenIter.Current();
+                var next = tokenIter.Next();
                 if (token.Kind == TokenKind.New)
                 {
                     result = ReadNewPointer(tokenIter);
+                }
+                else if (token.Kind == TokenKind.Word && next.Kind == TokenKind.SquareBracketOpen)
+                {
+                    result = ReadIndexAccess(tokenIter);
                 }
                 else
                 {
@@ -409,6 +414,18 @@ namespace erc
             }
 
             return result;
+        }
+
+        private AstItem ReadIndexAccess(TokenIterator tokenIter)
+        {
+            var symbol = tokenIter.PopExpected(TokenKind.Word);
+            tokenIter.PopExpected(TokenKind.SquareBracketOpen);
+
+            var valueExpression = ReadExpression(tokenIter, TokenKind.SquareBracketClose);
+
+            tokenIter.PopExpected(TokenKind.SquareBracketClose);
+
+            return AstItem.IndexAccess(symbol.Value, valueExpression);
         }
 
         private AstItem ReadNewPointer(TokenIterator tokens)

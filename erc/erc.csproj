@@ -44,6 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assert.cs" />
     <Compile Include="DataTypeGroup.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="operators\AdditionOperator.cs" />

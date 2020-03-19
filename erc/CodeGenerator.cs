@@ -420,6 +420,9 @@ namespace erc
                 case AstItemKind.NewPointer:
                     return GenerateNewPointer(expression, targetLocation);
 
+                case AstItemKind.IndexAccess:
+                    return GenerateIndexAccess(expression, targetLocation);
+
                 case AstItemKind.Expression:
                     var ops = GenerateExpressionOperations(expression.Children, targetLocation);
                     CollapsePushPop(ops);
@@ -430,6 +433,28 @@ namespace erc
                 default:
                     return new List<Operation>();
             }
+        }
+
+        private List<Operation> GenerateIndexAccess(AstItem item, Operand targetLocation)
+        {
+            var result = new List<Operation>();
+            var symbol = _context.RequireSymbol(item.Identifier);
+
+            var elementType = symbol.DataType.ElementType;
+            var pointerType = symbol.DataType;
+
+            //Get index into accumulator
+            result.AddRange(GenerateExpression(item.Children[0], pointerType.Accumulator));
+            //Multiply by byte size of sub type
+            result.Add(new Operation(pointerType, Instruction.MOV, pointerType.TempRegister1, Operand.Immediate(elementType.ByteSize)));
+            result.Add(new Operation(pointerType, Instruction.MUL, pointerType.TempRegister1));
+            //Add base address
+            result.Add(new Operation(pointerType, Instruction.ADD, pointerType.Accumulator, symbol.Location));
+
+            //Move value to target
+            result.AddRange(Move(elementType, Operand.HeapAddressInRegister(pointerType.Accumulator.Register), targetLocation));
+
+            return result;
         }
 
         private List<Operation> GenerateDelPointer(AstItem expression)

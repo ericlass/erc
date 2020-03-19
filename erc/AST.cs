@@ -26,7 +26,8 @@ namespace erc
         If,
         For,
         NewPointer,
-        DelPointer
+        DelPointer,
+        IndexAccess
     }
 
     public class AstItem
@@ -290,9 +291,13 @@ namespace erc
 
         public static AstItem DelPointer(string varName)
         {
-            //Need to create a variable node so the VarScopeEnd is after it
-            var variable = Variable(varName);
-            return new AstItem { Kind = AstItemKind.DelPointer, DataType = DataType.VOID, Identifier = varName, Children = { variable } };
+            return new AstItem { Kind = AstItemKind.DelPointer, DataType = DataType.VOID, Identifier = varName };
+        }
+
+        public static AstItem IndexAccess(string varName, AstItem indexExpression)
+        {
+            //Data type is set by semantic analysis
+            return new AstItem { Kind = AstItemKind.IndexAccess, Identifier = varName, Children = { indexExpression } };
         }
 
     }

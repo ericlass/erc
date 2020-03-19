@@ -6,6 +6,9 @@ fn main() {
 fn pointers() {
 	let p = new u64;
 	let p2 = new f32(10);
+
+	let x = p[0];
+
 	del p;
 	del p2;
 }

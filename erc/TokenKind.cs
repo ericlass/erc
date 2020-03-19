@@ -16,6 +16,8 @@ namespace erc
         RoundBracketClose,
         CurlyBracketOpen,
         CurlyBracketClose,
+        SquareBracketOpen,
+        SquareBracketClose,
         Let,
         Fn,
         Ret,

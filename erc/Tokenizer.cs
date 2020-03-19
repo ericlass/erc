@@ -39,6 +39,8 @@ namespace erc
             [')'] = TokenKind.RoundBracketClose,
             ['{'] = TokenKind.CurlyBracketOpen,
             ['}'] = TokenKind.CurlyBracketClose,
+            ['['] = TokenKind.SquareBracketOpen,
+            [']'] = TokenKind.SquareBracketClose,
             [':'] = TokenKind.TypeOperator,
             [','] = TokenKind.Comma
         };

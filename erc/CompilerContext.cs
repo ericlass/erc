@@ -66,6 +66,15 @@ namespace erc
             return result;
         }
 
+        public Symbol RequireSymbol(string name)
+        {
+            var result = GetSymbol(name);
+            if (result == null)
+                throw new Exception("Undeclared symbol: " + name);
+
+            return result;
+        }
+
         public List<Symbol> GetAllVariables()
         {
             return _blockScope.GetAllVariables();
