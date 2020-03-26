@@ -12,13 +12,23 @@ namespace erc
         {
             //These should not be used for variables or so
             _excluded.Add(Register.RAX.Group);
+            _excluded.Add(Register.RCX.Group);
+            _excluded.Add(Register.RDX.Group);
+            _excluded.Add(Register.R8.Group);
+            _excluded.Add(Register.R9.Group);
             _excluded.Add(Register.R10.Group);
             _excluded.Add(Register.R11.Group);
             _excluded.Add(Register.RSP.Group);
             _excluded.Add(Register.RBP.Group);
+
+            _excluded.Add(Register.XMM0.Group);
+            _excluded.Add(Register.XMM1.Group);
+            _excluded.Add(Register.XMM2.Group);
+            _excluded.Add(Register.XMM3.Group);
             _excluded.Add(Register.XMM4.Group);
             _excluded.Add(Register.XMM5.Group);
             _excluded.Add(Register.XMM6.Group);
+            _excluded.Add(Register.XMM7.Group);
         }
 
         public void Use(Register register)
