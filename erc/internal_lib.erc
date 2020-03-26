@@ -1,4 +1,4 @@
 ﻿fn ext("ExitProcess", "Kernel32.dll") erc_exit_process(exit_code: u32);
-fn ext("GetProcessHeap", "Kernel32.dll") erc_get_process_heap(): u64;
-fn ext("HeapAlloc", "Kernel32.dll") erc_heap_alloc(heap: u64, flags: u32, bytes: u64): u64;
-fn ext("HeapFree", "Kernel32.dll") erc_heap_free(heap: u64, flags: u32, mem: u64);
+fn ext("GetProcessHeap", "Kernel32.dll") erc_get_process_heap(): void*;
+fn ext("HeapAlloc", "Kernel32.dll") erc_heap_alloc(heap: void*, flags: u32, bytes: u64): void*;
+fn ext("HeapFree", "Kernel32.dll") erc_heap_free(heap: void*, flags: u32, mem: void*): bool;

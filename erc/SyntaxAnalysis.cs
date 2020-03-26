@@ -328,7 +328,31 @@ namespace erc
             var result = DataType.GetAllValues().Find((t) => t.Name == name);
 
             if (result == null)
-                throw new Exception("Unknown type: " + name);
+                throw new Exception("Unknown type: " + name + " at " + typeName);
+
+            var token = tokens.Current();
+            var isPointer = false;
+            if (token != null && token.Kind == TokenKind.ExpressionOperator)
+            {
+                if (token.Value == "*")
+                {
+                    isPointer = true;
+                    tokens.Pop();
+                }
+                else
+                    throw new Exception("Expected data type, got: " + token);
+            }
+
+            if (isPointer)
+            {
+                name = name +  "*";
+                var pointerType = DataType.GetAllValues().Find((t) => t.Name == name);
+
+                if (pointerType == null)
+                    pointerType = DataType.Pointer(result);
+
+                result = pointerType;
+            }
 
             return result;
         }

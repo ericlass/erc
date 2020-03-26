@@ -466,7 +466,7 @@ namespace erc
 
         public static DataType Pointer(DataType subType)
         {
-            var name = "*" + subType.Name;
+            var name = subType.Name + "*";
             var newType = new DataType
             {
                 Name = name,

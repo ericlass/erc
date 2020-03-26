@@ -85,6 +85,7 @@ namespace erc
 
                 case AstItemKind.FunctionDecl:
                 case AstItemKind.FunctionCall:
+                case AstItemKind.ExternFunctionDecl:
                     return Kind + ": " + Identifier + "(" + String.Join(", ", Children) + ")";
 
                 default:
@@ -104,8 +105,13 @@ namespace erc
 
                 case AstItemKind.VarScopeEnd:
                 case AstItemKind.FunctionCall:
-                case AstItemKind.FunctionDecl:
                     return Kind + ": \"" + Identifier + "\"";
+
+                case AstItemKind.FunctionDecl:
+                    return Kind + ": \"" + Identifier + "\" (" + DataType + ")";
+
+                case AstItemKind.ExternFunctionDecl:
+                    return Kind + ": \"" + Identifier + "\" (" + DataType + ") [\"" + Value2 + "\"; \"" + Value + "\"]";
 
                 case AstItemKind.Immediate:
                     return Kind + ": " + ImmediateValueToString() + " (" + DataType + ")";
