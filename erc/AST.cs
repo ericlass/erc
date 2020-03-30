@@ -27,7 +27,8 @@ namespace erc
         For,
         NewPointer,
         DelPointer,
-        IndexAccess
+        IndexAccess,
+        UnaryOperator
     }
 
     public class AstItem
@@ -40,6 +41,7 @@ namespace erc
         public object Value { get; set; } //Value for immediates
         public object Value2 { get; set; } //Value for immediates
         public IOperator Operator { get; set; } //Operator
+        public IUnaryOperator UnaryOperator { get; set; } //Operator
         public string SourceLine { get; set; } //Source code line, only filled for statements
         public List<AstItem> Children { get => _children; set => _children = value; }
         public bool DataGenerated { get; set; } = false; //Used to track which immediates have already been generated in the data section
@@ -277,6 +279,10 @@ namespace erc
         public static AstItem AsOperator(IOperator oper)
         {
             return new AstItem { Kind = AstItemKind.Operator, Operator = oper };
+        }
+        public static AstItem AsUnaryOperator(IUnaryOperator oper)
+        {
+            return new AstItem { Kind = AstItemKind.UnaryOperator, UnaryOperator = oper };
         }
 
         public static AstItem IfStatement(AstItem expression, List<AstItem> statements, List<AstItem> elseStatements)

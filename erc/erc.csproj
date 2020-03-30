@@ -48,10 +48,11 @@
     <Compile Include="DataTypeGroup.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="operators\AdditionOperator.cs" />
+    <Compile Include="operators\ArithmeticNegationOperator.cs" />
     <Compile Include="operators\ArithmeticOperator.cs" />
     <Compile Include="AST.cs" />
     <Compile Include="BlockScope.cs" />
-    <Compile Include="operators\BooleanInverseOperator.cs" />
+    <Compile Include="operators\BooleanInversionOperator.cs" />
     <Compile Include="operators\BooleanOperator.cs" />
     <Compile Include="operators\CastingOperator.cs" />
     <Compile Include="CodeGenerator.cs" />
@@ -67,12 +68,13 @@
     <Compile Include="LogLevel.cs" />
     <Compile Include="operators\ModuloOperator.cs" />
     <Compile Include="operators\MultiplicationOperator.cs" />
-    <Compile Include="operators\NegationOperator.cs" />
     <Compile Include="Operation.cs" />
     <Compile Include="operators\NoOpOperator.cs" />
     <Compile Include="operators\Operator.cs" />
+    <Compile Include="operators\PointerDereferenceOperator.cs" />
     <Compile Include="operators\RelationalOperator.cs" />
     <Compile Include="operators\SubtractionOperator.cs" />
+    <Compile Include="operators\UnaryOperator.cs" />
     <Compile Include="Optimizer.cs" />
     <Compile Include="PostProcessor.cs" />
     <Compile Include="DataType.cs" />

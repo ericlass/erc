@@ -402,6 +402,7 @@ namespace erc
                 {
                     //Math Expression
                     var expItemsInfix = new List<AstItem>();
+                    var expectOperand = true;
                     while (token != null)
                     {
                         switch (token.Kind)
@@ -413,12 +414,24 @@ namespace erc
                             case TokenKind.VectorConstructor:
                                 var operandItem = ReadSingleAstItem(tokenIter);
                                 expItemsInfix.Add(operandItem);
+                                expectOperand = false; //Next we want an operator
                                 break;
 
-                            case TokenKind.ExpressionOperator:
                             case TokenKind.RoundBracketOpen:
                             case TokenKind.RoundBracketClose:
                                 expItemsInfix.Add(AstItem.AsOperator(ParseOperator(token.Value)));
+                                break;
+
+                            case TokenKind.ExpressionOperator:
+                                if (expectOperand)
+                                {
+                                    expItemsInfix.Add(AstItem.AsUnaryOperator(ParseUnaryOperator(token.Value)));
+                                }
+                                else
+                                {
+                                    expItemsInfix.Add(AstItem.AsOperator(ParseOperator(token.Value)));
+                                    expectOperand = true; //Next we want an operand
+                                }
                                 break;
 
                             default:
@@ -581,6 +594,15 @@ namespace erc
             var oper = Operator.Parse(op);
             if (oper == null)
                 throw new Exception("Unsupported math operator: " + op);
+
+            return oper;
+        }
+
+        private IUnaryOperator ParseUnaryOperator(string op)
+        {
+            var oper = UnaryOperator.Parse(op);
+            if (oper == null)
+                throw new Exception("Unsupported unary operator: " + op);
 
             return oper;
         }
