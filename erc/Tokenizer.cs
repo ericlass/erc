@@ -53,7 +53,9 @@ namespace erc
             var token = ReadToken(iterator);
             while (token != null)
             {
-                result.Add(token);
+                if (token.Kind != TokenKind.Comment)
+                    result.Add(token);
+
                 token = ReadToken(iterator);
             }
 
@@ -107,39 +109,63 @@ namespace erc
             }
             else
             {
-                //First try to find operator with two characters
-                var figure = c.ToString() + iterator.Next().ToString();
-                var op = Operator.Parse(figure);
-                if (op != null)
+                //Need to check for comments here because they start with an operator ("/")
+                bool wasComment = false;
+                if (c == '/')
                 {
-                    value = figure;
-                    type = TokenKind.ExpressionOperator;
-                    //Step twice to also remove second character
-                    iterator.Step();
-                    iterator.Step();
+                    if (iterator.Next() == '/')
+                    {
+                        SkipSingleLineComment(iterator);
+                        wasComment = true;
+                    }
+                    else if (iterator.Next() == '*')
+                    {
+                        SkipMultilineComment(iterator);
+                        wasComment = true;
+                    }
+                }
+
+                if (wasComment)
+                {
+                    value = "COMMENT";
+                    type = TokenKind.Comment;
                 }
                 else
-                {
-                    //Try to find operator with only one character
-                    figure = c.ToString();
-                    op = Operator.Parse(figure);
+                { 
+                    //First try to find operator with two characters
+                    var figure = c.ToString() + iterator.Next().ToString();
+                    var op = Operator.Parse(figure);
                     if (op != null)
                     {
                         value = figure;
                         type = TokenKind.ExpressionOperator;
+                        //Step twice to also remove second character
+                        iterator.Step();
                         iterator.Step();
                     }
                     else
                     {
-                        var unary = UnaryOperator.Parse(c.ToString());
-                        if (unary != null)
+                        //Try to find operator with only one character
+                        figure = c.ToString();
+                        op = Operator.Parse(figure);
+                        if (op != null)
                         {
                             value = figure;
                             type = TokenKind.ExpressionOperator;
                             iterator.Step();
                         }
                         else
-                            throw new Exception("Unexpected character '" + c + "' at (" + startLine + "," + startColumn + ")");
+                        {
+                            var unary = UnaryOperator.Parse(c.ToString());
+                            if (unary != null)
+                            {
+                                value = figure;
+                                type = TokenKind.ExpressionOperator;
+                                iterator.Step();
+                            }
+                            else
+                                throw new Exception("Unexpected character '" + c + "' at (" + startLine + "," + startColumn + ")");
+                        }
                     }
                 }
             }
@@ -229,6 +255,34 @@ namespace erc
             }
 
             return iterator.HasMore();
+        }
+
+        private void SkipMultilineComment(StringIterator iterator)
+        {
+            var current = iterator.Current();
+            while (current > 0)
+            {
+                if (current == '*' && iterator.Next() == '/')
+                {
+                    //Skip "*/"
+                    iterator.Step();
+                    iterator.Step();
+                    return;
+                }
+
+                iterator.Step();
+                current = iterator.Current();
+            }
+        }
+
+        private void SkipSingleLineComment(StringIterator iterator)
+        {
+            var current = iterator.Current();
+            while (current != '\n' && current > 0)
+            {
+                iterator.Step();
+                current = iterator.Current();
+            }
         }
 
         private bool IsIdentifierChar(char c)

@@ -4,6 +4,12 @@ fn main() {
 }
 
 fn expressions() {
+	//Testing single line comment
+	
+	/* Multi
+	line
+	comment */
+
 	let a = 1 + 2;
 	a = -(-3 * -6);
 }

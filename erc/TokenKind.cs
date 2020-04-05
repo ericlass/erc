@@ -31,6 +31,7 @@ namespace erc
         Ext,
         String,
         New,
-        Del
+        Del,
+        Comment
     }
 }
