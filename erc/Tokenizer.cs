@@ -131,7 +131,15 @@ namespace erc
                     }
                     else
                     {
-                        throw new Exception("Unexpected character '" + c + "' at (" + startLine + "," + startColumn + ")");
+                        var unary = UnaryOperator.Parse(c.ToString());
+                        if (unary != null)
+                        {
+                            value = figure;
+                            type = TokenKind.ExpressionOperator;
+                            iterator.Step();
+                        }
+                        else
+                            throw new Exception("Unexpected character '" + c + "' at (" + startLine + "," + startColumn + ")");
                     }
                 }
             }

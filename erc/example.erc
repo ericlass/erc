@@ -3,6 +3,11 @@ fn main() {
 	pointers();
 }
 
+fn expressions() {
+	let a = 1 + 2;
+	a = -(-3 * -6);
+}
+
 fn pointers() {
 	let p = new u64;
 	let p2 = new f32(10);

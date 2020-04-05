@@ -131,6 +131,16 @@ namespace erc
             }
         }
 
+        public bool IsMemoryLocation()
+        {
+            return
+                Kind == OperandKind.DataSection ||
+                Kind == OperandKind.HeapAddressInRegister ||
+                Kind == OperandKind.HeapFixedAddress ||
+                Kind == OperandKind.StackFromBase ||
+                Kind == OperandKind.StackFromTop;
+        }
+
         public static Operand DataSection(string dataName)
         {
             return new Operand { Kind = OperandKind.DataSection, LabelName = dataName };

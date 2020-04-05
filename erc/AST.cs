@@ -78,6 +78,9 @@ namespace erc
                 case AstItemKind.Operator:
                     return Kind + ": " + Operator.Figure;
 
+                case AstItemKind.UnaryOperator:
+                    return Kind + ": " + UnaryOperator.Figure;
+
                 case AstItemKind.Parameter:
                     return Kind + ": " + Identifier + "(" + DataType + ")";
 
@@ -120,6 +123,9 @@ namespace erc
 
                 case AstItemKind.Operator:
                     return Kind + ": " + this.Operator.Figure;
+
+                case AstItemKind.UnaryOperator:
+                    return Kind + ": " + this.UnaryOperator.Figure;
 
                 default:
                     return Kind.ToString();

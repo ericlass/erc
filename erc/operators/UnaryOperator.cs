@@ -12,7 +12,7 @@ namespace erc
         {
             if (_allValues == null)
             {
-                var regType = typeof(Operator);
+                var regType = typeof(UnaryOperator);
                 var fields = regType.GetFields(BindingFlags.Public | BindingFlags.Static);
                 _allValues = new List<IUnaryOperator>(fields.Length);
                 foreach (var field in fields)

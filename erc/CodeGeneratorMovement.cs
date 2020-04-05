@@ -25,7 +25,7 @@ namespace erc
             if (source == target)
                 return result;
 
-            if ((source.Kind == OperandKind.StackFromBase || source.Kind == OperandKind.StackFromTop || source.Kind == OperandKind.DataSection) && (target.Kind == OperandKind.StackFromBase || target.Kind == OperandKind.StackFromTop))
+            if (source.IsMemoryLocation() && target.IsMemoryLocation())
             {
                 //Cannot directly move between two memory locations, need to use accumulator register as temp location and do it in two steps
                 result.Add(new Operation(dataType, instruction, dataType.Accumulator, source));

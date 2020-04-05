@@ -321,14 +321,14 @@ namespace erc
 
                     //Get data type of operand1
                     DataType op1Type;
-                    if (operand1.Kind == AstItemKind.Operator)
+                    if (operand1.Kind == AstItemKind.Operator || operand1.Kind == AstItemKind.UnaryOperator)
                         op1Type = operand1.DataType;
                     else
                         op1Type = CheckExpression(operand1);
 
                     //Get data type of operand2
                     DataType op2Type;
-                    if (operand2.Kind == AstItemKind.Operator)
+                    if (operand2.Kind == AstItemKind.Operator || operand2.Kind == AstItemKind.UnaryOperator)
                         op2Type = operand2.DataType;
                     else
                         op2Type = CheckExpression(operand2);
@@ -350,6 +350,34 @@ namespace erc
                     //-2 is correct because next iteration of loop will increment i
                     //anyways and it will then point to the next item in the expression.
                     i -= 2;
+                }
+                else if (item.Kind == AstItemKind.UnaryOperator)
+                {
+                    var operand = terms[i - 1];
+
+                    //Get data type of operand
+                    DataType opType;
+                    if (operand.Kind == AstItemKind.Operator || operand.Kind == AstItemKind.UnaryOperator)
+                        opType = operand.DataType;
+                    else
+                        opType = CheckExpression(operand);
+
+                    //Check if operand type is valid
+                    item.UnaryOperator.ValidateOperandType(opType);
+
+                    //Set data type on operator
+                    item.DataType = item.UnaryOperator.GetReturnType(opType);
+
+                    //Overwritten in every iteration. The last operator defines the final data type.
+                    expressionFinalType = item.DataType;
+
+                    //Remove the operand from the expression, do not remove the current operator
+                    //as it is required to know later that a value must be popped from stack
+                    terms.RemoveAt(i - 1);
+
+                    //-1 is correct because next iteration of loop will increment i
+                    //anyways and it will then point to the next item in the expression.
+                    i -= 1;
                 }
             }
 

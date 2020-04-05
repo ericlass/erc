@@ -535,6 +535,21 @@ namespace erc
                     //anyways and it will then point to the next item in the expression.
                     i -= 2;
                 }
+                else if (item.Kind == AstItemKind.UnaryOperator)
+                {
+                    var operand = terms[i - 1];
+                    var opLocation = GetOperandLocation(result, operand, item.DataType.TempRegister1);
+                    result.AddRange(item.UnaryOperator.Generate(item.DataType, target, opLocation));
+                    result.Add(new Operation(item.DataType, Instruction.V_PUSH, target));
+
+                    //Remove the operand from the expression, do not remove the current operator
+                    //as it is required to know later that a value must be popped from stack
+                    terms.RemoveAt(i - 1);
+
+                    //-1 is correct because next iteration of loop will increment i
+                    //anyways and it will then point to the next item in the expression.
+                    i -= 1;
+                }
             }
 
             //Remove trailing push, not required
@@ -579,7 +594,7 @@ namespace erc
             {
                 output.AddRange(GenerateFunctionCall(operand, defaultLocation));
             }
-            else if (operand.Kind == AstItemKind.Operator)
+            else if (operand.Kind == AstItemKind.Operator || operand.Kind == AstItemKind.UnaryOperator)
             {
                 output.Add(new Operation(operand.DataType, Instruction.V_POP, defaultLocation));
             }
@@ -673,21 +688,39 @@ namespace erc
                             var target = popOp.Operand1;
                             if (source != target)
                             {
-                                //Transform pop to direct move in-place
-                                if (source.IsStack() || target.IsStack())
-                                    popOp.Instruction = popOp.DataType.MoveInstructionUnaligned;
-                                else
-                                    popOp.Instruction = popOp.DataType.MoveInstructionAligned;
+                                //Check if source location has changed between the push and pop
+                                var hasChanged = false;
+                                for (int k = j + 1; k < i; k++)
+                                {
+                                    var checkOp = ops[k];
+                                    if (checkOp.Instruction != Instruction.NOP && checkOp.Instruction != Instruction.POP)
+                                    {
+                                        if (checkOp.Operand1 == source)
+                                        {
+                                            hasChanged = true;
+                                            break;
+                                        }
+                                    }
+                                }
 
-                                popOp.Operand1 = target;
-                                popOp.Operand2 = source;
+                                if (!hasChanged)
+                                {
+                                    //Transform pop to direct move in-place
+                                    if (source.IsStack() || target.IsStack())
+                                        popOp.Instruction = popOp.DataType.MoveInstructionUnaligned;
+                                    else
+                                        popOp.Instruction = popOp.DataType.MoveInstructionAligned;
 
-                                //Make push a nop so it is removed below
-                                pushOp.Instruction = Instruction.NOP;
+                                    popOp.Operand1 = target;
+                                    popOp.Operand2 = source;
+
+                                    //Make push a nop so it is removed below
+                                    pushOp.Instruction = Instruction.NOP;
+                                }
                             }
                             else
                             {
-                                //Check if location has changed between the push and pop
+                                //Check if source location has changed between the push and pop
                                 var hasChanged = false;
                                 for (int k = j + 1; k < i; k++)
                                 {

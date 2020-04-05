@@ -11,7 +11,12 @@ namespace erc
 
         public void ValidateOperandType(DataType operandType)
         {
-            if (!(operandType.Group != DataTypeGroup.ScalarInteger && operandType.IsSigned) || operandType.Group != DataTypeGroup.ScalarFloat || operandType.Group != DataTypeGroup.VectorFloat)
+            //if (operandType.Group == DataTypeGroup.ScalarInteger && !operandType.IsSigned)
+                //throw new Exception("Unsupported data type for arithmetic negation operator: " + operandType);
+
+
+
+            if ((operandType.Group == DataTypeGroup.ScalarInteger && !operandType.IsSigned) && operandType.Group != DataTypeGroup.ScalarFloat && operandType.Group != DataTypeGroup.VectorFloat)
                 throw new Exception("Unsupported data type for arithmetic negation operator: " + operandType);
         }
 
@@ -29,14 +34,14 @@ namespace erc
                 throw new Exception("Target location must be a register! Given: " + target);
 
             var subInstruction = dataType.SubInstruction;
-            var xorInstruction = Instruction.XOR;
+            var xorInstruction = GetXorInstruction(dataType);
 
             var result = new List<Operation>();
             switch (subInstruction.NumOperands)
             {
                 case 1:
                     //For 1-operand syntax we use the accumulator
-                    result.Add(new Operation(dataType, xorInstruction, dataType.Accumulator));
+                    result.Add(new Operation(dataType, xorInstruction, dataType.Accumulator, dataType.Accumulator));
 
                     //Move operand to register, if required
                     var opLocation = operand;
@@ -51,7 +56,7 @@ namespace erc
 
                 case 2:
                     //For 2-operand syntax we use the target
-                    result.Add(new Operation(dataType, xorInstruction, target));
+                    result.Add(new Operation(dataType, xorInstruction, target, target));
 
                     //Move operand to register, if required
                     opLocation = operand;
@@ -66,7 +71,7 @@ namespace erc
 
                 case 3:
                     //For 3-operand syntax we use the first temp register
-                    result.Add(new Operation(dataType, xorInstruction, dataType.TempRegister1));
+                    result.Add(new Operation(dataType, xorInstruction, dataType.TempRegister1, dataType.TempRegister1));
 
                     //Move operand to register, if required
                     opLocation = operand;
@@ -84,5 +89,14 @@ namespace erc
             }
             return result;
         }
+
+        public Instruction GetXorInstruction(DataType dataType)
+        {
+            if (dataType.Group == DataTypeGroup.ScalarFloat || dataType.Group == DataTypeGroup.VectorFloat)
+                return Instruction.PXOR;
+
+            return Instruction.XOR;
+        }
+
     }
 }
