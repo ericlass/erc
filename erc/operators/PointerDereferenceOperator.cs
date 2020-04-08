@@ -16,11 +16,12 @@ namespace erc
             var opLocation = operand;
             if (operand.Kind != OperandKind.Register)
             {
+                //Need to use DataType.U64 here because actual pointer type is not available here anymore
                 opLocation = DataType.U64.Accumulator;
-                result.Add(new Operation(dataType, Instruction.MOV, opLocation, operand));
+                result.Add(new Operation(DataType.U64, Instruction.MOV, opLocation, operand));
             }
 
-            result.AddRange(CodeGenerator.Move(dataType.ElementType, Operand.HeapAddressInRegister(opLocation.Register), target));
+            result.AddRange(CodeGenerator.Move(dataType, Operand.HeapAddressInRegister(opLocation.Register), target));
 
             return result;
         }

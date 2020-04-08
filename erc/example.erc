@@ -16,12 +16,13 @@ fn expressions() {
 
 fn pointers() {
 	let p = new u64;
-	let p2 = new f32(10);
+	//let p2 = new f32(10);
 
-	let x = p[0];
+	//let x = p[0];
+	let x = *p;
 
 	del p;
-	del p2;
+	//del p2;
 }
 
 fn boolean(p1: bool) {
