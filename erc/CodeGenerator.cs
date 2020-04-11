@@ -234,8 +234,9 @@ namespace erc
         private List<Operation> GenerateAssignment(AstItem statement)
         {
             //No need to check if variable was already declared or declared. That is already check by syntax analysis!
-            var variable = _context.GetSymbol(statement.Identifier);
-            return GenerateExpression(statement.Children[0], variable.Location);
+            //TODO: Handle assignments to deref pointer and index access
+            var variable = _context.GetSymbol(statement.Children[0].Identifier);
+            return GenerateExpression(statement.Children[1], variable.Location);
         }
 
         private List<Operation> GenerateFunctionCall(AstItem funcCall, Operand targetLocation)

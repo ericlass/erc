@@ -28,7 +28,9 @@ namespace erc
         NewPointer,
         DelPointer,
         IndexAccess,
-        UnaryOperator
+        UnaryOperator,
+        // Used as target for assignments.
+        PointerDeref
     }
 
     public class AstItem
@@ -61,7 +63,7 @@ namespace erc
             {
                 case AstItemKind.VarDecl:
                 case AstItemKind.Assignment:
-                    return Kind + ": " + DataType + "(" + Identifier + "; " + Children[0] + ")";
+                    return Kind + ": " + DataType + "(" + Children[0] + ")";
 
                 case AstItemKind.VarScopeEnd:
                     return Kind + ": " + Identifier;
@@ -73,6 +75,8 @@ namespace erc
                     return "<" + String.Join(",", Children) + ">";
 
                 case AstItemKind.Variable:
+                case AstItemKind.PointerDeref:
+                case AstItemKind.IndexAccess:
                     return Kind + ": " + DataType + "(" + Identifier + ")";
 
                 case AstItemKind.Operator:
@@ -103,9 +107,10 @@ namespace erc
             switch (Kind)
             {
                 case AstItemKind.VarDecl:
-                case AstItemKind.Assignment:
                 case AstItemKind.Variable:
                 case AstItemKind.Parameter:
+                case AstItemKind.PointerDeref:
+                case AstItemKind.IndexAccess:
                     return Kind + ": \"" + Identifier + "\" (" + DataType + ")";
 
                 case AstItemKind.VarScopeEnd:
@@ -180,11 +185,33 @@ namespace erc
             return result;
         }
 
-        public static AstItem Assignment(string varName, AstItem expression)
+        public static AstItem VariableAssignment(string varName, AstItem expression)
         {
             var result = new AstItem(AstItemKind.Assignment);
-            result.Identifier = varName;
+            result.Children.Add(Variable(varName));
             result.Children.Add(expression);
+            return result;
+        }
+
+        public static AstItem PointerAssignment(string varName, AstItem expression)
+        {
+            var pointer = PointerDeref(varName);
+
+            var result = new AstItem(AstItemKind.Assignment);
+            result.Children.Add(pointer);
+            result.Children.Add(expression);
+
+            return result;
+        }
+
+        public static AstItem PointerIndexAssignment(string varName, AstItem indexExpression, AstItem expression)
+        {
+            var pointer = IndexAccess(varName, indexExpression);
+
+            var result = new AstItem(AstItemKind.Assignment);
+            result.Children.Add(pointer);
+            result.Children.Add(expression);
+
             return result;
         }
 
@@ -310,6 +337,11 @@ namespace erc
         public static AstItem DelPointer(string varName)
         {
             return new AstItem { Kind = AstItemKind.DelPointer, DataType = DataType.VOID, Identifier = varName };
+        }
+
+        private static AstItem PointerDeref(string varName)
+        {
+            return new AstItem { Kind = AstItemKind.PointerDeref, Identifier = varName };
         }
 
         public static AstItem IndexAccess(string varName, AstItem indexExpression)

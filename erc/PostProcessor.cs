@@ -89,7 +89,7 @@ namespace erc
         /// <param name="found">Found variable names are stored here.</param>
         public void FindVariables(AstItem item, List<string> found)
         {
-            if (item.Kind == AstItemKind.Variable || item.Kind == AstItemKind.VarDecl || item.Kind == AstItemKind.Assignment || item.Kind == AstItemKind.DelPointer || item.Kind == AstItemKind.IndexAccess)
+            if (item.Kind == AstItemKind.Variable || item.Kind == AstItemKind.VarDecl || item.Kind == AstItemKind.DelPointer || item.Kind == AstItemKind.IndexAccess || item.Kind == AstItemKind.PointerDeref)
             {
                 found.Add(item.Identifier);
             }

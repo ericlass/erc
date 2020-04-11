@@ -107,112 +107,135 @@ namespace erc
         {
             if (item.Kind == AstItemKind.VarDecl)
             {
-                var variable = _context.GetSymbol(item.Identifier);
-                if (variable != null)
-                    throw new Exception("Variable already declared: " + item);
-
-                var dataType = CheckExpression(item.Children[0]);
-                item.DataType = dataType;
-
-                variable = new Symbol(item.Identifier, SymbolKind.Variable, dataType);
-                _context.AddVariable(variable);
+                CheckVarDecl(item);
             }
             else if (item.Kind == AstItemKind.Assignment)
             {
-                var variable = _context.GetSymbol(item.Identifier);
-                if (variable == null)
-                    throw new Exception("Variable not declared: " + item);
-
-                if (!variable.IsAssignable)
-                    throw new Exception("Cannot assign to symbol: " + variable);
-
-                item.DataType = CheckExpression(item.Children[0]);
-
-                if (variable.DataType != item.DataType)
-                    throw new Exception("Cannot assign value of type " + item.DataType + " to variable " + variable);
+                CheckAssignment(item);
             }
             else if (item.Kind == AstItemKind.FunctionCall)
             {
-                var function = _context.GetFunction(item.Identifier);
-                if (function == null)
-                    throw new Exception("Undeclared function: " + item.Identifier);
-
-                if (item.Children.Count != function.Parameters.Count)
-                    throw new Exception("Invalid number of arguments to function '" + function.Name + "'! Expected: " + function.Parameters.Count + ", given: " + item.Children.Count);
-
-                for (int i = 0; i < item.Children.Count; i++)
-                {
-                    var expression = item.Children[i];
-                    var parameter = function.Parameters[i];
-
-                    var dataType = CheckExpression(expression);
-                    if (dataType != parameter.DataType)
-                        throw new Exception("Invalid data type for parameter " + parameter + "! Expected: " + parameter.DataType + ", found: " + dataType);
-
-                    expression.DataType = dataType;
-                }
-
-                item.DataType = function.ReturnType;
+                CheckFunctionCall(item);
             }
             else if (item.Kind == AstItemKind.Return)
             {
-                var valueExpression = item.Children[0];
-                var valueType = DataType.VOID;
-
-                if (valueExpression != null)
-                {
-                    valueType = CheckExpression(valueExpression);
-
-                    if (valueType != _context.CurrentFunction.ReturnType)
-                        throw new Exception("Invalid return data type! Expected " + _context.CurrentFunction.ReturnType + ", found " + valueType);
-                }
-
-                item.DataType = valueType;
+                CheckReturnStatement(item);
             }
             else if (item.Kind == AstItemKind.If)
             {
-                var dataType = CheckExpression(item.Children[0]);
-                if (dataType != DataType.BOOL)
-                    throw new Exception("Expression for if statement must return bool, got: " + dataType);
+                CheckIfStatement(item);
+            }
+            else if (item.Kind == AstItemKind.DelPointer)
+            {
+                CheckPointerDeletion(item);
+            }
+            else
+                throw new Exception("Unknown statement: " + item);
+        }
 
-                //if block
+        private void CheckPointerDeletion(AstItem item)
+        {
+            var variable = _context.GetSymbol(item.Identifier);
+            if (variable == null)
+                throw new Exception("Undeclared variable: '" + item.Identifier + "' at: " + item);
+
+            if (!variable.DataType.IsPointer)
+                throw new Exception("Cannot del non-pointer data type: " + variable.DataType + " at: " + item);
+
+            //TODO: Check that the pointer is one that was created with "new" and not some other self-created one
+        }
+
+        private void CheckIfStatement(AstItem item)
+        {
+            var dataType = CheckExpression(item.Children[0]);
+            if (dataType != DataType.BOOL)
+                throw new Exception("Expression for if statement must return bool, got: " + dataType);
+
+            //if block
+            _context.EnterBlock();
+
+            var statements = item.Children[1].Children;
+            foreach (var statement in statements)
+            {
+                CheckStatement(statement);
+            }
+
+            _context.LeaveBlock();
+
+            //else block
+            var elseStatements = item.Children[2];
+            if (elseStatements != null)
+            {
                 _context.EnterBlock();
 
-                var statements = item.Children[1].Children;
-                foreach (var statement in statements)
+                foreach (var statement in elseStatements.Children)
                 {
                     CheckStatement(statement);
                 }
 
                 _context.LeaveBlock();
-
-                //else block
-                var elseStatements = item.Children[2];
-                if (elseStatements != null)
-                {
-                    _context.EnterBlock();
-
-                    foreach (var statement in elseStatements.Children)
-                    {
-                        CheckStatement(statement);
-                    }
-
-                    _context.LeaveBlock();
-                }
             }
-            else if (item.Kind == AstItemKind.DelPointer)
+        }
+
+        private void CheckReturnStatement(AstItem item)
+        {
+            var valueExpression = item.Children[0];
+            var valueType = DataType.VOID;
+
+            if (valueExpression != null)
             {
-                var variable = _context.GetSymbol(item.Identifier);
-                if (variable == null)
-                    throw new Exception("Undeclared variable: '" + item.Identifier + "' at: " + item);
+                valueType = CheckExpression(valueExpression);
 
-                if (!variable.DataType.IsPointer)
-                    throw new Exception("Cannot del non-pointer data type: " + variable.DataType + " at: " + item);
-
-                //TODO: Check that the pointer is one that was created with "new" and not some other self-created one
+                if (valueType != _context.CurrentFunction.ReturnType)
+                    throw new Exception("Invalid return data type! Expected " + _context.CurrentFunction.ReturnType + ", found " + valueType);
             }
-            else
-                throw new Exception("Unknown statement: " + item);
+
+            item.DataType = valueType;
+        }
+
+        private void CheckAssignment(AstItem item)
+        {
+            var target = item.Children[0];
+
+            var variable = _context.GetSymbol(target.Identifier);
+            Assert.Check(variable != null, "Variable not declared: " + item);
+            Assert.Check(variable.IsAssignable, "Cannot assign to symbol: " + variable);
+
+            item.DataType = CheckExpression(item.Children[1]);
+            target.DataType = item.DataType;
+
+            switch (target.Kind)
+            {
+                case AstItemKind.Variable:
+                    Assert.Check(variable.DataType == item.DataType, "Cannot assign value of type " + item.DataType + " to variable " + variable);
+                    break;
+
+                case AstItemKind.PointerDeref:
+                    Assert.Check(variable.DataType.IsPointer, "Can only derefence pointer type, got: " + variable.DataType);
+                    Assert.Check(variable.DataType.ElementType == item.DataType, "Cannot assign value of type " + item.DataType + " to dereferenced pointer type " + variable.DataType);
+                    break;
+
+                case AstItemKind.IndexAccess:
+                    target.DataType = CheckIndexAccess(target);
+                    Assert.Check(variable.DataType.ElementType == item.DataType, "Cannot assign value of type " + item.DataType + " to index access of type " + variable.DataType);
+                    break;
+
+                default:
+                    throw new Exception("Unsupported assignment target: " + target);
+            }
+        }
+
+        private void CheckVarDecl(AstItem item)
+        {
+            var variable = _context.GetSymbol(item.Identifier);
+            if (variable != null)
+                throw new Exception("Variable already declared: " + item);
+
+            var dataType = CheckExpression(item.Children[0]);
+            item.DataType = dataType;
+
+            variable = new Symbol(item.Identifier, SymbolKind.Variable, dataType);
+            _context.AddVariable(variable);
         }
 
         private DataType CheckExpression(AstItem expression)
@@ -254,7 +277,7 @@ namespace erc
             return expression.DataType;
         }
 
-        private void CheckIndexAccess(AstItem expression)
+        private DataType CheckIndexAccess(AstItem expression)
         {
             var symbol = _context.RequireSymbol(expression.Identifier);
             Assert.Check(symbol.DataType.IsPointer, "Index access can only be done on pointer types. Type use: " + symbol.DataType);
@@ -274,7 +297,7 @@ namespace erc
                     throw new Exception("Index for index access must by unsigned integer type, got: " + indexExpType);
             }
 
-            expression.DataType = symbol.DataType.ElementType;
+            return symbol.DataType.ElementType;
         }
 
         private void CheckNewPointer(AstItem expression)

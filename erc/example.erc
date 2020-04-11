@@ -15,8 +15,11 @@ fn expressions() {
 }
 
 fn pointers() {
-	let p = new u64;
+	let p = new i64;
 	//let p2 = new f32(10);
+
+	*p = 5;
+	p[0] = 8;
 
 	//let x = p[0];
 	let x = *p;

@@ -176,7 +176,9 @@ namespace erc
                         tokens.PopExpected(TokenKind.StatementTerminator);
                     }
                     else if (next.Kind == TokenKind.AssigmnentOperator)
-                        result = ReadAssignment(tokens);
+                        result = ReadVariableAssignment(tokens);
+                    else if (next.Kind == TokenKind.SquareBracketOpen)
+                        result = ReadIndexerAssignment(tokens);
                     else
                         throw new Exception("Unexpected token after identifier '" + token.Value + "'. Expected '=' or '(', found: " + next);
                     break;
@@ -188,6 +190,16 @@ namespace erc
                 case TokenKind.Del:
                     result = ReadDelStatement(tokens);
                     tokens.PopExpected(TokenKind.StatementTerminator);
+                    break;
+
+                case TokenKind.ExpressionOperator:
+                    if (token.Value == "*")
+                    {
+                        result = ReadPointerAssignment(tokens);
+                    }
+                    else
+                        throw new Exception("Unexpected token. Expected 'let', 'ret', '}' or identifier, found: " + token);
+
                     break;
 
                 case TokenKind.CurlyBracketClose:
@@ -308,7 +320,7 @@ namespace erc
             return AstItem.VarDecl(name.Value, expression);
         }
 
-        private AstItem ReadAssignment(TokenIterator tokens)
+        private AstItem ReadVariableAssignment(TokenIterator tokens)
         {
             var name = tokens.PopExpected(TokenKind.Word);
             tokens.PopExpected(TokenKind.AssigmnentOperator);
@@ -317,7 +329,37 @@ namespace erc
 
             tokens.PopExpected(TokenKind.StatementTerminator);
 
-            return AstItem.Assignment(name.Value, expression);
+            return AstItem.VariableAssignment(name.Value, expression);
+        }
+
+        private AstItem ReadPointerAssignment(TokenIterator tokens)
+        {
+            tokens.PopExpected(TokenKind.ExpressionOperator);
+            var name = tokens.PopExpected(TokenKind.Word);
+            tokens.PopExpected(TokenKind.AssigmnentOperator);
+
+            var expression = ReadExpression(tokens, TokenKind.StatementTerminator);
+
+            tokens.PopExpected(TokenKind.StatementTerminator);
+
+            return AstItem.PointerAssignment(name.Value, expression);
+        }
+
+        private AstItem ReadIndexerAssignment(TokenIterator tokens)
+        {
+            var name = tokens.PopExpected(TokenKind.Word);
+            
+            tokens.PopExpected(TokenKind.SquareBracketOpen);
+            var indexExpression = ReadExpression(tokens, TokenKind.SquareBracketClose);
+            tokens.PopExpected(TokenKind.SquareBracketClose);
+
+            tokens.PopExpected(TokenKind.AssigmnentOperator);
+
+            var valueExpression = ReadExpression(tokens, TokenKind.StatementTerminator);
+
+            tokens.PopExpected(TokenKind.StatementTerminator);
+
+            return AstItem.PointerIndexAssignment(name.Value, indexExpression, valueExpression);
         }
 
         private DataType ReadDataType(TokenIterator tokens)
