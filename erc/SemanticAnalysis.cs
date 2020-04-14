@@ -297,6 +297,7 @@ namespace erc
                     throw new Exception("Index for index access must by unsigned integer type, got: " + indexExpType);
             }
 
+            expression.DataType = symbol.DataType.ElementType;
             return symbol.DataType.ElementType;
         }
 

@@ -15,17 +15,15 @@ fn expressions() {
 }
 
 fn pointers() {
-	let p = new i64;
-	//let p2 = new f32(10);
+	let p = new i64(5);
 
 	*p = 5;
-	p[0] = 8;
+	p[2] = 8;
 
-	//let x = p[0];
-	let x = *p;
+	let x = p[0];
+	let y = *p;
 
 	del p;
-	//del p2;
 }
 
 fn boolean(p1: bool) {

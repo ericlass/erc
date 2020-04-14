@@ -140,7 +140,7 @@ namespace erc
 
             foreach (var statement in statements.Children)
             {
-                //result.Add(new Operation(DataType.I64, Instruction.V_COMMENT, Operand.Label(statement.SourceLine)));
+                result.Add(new Operation(DataType.I64, Instruction.V_COMMENT, Operand.Label(statement.SourceLine)));
                 result.AddRange(GenerateStatement(statement));
             }
 
@@ -234,9 +234,53 @@ namespace erc
         private List<Operation> GenerateAssignment(AstItem statement)
         {
             //No need to check if variable was already declared or declared. That is already check by syntax analysis!
-            //TODO: Handle assignments to deref pointer and index access
-            var variable = _context.GetSymbol(statement.Children[0].Identifier);
-            return GenerateExpression(statement.Children[1], variable.Location);
+            var result = new List<Operation>();
+            var target = statement.Children[0];
+            Operand targetLocation;
+            var symbol = _context.RequireSymbol(statement.Children[0].Identifier);
+            Register tmpRegister = null;
+
+            switch (target.Kind)
+            {
+                case AstItemKind.Variable:
+                    targetLocation = symbol.Location;
+                    break;
+
+                case AstItemKind.IndexAccess:
+                    tmpRegister = _context.RegisterPool.GetFreeRegister(symbol.DataType);
+                    Assert.Check(tmpRegister != null, "No register free for index address calculation at: " + statement);
+                    _context.RegisterPool.Use(tmpRegister);
+
+                    targetLocation = Operand.HeapAddressInRegister(tmpRegister);
+                    result.AddRange(GenerateIndexAddressCalculation(target.Children[0], symbol, Operand.AsRegister(tmpRegister)));
+                    break;
+
+                case AstItemKind.PointerDeref:
+                    if (symbol.Location.Kind != OperandKind.Register)
+                    {
+                        tmpRegister = _context.RegisterPool.GetFreeRegister(symbol.DataType);
+                        Assert.Check(tmpRegister != null, "No register free for pointer address at: " + statement);
+                        _context.RegisterPool.Use(tmpRegister);
+
+                        targetLocation = Operand.HeapAddressInRegister(tmpRegister);
+                        result.AddRange(Move(symbol.DataType, symbol.Location, Operand.AsRegister(tmpRegister)));
+                    }
+                    else
+                    {
+                        targetLocation = Operand.HeapAddressInRegister(symbol.Location.Register);
+                    }
+                    break;
+
+                default:
+                    throw new Exception("Unsupported target item for assignment: " + target);
+            }
+
+            result.AddRange(GenerateExpression(statement.Children[1], targetLocation));
+
+            if (tmpRegister != null)
+                _context.RegisterPool.Free(tmpRegister);
+
+            return result;
         }
 
         private List<Operation> GenerateFunctionCall(AstItem funcCall, Operand targetLocation)
@@ -442,19 +486,35 @@ namespace erc
             var symbol = _context.RequireSymbol(item.Identifier);
 
             var elementType = symbol.DataType.ElementType;
-            var pointerType = symbol.DataType;
 
-            //Get index into accumulator
-            result.AddRange(GenerateExpression(item.Children[0], pointerType.Accumulator));
-            //Multiply by byte size of sub type
-            result.Add(new Operation(pointerType, Instruction.MOV, pointerType.TempRegister1, Operand.Immediate(elementType.ByteSize)));
-            result.Add(new Operation(pointerType, Instruction.MUL, pointerType.TempRegister1));
-            //Add base address
-            result.Add(new Operation(pointerType, Instruction.ADD, pointerType.Accumulator, symbol.Location));
+            var tmpRegister = _context.RegisterPool.GetFreeRegister(symbol.DataType);
+            Assert.Check(tmpRegister != null, "No free register for index access at: " + item);
+            _context.RegisterPool.Use(tmpRegister);
+
+            result.AddRange(GenerateIndexAddressCalculation(item.Children[0], symbol, Operand.AsRegister(tmpRegister)));
 
             //Move value to target
-            result.AddRange(Move(elementType, Operand.HeapAddressInRegister(pointerType.Accumulator.Register), targetLocation));
+            result.AddRange(Move(elementType, Operand.HeapAddressInRegister(tmpRegister), targetLocation));
 
+            _context.RegisterPool.Free(tmpRegister);
+
+            return result;
+        }
+
+        private List<Operation> GenerateIndexAddressCalculation(AstItem indexExpression, Symbol symbol, Operand target)
+        {
+            var pointerType = symbol.DataType;
+            var result = new List<Operation>();
+            //Get index into accumulator
+            result.AddRange(GenerateExpression(indexExpression, target));
+
+            //TODO: Optimize: The MOV and MUL can be saved if the index expression return 0. Add a "TEST target" and "JZ"
+            //Multiply by byte size of sub type
+            result.Add(new Operation(pointerType, Instruction.MOV, pointerType.TempRegister1, Operand.Immediate(pointerType.ElementType.ByteSize)));
+            result.Add(new Operation(pointerType, Instruction.MUL, pointerType.TempRegister1));
+
+            //Add base address
+            result.Add(new Operation(pointerType, Instruction.ADD, target, symbol.Location));
             return result;
         }
 
