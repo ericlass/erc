@@ -11,6 +11,7 @@ Modern, powerful programming language for modern x64 CPUs. erc is made with perf
 - Polymorphy through simple interfaces
 - Common Code sharing through traits
 - Included support for SoA
+- Intrinsics for certain CPU instructions
 
 ### Compiler:
 - Native compilation to executable
