@@ -23,7 +23,7 @@ Modern, powerful programming language for modern x64 CPUs. erc is made with perf
 
 ## Example
 Here's an example that shows some features. Please note that the syntax is very likely to change on the road to version 1.0.
-```javascript
+```rust
 //declare integer variable (with type inference, signed 64bit integer is default)
 let a = 5;
 
