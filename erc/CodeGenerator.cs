@@ -566,7 +566,7 @@ namespace erc
             for (int i = 0; i < terms.Count; i++)
             {
                 var item = terms[i];
-                if (item.Kind == AstItemKind.Operator)
+                if (item.Kind == AstItemKind.BinaryOperator)
                 {
                     var operand1 = terms[i - 2];
                     var operand2 = terms[i - 1];
@@ -579,7 +579,7 @@ namespace erc
 
                     var op2Location = GetOperandLocation(result, operand2, item.DataType.TempRegister2);
 
-                    result.AddRange(item.Operator.Generate(item.DataType, target, op1Location, operand1.DataType, op2Location, operand2.DataType));
+                    result.AddRange(item.BinaryOperator.Generate(item.DataType, target, op1Location, operand1.DataType, op2Location, operand2.DataType));
 
                     //Free usage of temp register, if required
                     if (op1Location == item.DataType.TempRegister1)
@@ -655,7 +655,7 @@ namespace erc
             {
                 output.AddRange(GenerateFunctionCall(operand, defaultLocation));
             }
-            else if (operand.Kind == AstItemKind.Operator || operand.Kind == AstItemKind.UnaryOperator)
+            else if (operand.Kind == AstItemKind.BinaryOperator || operand.Kind == AstItemKind.UnaryOperator)
             {
                 output.Add(new Operation(operand.DataType, Instruction.V_POP, defaultLocation));
             }

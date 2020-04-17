@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace erc
 {
-    public class ModuloOperator : IOperator
+    public class ModuloOperator : IBinaryOperator
     {
         //TODO: Check which are really supported
         private HashSet<DataType> _supportedDataTypes = new HashSet<DataType>() {
@@ -18,8 +18,8 @@ namespace erc
             };
 
         public string Figure => "%";
-
         public int Precedence => 20;
+
 
         public void ValidateOperandTypes(DataType operand1Type, DataType operand2Type)
         {

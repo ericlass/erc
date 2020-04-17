@@ -3,12 +3,11 @@ using System.Collections.Generic;
 
 namespace erc
 {
-    public class BooleanOperator : IOperator
+    public class BooleanOperator : IBinaryOperator
     {
         private Instruction _instruction;
 
         public string Figure { get; }
-
         public int Precedence { get; }
 
         public BooleanOperator(string figure, Instruction instruction, int precedence)

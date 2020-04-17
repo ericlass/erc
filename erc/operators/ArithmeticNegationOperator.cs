@@ -6,7 +6,6 @@ namespace erc
     class ArithmeticNegationOperator : IUnaryOperator
     {
         public string Figure => "-";
-
         public int Precedence => 23;
 
         public void ValidateOperandType(DataType operandType)

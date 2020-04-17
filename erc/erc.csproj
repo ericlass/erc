@@ -63,6 +63,7 @@
     <Compile Include="Function.cs" />
     <Compile Include="FunctionScope.cs" />
     <Compile Include="Instruction.cs" />
+    <Compile Include="operators\IBinaryOperator.cs" />
     <Compile Include="operators\IOperator.cs" />
     <Compile Include="operators\IUnaryOperator.cs" />
     <Compile Include="LogLevel.cs" />

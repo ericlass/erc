@@ -6,10 +6,9 @@ using System.Threading.Tasks;
 
 namespace erc
 {
-    class NoOpOperator : IOperator
+    class NoOpOperator : IBinaryOperator
     {
         public string Figure { get; }
-
         public int Precedence { get; }
 
         public NoOpOperator(string figure, int precedence)

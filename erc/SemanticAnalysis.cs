@@ -338,30 +338,30 @@ namespace erc
             for (int i = 0; i < terms.Count; i++)
             {
                 var item = terms[i];
-                if (item.Kind == AstItemKind.Operator)
+                if (item.Kind == AstItemKind.BinaryOperator)
                 {
                     var operand1 = terms[i - 2];
                     var operand2 = terms[i - 1];
 
                     //Get data type of operand1
                     DataType op1Type;
-                    if (operand1.Kind == AstItemKind.Operator || operand1.Kind == AstItemKind.UnaryOperator)
+                    if (operand1.Kind == AstItemKind.BinaryOperator || operand1.Kind == AstItemKind.UnaryOperator)
                         op1Type = operand1.DataType;
                     else
                         op1Type = CheckExpression(operand1);
 
                     //Get data type of operand2
                     DataType op2Type;
-                    if (operand2.Kind == AstItemKind.Operator || operand2.Kind == AstItemKind.UnaryOperator)
+                    if (operand2.Kind == AstItemKind.BinaryOperator || operand2.Kind == AstItemKind.UnaryOperator)
                         op2Type = operand2.DataType;
                     else
                         op2Type = CheckExpression(operand2);
 
                     //Check if operand types are valid
-                    item.Operator.ValidateOperandTypes(op1Type, op2Type);
+                    item.BinaryOperator.ValidateOperandTypes(op1Type, op2Type);
 
                     //Set data type on operator
-                    item.DataType = item.Operator.GetReturnType(op1Type, op2Type);
+                    item.DataType = item.BinaryOperator.GetReturnType(op1Type, op2Type);
 
                     //Overwritten in every iteration. The last operator defines the final data type.
                     expressionFinalType = item.DataType;
@@ -381,7 +381,7 @@ namespace erc
 
                     //Get data type of operand
                     DataType opType;
-                    if (operand.Kind == AstItemKind.Operator || operand.Kind == AstItemKind.UnaryOperator)
+                    if (operand.Kind == AstItemKind.BinaryOperator || operand.Kind == AstItemKind.UnaryOperator)
                         opType = operand.DataType;
                     else
                         opType = CheckExpression(operand);

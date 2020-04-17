@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace erc
 {
-    public class RelationalOperator : IOperator
+    public class RelationalOperator : IBinaryOperator
     {
         public string Figure { get; }
         public int Precedence => 17;

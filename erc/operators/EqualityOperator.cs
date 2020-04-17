@@ -4,12 +4,11 @@ using System.Linq;
 
 namespace erc
 {
-    public class EqualityOperator : IOperator
+    public class EqualityOperator : IBinaryOperator
     {
         private bool _negate;
 
         public string Figure { get; }
-
         public int Precedence => 16;
 
         public EqualityOperator(string figure, bool negate)

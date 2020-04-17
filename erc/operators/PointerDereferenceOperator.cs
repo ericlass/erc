@@ -6,7 +6,6 @@ namespace erc
     class PointerDereferenceOperator : IUnaryOperator
     {
         public string Figure => "*";
-
         public int Precedence => 23;
 
         public List<Operation> Generate(DataType dataType, Operand target, Operand operand)

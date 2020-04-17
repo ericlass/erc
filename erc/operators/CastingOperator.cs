@@ -3,10 +3,9 @@ using System.Collections.Generic;
 
 namespace erc
 {
-    public class CastingOperator : IOperator
+    public class CastingOperator : IBinaryOperator
     {
         public string Figure => "as";
-
         public int Precedence => 17;
 
         public void ValidateOperandTypes(DataType operand1Type, DataType operand2Type)

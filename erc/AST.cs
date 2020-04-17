@@ -15,7 +15,7 @@ namespace erc
         VarScopeEnd,
         Vector,
         Expression,
-        Operator,
+        BinaryOperator,
         Parameter,
         ParameterList,
         StatementList,
@@ -35,18 +35,18 @@ namespace erc
 
     public class AstItem
     {
-        private List<AstItem> _children = new List<AstItem>();
-
         public AstItemKind Kind { get; set; }
         public DataType DataType { get; set; }
         public string Identifier { get; set; } //Name of variable, function etc.
         public object Value { get; set; } //Value for immediates
         public object Value2 { get; set; } //Value for immediates
         public IOperator Operator { get; set; } //Operator
-        public IUnaryOperator UnaryOperator { get; set; } //Operator
         public string SourceLine { get; set; } //Source code line, only filled for statements
-        public List<AstItem> Children { get => _children; set => _children = value; }
+        public List<AstItem> Children { get; set; } = new List<AstItem>();
         public bool DataGenerated { get; set; } = false; //Used to track which immediates have already been generated in the data section
+
+        public IBinaryOperator BinaryOperator => (IBinaryOperator)Operator;
+        public IUnaryOperator UnaryOperator => (IUnaryOperator)Operator;
 
         public AstItem()
         {
@@ -79,11 +79,9 @@ namespace erc
                 case AstItemKind.IndexAccess:
                     return Kind + ": " + DataType + "(" + Identifier + ")";
 
-                case AstItemKind.Operator:
-                    return Kind + ": " + Operator.Figure;
-
+                case AstItemKind.BinaryOperator:
                 case AstItemKind.UnaryOperator:
-                    return Kind + ": " + UnaryOperator.Figure;
+                    return Kind + ": " + Operator.Figure;
 
                 case AstItemKind.Parameter:
                     return Kind + ": " + Identifier + "(" + DataType + ")";
@@ -126,11 +124,9 @@ namespace erc
                 case AstItemKind.Immediate:
                     return Kind + ": " + ImmediateValueToString() + " (" + DataType + ")";
 
-                case AstItemKind.Operator:
-                    return Kind + ": " + this.Operator.Figure;
-
+                case AstItemKind.BinaryOperator:
                 case AstItemKind.UnaryOperator:
-                    return Kind + ": " + this.UnaryOperator.Figure;
+                    return Kind + ": " + this.Operator.Figure;
 
                 default:
                     return Kind.ToString();
@@ -309,13 +305,13 @@ namespace erc
             return new AstItem { Kind = AstItemKind.FunctionDecl, Identifier = varName, Children = new List<AstItem>() { startExpression, endExpression, statementList } };
         }
 
-        public static AstItem AsOperator(IOperator oper)
+        public static AstItem AsOperator(IBinaryOperator oper)
         {
-            return new AstItem { Kind = AstItemKind.Operator, Operator = oper };
+            return new AstItem { Kind = AstItemKind.BinaryOperator, Operator = oper };
         }
         public static AstItem AsUnaryOperator(IUnaryOperator oper)
         {
-            return new AstItem { Kind = AstItemKind.UnaryOperator, UnaryOperator = oper };
+            return new AstItem { Kind = AstItemKind.UnaryOperator, Operator = oper };
         }
 
         public static AstItem IfStatement(AstItem expression, List<AstItem> statements, List<AstItem> elseStatements)

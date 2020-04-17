@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace erc
 {
-    public abstract class ArithmeticOperator : IOperator
+    public abstract class ArithmeticOperator : IBinaryOperator
     {
         private HashSet<DataType> _supportedDataTypes = new HashSet<DataType>() {
                  DataType.I64,
@@ -17,6 +17,7 @@ namespace erc
 
         public abstract string Figure { get; }
         public abstract int Precedence { get; }
+
         public abstract Instruction GetInstruction(DataType dataType);
 
         public void ValidateOperandTypes(DataType operand1Type, DataType operand2Type)

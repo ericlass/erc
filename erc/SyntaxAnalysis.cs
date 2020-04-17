@@ -631,7 +631,7 @@ namespace erc
             return AstItem.Vector(name.Value, paramExpressions);
         }
 
-        private IOperator ParseOperator(string op)
+        private IBinaryOperator ParseOperator(string op)
         {
             var oper = Operator.Parse(op);
             if (oper == null)
@@ -680,7 +680,7 @@ namespace erc
                         cbuffer = stack.Pop();
                     }
                 }
-                else if (item.Kind == AstItemKind.Operator || item.Kind == AstItemKind.UnaryOperator)
+                else if (item.Kind == AstItemKind.BinaryOperator || item.Kind == AstItemKind.UnaryOperator)
                 {
                     if (stack.Count != 0 && Predecessor(stack.Peek(), item))
                     {
@@ -694,7 +694,7 @@ namespace erc
 
                             cbuffer = stack.Peek();
                             // With unary operators it is now possible to find a round bracket here, which must not be popped!
-                            if (cbuffer.Kind == AstItemKind.Operator && cbuffer.Operator == Operator.ROUND_BRACKET_OPEN)
+                            if (cbuffer.Kind == AstItemKind.BinaryOperator && cbuffer.Operator == Operator.ROUND_BRACKET_OPEN)
                                 break;
                             else
                                 stack.Pop();
@@ -725,10 +725,7 @@ namespace erc
         /// <returns></returns>
         private bool Predecessor(AstItem firstOperator, AstItem secondOperator)
         {
-            var firstPred = firstOperator.UnaryOperator != null ? firstOperator.UnaryOperator.Precedence : firstOperator.Operator.Precedence;
-            var secondPred = secondOperator.UnaryOperator != null ? secondOperator.UnaryOperator.Precedence : secondOperator.Operator.Precedence;
-
-            return firstPred >= secondPred;
+            return firstOperator.Operator.Precedence >= secondOperator.Operator.Precedence;
         }
 
     }
