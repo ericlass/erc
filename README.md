@@ -24,21 +24,51 @@ Modern, powerful programming language for modern x64 CPUs. erc is made with perf
 ## Example
 Here's an example that shows some features. Please note that the syntax is very likely to change on the road to version 1.0.
 ```rust
-//declare integer variable (with type inference, signed 64bit integer is default)
-let a = 5;
+//Entry point for application
+fn main()
+{
+    //Local variable declaration with type inference (signed 64-bit integer here)
+    let a = 5;
+    
+    //Declare new vectors of four 64-bit double precision floating point values
+    //"vec" uses type inference to determine the specific vector type
+    let v1 = vec(1.0, 2.0, 3.0, 4.0);
+    //You can also specify the type directly. v2 will have the same type as v1.
+    let v2 = vec4d(4.0, 2.0, 2.0, 1.0);
+    
+    //Add the two vectors component-wise. This will use CPUs AVX vector registers and instructions.
+    let result = v1 + v2;
+    
+    //Vector component access by zero-based index
+    let x = result.0;
+    let y = result.1;
+    let z = result.2;
+}
 
-//declare floating point variable (with type inference, 64bit double precision is default)
-let pi = 3.1415;
+fn pointers()
+{
+    //Allocate space for 1000 four-component 32-bit floating point vectors on the heap
+    //Initializing all components to 0.0 (initialization is optional)
+    //Type of "vertices" will be "vec4f*"
+    let vertices = new vec4f(1000, vec(0.0f, 0.0f, 0.0f, 0.0f));
+    
+    //Dereference pointer to get first value
+    let first = *vertices;
+    //Or use index to get it
+    first = vertices[0];
+    
+    //Pointer arithmetic (vec4f is 16 bytes)
+    let third = *(vertices + 2 * 16)
+    
+    //Write first value using dereferencing
+    *vertices = vec(1.0f, 1.0f, 1.0f, 1.0f);
+    //Write second value using index
+    vertices[1] = vec(2.0f, 2.0f, 2.0f, 2.0f);
+    
+    //Need to free memory!
+    del vertices;
+}
 
-//declare vector variable (with type inference, vector of 4 64bit double precision floats here)
-let va = vec(1.0, 2.0, 3.0, 4.0)
-let vb = vec(4.0, 3.0, 2.0, 1.0)
-
-//add vectors (will use AVX)
-let result = va + vb;
-
-//access vector components
-let x = result.0;
-let y = result.1;
-let z = result.2;
+//External function import from .dll files
+fn ext("QueryPerformanceCounter", "Kernel32.dll") query_perf_counter(u64* performanceCount);
 ```
