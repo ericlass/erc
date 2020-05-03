@@ -47,9 +47,10 @@ namespace erc
             var locator = new StorageLocator();
             locator.Locate(context);
 
-            var generator = new CodeGenerator();
-            string finalCode = generator.Generate(context);
-            //string finalCode = "none";
+            var generator = new IMCodeGenerator();
+            generator.Generate(context);
+
+            string finalCode = String.Join("\n", context.IMCode);
 
             stopWatch.Stop();
             var compilationTime = stopWatch.ElapsedMilliseconds;

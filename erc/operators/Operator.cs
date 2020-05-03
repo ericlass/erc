@@ -37,16 +37,16 @@ namespace erc
         public static IBinaryOperator ADD = new AdditionOperator();
         public static IBinaryOperator SUB = new SubtractionOperator();
 
-        public static IBinaryOperator LessThan = new RelationalOperator("<", Instruction.CMOVB, Instruction.CMOVGE);
-        public static IBinaryOperator LessThanOrEqual = new RelationalOperator("<=", Instruction.CMOVBE, Instruction.CMOVG);
-        public static IBinaryOperator GreaterThan = new RelationalOperator(">", Instruction.CMOVG, Instruction.CMOVBE);
-        public static IBinaryOperator GreaterThanOrEqual = new RelationalOperator(">=", Instruction.CMOVGE, Instruction.CMOVB);
+        public static IBinaryOperator LessThan = new RelationalOperator("<", IMCondition.Below, IMCondition.GreaterEqual);
+        public static IBinaryOperator LessThanOrEqual = new RelationalOperator("<=", IMCondition.BelowEqual, IMCondition.Greater);
+        public static IBinaryOperator GreaterThan = new RelationalOperator(">", IMCondition.Greater, IMCondition.BelowEqual);
+        public static IBinaryOperator GreaterThanOrEqual = new RelationalOperator(">=", IMCondition.GreaterEqual, IMCondition.Below);
 
         public static IBinaryOperator EQUALS = new EqualityOperator("==", false);
         public static IBinaryOperator NOT_EQUALS = new EqualityOperator("!=", true);
 
-        public static IBinaryOperator AND_BOOL = new BooleanOperator("&&", Instruction.AND, 12);
-        public static IBinaryOperator OR_BOOL = new BooleanOperator("||", Instruction.OR, 11);
+        public static IBinaryOperator AND_BOOL = new BooleanOperator("&&", IMInstruction.AND, 12);
+        public static IBinaryOperator OR_BOOL = new BooleanOperator("||", IMInstruction.OR, 11);
 
         //Only required for expression parsing, no code generated
         public static IBinaryOperator ROUND_BRACKET_OPEN = new NoOpOperator("(", 1);

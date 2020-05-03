@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace erc
 {
@@ -8,9 +9,9 @@ namespace erc
 
         public override int Precedence => 20;
 
-        public override Instruction GetInstruction(DataType dataType)
+        public override List<IMOperation> Generate(IMOperand target, IMOperand operand1, IMOperand operand2)
         {
-            return dataType.MulInstruction;
+            return new List<IMOperation>() { IMOperation.Mul(target, operand1, operand2) };
         }
     }
 }

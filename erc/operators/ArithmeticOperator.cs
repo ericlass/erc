@@ -18,8 +18,6 @@ namespace erc
         public abstract string Figure { get; }
         public abstract int Precedence { get; }
 
-        public abstract Instruction GetInstruction(DataType dataType);
-
         public void ValidateOperandTypes(DataType operand1Type, DataType operand2Type)
         {
             if (operand1Type != operand2Type)
@@ -34,74 +32,7 @@ namespace erc
             return operand1Type;
         }
 
-        public List<Operation> Generate(DataType dataType, Operand target, Operand operand1, DataType operand1Type, Operand operand2, DataType operand2Type)
-        {
-            //General contract: target MUST be a register
-            if (target.Kind != OperandKind.Register)
-                throw new Exception("Target location must be a register! Given: " + target);
-
-            var instruction = GetInstruction(dataType);
-            if (instruction == null)
-                throw new Exception("Data type " + dataType + " does not specify an instruction for arithmetic operator: " + Figure);
-
-            var result = new List<Operation>();
-            switch (instruction.NumOperands)
-            {
-                case 1:
-                    //Move operand1 to accumulator for 1-operand syntax like MUL and DIV
-                    result.AddRange(CodeGenerator.Move(dataType, operand1, dataType.Accumulator));
-
-                    //Move operand2 to register, if required
-                    var op2Location = operand2;
-                    if (op2Location.Kind != OperandKind.Register)
-                    {
-                        op2Location = dataType.TempRegister1;
-                        result.AddRange(CodeGenerator.Move(dataType, operand2, op2Location));
-                    }
-
-                    result.Add(new Operation(dataType, instruction, op2Location));
-                    break;
-
-                case 2:
-                    //Move operand1 to target for 2-operand syntax like ADD and SUB
-                    result.AddRange(CodeGenerator.Move(dataType, operand1, target));
-
-                    //Move operand2 to register, if required
-                    op2Location = operand2;
-                    if (op2Location.Kind != OperandKind.Register)
-                    {
-                        op2Location = dataType.TempRegister1;
-                        result.AddRange(CodeGenerator.Move(dataType, operand2, op2Location));
-                    }
-
-                    result.Add(new Operation(dataType, instruction, target, op2Location));
-                    break;
-
-                case 3:
-                    //Move operand1 to register, if required
-                    var op1Location = operand1;
-                    if (op1Location.Kind != OperandKind.Register)
-                    {
-                        op1Location = dataType.TempRegister1;
-                        result.AddRange(CodeGenerator.Move(dataType, operand1, op1Location));
-                    }
-
-                    //Move operand2 to register, if required
-                    op2Location = operand2;
-                    if (op2Location.Kind != OperandKind.Register)
-                    {
-                        op2Location = dataType.TempRegister2;
-                        result.AddRange(CodeGenerator.Move(dataType, operand2, op2Location));
-                    }
-
-                    result.Add(new Operation(dataType, instruction, target, op1Location, op2Location));
-                    break;
-
-                default:
-                    throw new Exception("Unsupported number of operands for instruction: " + instruction);
-            }
-            return result;
-        }
+        public abstract List<IMOperation> Generate(IMOperand target, IMOperand operand1, IMOperand operand2);
     }
 
 }

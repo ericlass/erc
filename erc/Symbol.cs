@@ -8,6 +8,7 @@ namespace erc
         public SymbolKind Kind { get; set; }
         public DataType DataType { get; set; }
         public Operand Location { get; set; }
+        public IMOperand IMLocation { get; set; }
 
         public Symbol(string name, SymbolKind kind, DataType dataType)
         {
@@ -24,8 +25,8 @@ namespace erc
         public override string ToString()
         {
             var result = Name + "(" + Kind + "; " + DataType;
-            if (Location != null)
-                result += "; " + Location;
+            if (IMLocation != null)
+                result += "; " + IMLocation;
             return result + ")";
         }
     }

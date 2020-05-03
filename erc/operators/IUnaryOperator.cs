@@ -7,7 +7,7 @@ namespace erc
     {
         void ValidateOperandType(DataType operandType);
         DataType GetReturnType(DataType operandType);
-        List<Operation> Generate(DataType dataType, Operand target, Operand operand);
+        List<IMOperation> Generate(IMOperand target, IMOperand operand);
     }
 
 }

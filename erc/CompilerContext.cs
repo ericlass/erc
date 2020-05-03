@@ -8,6 +8,7 @@ namespace erc
         public string Source { get; set; }
         public List<Token> Tokens { get; set; }
         public AstItem AST { get; set; }
+        public List<IMOperation> IMCode { get; set; }
         public SimpleLogger Logger { get; } = new SimpleLogger();
 
         private ProgramScope _programScope = new ProgramScope();

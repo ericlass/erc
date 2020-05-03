@@ -8,17 +8,9 @@ namespace erc
         public string Figure => "!";
         public int Precedence => 23;
 
-        public List<Operation> Generate(DataType dataType, Operand target, Operand operand)
+        public List<IMOperation> Generate(IMOperand target, IMOperand operand)
         {
-            var result = new List<Operation>();
-
-            //Move operand to target, which must be a register
-            if (operand != target)
-                result.AddRange(CodeGenerator.Move(dataType, operand, target));
-
-            result.Add(new Operation(dataType, Instruction.NOT, target));
-
-            return result;
+            return IMOperation.Not(target, operand).AsList();
         }
 
         public DataType GetReturnType(DataType operandType)
