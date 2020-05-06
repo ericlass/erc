@@ -48,13 +48,10 @@
     <Compile Include="DataTypeGroup.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="intermediate\IMCodeGenerator.cs" />
-    <Compile Include="intermediate\IMCondition.cs" />
     <Compile Include="intermediate\IMInstruction.cs" />
     <Compile Include="intermediate\IMOperand.cs" />
     <Compile Include="intermediate\IMOperandKind.cs" />
     <Compile Include="intermediate\IMOperation.cs" />
-    <Compile Include="intermediate\IMRegisterKind.cs" />
-    <Compile Include="intermediate\IMRegisterPool.cs" />
     <Compile Include="operators\AdditionOperator.cs" />
     <Compile Include="operators\ArithmeticNegationOperator.cs" />
     <Compile Include="operators\ArithmeticOperator.cs" />

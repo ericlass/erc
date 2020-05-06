@@ -33,12 +33,20 @@ namespace erc
 
         private CompilerContext _context = null;
         private long _ifLabelCounter = 0;
+        private Dictionary<string, Instruction> _instructionMap = null;
         private Optimizer _optimizer = new Optimizer();
-        private IMRegisterPool _registerPool = new IMRegisterPool();
 
-        public void Generate(CompilerContext context)
+        public string Generate(CompilerContext context)
         {
             _context = context;
+
+            InitInstructionMap();
+
+            var dataEntries = new List<Tuple<int, string>>();
+            dataEntries.Add(new Tuple<int, string>(DataType.BOOL.ByteSize, "imm_bool_false " + DataType.BOOL.ImmediateSize + " 0"));
+            dataEntries.Add(new Tuple<int, string>(DataType.BOOL.ByteSize, "imm_bool_true " + DataType.BOOL.ImmediateSize + " 1"));
+            dataEntries.Add(new Tuple<int, string>(DataType.U64.ByteSize, ProcessHeapImmName + " " + DataType.U64.ImmediateSize + " 0"));
+            GenerateDataSection(context.AST, dataEntries);
 
             var codeLines = new List<IMOperation>();
             foreach (var function in context.AST.Children)
@@ -46,7 +54,61 @@ namespace erc
                 codeLines.AddRange(GenerateFunction(function));
             }
 
-            _context.IMCode = codeLines;
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine(CodeHeader);
+
+            //Sort data entries descending by size to make them aligned
+            dataEntries.Sort((a, b) => b.Item1 - a.Item1);
+            dataEntries.ForEach((d) => builder.AppendLine(d.Item2));
+
+            builder.AppendLine();
+            builder.AppendLine(CodeSection);
+            codeLines.ForEach((l) => builder.AppendLine(l.ToString()));
+
+            builder.AppendLine(ImportSection);
+
+            var libs = new List<string>();
+            var imports = new List<string>();
+
+            foreach (var library in _importedFunctions)
+            {
+                var libName = library.Key;
+                var internalLibName = libName.Substring(0, libName.LastIndexOf('.'));
+                libs.Add(internalLibName + ",'" + libName + "'");
+
+                if (library.Value.Count > 0)
+                {
+                    var fns = new List<string>();
+                    foreach (var fnName in library.Value)
+                    {
+                        fns.Add("  " + fnName + ",'" + fnName + "'");
+                    }
+                    imports.Add("import " + internalLibName + ",\\\n" + String.Join(",\\\n", fns));
+                }
+            }
+
+            builder.AppendLine("library " + String.Join(",\\\n", libs));
+            builder.AppendLine(String.Join("\n", imports));
+
+            return builder.ToString();
+        }
+
+        private void AddImport(string libName, string fnName)
+        {
+            var normalized = libName.ToLower();
+
+            List<string> functions = null;
+            if (_importedFunctions.ContainsKey(normalized))
+            {
+                functions = _importedFunctions[normalized];
+            }
+            else
+            {
+                functions = new List<string>();
+                _importedFunctions.Add(normalized, functions);
+            }
+
+            functions.Add(fnName);
         }
 
         private List<IMOperation> GenerateFunction(AstItem function)
@@ -61,17 +123,31 @@ namespace erc
             var statements = function.Children[1];
             var result = new List<IMOperation>();
 
-            result.Add(IMOperation.Cmnt(""));
+            result.Add(new IMOperation(DataType.I64, Instruction.V_COMMENT, Operand.Label("")));
             var labelName = "fn_" + function.Identifier;
-            result.Add(IMOperation.Labl(labelName));
+            result.Add(new IMOperation(DataType.I64, Instruction.V_LABEL, Operand.Label(labelName)));
 
             _context.EnterFunction(currentFunction);
             _context.EnterBlock();
 
+            //Mark used parameter registers as used
+            foreach (var parameter in currentFunction.Parameters)
+            {
+                if (parameter.Location.Kind == OperandKind.Register)
+                    _context.RegisterPool.Use(parameter.Location.Register);
+            }
+
             foreach (var statement in statements.Children)
             {
-                result.Add(IMOperation.Cmnt(statement.SourceLine));
+                result.Add(new IMOperation(DataType.I64, Instruction.V_COMMENT, Operand.Label(statement.SourceLine)));
                 result.AddRange(GenerateStatement(statement));
+            }
+
+            //Free parameter registers
+            foreach (var parameter in currentFunction.Parameters)
+            {
+                if (parameter.Location.Kind == OperandKind.Register)
+                    _context.RegisterPool.Free(parameter.Location.Register);
             }
 
             _context.LeaveBlock();
@@ -79,17 +155,20 @@ namespace erc
 
             //Add return as last instruction, if required
             var last = result[result.Count - 1];
-            if (last.Instruction != IMInstruction.RET)
-                result.Add(IMOperation.Ret());
+            if (last.Instruction != Instruction.RET)
+                result.Add(new IMOperation(DataType.VOID, Instruction.RET));
 
-            //_optimizer.Optimize(result);
+            _optimizer.Optimize(result);
 
             return result;
         }
 
         private List<IMOperation> GenerateExternalFunction(AstItem function)
         {
-            //Nothing to do here. For IM an external function is just any other function. The native code generator needs to take care of this.
+            var libName = function.Value as string;
+            var fnName = function.Value2 as string;
+
+            AddImport(libName, fnName);
             return new List<IMOperation>();
         }
 
@@ -120,8 +199,8 @@ namespace erc
 
                     if (variable != null && variable.Kind == SymbolKind.Variable)
                     {
-                        if (variable.IMLocation.Kind == IMOperandKind.Register)
-                            _registerPool.Free(variable.IMLocation);
+                        if (variable.Location.Kind == OperandKind.Register)
+                            _context.RegisterPool.Free(variable.Location.Register);
 
                         _context.RemoveVariable(variable);
                     }
@@ -134,44 +213,61 @@ namespace erc
 
         private List<IMOperation> GenerateVarDecl(AstItem statement)
         {
-            var register = _registerPool.GetFreeRegister(statement.DataType);
-            _registerPool.Use(register);
+            var operations = GenerateExpression(statement.Children[0], statement.DataType.Accumulator);
 
-            var operations = GenerateExpression(statement.Children[0], register);
+            Register register = _context.RegisterPool.GetFreeRegister(statement.DataType);
+            if (register == null)
+                throw new Exception("No register left for variable declaration: " + statement);
+
+            _context.RegisterPool.Use(register);
 
             var variable = new Symbol(statement.Identifier, SymbolKind.Variable, statement.DataType);
-            variable.IMLocation = register;
+            variable.Location = Operand.AsRegister(register);
             _context.AddVariable(variable);
+
+            operations.AddRange(Move(statement.DataType, statement.DataType.Accumulator, variable.Location));
 
             return operations;
         }
 
         private List<IMOperation> GenerateAssignment(AstItem statement)
         {
-            //No need to check if variable was already declared. That is already check by syntax analysis!
-
+            //No need to check if variable was already declared or declared. That is already check by syntax analysis!
             var result = new List<IMOperation>();
             var target = statement.Children[0];
-            IMOperand targetLocation;
+            Operand targetLocation;
             var symbol = _context.RequireSymbol(statement.Children[0].Identifier);
-            IMOperand tmpRegister = null;
+            Register tmpRegister = null;
 
             switch (target.Kind)
             {
                 case AstItemKind.Variable:
-                    targetLocation = symbol.IMLocation;
+                    targetLocation = symbol.Location;
                     break;
 
                 case AstItemKind.IndexAccess:
-                    tmpRegister = _registerPool.GetFreeRegister(symbol.DataType);
-                    _registerPool.Use(tmpRegister);
+                    tmpRegister = _context.RegisterPool.GetFreeRegister(symbol.DataType);
+                    Assert.Check(tmpRegister != null, "No register free for index address calculation at: " + statement);
+                    _context.RegisterPool.Use(tmpRegister);
 
-                    targetLocation = IMOperand.Heap(symbol.DataType, tmpRegister.RegisterKind, tmpRegister.RegisterIndex, 0);
-                    result.AddRange(GenerateIndexAddressCalculation(target.Children[0], symbol, tmpRegister));
+                    targetLocation = Operand.HeapAddressInRegister(tmpRegister);
+                    result.AddRange(GenerateIndexAddressCalculation(target.Children[0], symbol, Operand.AsRegister(tmpRegister)));
                     break;
 
                 case AstItemKind.PointerDeref:
-                    targetLocation = IMOperand.Heap(symbol.DataType, symbol.IMLocation.RegisterKind, symbol.IMLocation.RegisterIndex, 0);
+                    if (symbol.Location.Kind != OperandKind.Register)
+                    {
+                        tmpRegister = _context.RegisterPool.GetFreeRegister(symbol.DataType);
+                        Assert.Check(tmpRegister != null, "No register free for pointer address at: " + statement);
+                        _context.RegisterPool.Use(tmpRegister);
+
+                        targetLocation = Operand.HeapAddressInRegister(tmpRegister);
+                        result.AddRange(Move(symbol.DataType, symbol.Location, Operand.AsRegister(tmpRegister)));
+                    }
+                    else
+                    {
+                        targetLocation = Operand.HeapAddressInRegister(symbol.Location.Register);
+                    }
                     break;
 
                 default:
@@ -181,33 +277,34 @@ namespace erc
             result.AddRange(GenerateExpression(statement.Children[1], targetLocation));
 
             if (tmpRegister != null)
-                _registerPool.Free(tmpRegister);
+                _context.RegisterPool.Free(tmpRegister);
 
             return result;
         }
 
-        private List<IMOperation> GenerateFunctionCall(AstItem funcCall, IMOperand targetLocation)
+        private List<IMOperation> GenerateFunctionCall(AstItem funcCall, Operand targetLocation)
         {
             var result = new List<IMOperation>();
             var function = _context.GetFunction(funcCall.Identifier);
 
             //List of registers that need to be restored
-            var savedRegisters = new List<IMOperand>();
+            var savedRegisters = new List<Register>();
 
             //Push used registers
-            foreach (var register in _registerPool.GetAllUsed())
+            foreach (var register in _context.RegisterPool.GetAllUsed())
             {
-                result.Add(IMOperation.Push(register));
+                result.AddRange(Push(Register.GetDefaultDataType(register), Operand.AsRegister(register)));
                 savedRegisters.Add(register);
             }
 
             //Push parameter registers of current function
-            for (int p = 0; p < _context.CurrentFunction.Parameters.Count; p++)
+            foreach (var funcParam in _context.CurrentFunction.Parameters)
             {
-                var parameter = _context.CurrentFunction.Parameters[p];
-                IMOperand paramRegister = IMOperand.Register(parameter.DataType, IMRegisterKind.RP, p);
-                result.Add(IMOperation.Push(paramRegister));
-                savedRegisters.Add(paramRegister);
+                if (funcParam.Location.Kind == OperandKind.Register && !savedRegisters.Contains(funcParam.Location.Register))
+                {
+                    result.AddRange(Push(funcParam.DataType, funcParam.Location));
+                    savedRegisters.Add(funcParam.Location.Register);
+                }
             }
 
             //Generate parameter values in desired locations
@@ -216,26 +313,33 @@ namespace erc
                 //Assuming that AST item has as many children as function has parameters, as this is checked before
                 var parameter = function.Parameters[i];
                 var expression = funcCall.Children[i];
-                result.AddRange(GenerateExpression(expression, IMOperand.Register(parameter.DataType, IMRegisterKind.RP, i)));
+                result.AddRange(GenerateExpression(expression, parameter.Location));
             }
+
+            //Add 32 bytes shadow space
+            result.Add(new IMOperation(DataType.I64, Instruction.SUB_IMM, Operand.AsRegister(Register.RSP), Operand.Immediate(32)));
+            result.AddRange(Move(DataType.I64, Operand.AsRegister(Register.RSP), Operand.AsRegister(Register.RBP)));
 
             //Finally, call function
             if (function.IsExtern)
-                result.Add(IMOperation.Call(IMOperand.AsIdentifier(function.ExternalName)));
+                result.Add(new IMOperation(function.ReturnType, Instruction.CALL, Operand.Label("[" + function.ExternalName + "]")));
             else
-                result.Add(IMOperation.Call(IMOperand.AsIdentifier("fn_" + function.Name)));
+                result.Add(new IMOperation(function.ReturnType, Instruction.CALL, Operand.Label("fn_" + function.Name)));
+
+            //Remove shadow space
+            result.Add(new IMOperation(DataType.I64, Instruction.ADD_IMM, Operand.AsRegister(Register.RSP), Operand.Immediate(32)));
 
             //Move result value (if exists) to target location (if required)
-            if (function.ReturnType != DataType.VOID && targetLocation != null)
+            if (function.ReturnType != DataType.VOID && targetLocation != null && function.ReturnLocation != targetLocation)
             {
-                result.Add(IMOperation.Mov(targetLocation, IMOperand.Register(function.ReturnType, IMRegisterKind.FRV, -1)));
+                result.AddRange(Move(function.ReturnType, function.ReturnLocation, targetLocation));
             }
 
             //Restore saved registers in reverse order from stack
             savedRegisters.Reverse();
             foreach (var register in savedRegisters)
             {
-                result.Add(IMOperation.Pop(register));
+                result.AddRange(Pop(Register.GetDefaultDataType(register), Operand.AsRegister(register)));
             }
 
             return result;
@@ -251,11 +355,20 @@ namespace erc
 
             if (function.ReturnType != DataType.VOID)
             {
+                var returnLocation = function.ReturnLocation;
+                //The return location might be in use by a parameter, so put return value somewhere else in this case.
+                if (returnLocation.Kind == OperandKind.Register && _context.RegisterPool.IsUsed(returnLocation.Register))
+                    returnLocation = function.ReturnType.Accumulator;
+
                 AstItem valueExpression = statement.Children[0];
-                result.AddRange(GenerateExpression(valueExpression, IMOperand.Register(function.ReturnType, IMRegisterKind.FRV, -1)));
+                result.AddRange(GenerateExpression(valueExpression, returnLocation));
+
+                //If value is not in correct location, move it there
+                if (returnLocation != function.ReturnLocation)
+                    result.AddRange(Move(function.ReturnType, returnLocation, function.ReturnLocation));
             }
 
-            result.Add(IMOperation.Ret());
+            result.Add(new IMOperation(DataType.VOID, Instruction.RET));
 
             return result;
         }
@@ -271,66 +384,67 @@ namespace erc
 
             var result = new List<IMOperation>();
 
-            var cmpLocation = _registerPool.GetFreeRegister(DataType.BOOL);
-            _registerPool.Use(cmpLocation);
-
-            result.AddRange(GenerateExpression(expression, cmpLocation));
-            result.Add(IMOperation.Cmp(cmpLocation, IMOperand.Immediate(DataType.BOOL, 1)));
-
-            _registerPool.Free(cmpLocation);
+            result.AddRange(GenerateExpression(expression, DataType.BOOL.Accumulator));
+            result.Add(new IMOperation(DataType.VOID, Instruction.CMP, DataType.BOOL.Accumulator, Operand.Immediate(1)));
 
             _ifLabelCounter += 1;
             var endLabel = "if_end_" + _ifLabelCounter;
 
             if (elseStatements == null)
             {
-                result.Add(IMOperation.Cjmp(IMOperand.AsCondition(IMCondition.NotEqual), IMOperand.AsIdentifier(endLabel)));
+                result.Add(new IMOperation(DataType.VOID, Instruction.JNE, Operand.Label(endLabel)));
 
                 foreach (var stat in ifStatements.Children)
                 {
                     result.AddRange(GenerateStatement(stat));
                 }
 
-                result.Add(IMOperation.Labl(endLabel));
+                result.Add(new IMOperation(DataType.VOID, Instruction.V_LABEL, Operand.Label(endLabel)));
             }
             else
             {
                 _ifLabelCounter += 1;
                 var elseLabel = "if_else_" + _ifLabelCounter;
 
-                result.Add(IMOperation.Cjmp(IMOperand.AsCondition(IMCondition.NotEqual), IMOperand.AsIdentifier(elseLabel)));
+                result.Add(new IMOperation(DataType.VOID, Instruction.JNE, Operand.Label(elseLabel)));
 
                 foreach (var stat in ifStatements.Children)
                 {
                     result.AddRange(GenerateStatement(stat));
                 }
-                result.Add(IMOperation.Jmp(IMOperand.AsIdentifier(endLabel)));
+                result.Add(new IMOperation(DataType.VOID, Instruction.JMP, Operand.Label(endLabel)));
 
-                result.Add(IMOperation.Labl(elseLabel));
+                result.Add(new IMOperation(DataType.VOID, Instruction.V_LABEL, Operand.Label(elseLabel)));
                 foreach (var stat in elseStatements.Children)
                 {
                     result.AddRange(GenerateStatement(stat));
                 }
 
-                result.Add(IMOperation.Labl(endLabel));
+                result.Add(new IMOperation(DataType.VOID, Instruction.V_LABEL, Operand.Label(endLabel)));
             }
 
             return result;
         }
 
-        private List<IMOperation> GenerateExpression(AstItem expression, IMOperand targetLocation)
+        private List<IMOperation> GenerateExpression(AstItem expression, Operand targetLocation)
         {
             switch (expression.Kind)
             {
                 case AstItemKind.Immediate:
+                    var src = Operand.DataSection(expression.Identifier);
+                    return Move(expression.DataType, src, targetLocation);
+
                 case AstItemKind.DirectImmediate:
-                    return IMOperation.Mov(targetLocation, IMOperand.Immediate(expression.DataType, expression.Value)).AsList();
+                    return new List<IMOperation>()
+                    {
+                        new IMOperation(expression.DataType, expression.DataType.MoveInstructionUnaligned, targetLocation, Operand.Immediate((long)expression.Value))
+                    };
 
                 case AstItemKind.Vector:
                     if (IsFullImmediateVector(expression))
                     {
-                        var values = expression.Children.ConvertAll<object>((i) => i.Value);
-                        return IMOperation.Mov(targetLocation, IMOperand.Immediate(expression.DataType, values)).AsList();
+                        src = Operand.DataSection(expression.Identifier);
+                        return Move(expression.DataType, src, targetLocation);
                     }
                     else
                     {
@@ -339,8 +453,8 @@ namespace erc
 
                 case AstItemKind.Variable:
                     var variable = _context.GetSymbol(expression.Identifier);
-                    if (variable.IMLocation != targetLocation)
-                        return IMOperation.Mov(targetLocation, variable.IMLocation).AsList();
+                    if (variable.Location != targetLocation)
+                        return Move(expression.DataType, variable.Location, targetLocation);
                     else
                         return new List<IMOperation>();
 
@@ -356,6 +470,8 @@ namespace erc
                 case AstItemKind.Expression:
                     var ops = GenerateExpressionOperations(expression.Children, targetLocation);
                     CollapsePushPop(ops);
+                    //It is possible that some push/pops remain. For vectors, these must be converted to moves.
+                    GenerateVectorPushPops(ops);
                     return ops;
 
                 default:
@@ -363,44 +479,41 @@ namespace erc
             }
         }
 
-        private List<IMOperation> GenerateIndexAccess(AstItem item, IMOperand targetLocation)
+        private List<IMOperation> GenerateIndexAccess(AstItem item, Operand targetLocation)
         {
             var result = new List<IMOperation>();
             var symbol = _context.RequireSymbol(item.Identifier);
 
             var elementType = symbol.DataType.ElementType;
 
-            var tmpRegister = _registerPool.GetFreeRegister(symbol.DataType);
-            _registerPool.Use(tmpRegister);
+            var tmpRegister = _context.RegisterPool.GetFreeRegister(symbol.DataType);
+            Assert.Check(tmpRegister != null, "No free register for index access at: " + item);
+            _context.RegisterPool.Use(tmpRegister);
 
-            result.AddRange(GenerateIndexAddressCalculation(item.Children[0], symbol, tmpRegister));
+            result.AddRange(GenerateIndexAddressCalculation(item.Children[0], symbol, Operand.AsRegister(tmpRegister)));
 
             //Move value to target
-            result.Add(IMOperation.Mov(targetLocation, IMOperand.Heap(elementType, tmpRegister.RegisterKind, tmpRegister.RegisterIndex, 0)));
+            result.AddRange(Move(elementType, Operand.HeapAddressInRegister(tmpRegister), targetLocation));
 
-            _registerPool.Free(tmpRegister);
+            _context.RegisterPool.Free(tmpRegister);
 
             return result;
         }
 
-        private List<IMOperation> GenerateIndexAddressCalculation(AstItem indexExpression, Symbol symbol, IMOperand target)
+        private List<IMOperation> GenerateIndexAddressCalculation(AstItem indexExpression, Symbol symbol, Operand target)
         {
             var pointerType = symbol.DataType;
             var result = new List<IMOperation>();
-
-            //Get index into target. Do this first!
+            //Get index into accumulator
             result.AddRange(GenerateExpression(indexExpression, target));
 
-            var tempLocation = _registerPool.GetFreeRegister(pointerType);
-            _registerPool.Use(tempLocation);
-
+            //TODO: Optimize: The MOV and MUL can be saved if the index expression return 0. Add a "TEST target" and "JZ"
             //Multiply by byte size of sub type
-            result.Add(IMOperation.Mul(tempLocation, target, IMOperand.Immediate(DataType.U64, pointerType.ElementType.ByteSize)));
+            result.Add(new IMOperation(pointerType, Instruction.MOV, pointerType.TempRegister1, Operand.Immediate(pointerType.ElementType.ByteSize)));
+            result.Add(new IMOperation(pointerType, Instruction.MUL, pointerType.TempRegister1));
 
             //Add base address
-            result.Add(IMOperation.Add(target, tempLocation, symbol.IMLocation));
-
-            _registerPool.Free(tempLocation);
+            result.Add(new IMOperation(pointerType, Instruction.ADD, target, symbol.Location));
             return result;
         }
 
@@ -421,13 +534,9 @@ namespace erc
             return GenerateFunctionCall(funcCall, null);
         }
 
-        private List<IMOperation> GenerateNewPointer(AstItem expression, IMOperand targetLocation)
+        private List<IMOperation> GenerateNewPointer(AstItem expression, Operand targetLocation)
         {
             var bytesToReserve = (long)(expression.Value) * expression.DataType.ElementType.ByteSize;
-
-            //PROBLEM: Need to pass the heap address as first parameter for erc_heap_alloc. No problem
-            //in IM or ASM, but here it has to be in AST. Worked before because of labeled "global" symbol
-            //in data section, which does not exist anymore.
 
             //Prepare parameter values
             var heap = new AstItem(AstItemKind.Immediate);
@@ -443,12 +552,16 @@ namespace erc
             return GenerateFunctionCall(funcCall, targetLocation);
         }
 
-        private List<IMOperation> GenerateExpressionOperations(List<AstItem> items, IMOperand targetLocation)
+        private List<IMOperation> GenerateExpressionOperations(List<AstItem> items, Operand targetLocation)
         {
             //Create copy of list so original is not modified
             var terms = new List<AstItem>(items);
-            var result = new List<IMOperation>();
 
+            var target = targetLocation;
+            if (target == null || target.Kind != OperandKind.Register)
+                target = terms[0].DataType.Accumulator;
+
+            var result = new List<IMOperation>();
             for (int i = 0; i < terms.Count; i++)
             {
                 var item = terms[i];
@@ -457,23 +570,21 @@ namespace erc
                     var operand1 = terms[i - 2];
                     var operand2 = terms[i - 1];
 
-                    var tempRegister1 = _registerPool.GetFreeRegister(item.DataType);
-                    _registerPool.Use(tempRegister1);
-                    var tempRegister2 = _registerPool.GetFreeRegister(item.DataType);
-                    _registerPool.Use(tempRegister2);
+                    var op1Location = GetOperandLocation(result, operand1, item.DataType.TempRegister1);
 
-                    var op1Location = GetOperandLocation(result, operand1, tempRegister1);
-                    var op2Location = GetOperandLocation(result, operand2, tempRegister2);
+                    //Only need to save operand1. operand2 will never be overwritten between its creation and usage in arithmetic instruction, which directly follows.
+                    if (op1Location == item.DataType.TempRegister1)
+                        _context.RegisterPool.Use(op1Location.Register);
 
-                    result.AddRange(item.BinaryOperator.Generate(targetLocation, op1Location, op2Location));
+                    var op2Location = GetOperandLocation(result, operand2, item.DataType.TempRegister2);
 
-                    //Free usage of temp registers, if required
-                    if (op1Location == tempRegister1)
-                        _registerPool.Free(op1Location);
-                    if (op2Location == tempRegister2)
-                        _registerPool.Free(op2Location);
+                    //result.AddRange(item.BinaryOperator.Generate(item.DataType, target, op1Location, operand1.DataType, op2Location, operand2.DataType));
 
-                    result.Add(IMOperation.Push(targetLocation));
+                    //Free usage of temp register, if required
+                    if (op1Location == item.DataType.TempRegister1)
+                        _context.RegisterPool.Free(op1Location.Register);
+
+                    result.Add(new IMOperation(item.DataType, Instruction.V_PUSH, target));
 
                     //Remove the two operands from the expression, do not remove the current operator
                     //as it is required to know later that a value must be popped from stack
@@ -487,18 +598,11 @@ namespace erc
                 else if (item.Kind == AstItemKind.UnaryOperator)
                 {
                     var operand = terms[i - 1];
+                    var opLocation = GetOperandLocation(result, operand, item.DataType.TempRegister1);
 
-                    var tempRegister = _registerPool.GetFreeRegister(item.DataType);
-                    _registerPool.Use(tempRegister);
+                    //result.AddRange(item.UnaryOperator.Generate(item.DataType, target, opLocation));
 
-                    var opLocation = GetOperandLocation(result, operand, tempRegister);
-
-                    result.AddRange(item.UnaryOperator.Generate(targetLocation, opLocation));
-
-                    if (opLocation == tempRegister)
-                        _registerPool.Free(opLocation);
-
-                    result.Add(IMOperation.Push(targetLocation));
+                    result.Add(new IMOperation(item.DataType, Instruction.V_PUSH, target));
 
                     //Remove the operand from the expression, do not remove the current operator
                     //as it is required to know later that a value must be popped from stack
@@ -513,6 +617,9 @@ namespace erc
             //Remove trailing push, not required
             result.RemoveAt(result.Count - 1);
 
+            if (target != targetLocation)
+                result.AddRange(Move(items[0].DataType, target, targetLocation));
+
             return result;
         }
 
@@ -523,21 +630,18 @@ namespace erc
         /// <param name="operand"></param>
         /// <param name="defaultLocation">The location to use when the operand has no location at the moment.</param>
         /// <returns>The current location of the operand. If it has no location, it is moved to the default location and that is returned.</returns>
-        private IMOperand GetOperandLocation(List<IMOperation> output, AstItem operand, IMOperand defaultLocation)
+        private Operand GetOperandLocation(List<IMOperation> output, AstItem operand, Operand defaultLocation)
         {
             var result = defaultLocation;
 
             if (operand.Kind == AstItemKind.Immediate)
             {
-                result = IMOperand.Immediate(operand.DataType, operand.Value);
+                result = Operand.DataSection(operand.Identifier);
             }
             else if (operand.Kind == AstItemKind.Vector)
             {
                 if (IsFullImmediateVector(operand))
-                {
-                    var values = operand.Children.ConvertAll<object>((i) => i.Value);
-                    result = IMOperand.Immediate(operand.DataType, values);
-                }
+                    result = Operand.DataSection(operand.Identifier);
                 else
                 {
                     output.AddRange(GenerateVectorWithExpressions(operand, defaultLocation));
@@ -546,7 +650,7 @@ namespace erc
             else if (operand.Kind == AstItemKind.Variable)
             {
                 var variable = _context.GetSymbol(operand.Identifier);
-                result = variable.IMLocation;
+                result = variable.Location;
             }
             else if (operand.Kind == AstItemKind.FunctionCall)
             {
@@ -554,39 +658,60 @@ namespace erc
             }
             else if (operand.Kind == AstItemKind.BinaryOperator || operand.Kind == AstItemKind.UnaryOperator)
             {
-                output.Add(IMOperation.Pop(defaultLocation));
+                output.Add(new IMOperation(operand.DataType, Instruction.V_POP, defaultLocation));
             }
 
             return result;
         }
 
-        private List<IMOperation> GenerateVectorWithExpressions(AstItem expression, IMOperand targetLocation)
+        //Replace PUSH and POP of vectors with corresponding moves
+        private void GenerateVectorPushPops(List<IMOperation> ops)
+        {
+            for (int i = ops.Count - 1; i >= 0; i--)
+            {
+                var op = ops[i];
+                if (op.DataType.IsVector || op.DataType == DataType.F32 || op.DataType == DataType.F64)
+                {
+                    if (op.Instruction == Instruction.PUSH || op.Instruction == Instruction.V_PUSH)
+                    {
+                        ops.RemoveAt(i);
+                        ops.InsertRange(i, Push(op.DataType, op.Operand1));
+                    }
+                    else if (op.Instruction == Instruction.POP || op.Instruction == Instruction.V_POP)
+                    {
+                        ops.RemoveAt(i);
+                        ops.InsertRange(i, Pop(op.DataType, op.Operand1));
+                    }
+                }
+            }
+        }
+
+        private List<IMOperation> GenerateVectorWithExpressions(AstItem expression, Operand targetLocation)
         {
             var operations = new List<IMOperation>();
 
             //Save current stack pointer
-            var saveSpRegister = _registerPool.GetFreeRegister(DataType.U64);
-            _registerPool.Use(saveSpRegister);
+            operations.AddRange(Move(DataType.I64, Operand.AsRegister(Register.RSP), Operand.AsRegister(Register.RSI)));
+            _context.RegisterPool.Use(Register.RSI);
 
-            operations.Add(IMOperation.Mov(saveSpRegister, IMOperand.Register(DataType.U64, IMRegisterKind.RST, -1)));
+            //Align stack correctly
+            operations.Add(new IMOperation(DataType.I64, Instruction.AND_IMM, Operand.AsRegister(Register.RSP), Operand.Immediate(expression.DataType.ByteSize * -1)));
 
             //Generate vector on stack
             operations.AddRange(GenerateVectorWithExpressionsOnStack(expression));
 
             //Move final vector to target
-            operations.Add(IMOperation.Mov(targetLocation, IMOperand.StackFromTop(expression.DataType, 0)));
-
+            operations.AddRange(Move(expression.DataType, Operand.StackFromTop(0), targetLocation));
             //Restore stack pointer
-            operations.Add(IMOperation.Mov(IMOperand.Register(DataType.U64, IMRegisterKind.RST, -1), saveSpRegister));
-            _registerPool.Free(saveSpRegister);
+            operations.AddRange(Move(DataType.I64, Operand.AsRegister(Register.RSI), Operand.AsRegister(Register.RSP)));
+            _context.RegisterPool.Free(Register.RSI);
 
             return operations;
         }
 
         private List<IMOperation> GenerateVectorWithExpressionsOnStack(AstItem expression)
         {
-            var accumulator = _registerPool.GetFreeRegister(expression.DataType);
-            _registerPool.Use(accumulator);
+            var accumulator = expression.DataType.ElementType.Accumulator;
 
             var operations = new List<IMOperation>();
 
@@ -595,14 +720,18 @@ namespace erc
             {
                 var child = expression.Children[i];
                 //TODO: OPTIMIZE - When expression is immediate or variable, it is not required to go through the accumulator.
-                //        		   You can directly "push" the register or memory location to the stack.
+                //        		 You can directly "push" the register or memory location to the stack.
                 operations.AddRange(GenerateExpression(child, accumulator));
-                operations.Add(IMOperation.Push(accumulator));
+                operations.AddRange(Push(expression.DataType.ElementType, accumulator));
             }
 
-            _registerPool.Free(accumulator);
-
             return operations;
+        }
+
+        private Instruction GetInstruction(AstItemKind kind, DataType dataType)
+        {
+            var key = kind + "_" + dataType.Name;
+            return _instructionMap[key.ToLower()];
         }
 
         private void CollapsePushPop(List<IMOperation> ops)
@@ -610,15 +739,15 @@ namespace erc
             for (int i = 0; i < ops.Count; i++)
             {
                 var popOp = ops[i];
-                if (popOp.Instruction == IMInstruction.POP)
+                if (popOp.Instruction == Instruction.V_POP)
                 {
                     for (int j = i; j >= 0; j--)
                     {
                         var pushOp = ops[j];
-                        if (pushOp.Instruction == IMInstruction.PUSH)
+                        if (pushOp.Instruction == Instruction.V_PUSH)
                         {
-                            var source = pushOp.Operands[0];
-                            var target = popOp.Operands[0];
+                            var source = pushOp.Operand1;
+                            var target = popOp.Operand1;
                             if (source != target)
                             {
                                 //Check if source location has changed between the push and pop
@@ -626,9 +755,9 @@ namespace erc
                                 for (int k = j + 1; k < i; k++)
                                 {
                                     var checkOp = ops[k];
-                                    if (checkOp.Instruction != IMInstruction.NOP && checkOp.Instruction != IMInstruction.POP)
+                                    if (checkOp.Instruction != Instruction.NOP && checkOp.Instruction != Instruction.POP)
                                     {
-                                        if (checkOp.Operands[0] == source)
+                                        if (checkOp.Operand1 == source)
                                         {
                                             hasChanged = true;
                                             break;
@@ -639,12 +768,16 @@ namespace erc
                                 if (!hasChanged)
                                 {
                                     //Transform pop to direct move in-place
-                                    popOp.Instruction = IMInstruction.MOV;
-                                    popOp.Operands[0] = target;
-                                    popOp.Operands[1] = source;
+                                    if (source.IsStack() || target.IsStack())
+                                        popOp.Instruction = popOp.DataType.MoveInstructionUnaligned;
+                                    else
+                                        popOp.Instruction = popOp.DataType.MoveInstructionAligned;
+
+                                    popOp.Operand1 = target;
+                                    popOp.Operand2 = source;
 
                                     //Make push a nop so it is removed below
-                                    pushOp.Instruction = IMInstruction.NOP;
+                                    pushOp.Instruction = Instruction.NOP;
                                 }
                             }
                             else
@@ -654,9 +787,9 @@ namespace erc
                                 for (int k = j + 1; k < i; k++)
                                 {
                                     var checkOp = ops[k];
-                                    if (checkOp.Instruction != IMInstruction.NOP && checkOp.Instruction != IMInstruction.POP)
+                                    if (checkOp.Instruction != Instruction.NOP && checkOp.Instruction != Instruction.POP)
                                     {
-                                        if (checkOp.Operands[0] == source)
+                                        if (checkOp.Operand1 == source)
                                         {
                                             hasChanged = true;
                                             break;
@@ -667,20 +800,27 @@ namespace erc
                                 //If not, push/pop can simply be removed.
                                 if (!hasChanged)
                                 {
-                                    pushOp.Instruction = IMInstruction.NOP;
-                                    popOp.Instruction = IMInstruction.NOP;
+                                    pushOp.Instruction = Instruction.NOP;
+                                    popOp.Instruction = Instruction.NOP;
                                 }
                                 //If yes, value needs to be saved somewhere and restored later
                                 else
                                 {
                                     //Use free register if possible
-                                    var register = _registerPool.GetFreeRegister(source.DataType);
-                                    pushOp.Instruction = IMInstruction.MOV;
-                                    pushOp.Operands.Add(pushOp.Operands[0]);
-                                    pushOp.Operands[0] = register;
+                                    var register = TakeIntermediateRegister(popOp.DataType);
+                                    if (register != null)
+                                    {
+                                        pushOp.Instruction = pushOp.DataType.MoveInstructionAligned;
+                                        pushOp.Operand2 = pushOp.Operand1;
+                                        pushOp.Operand1 = register;
 
-                                    popOp.Instruction = IMInstruction.MOV;
-                                    popOp.Operands.Add(register);
+                                        popOp.Instruction = popOp.DataType.MoveInstructionAligned;
+                                        popOp.Operand2 = register;
+                                    }
+                                    else
+                                    {
+                                        //No registers left, put on stack. Nothing to do as this is already the case.
+                                    }
                                 }
                             }
                             break;
@@ -689,7 +829,99 @@ namespace erc
                 }
             }
 
-            ops.RemoveAll((a) => a.Instruction == IMInstruction.NOP);
+            ops.RemoveAll((a) => a.Instruction == Instruction.NOP);
+            ops.ForEach((o) => { if (o.Instruction == Instruction.V_PUSH) o.Instruction = Instruction.PUSH; });
+            ops.ForEach((o) => { if (o.Instruction == Instruction.V_POP) o.Instruction = Instruction.POP; });
+        }
+
+        public Operand TakeIntermediateRegister(DataType dataType)
+        {
+            //TODO: Implement
+            return null;
+        }
+
+        private void InitInstructionMap()
+        {
+            _instructionMap = new Dictionary<string, Instruction>
+            {
+                ["addop_i64"] = Instruction.ADD,
+                ["subop_i64"] = Instruction.SUB,
+                ["mulop_i64"] = Instruction.MUL,
+                ["divop_i64"] = Instruction.DIV,
+
+                ["addop_f32"] = Instruction.VADDSS,
+                ["subop_f32"] = Instruction.VSUBSS,
+                ["mulop_f32"] = Instruction.VMULSS,
+                ["divop_f32"] = Instruction.VDIVSS,
+
+                ["addop_f64"] = Instruction.VADDSD,
+                ["subop_f64"] = Instruction.VSUBSD,
+                ["mulop_f64"] = Instruction.VMULSD,
+                ["divop_f64"] = Instruction.VDIVSD,
+
+                ["addop_ivec2q"] = Instruction.VPADDQ,
+                ["subop_ivec2q"] = Instruction.VPSUBQ,
+                ["mulop_ivec2q"] = Instruction.VPMULQ,
+                ["divop_ivec2q"] = Instruction.VPDIVQ,
+
+                ["addop_ivec4q"] = Instruction.VPADDQ,
+                ["subop_ivec4q"] = Instruction.VPSUBQ,
+                ["mulop_ivec4q"] = Instruction.VPMULQ,
+                ["divop_ivec4q"] = Instruction.VPDIVQ,
+
+                ["addop_vec4f"] = Instruction.VADDPS,
+                ["subop_vec4f"] = Instruction.VSUBPS,
+                ["mulop_vec4f"] = Instruction.VMULPS,
+                ["divop_vec4f"] = Instruction.VDIVPS,
+
+                ["addop_vec8f"] = Instruction.VADDPS,
+                ["subop_vec8f"] = Instruction.VSUBPS,
+                ["mulop_vec8f"] = Instruction.VMULPS,
+                ["divop_vec8f"] = Instruction.VDIVPS,
+
+                ["addop_vec2d"] = Instruction.VADDPD,
+                ["subop_vec2d"] = Instruction.VSUBPD,
+                ["mulop_vec2d"] = Instruction.VMULPD,
+                ["divop_vec2d"] = Instruction.VDIVPD,
+
+                ["addop_vec4d"] = Instruction.VADDPD,
+                ["subop_vec4d"] = Instruction.VSUBPD,
+                ["mulop_vec4d"] = Instruction.VMULPD,
+                ["divop_vec4d"] = Instruction.VDIVPD,
+            };
+        }
+
+        private void GenerateDataSection(AstItem item, List<Tuple<int, string>> entries)
+        {
+            if (!item.DataGenerated)
+            {
+                if (item.Kind == AstItemKind.Immediate)
+                {
+                    var dataType = item.DataType;
+                    entries.Add(new Tuple<int, string>(item.DataType.ByteSize, item.Identifier + " " + dataType.ImmediateSize + " " + dataType.ImmediateValueToCode(item)));
+                    item.DataGenerated = true;
+                }
+                else if (item.Kind == AstItemKind.Vector)
+                {
+                    if (IsFullImmediateVector(item))
+                    {
+                        var dataType = item.DataType;
+                        entries.Add(new Tuple<int, string>(item.DataType.ByteSize, item.Identifier + " " + dataType.ImmediateSize + " " + dataType.ImmediateValueToCode(item)));
+                        item.DataGenerated = true;
+                        item.Children.ForEach((c) => c.DataGenerated = true);
+                    }
+                    else
+                    {
+                        //Vectors that are not full-immediate need to be generated at runtime, not at compile time in data section
+                    }
+                }
+            }
+
+            foreach (var child in item.Children)
+            {
+                if (child != null)
+                    GenerateDataSection(child, entries);
+            }
         }
 
         private bool IsFullImmediateVector(AstItem vector)

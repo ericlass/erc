@@ -153,12 +153,12 @@ namespace erc
 
         public static IMOperation Labl(string labelName)
         {
-            return new IMOperation(IMInstruction.LABL, IMOperand.AsIdentifier(labelName));
+            return new IMOperation(IMInstruction.LABL, IMOperand.Immediate(DataType.VOID, labelName));
         }
 
         public static IMOperation Cmnt(string text)
         {
-            return new IMOperation(IMInstruction.CMNT, IMOperand.AsIdentifier(text));
+            return new IMOperation(IMInstruction.CMNT, IMOperand.Immediate(DataType.VOID, text));
         }
 
     }
