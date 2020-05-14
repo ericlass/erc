@@ -10,7 +10,7 @@ namespace erc
 
         public List<IMOperation> Generate(IMOperand target, IMOperand operand)
         {
-            return IMOperation.Not(target, operand).AsList();
+            return IMOperation.Not(target, operand).AsList;
         }
 
         public DataType GetReturnType(DataType operandType)

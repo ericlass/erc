@@ -25,7 +25,7 @@ namespace erc
         public static IMInstruction NOT  = new IMInstruction("NOT", 2);   // <target>, <op1>
         public static IMInstruction NEG  = new IMInstruction("NEG", 2);   // <target>, <op1>
         public static IMInstruction CALL = new IMInstruction("CALL", 1);  // <identifier>, [<target>], [<parameter_values>]
-        public static IMInstruction RET  = new IMInstruction("RET", 0);   // <op>
+        public static IMInstruction RET  = new IMInstruction("RET", 1);   // <op>
         public static IMInstruction CMP  = new IMInstruction("CMP", 2);   // <op1>, <op2>
         
         public static IMInstruction JMP  = new IMInstruction("JMP", 1);      // <identifier>
@@ -128,5 +128,7 @@ namespace erc
         public static IMInstruction DEL  = new IMInstruction("DEL", 1);   // <target>
         public static IMInstruction LABL = new IMInstruction("LABEL", 1); // <identifier>
         public static IMInstruction CMNT = new IMInstruction("CMNT", 1);  // <identifier>
+        public static IMInstruction FREE = new IMInstruction("FREE", 1);  // <identifier>
+        public static IMInstruction EXTFN = new IMInstruction("EXTFN", 3);  // <identifier>
     }
 }

@@ -495,6 +495,27 @@ namespace erc
             return newType;
         }
 
+        /// <summary>
+        /// Dummy string type.
+        /// </summary>
+        public static DataType STRING = new DataType
+        {
+            Name = "string",
+            ByteSize = 8,
+            IsVector = false,
+            IsSigned = false,
+            NumElements = 1,
+            OperandSize = "qword",
+            ImmediateSize = "dq",
+            Group = DataTypeGroup.Other,
+            Accumulator = Operand.AsRegister(Register.RAX),
+            TempRegister1 = Operand.AsRegister(Register.R10),
+            TempRegister2 = Operand.AsRegister(Register.R11),
+            MoveInstructionAligned = Instruction.MOV,
+            MoveInstructionUnaligned = Instruction.MOV,
+            ImmediateValueToCode = (item) => item.Value.ToString()
+        };
+
         /*public static RawDataType Array(RawDataType subType)
         {
             var name = subType.Name + "[]";

@@ -8,6 +8,7 @@ namespace erc
         Parameter,
         Immediate,
         Constructor,
-        Global
+        Global,
+        Reference
     }
 }

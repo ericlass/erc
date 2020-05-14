@@ -8,14 +8,14 @@ namespace erc
         public string Figure { get; }
         public int Precedence => 17;
 
-        private IMCondition _trueCondition;
-        private IMCondition _falseCondition;
+        private IMInstruction _trueInstruction;
+        private IMInstruction _falseInstruction;
 
-        public RelationalOperator(string figure, IMCondition trueCondition, IMCondition falseCondition)
+        public RelationalOperator(string figure, IMInstruction trueInstruction, IMInstruction falseInstruction)
         {
             Figure = figure;
-            _trueCondition = trueCondition;
-            _falseCondition = falseCondition;
+            _trueInstruction = trueInstruction;
+            _falseInstruction = falseInstruction;
         }
 
         public void ValidateOperandTypes(DataType operand1Type, DataType operand2Type)
@@ -38,8 +38,8 @@ namespace erc
             return new List<IMOperation>()
             {
                 IMOperation.Cmp(operand1, operand2),
-                IMOperation.Cmov(IMOperand.AsCondition(_trueCondition), target, IMOperand.Immediate(DataType.BOOL, 1)),
-                IMOperation.Cmov(IMOperand.AsCondition(_falseCondition), target, IMOperand.Immediate(DataType.BOOL, 0))
+                IMOperation.Create(_trueInstruction, new List<IMOperand>() { target, IMOperand.BOOL_TRUE }),
+                IMOperation.Create(_falseInstruction, new List<IMOperand>() { target, IMOperand.BOOL_FALSE }),
             };
         }
     }

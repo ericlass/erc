@@ -33,7 +33,7 @@ namespace erc
 
         public List<IMOperation> Generate(IMOperand target, IMOperand operand1, IMOperand operand2)
         {
-            return new IMOperation(_instruction, target, operand1, operand2).AsList();
+            return new IMOperation(_instruction, target, operand1, operand2).AsList;
         }
     }
 

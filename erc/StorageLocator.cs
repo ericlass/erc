@@ -20,12 +20,12 @@ namespace erc
                 InitRegisters();
 
                 var funcDecl = context.GetFunction(function.Identifier);
-                AssignFunctionParameterLocations(funcDecl);
-                AssignFunctionReturnLocation(funcDecl);
+                //AssignFunctionParameterLocations(funcDecl);
+                //AssignFunctionReturnLocation(funcDecl);
             }
         }
 
-        private void AssignFunctionReturnLocation(Function function)
+        /*private void AssignFunctionReturnLocation(Function function)
         {
             if (function.ReturnType.Group == DataTypeGroup.ScalarInteger)
                 function.ReturnLocation = Operand.AsRegister(Register.GroupToSpecificRegister(RegisterGroup.A, function.ReturnType));
@@ -41,9 +41,9 @@ namespace erc
                 function.ReturnLocation = Operand.AsRegister(Register.YMM0);
             else if (function.ReturnType != DataType.VOID)
                 throw new Exception("Unknown function return type: " + function.ReturnType);
-        }
+        }*/
 
-        private void AssignFunctionParameterLocations(Function function)
+        /*private void AssignFunctionParameterLocations(Function function)
         {
             var paramOffset = 0;
             InitParamRegisters();
@@ -109,7 +109,7 @@ namespace erc
                 else
                     throw new Exception("Unknown data type: " + parameter.DataType);
             }
-        }
+        }*/
 
         private void InitRegisters()
         {

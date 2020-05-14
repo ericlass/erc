@@ -51,8 +51,9 @@ namespace erc
                 notEqualValue = IMOperand.Immediate(DataType.BOOL, 0);
             }
 
-            result.Add(IMOperation.Cmov(IMOperand.AsCondition(IMCondition.Equal), target, equalValue));
-            result.Add(IMOperation.Cmov(IMOperand.AsCondition(IMCondition.NotEqual), target, notEqualValue));
+            //TODO: Replace by SETcc
+            result.Add(IMOperation.MovE(target, equalValue));
+            result.Add(IMOperation.MovNe(target, notEqualValue));
 
             return result;
         }

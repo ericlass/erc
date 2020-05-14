@@ -16,7 +16,7 @@ namespace erc
 
         public List<IMOperation> Generate(IMOperand target, IMOperand operand1, IMOperand operand2)
         {
-            return IMOperation.Nop().AsList();
+            return IMOperation.Nop().AsList;
         }
 
         public DataType GetReturnType(DataType operand1Type, DataType operand2Type)

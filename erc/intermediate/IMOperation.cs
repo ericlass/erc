@@ -8,6 +8,10 @@ namespace erc
         public IMInstruction Instruction { get; set; }
         public List<IMOperand> Operands { get; set; }
 
+        private IMOperation()
+        {
+        }
+
         private IMOperation(IMInstruction instruction)
         {
             Assert.Check(instruction.NumOperands == 0, "Instruction " + instruction.Name + " expected " + instruction.NumOperands + " operands, but none given!");
@@ -36,14 +40,19 @@ namespace erc
             Operands = new List<IMOperand> { operand1, operand2, operand3 };
         }
 
-        public List<IMOperation> AsList()
+        public List<IMOperation> AsList
         {
-            return new List<IMOperation>(1) { this };
+            get { return new List<IMOperation>(1) { this }; }
         }
 
         public override string ToString()
         {
-            return Instruction.Name + String.Join(", ", Operands);
+            return Instruction.Name + " " + String.Join(", ", Operands);
+        }
+
+        public static IMOperation Create(IMInstruction instruction, List<IMOperand> operands)
+        {
+            return new IMOperation() { Instruction = instruction, Operands = operands };
         }
 
         public static IMOperation Mov(IMOperand target, IMOperand source)
@@ -59,6 +68,11 @@ namespace erc
         public static IMOperation Pop(IMOperand target)
         {
             return new IMOperation(IMInstruction.POP, target);
+        }
+
+        public static IMOperation BinaryOperator(IMInstruction instruction, IMOperand target, IMOperand operand1, IMOperand operand2)
+        {
+            return new IMOperation(instruction, target, operand1, operand2);
         }
 
         public static IMOperation Add(IMOperand target, IMOperand summand1, IMOperand summand2)
@@ -96,6 +110,11 @@ namespace erc
             return new IMOperation(IMInstruction.XOR, target, operand1, operand2);
         }
 
+        public static IMOperation UnaryOperator(IMInstruction instruction, IMOperand target, IMOperand operand)
+        {
+            return new IMOperation(instruction, target, operand);
+        }
+
         public static IMOperation Not(IMOperand target, IMOperand operand)
         {
             return new IMOperation(IMInstruction.NOT, target, operand);
@@ -106,19 +125,26 @@ namespace erc
             return new IMOperation(IMInstruction.NEG, target, operand);
         }
 
-        public static IMOperation Call(IMOperand functionName)
+        public static IMOperation Call(string functionName, IMOperand result, List<IMOperand> paramValues)
         {
-            return new IMOperation(IMInstruction.CALL, functionName);
+            var allOperands = new List<IMOperand>() { IMOperand.ConstructorImmediate(DataType.STRING, functionName), result };
+            allOperands.AddRange(paramValues);
+            return new IMOperation() { Instruction = IMInstruction.CALL, Operands = allOperands };
         }
 
-        public static IMOperation Ret()
+        public static IMOperation Ret(IMOperand returnValue)
         {
-            return new IMOperation(IMInstruction.RET);
+            return new IMOperation(IMInstruction.RET, returnValue);
         }
 
-        public static IMOperation Jmp(IMOperand labelName)
+        public static IMOperation Jmp(string labelName)
         {
-            return new IMOperation(IMInstruction.JMP, labelName);
+            return new IMOperation(IMInstruction.JMP, IMOperand.ConstructorImmediate(DataType.STRING, labelName));
+        }
+
+        public static IMOperation JmpNe(string labelName)
+        {
+            return new IMOperation(IMInstruction.JMPNE, IMOperand.ConstructorImmediate(DataType.STRING, labelName));
         }
 
         public static IMOperation Cmp(IMOperand operand1, IMOperand operand2)
@@ -126,14 +152,14 @@ namespace erc
             return new IMOperation(IMInstruction.CMP, operand1, operand2);
         }
 
-        public static IMOperation Cjmp(IMOperand condition, IMOperand labelName)
+        public static IMOperation MovE(IMOperand target, IMOperand source)
         {
-            return new IMOperation(IMInstruction.CJMP, condition, labelName);
+            return new IMOperation(IMInstruction.MOVE, target, source);
         }
 
-        public static IMOperation Cmov(IMOperand condition, IMOperand target, IMOperand source)
+        public static IMOperation MovNe(IMOperand target, IMOperand source)
         {
-            return new IMOperation(IMInstruction.CMOV, condition, target, source);
+            return new IMOperation(IMInstruction.MOVNE, target, source);
         }
 
         public static IMOperation Nop()
@@ -143,7 +169,7 @@ namespace erc
 
         public static IMOperation Aloc(IMOperand target, IMOperand numBytes)
         {
-            return new IMOperation(IMInstruction.ALOC, target, target, numBytes);
+            return new IMOperation(IMInstruction.ALOC, target, numBytes);
         }
 
         public static IMOperation Del(IMOperand target)
@@ -153,12 +179,27 @@ namespace erc
 
         public static IMOperation Labl(string labelName)
         {
-            return new IMOperation(IMInstruction.LABL, IMOperand.Immediate(DataType.VOID, labelName));
+            return new IMOperation(IMInstruction.LABL, IMOperand.Constructor(DataType.STRING, IMOperand.Immediate(DataType.STRING, labelName)));
         }
 
         public static IMOperation Cmnt(string text)
         {
-            return new IMOperation(IMInstruction.CMNT, IMOperand.Immediate(DataType.VOID, text));
+            return new IMOperation(IMInstruction.CMNT, IMOperand.Constructor(DataType.STRING, IMOperand.Immediate(DataType.STRING, text)));
+        }
+
+        public static IMOperation Extfn(string name, string externalName, string libName)
+        {
+            return new IMOperation(
+                IMInstruction.EXTFN,
+                IMOperand.ConstructorImmediate(DataType.STRING, name),
+                IMOperand.ConstructorImmediate(DataType.STRING, externalName),
+                IMOperand.ConstructorImmediate(DataType.STRING, libName)
+            );
+        }
+
+        public static IMOperation Free(IMOperand operand)
+        {
+            return new IMOperation(IMInstruction.FREE, operand);
         }
 
     }

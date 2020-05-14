@@ -10,9 +10,8 @@ namespace erc
 
         public List<IMOperation> Generate(IMOperand target, IMOperand operand)
         {
-            Assert.Check(operand.Kind == IMOperandKind.Register, "Only register operands allowed for pointer dereference operator! Got: " + operand);
-            var heapOperand = IMOperand.Heap(operand.DataType, operand.RegisterKind, operand.RegisterIndex, 0);
-            return IMOperation.Mov(target, heapOperand).AsList();
+            var reference = IMOperand.Reference(operand.DataType, operand);
+            return IMOperation.Mov(target, reference).AsList;
         }
 
         public DataType GetReturnType(DataType operandType)

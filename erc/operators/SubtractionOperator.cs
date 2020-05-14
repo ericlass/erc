@@ -11,7 +11,7 @@ namespace erc
 
         public override List<IMOperation> Generate(IMOperand target, IMOperand operand1, IMOperand operand2)
         {
-            return new List<IMOperation>() { IMOperation.Sub(target, operand1, operand2) };
+            return IMOperation.Sub(target, operand1, operand2).AsList;
         }
     }
 }

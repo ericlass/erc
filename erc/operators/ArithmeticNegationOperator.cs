@@ -21,7 +21,7 @@ namespace erc
 
         public List<IMOperation> Generate(IMOperand target, IMOperand operand)
         {
-            return IMOperation.Neg(target, operand).AsList();
+            return IMOperation.Neg(target, operand).AsList;
         }
 
     }

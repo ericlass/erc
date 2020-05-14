@@ -6,7 +6,7 @@ namespace erc
 {
     public partial class CodeGenerator
     {
-        private const string ProcessHeapImmName = "erc_process_heap";
+        /*private const string ProcessHeapImmName = "erc_process_heap";
 
         private const string CodeHeader =
             "format PE64 NX GUI 6.0\n" +
@@ -931,6 +931,6 @@ namespace erc
 
             return vector.Children.TrueForAll((i) => i.Kind == AstItemKind.Immediate);
         }
-
+        */
     }
 }
