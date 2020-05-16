@@ -8,7 +8,7 @@ namespace erc
         public string Source { get; set; }
         public List<Token> Tokens { get; set; }
         public AstItem AST { get; set; }
-        public List<IMOperation> IMCode { get; set; }
+        public List<IIMObject> IMObjects { get; set; }
         public SimpleLogger Logger { get; } = new SimpleLogger();
 
         private ProgramScope _programScope = new ProgramScope();
@@ -100,6 +100,15 @@ namespace erc
         public Function GetFunction(string name)
         {
             return _programScope.GetFunction(name);
+        }
+
+        public Function RequireFunction(string name)
+        {
+            var result = GetFunction(name);
+            if (result == null)
+                throw new Exception("Undeclared function: " + name);
+
+            return result;
         }
 
         public Function CurrentFunction

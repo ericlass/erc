@@ -47,8 +47,12 @@
     <Compile Include="Assert.cs" />
     <Compile Include="DataTypeGroup.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="intermediate\IIMObject.cs" />
     <Compile Include="intermediate\IMCodeGenerator.cs" />
+    <Compile Include="intermediate\IMExternalFunction.cs" />
+    <Compile Include="intermediate\IMFunction.cs" />
     <Compile Include="intermediate\IMInstruction.cs" />
+    <Compile Include="intermediate\IMObjectKind.cs" />
     <Compile Include="intermediate\IMOperand.cs" />
     <Compile Include="intermediate\IMOperandKind.cs" />
     <Compile Include="intermediate\IMOperation.cs" />

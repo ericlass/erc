@@ -20,17 +20,17 @@ namespace erc
         {
             _context = context;
 
-            var codeLines = new List<IMOperation>();
+            var codeLines = new List<IIMObject>();
             foreach (var function in context.AST.Children)
             {
-                codeLines.AddRange(GenerateFunction(function));
+                codeLines.Add(GenerateFunction(function));
                 _tempLocalCounter = 0;
             }
 
-            _context.IMCode = codeLines;
+            _context.IMObjects = codeLines;
         }
 
-        private List<IMOperation> GenerateFunction(AstItem function)
+        private IIMObject GenerateFunction(AstItem function)
         {
             if (function.Kind == AstItemKind.ExternFunctionDecl)
                 return GenerateExternalFunction(function);
@@ -40,11 +40,10 @@ namespace erc
             var currentFunction = _context.GetFunction(function.Identifier);
 
             var statements = function.Children[1];
-            var result = new List<IMOperation>();
+            var operations = new List<IMOperation>();
 
-            result.Add(IMOperation.Cmnt(""));
             var labelName = "fn_" + function.Identifier;
-            result.Add(IMOperation.Labl(labelName));
+            operations.Add(IMOperation.Labl(labelName));
 
             _context.EnterFunction(currentFunction);
             _context.EnterBlock();
@@ -52,25 +51,26 @@ namespace erc
             foreach (var statement in statements.Children)
             {
                 //result.Add(IMOperation.Cmnt(statement.SourceLine));
-                result.AddRange(GenerateStatement(statement));
+                operations.AddRange(GenerateStatement(statement));
             }
 
             _context.LeaveBlock();
             _context.LeaveFunction();
 
             //Add return as last instruction, if required
-            var last = result[result.Count - 1];
+            var last = operations[operations.Count - 1];
             if (last.Instruction != IMInstruction.RET)
-                result.Add(IMOperation.Ret(IMOperand.VOID));
+                operations.Add(IMOperation.Ret(IMOperand.VOID));
 
-            return result;
+            return new IMFunction() { Definition = currentFunction, Body = operations };
         }
 
-        private List<IMOperation> GenerateExternalFunction(AstItem function)
+        private IIMObject GenerateExternalFunction(AstItem function)
         {
+            var definition = _context.RequireFunction(function.Identifier);
             var libName = function.Value as string;
             var fnName = function.Value2 as string;
-            return IMOperation.Extfn(function.Identifier, fnName, libName).AsList;
+            return new IMExternalFunction() { Definition = definition, ExternalName = fnName, LibName = libName };
         }
 
         private List<IMOperation> GenerateStatement(AstItem statement)
@@ -161,7 +161,7 @@ namespace erc
                 //Assuming that AST item has as many children as function has parameters, as this is checked before
                 var parameter = function.Parameters[i];
                 var expression = funcCall.Children[i];
-                var location = IMOperand.Parameter(parameter.DataType, i + 1);
+                var location = NewTempLocal(parameter.DataType);
                 paramLocations.Add(location);
                 result.AddRange(GenerateExpression(expression, location));
             }

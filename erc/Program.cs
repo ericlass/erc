@@ -50,7 +50,7 @@ namespace erc
             var generator = new IMCodeGenerator();
             generator.Generate(context);
 
-            string finalCode = String.Join("\n", context.IMCode);
+            string finalCode = String.Join("\n", context.IMObjects);
 
             stopWatch.Stop();
             var compilationTime = stopWatch.ElapsedMilliseconds;
