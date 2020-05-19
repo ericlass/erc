@@ -39,11 +39,15 @@ namespace erc
 
             var currentFunction = _context.GetFunction(function.Identifier);
 
+            //Make sure parameters have correct value names
+            for (int i = 0; i < currentFunction.Parameters.Count; i++)
+            {
+                var parameter = currentFunction.Parameters[i];
+                parameter.Location = IMOperand.Parameter(parameter.DataType, i + 1);
+            }
+
             var statements = function.Children[1];
             var operations = new List<IMOperation>();
-
-            var labelName = "fn_" + function.Identifier;
-            operations.Add(IMOperation.Labl(labelName));
 
             _context.EnterFunction(currentFunction);
             _context.EnterBlock();
