@@ -10,6 +10,11 @@ namespace erc
         public object Value { get; set; }
         public List<IMOperand> Values { get; set; } = new List<IMOperand>();
         public DataType DataType { get; set; }
+        
+        public string FullName 
+        { 
+            get { return this.ToString(); }
+        }
 
         private IMOperand()
         {

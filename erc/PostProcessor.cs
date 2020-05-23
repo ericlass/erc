@@ -24,7 +24,7 @@ namespace erc
             if (item.Kind == AstItemKind.Immediate || item.Kind == AstItemKind.Vector)
             {
                 //Booleans get fixed names as they can only have two values
-                if (item.DataType == DataType.BOOL)
+                if (item.DataType.Kind == DataTypeKind.BOOL)
                 {
                     var boolVal = (bool)item.Value;
                     item.Identifier = boolVal ? "imm_bool_true" : "imm_bool_false";

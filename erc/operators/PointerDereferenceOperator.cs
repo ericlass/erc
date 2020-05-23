@@ -21,7 +21,7 @@ namespace erc
 
         public void ValidateOperandType(DataType operandType)
         {
-            if (!operandType.IsPointer)
+            if (operandType.Kind != DataTypeKind.POINTER)
                 throw new Exception("Can only dereference pointers with '*', given: " + operandType);
         }
     }

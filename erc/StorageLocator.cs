@@ -5,11 +5,11 @@ namespace erc
 {
     public class StorageLocator
     {
-        private Stack<RegisterGroup> _freeRRegisters = new Stack<RegisterGroup>();
-        private Stack<RegisterGroup> _freeMMRegisters = new Stack<RegisterGroup>();
+        private Stack<X64RegisterGroup> _freeRRegisters = new Stack<X64RegisterGroup>();
+        private Stack<X64RegisterGroup> _freeMMRegisters = new Stack<X64RegisterGroup>();
 
-        private Stack<RegisterGroup> _freeParameterRRegisters = new Stack<RegisterGroup>();
-        private Stack<RegisterGroup> _freeParameterMMRegisters = new Stack<RegisterGroup>();
+        private Stack<X64RegisterGroup> _freeParameterRRegisters = new Stack<X64RegisterGroup>();
+        private Stack<X64RegisterGroup> _freeParameterMMRegisters = new Stack<X64RegisterGroup>();
 
         //Heap? not here, dynamically at runtime
 
@@ -114,35 +114,35 @@ namespace erc
         private void InitRegisters()
         {
             _freeRRegisters.Clear();
-            _freeRRegisters.Push(RegisterGroup.R15);
-            _freeRRegisters.Push(RegisterGroup.R14);
-            _freeRRegisters.Push(RegisterGroup.R13);
-            _freeRRegisters.Push(RegisterGroup.R12);
+            _freeRRegisters.Push(X64RegisterGroup.R15);
+            _freeRRegisters.Push(X64RegisterGroup.R14);
+            _freeRRegisters.Push(X64RegisterGroup.R13);
+            _freeRRegisters.Push(X64RegisterGroup.R12);
 
             _freeMMRegisters.Clear();
-            _freeMMRegisters.Push(RegisterGroup.MM15);
-            _freeMMRegisters.Push(RegisterGroup.MM14);
-            _freeMMRegisters.Push(RegisterGroup.MM13);
-            _freeMMRegisters.Push(RegisterGroup.MM12);
-            _freeMMRegisters.Push(RegisterGroup.MM11);
-            _freeMMRegisters.Push(RegisterGroup.MM10);
-            _freeMMRegisters.Push(RegisterGroup.MM9);
-            _freeMMRegisters.Push(RegisterGroup.MM8);
+            _freeMMRegisters.Push(X64RegisterGroup.MM15);
+            _freeMMRegisters.Push(X64RegisterGroup.MM14);
+            _freeMMRegisters.Push(X64RegisterGroup.MM13);
+            _freeMMRegisters.Push(X64RegisterGroup.MM12);
+            _freeMMRegisters.Push(X64RegisterGroup.MM11);
+            _freeMMRegisters.Push(X64RegisterGroup.MM10);
+            _freeMMRegisters.Push(X64RegisterGroup.MM9);
+            _freeMMRegisters.Push(X64RegisterGroup.MM8);
         }
 
         private void InitParamRegisters()
         {
             _freeParameterRRegisters.Clear();
-            _freeParameterRRegisters.Push(RegisterGroup.R9);
-            _freeParameterRRegisters.Push(RegisterGroup.R8);
-            _freeParameterRRegisters.Push(RegisterGroup.D);
-            _freeParameterRRegisters.Push(RegisterGroup.C);
+            _freeParameterRRegisters.Push(X64RegisterGroup.R9);
+            _freeParameterRRegisters.Push(X64RegisterGroup.R8);
+            _freeParameterRRegisters.Push(X64RegisterGroup.D);
+            _freeParameterRRegisters.Push(X64RegisterGroup.C);
 
             _freeParameterMMRegisters.Clear();
-            _freeParameterMMRegisters.Push(RegisterGroup.MM3);
-            _freeParameterMMRegisters.Push(RegisterGroup.MM2);
-            _freeParameterMMRegisters.Push(RegisterGroup.MM1);
-            _freeParameterMMRegisters.Push(RegisterGroup.MM0);
+            _freeParameterMMRegisters.Push(X64RegisterGroup.MM3);
+            _freeParameterMMRegisters.Push(X64RegisterGroup.MM2);
+            _freeParameterMMRegisters.Push(X64RegisterGroup.MM1);
+            _freeParameterMMRegisters.Push(X64RegisterGroup.MM0);
         }
 
     }
