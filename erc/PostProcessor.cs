@@ -12,35 +12,6 @@ namespace erc
                 if (function.Kind == AstItemKind.FunctionDecl)
                     CreateVariableScopeNodes(function);
             }
-            
-            AssignDataNames(context.AST);
-            //RemoveUnusedFunctionDecls(context.AST);
-        }
-
-        private int _immCounter = 0;
-
-        private void AssignDataNames(AstItem item)
-        {
-            if (item.Kind == AstItemKind.Immediate || item.Kind == AstItemKind.Vector)
-            {
-                //Booleans get fixed names as they can only have two values
-                if (item.DataType.Kind == DataTypeKind.BOOL)
-                {
-                    var boolVal = (bool)item.Value;
-                    item.Identifier = boolVal ? "imm_bool_true" : "imm_bool_false";
-                }
-                else
-                {
-                    item.Identifier = "imm_" + _immCounter;
-                    _immCounter += 1;
-                }
-            }
-
-            foreach (var child in item.Children)
-            {
-                if (child != null)
-                    AssignDataNames(child);
-            }
         }
 
         /// <summary>
@@ -98,35 +69,6 @@ namespace erc
             {
                 if (child != null)
                     FindVariables(child, found);
-            }
-        }
-
-        public void RemoveUnusedFunctionDecls(AstItem topItem)
-        {
-            //TODO: This does not work for functions that are called in functions that are not called. Make it work.
-            var calledFunctions = new List<string>();
-            FindFunctionCalls(topItem, calledFunctions);
-
-            for (int i = topItem.Children.Count - 1; i >= 0; i--)
-            {
-                var func = topItem.Children[i];
-                if (func.Kind == AstItemKind.FunctionDecl && !calledFunctions.Contains(func.Identifier))
-                {
-                    topItem.Children.RemoveAt(i);
-                }
-            }
-        }
-
-        public void FindFunctionCalls(AstItem topItem, List<string> result)
-        {
-            if (topItem.Kind == AstItemKind.FunctionCall)
-            {
-                result.Add(topItem.Identifier);
-            }
-
-            foreach (var child in topItem.Children)
-            {
-                FindFunctionCalls(child, result);
             }
         }
 

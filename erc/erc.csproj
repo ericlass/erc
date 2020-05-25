@@ -61,6 +61,7 @@
     <Compile Include="native\WinX64CodeGenerator.cs" />
     <Compile Include="native\X64DataTypeProperties.cs" />
     <Compile Include="native\X64FunctionFrame.cs" />
+    <Compile Include="native\X64MemoryManager.cs" />
     <Compile Include="native\X64StorageLocation.cs" />
     <Compile Include="native\X64StorageLocationKind.cs" />
     <Compile Include="operators\AdditionOperator.cs" />
@@ -91,7 +92,6 @@
     <Compile Include="operators\RelationalOperator.cs" />
     <Compile Include="operators\SubtractionOperator.cs" />
     <Compile Include="operators\UnaryOperator.cs" />
-    <Compile Include="Optimizer.cs" />
     <Compile Include="PostProcessor.cs" />
     <Compile Include="DataType.cs" />
     <Compile Include="Program.cs" />
@@ -103,7 +103,6 @@
     <Compile Include="SemanticAnalysis.cs" />
     <Compile Include="SimpleIterator.cs" />
     <Compile Include="SimpleLogger.cs" />
-    <Compile Include="StorageLocator.cs" />
     <Compile Include="StringIterator.cs" />
     <Compile Include="SymbolKind.cs" />
     <Compile Include="SyntaxAnalysis.cs" />

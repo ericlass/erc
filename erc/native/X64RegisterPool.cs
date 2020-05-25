@@ -11,24 +11,18 @@ namespace erc
         public X64RegisterPool()
         {
             //These should not be used for variables or so
-            _excluded.Add(X64Register.RAX.Group);
-            _excluded.Add(X64Register.RCX.Group);
-            _excluded.Add(X64Register.RDX.Group);
-            _excluded.Add(X64Register.R8.Group);
-            _excluded.Add(X64Register.R9.Group);
-            _excluded.Add(X64Register.R10.Group);
-            _excluded.Add(X64Register.R11.Group);
             _excluded.Add(X64Register.RSP.Group);
             _excluded.Add(X64Register.RBP.Group);
+        }
 
-            _excluded.Add(X64Register.XMM0.Group);
-            _excluded.Add(X64Register.XMM1.Group);
-            _excluded.Add(X64Register.XMM2.Group);
-            _excluded.Add(X64Register.XMM3.Group);
-            _excluded.Add(X64Register.XMM4.Group);
-            _excluded.Add(X64Register.XMM5.Group);
-            _excluded.Add(X64Register.XMM6.Group);
-            _excluded.Add(X64Register.XMM7.Group);
+        public void Reset()
+        {
+            _used.Clear();
+        }
+
+        public void Use(X64Register register)
+        {
+            _used.Add(register.Group);
         }
 
         public X64Register Take(DataType dataType)

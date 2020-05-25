@@ -44,11 +44,11 @@ namespace erc
             var processor = new PostProcessor();
             processor.Process(context);
 
-            var locator = new StorageLocator();
-            locator.Locate(context);
+            var imGenerator = new IMCodeGenerator();
+            imGenerator.Generate(context);
 
-            var generator = new IMCodeGenerator();
-            generator.Generate(context);
+            var x64Generator = new WinX64CodeGenerator();
+            x64Generator.Generate(context);
 
             string finalCode = String.Join("\n", context.IMObjects);
 
