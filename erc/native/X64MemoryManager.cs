@@ -7,6 +7,7 @@ namespace erc
     {
         private Stack<X64RegisterGroup> _freeParameterRRegisters = new Stack<X64RegisterGroup>();
         private Stack<X64RegisterGroup> _freeParameterMMRegisters = new Stack<X64RegisterGroup>();
+        private long _immediateCounter = 0;
 
         public X64FunctionFrame CreateFunctionScope(IMFunction function)
         {
@@ -18,7 +19,7 @@ namespace erc
             var paramIndex = 1;
             foreach (var location in paramLocations)
             {
-                var name = "$" + paramIndex;
+                var name = IMOperand.ParameterPrefix + paramIndex;
                 locationMap.Add(name, location);
 
                 if (location.Kind == X64StorageLocationKind.Register)
@@ -85,11 +86,38 @@ namespace erc
                 }
             }
 
+            //Data Section (full immediate constructors)
+            var dataEntries = new List<Tuple<DataType, string>>();
+            foreach (var operation in function.Body)
+            {
+                foreach (var operand in operation.Operands)
+                {
+                    if (operand.Kind == IMOperandKind.Constructor)
+                    {
+                        var isFullImmediate = operand.Values.TrueForAll((op) => op.Kind == IMOperandKind.Immediate);
+                        if (isFullImmediate)
+                        {
+                            var dataType = operand.DataType;
+                            var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
+                            //TODO: Handle vectors correctly
+                            var valueStr = x64DataType.ImmediateValueToAsmCode(operand);
+                            _immediateCounter += 1;
+                            var immediateName = "imm_" + _immediateCounter;
+
+                            var entry = immediateName + " " + x64DataType.ImmediateSize + " " + valueStr;
+
+                            dataEntries.Add(new Tuple<DataType, string>(dataType, entry));
+                        }
+                    }
+                }
+            }
+
             return new X64FunctionFrame()
             {
                 LocalsLocations = locationMap,
                 LocalsStackFrameSize = stackOffset,
-                LocalsHeapChunkSize = heapOffset
+                LocalsHeapChunkSize = heapOffset,
+                DataEntries = dataEntries
             };
         }
 

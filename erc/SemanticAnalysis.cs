@@ -546,28 +546,47 @@ namespace erc
         {
             var last = str[str.Length - 1];
 
-            if (dataType.Kind == DataTypeKind.F32)
+            switch (dataType.Kind)
             {
-                if (last == 'f')
-                    return float.Parse(str.Substring(0, str.Length - 1), CultureInfo.InvariantCulture);
-                else
-                    return float.Parse(str, CultureInfo.InvariantCulture);
-            }
+                case DataTypeKind.I8:
+                    return sbyte.Parse(str);
 
-            if (dataType.Kind == DataTypeKind.F64)
-            {
-                if (last == 'd')
-                    return double.Parse(str.Substring(0, str.Length - 1), CultureInfo.InvariantCulture);
-                else
-                    return double.Parse(str, CultureInfo.InvariantCulture);
-            }
+                case DataTypeKind.I16:
+                    return short.Parse(str);
 
-            if (dataType.Kind == DataTypeKind.I64)
-            {
-                return long.Parse(str);
-            }
+                case DataTypeKind.I32:
+                    return int.Parse(str);
 
-            throw new Exception("Unsupported number type: " + dataType + " for value " + str);
+                case DataTypeKind.I64:
+                    return long.Parse(str);
+
+                case DataTypeKind.U8:
+                    return byte.Parse(str);
+
+                case DataTypeKind.U16:
+                    return ushort.Parse(str);
+
+                case DataTypeKind.U32:
+                    return uint.Parse(str);
+
+                case DataTypeKind.U64:
+                    return ulong.Parse(str);
+
+                case DataTypeKind.F32:
+                    if (last == 'f')
+                        return float.Parse(str.Substring(0, str.Length - 1), CultureInfo.InvariantCulture);
+                    else
+                        return float.Parse(str, CultureInfo.InvariantCulture);
+
+                case DataTypeKind.F64:
+                    if (last == 'd')
+                        return double.Parse(str.Substring(0, str.Length - 1), CultureInfo.InvariantCulture);
+                    else
+                        return double.Parse(str, CultureInfo.InvariantCulture);
+
+                default:
+                    throw new Exception("Unsupported number type: " + dataType + " for value " + str);
+            }
         }
 
     }

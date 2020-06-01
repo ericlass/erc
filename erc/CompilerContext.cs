@@ -10,6 +10,7 @@ namespace erc
         public AstItem AST { get; set; }
         public List<IIMObject> IMObjects { get; set; }
         public SimpleLogger Logger { get; } = new SimpleLogger();
+        public string NativeCode { get; set; }
 
         private ProgramScope _programScope = new ProgramScope();
         private FunctionScope _functionScope = null;

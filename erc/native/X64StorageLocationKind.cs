@@ -8,6 +8,7 @@ namespace erc
         Register,
         StackFromBase,
         HeapForLocals,
-        HeapInRegister
+        HeapInRegister,
+        DataSection
     }
 }

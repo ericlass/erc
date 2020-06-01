@@ -5,6 +5,8 @@ namespace erc
 {
     public class IMOperand
     {
+        public const string ParameterPrefix = "$";
+
         public IMOperandKind Kind { get; set; }
         public string Name { get; set; }
         public object Value { get; set; }
@@ -28,7 +30,7 @@ namespace erc
                     return "%" + Name;
 
                 case IMOperandKind.Parameter:
-                    return "$" + Name;
+                    return ParameterPrefix + Name;
 
                 case IMOperandKind.Constructor:
                     return "#" + DataType.Name + "(" + String.Join(", ", Values) + ")";

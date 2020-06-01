@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace erc
 {
@@ -239,7 +240,8 @@ namespace erc
             AddInstruction = X64Instruction.ADDPS,
             SubInstruction = X64Instruction.SUBPS,
             DivInstruction = X64Instruction.DIVPS,
-            MulInstruction = X64Instruction.MULPS
+            MulInstruction = X64Instruction.MULPS,
+            ImmediateValueToAsmCode = (o) => String.Join(",", o.Values.ConvertAll<string>((v) => F32.ImmediateValueToAsmCode(v)))
         };
 
 
@@ -256,7 +258,8 @@ namespace erc
             AddInstruction = X64Instruction.VADDPS,
             SubInstruction = X64Instruction.VSUBPS,
             DivInstruction = X64Instruction.VDIVPS,
-            MulInstruction = X64Instruction.VMULPS
+            MulInstruction = X64Instruction.VMULPS,
+            ImmediateValueToAsmCode = (o) => String.Join(",", o.Values.ConvertAll<string>((v) => F32.ImmediateValueToAsmCode(v)))
         };
 
 
@@ -273,7 +276,8 @@ namespace erc
             AddInstruction = X64Instruction.ADDPD,
             SubInstruction = X64Instruction.SUBPD,
             DivInstruction = X64Instruction.DIVPD,
-            MulInstruction = X64Instruction.MULPD
+            MulInstruction = X64Instruction.MULPD,
+            ImmediateValueToAsmCode = (o) => String.Join(",", o.Values.ConvertAll<string>((v) => F64.ImmediateValueToAsmCode(v)))
         };
 
 
@@ -290,7 +294,24 @@ namespace erc
             AddInstruction = X64Instruction.VADDPD,
             SubInstruction = X64Instruction.VSUBPD,
             DivInstruction = X64Instruction.VDIVPD,
-            MulInstruction = X64Instruction.VMULPD
+            MulInstruction = X64Instruction.VMULPD,
+            ImmediateValueToAsmCode = (o) => String.Join(",", o.Values.ConvertAll<string>((v) => F64.ImmediateValueToAsmCode(v)))
+        };
+
+        private static readonly X64DataTypeProperties STRING = new X64DataTypeProperties()
+        {
+            OperandSize = "word",
+            ImmediateSize = "dw",
+            Accumulator = X64Register.AX,
+            TempRegister1 = X64Register.R10W,
+            TempRegister2 = X64Register.R11W,
+            MoveInstructionAligned = X64Instruction.MOV,
+            MoveInstructionUnaligned = X64Instruction.MOV,
+            AddInstruction = X64Instruction.ADD,
+            SubInstruction = X64Instruction.SUB,
+            DivInstruction = X64Instruction.DIV,
+            MulInstruction = X64Instruction.MUL,
+            ImmediateValueToAsmCode = (o) => BitConverter.ToString(Encoding.Unicode.GetBytes(((string)o.Value))).Replace("-", "")
         };
 
     }
