@@ -53,7 +53,10 @@ namespace erc
                 [DataTypeKind.VEC4F] = VEC4F,
                 [DataTypeKind.VEC8F] = VEC8F,
                 [DataTypeKind.VEC2D] = VEC2D,
-                [DataTypeKind.VEC4D] = VEC4D
+                [DataTypeKind.VEC4D] = VEC4D,
+                [DataTypeKind.BOOL] = BOOL,
+                [DataTypeKind.POINTER] = POINTER,
+                [DataTypeKind.STRING] = STRING
             };
         }
 
@@ -240,8 +243,7 @@ namespace erc
             AddInstruction = X64Instruction.ADDPS,
             SubInstruction = X64Instruction.SUBPS,
             DivInstruction = X64Instruction.DIVPS,
-            MulInstruction = X64Instruction.MULPS,
-            ImmediateValueToAsmCode = (o) => String.Join(",", o.Values.ConvertAll<string>((v) => F32.ImmediateValueToAsmCode(v)))
+            MulInstruction = X64Instruction.MULPS
         };
 
 
@@ -258,8 +260,7 @@ namespace erc
             AddInstruction = X64Instruction.VADDPS,
             SubInstruction = X64Instruction.VSUBPS,
             DivInstruction = X64Instruction.VDIVPS,
-            MulInstruction = X64Instruction.VMULPS,
-            ImmediateValueToAsmCode = (o) => String.Join(",", o.Values.ConvertAll<string>((v) => F32.ImmediateValueToAsmCode(v)))
+            MulInstruction = X64Instruction.VMULPS
         };
 
 
@@ -276,8 +277,7 @@ namespace erc
             AddInstruction = X64Instruction.ADDPD,
             SubInstruction = X64Instruction.SUBPD,
             DivInstruction = X64Instruction.DIVPD,
-            MulInstruction = X64Instruction.MULPD,
-            ImmediateValueToAsmCode = (o) => String.Join(",", o.Values.ConvertAll<string>((v) => F64.ImmediateValueToAsmCode(v)))
+            MulInstruction = X64Instruction.MULPD
         };
 
 
@@ -294,8 +294,34 @@ namespace erc
             AddInstruction = X64Instruction.VADDPD,
             SubInstruction = X64Instruction.VSUBPD,
             DivInstruction = X64Instruction.VDIVPD,
-            MulInstruction = X64Instruction.VMULPD,
-            ImmediateValueToAsmCode = (o) => String.Join(",", o.Values.ConvertAll<string>((v) => F64.ImmediateValueToAsmCode(v)))
+            MulInstruction = X64Instruction.VMULPD
+        };
+
+        private static readonly X64DataTypeProperties BOOL = new X64DataTypeProperties()
+        {
+            OperandSize = "byte",
+            ImmediateSize = "db",
+            Accumulator = X64Register.AL,
+            TempRegister1 = X64Register.R10B,
+            TempRegister2 = X64Register.R11B,
+            MoveInstructionAligned = X64Instruction.MOV,
+            MoveInstructionUnaligned = X64Instruction.MOV,
+            ImmediateValueToAsmCode = (o) => o.Value.ToString()
+        };
+
+        private static readonly X64DataTypeProperties POINTER = new X64DataTypeProperties()
+        {
+            OperandSize = "qword",
+            ImmediateSize = "dq",
+            Accumulator = X64Register.RAX,
+            TempRegister1 = X64Register.R10,
+            TempRegister2 = X64Register.R11,
+            MoveInstructionAligned = X64Instruction.MOV,
+            MoveInstructionUnaligned = X64Instruction.MOV,
+            AddInstruction = X64Instruction.ADD,
+            SubInstruction = X64Instruction.SUB,
+            DivInstruction = X64Instruction.DIV,
+            MulInstruction = X64Instruction.MUL
         };
 
         private static readonly X64DataTypeProperties STRING = new X64DataTypeProperties()

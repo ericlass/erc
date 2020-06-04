@@ -150,7 +150,8 @@ namespace erc
                     throw new Exception("Unsupported target item for assignment: " + target);
             }
 
-            return GenerateExpression(statement.Children[1], targetLocation);
+            result.AddRange(GenerateExpression(statement.Children[1], targetLocation));
+            return result;
         }
 
         private List<IMOperation> GenerateFunctionCall(AstItem funcCall, IMOperand targetLocation)

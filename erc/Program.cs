@@ -50,10 +50,11 @@ namespace erc
             var x64Generator = new WinX64CodeGenerator();
             x64Generator.Generate(context);
 
-            string finalCode = String.Join("\n", context.IMObjects);
-
             stopWatch.Stop();
             var compilationTime = stopWatch.ElapsedMilliseconds;
+
+            var immediateCode = String.Join("\n", context.IMObjects);
+            var nativeCode = String.Join("\n", context.NativeCode);
             
             Console.WriteLine();
             Console.WriteLine("AST");
@@ -62,12 +63,19 @@ namespace erc
 
             Console.WriteLine();
             Console.WriteLine();
-            Console.WriteLine("CODE");
+            Console.WriteLine("IM CODE");
             Console.WriteLine("==========");
-            Console.WriteLine(finalCode);
+            Console.WriteLine(immediateCode);
 
-            Clipboard.SetText(finalCode);
+            Console.WriteLine();
+            Console.WriteLine();
+            Console.WriteLine("NATIVE CODE");
+            Console.WriteLine("==========");
+            Console.WriteLine(nativeCode);
 
+            Clipboard.SetText(immediateCode + "\n\n\n" + nativeCode);
+
+            Console.WriteLine();
             Console.WriteLine("Compilation took: " + compilationTime + " ms");
 
             Console.WriteLine();

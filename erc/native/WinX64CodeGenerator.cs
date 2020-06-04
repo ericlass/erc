@@ -29,7 +29,7 @@ namespace erc
         private CompilerContext _context;
         private X64FunctionFrame _functionScope;
         private X64MemoryManager _memoryManager = new X64MemoryManager();
-        private List<Tuple<DataType, string>> _dataEntries;
+        private List<Tuple<DataType, string>> _dataEntries = new List<Tuple<DataType, string>>();
 
         public void Generate(CompilerContext context)
         {
@@ -52,11 +52,11 @@ namespace erc
                 }
             }
 
-            _dataEntries.Sort((o1, o2) => o1.Item1.ByteSize - o2.Item1.ByteSize);
+            _dataEntries.Sort((o1, o2) => o2.Item1.ByteSize - o1.Item1.ByteSize);
             var nativeCode = new StringBuilder();
             nativeCode.Append(CodeHeader);
-            nativeCode.Append(String.Join("\n", _dataEntries));
-            nativeCode.Append("\n");
+            nativeCode.Append(String.Join("\n", _dataEntries.ConvertAll<string>((e) => e.Item2)));
+            nativeCode.Append("\n\n");
             nativeCode.Append(CodeSection);
             nativeCode.Append(String.Join("\n", asmSource));
 
@@ -128,10 +128,10 @@ namespace erc
             var dataType = source.DataType;
             var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
 
-            var targetLocation = _functionScope.LocalsLocations[target.FullName];
-            var sourceLocation = _functionScope.LocalsLocations[source.FullName];
+            var targetLocation = GetOperandLocation(output, target);
+            var sourceLocation = GetOperandLocation(output, source);
 
-            //Values on stack are not align, so need to distinguish
+            //Values on stack are not aligned, so we need to distinguish
             X64Instruction instruction = null;
             if (sourceLocation.Kind == X64StorageLocationKind.StackFromBase || targetLocation.Kind == X64StorageLocationKind.StackFromBase)
                 instruction = x64DataType.MoveInstructionUnaligned;
@@ -151,30 +151,23 @@ namespace erc
 
         private X64StorageLocation GetOperandLocation(List<string> output, IMOperand operand)
         {
-            switch (operand.Kind)
+            if (_functionScope.LocalsLocations.ContainsKey(operand.FullName))
             {
-                case IMOperandKind.Local:
-                case IMOperandKind.Parameter:
-                case IMOperandKind.Global:
-                case IMOperandKind.Constructor:
-                    return _functionScope.LocalsLocations[operand.FullName];
-
-                case IMOperandKind.Reference:
-                    //TODO: Check if this is correct!
-                    return _functionScope.LocalsLocations[operand.Values[0].FullName];
-
-                case IMOperandKind.Immediate:
-                    throw new Exception("Unexpected immediate operand! Should only be part of constructor.");
-
-                default:
-                    throw new Exception("Unexpected IM operand kind: " + operand.Kind);
+                return _functionScope.LocalsLocations[operand.FullName];
             }
+            else if (operand.Kind == IMOperandKind.Constructor)
+            {
+                return GenerateConstructor(output, operand);
+            }
+            else
+                throw new Exception("Operand has no location in function scope and is not a constructor. This should not happen. Given: " + operand);
         }
 
         private X64StorageLocation GenerateConstructor(List<string> output, IMOperand operand)
         {
             Assert.Check(operand.Kind == IMOperandKind.Constructor, "Given operand must be constructor! Given: " + operand.Kind);
-            return null;
+            //TODO: Implement
+            return X64StorageLocation.DataSection("DUMMY");
         }
 
         private void GeneratePush(List<string> output, IMOperation operation)

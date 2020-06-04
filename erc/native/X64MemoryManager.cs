@@ -36,7 +36,7 @@ namespace erc
                     registerPool.Use(returnLocation.Register);
             }
 
-            //Now the local variables
+            //Now the local variables. Intentionally do no look into sub-values. These must be "defined" before already.
             var stackOffset = 0;
             var heapOffset = 0;
             foreach (var operation in function.Body)
@@ -56,7 +56,7 @@ namespace erc
                         {
                             if (operand.Kind == IMOperandKind.Local)
                             {
-                                //"Take" returns null if no register available or data type cannot be stored in register (strings, structures)
+                                //"Take" returns null if no register available or data type cannot be stored in register (structures)
                                 var register = registerPool.Take(operand.DataType);
                                 X64StorageLocation location = null;
 
@@ -81,6 +81,12 @@ namespace erc
                                 Assert.Check(location != null, "No location found for operand!");
                                 locationMap.Add(operand.FullName, location);
                             }
+                            else if (operand.Kind == IMOperandKind.Reference)
+                            {
+                                var addressLocation = locationMap[operand.Values[0].FullName];
+                                Assert.Check(addressLocation.Kind == X64StorageLocationKind.Register, "Address location for reference operand must be in register!");
+                                locationMap.Add(operand.FullName, X64StorageLocation.HeapInRegister(addressLocation.Register, 0));
+                            }
                         }
                     }
                 }
@@ -92,21 +98,30 @@ namespace erc
             {
                 foreach (var operand in operation.Operands)
                 {
-                    if (operand.Kind == IMOperandKind.Constructor)
+                    if (operand != null && operand.Kind == IMOperandKind.Constructor && !locationMap.ContainsKey(operand.FullName))
                     {
                         var isFullImmediate = operand.Values.TrueForAll((op) => op.Kind == IMOperandKind.Immediate);
                         if (isFullImmediate)
                         {
-                            var dataType = operand.DataType;
-                            var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
-                            //TODO: Handle vectors correctly
-                            var valueStr = x64DataType.ImmediateValueToAsmCode(operand);
+                            var valueStrings = new List<string>(operand.Values.Count);
+                            foreach (var value in operand.Values)
+                            {
+                                var elementType = value.DataType;
+                                var x64ElementType = X64DataTypeProperties.GetProperties(elementType.Kind);
+                                //TODO: Handle vectors correctly
+                                var valStr = x64ElementType.ImmediateValueToAsmCode(value);
+                                valueStrings.Add(valStr);
+                            }
+
                             _immediateCounter += 1;
                             var immediateName = "imm_" + _immediateCounter;
+                            var valueStr = String.Join(",", valueStrings);
 
+                            var x64DataType = X64DataTypeProperties.GetProperties(operand.DataType.Kind);
                             var entry = immediateName + " " + x64DataType.ImmediateSize + " " + valueStr;
 
-                            dataEntries.Add(new Tuple<DataType, string>(dataType, entry));
+                            dataEntries.Add(new Tuple<DataType, string>(operand.DataType, entry));
+                            locationMap.Add(operand.FullName, X64StorageLocation.DataSection(immediateName));
                         }
                     }
                 }
