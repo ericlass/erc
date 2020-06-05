@@ -108,7 +108,6 @@ namespace erc
                             {
                                 var elementType = value.DataType;
                                 var x64ElementType = X64DataTypeProperties.GetProperties(elementType.Kind);
-                                //TODO: Handle vectors correctly
                                 var valStr = x64ElementType.ImmediateValueToAsmCode(value);
                                 valueStrings.Add(valStr);
                             }

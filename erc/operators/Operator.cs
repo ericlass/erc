@@ -37,10 +37,10 @@ namespace erc
         public static IBinaryOperator ADD = new AdditionOperator();
         public static IBinaryOperator SUB = new SubtractionOperator();
 
-        public static IBinaryOperator LessThan = new RelationalOperator("<", IMInstruction.MOVB, IMInstruction.MOVGE);
-        public static IBinaryOperator LessThanOrEqual = new RelationalOperator("<=", IMInstruction.MOVBE, IMInstruction.MOVG);
-        public static IBinaryOperator GreaterThan = new RelationalOperator(">", IMInstruction.MOVG, IMInstruction.MOVBE);
-        public static IBinaryOperator GreaterThanOrEqual = new RelationalOperator(">=", IMInstruction.MOVGE, IMInstruction.MOVB);
+        public static IBinaryOperator LessThan = new RelationalOperator("<", IMInstruction.SETB);
+        public static IBinaryOperator LessThanOrEqual = new RelationalOperator("<=", IMInstruction.SETBE);
+        public static IBinaryOperator GreaterThan = new RelationalOperator(">", IMInstruction.SETG);
+        public static IBinaryOperator GreaterThanOrEqual = new RelationalOperator(">=", IMInstruction.SETGE);
 
         public static IBinaryOperator EQUALS = new EqualityOperator("==", false);
         public static IBinaryOperator NOT_EQUALS = new EqualityOperator("!=", true);

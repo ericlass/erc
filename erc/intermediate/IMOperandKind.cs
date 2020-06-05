@@ -9,6 +9,7 @@ namespace erc
         Immediate,
         Constructor,
         Global,
-        Reference
+        Reference,
+        Identifier
     }
 }

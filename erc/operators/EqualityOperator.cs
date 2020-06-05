@@ -38,22 +38,10 @@ namespace erc
 
             result.Add(IMOperation.Cmp(operand1, operand2));
 
-            IMOperand equalValue;
-            IMOperand notEqualValue;
             if (_negate)
-            {
-                equalValue = IMOperand.Immediate(DataType.BOOL, 0);
-                notEqualValue = IMOperand.Immediate(DataType.BOOL, 1);
-            }
+                result.Add(IMOperation.SetNE(target));
             else
-            {
-                equalValue = IMOperand.Immediate(DataType.BOOL, 1);
-                notEqualValue = IMOperand.Immediate(DataType.BOOL, 0);
-            }
-
-            //TODO: Replace by SETcc
-            result.Add(IMOperation.MovE(target, equalValue));
-            result.Add(IMOperation.MovNe(target, notEqualValue));
+                result.Add(IMOperation.SetE(target));
 
             return result;
         }

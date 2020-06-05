@@ -246,7 +246,7 @@ namespace erc
         public static DataType BOOL = new DataType
         {
             Kind = DataTypeKind.BOOL,
-            ByteSize = 4,
+            ByteSize = 1,
             IsVector = false,
             NumElements = 1,
             Group = DataTypeGroup.Other,
@@ -268,34 +268,6 @@ namespace erc
             DataType.GetAllValues().Add(newType);
             return newType;
         }
-
-        /// <summary>
-        /// Dummy string type.
-        /// </summary>
-        public static DataType STRING = new DataType
-        {
-            Kind = DataTypeKind.STRING,
-            ByteSize = 8,
-            IsVector = false,
-            IsSigned = false,
-            NumElements = 1,
-            Group = DataTypeGroup.Other,
-        };
-
-        /*public static RawDataType Array(RawDataType subType)
-        {
-            var name = subType.Name + "[]";
-            return new RawDataType
-            {
-                Name = name,
-                ByteSize = 8,
-                IsVector = false,
-                NumElements = 1,
-                ElementType = subType,
-                IsReference = true
-            };
-        }
-        */
 
     }
 }

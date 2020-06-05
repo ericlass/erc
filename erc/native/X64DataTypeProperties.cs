@@ -55,8 +55,8 @@ namespace erc
                 [DataTypeKind.VEC2D] = VEC2D,
                 [DataTypeKind.VEC4D] = VEC4D,
                 [DataTypeKind.BOOL] = BOOL,
-                [DataTypeKind.POINTER] = POINTER,
-                [DataTypeKind.STRING] = STRING
+                [DataTypeKind.POINTER] = POINTER
+                //[DataTypeKind.STRING] = STRING
             };
         }
 
@@ -73,7 +73,7 @@ namespace erc
             SubInstruction = X64Instruction.SUB,
             DivInstruction = X64Instruction.DIV,
             MulInstruction = X64Instruction.MUL,
-            ImmediateValueToAsmCode = (o) => o.Value.ToString()
+            ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 
 
@@ -90,7 +90,7 @@ namespace erc
             SubInstruction = X64Instruction.SUB,
             DivInstruction = X64Instruction.DIV,
             MulInstruction = X64Instruction.MUL,
-            ImmediateValueToAsmCode = (o) => o.Value.ToString()
+            ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 
 
@@ -107,7 +107,7 @@ namespace erc
             SubInstruction = X64Instruction.SUB,
             DivInstruction = X64Instruction.DIV,
             MulInstruction = X64Instruction.MUL,
-            ImmediateValueToAsmCode = (o) => o.Value.ToString()
+            ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 
 
@@ -124,7 +124,7 @@ namespace erc
             SubInstruction = X64Instruction.SUB,
             DivInstruction = X64Instruction.DIV,
             MulInstruction = X64Instruction.MUL,
-            ImmediateValueToAsmCode = (o) => o.Value.ToString()
+            ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 
 
@@ -141,7 +141,7 @@ namespace erc
             SubInstruction = X64Instruction.SUB,
             DivInstruction = X64Instruction.IDIV,
             MulInstruction = X64Instruction.IMUL,
-            ImmediateValueToAsmCode = (o) => o.Value.ToString()
+            ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 
 
@@ -158,7 +158,7 @@ namespace erc
             SubInstruction = X64Instruction.SUB,
             DivInstruction = X64Instruction.IDIV,
             MulInstruction = X64Instruction.IMUL,
-            ImmediateValueToAsmCode = (o) => o.Value.ToString()
+            ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 
 
@@ -175,7 +175,7 @@ namespace erc
             SubInstruction = X64Instruction.SUB,
             DivInstruction = X64Instruction.IDIV,
             MulInstruction = X64Instruction.IMUL,
-            ImmediateValueToAsmCode = (o) => o.Value.ToString()
+            ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 
 
@@ -192,7 +192,7 @@ namespace erc
             SubInstruction = X64Instruction.SUB,
             DivInstruction = X64Instruction.IDIV,
             MulInstruction = X64Instruction.IMUL,
-            ImmediateValueToAsmCode = (o) => o.Value.ToString()
+            ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 
 
@@ -209,7 +209,7 @@ namespace erc
             SubInstruction = X64Instruction.SUBSS,
             DivInstruction = X64Instruction.DIVSS,
             MulInstruction = X64Instruction.MULSS,
-            ImmediateValueToAsmCode = (o) => ((float)o.Value).ToCode()
+            ImmediateValueToAsmCode = (o) => ((float)o.ImmediateValue).ToCode()
         };
 
 
@@ -226,7 +226,7 @@ namespace erc
             SubInstruction = X64Instruction.SUBSD,
             DivInstruction = X64Instruction.DIVSD,
             MulInstruction = X64Instruction.MULSD,
-            ImmediateValueToAsmCode = (o) => ((double)o.Value).ToCode()
+            ImmediateValueToAsmCode = (o) => ((double)o.ImmediateValue).ToCode()
         };
 
 
@@ -306,7 +306,7 @@ namespace erc
             TempRegister2 = X64Register.R11B,
             MoveInstructionAligned = X64Instruction.MOV,
             MoveInstructionUnaligned = X64Instruction.MOV,
-            ImmediateValueToAsmCode = (o) => o.Value.ToString()
+            ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 
         private static readonly X64DataTypeProperties POINTER = new X64DataTypeProperties()
@@ -324,7 +324,7 @@ namespace erc
             MulInstruction = X64Instruction.MUL
         };
 
-        private static readonly X64DataTypeProperties STRING = new X64DataTypeProperties()
+        /*private static readonly X64DataTypeProperties STRING = new X64DataTypeProperties()
         {
             OperandSize = "word",
             ImmediateSize = "dw",
@@ -338,7 +338,7 @@ namespace erc
             DivInstruction = X64Instruction.DIV,
             MulInstruction = X64Instruction.MUL,
             ImmediateValueToAsmCode = (o) => BitConverter.ToString(Encoding.Unicode.GetBytes(((string)o.Value))).Replace("-", "")
-        };
+        };*/
 
     }
 }

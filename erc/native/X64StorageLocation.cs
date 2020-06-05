@@ -24,7 +24,7 @@ namespace erc
                     return "heap_locals(" + Offset + ")";
 
                 case X64StorageLocationKind.HeapInRegister:
-                    return "heap_register(" + Offset + ")";
+                    return "heap_register(" + Register + "+" + Offset + ")";
 
                 case X64StorageLocationKind.DataSection:
                     return "data_section(" + DataName + ")";

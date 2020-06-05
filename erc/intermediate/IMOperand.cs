@@ -9,7 +9,7 @@ namespace erc
 
         public IMOperandKind Kind { get; set; }
         public string Name { get; set; }
-        public object Value { get; set; }
+        public object ImmediateValue { get; set; } //Only used for immediates!
         public List<IMOperand> Values { get; set; } = new List<IMOperand>();
         public DataType DataType { get; set; }
         
@@ -36,10 +36,13 @@ namespace erc
                     return "#" + DataType.Name + "(" + String.Join(", ", Values) + ")";
 
                 case IMOperandKind.Immediate:
-                    return Value.ToString();
+                    return ImmediateValue.ToString();
 
                 case IMOperandKind.Global:
                     return "@" + Name;
+
+                case IMOperandKind.Identifier:
+                    return "'" + Name + "'";
 
                 case IMOperandKind.Reference:
                     return "[" + Values[0] + "]";
@@ -65,7 +68,7 @@ namespace erc
 
         public static IMOperand Immediate(DataType dataType, object value)
         {
-            return new IMOperand() { DataType = dataType, Kind = IMOperandKind.Immediate, Value = value };
+            return new IMOperand() { DataType = dataType, Kind = IMOperandKind.Immediate, ImmediateValue = value };
         }
 
         public static IMOperand Constructor(DataType dataType, List<IMOperand> values)
@@ -107,6 +110,11 @@ namespace erc
         public static IMOperand Reference(DataType dataType, IMOperand refValue)
         {
             return new IMOperand() { DataType = dataType, Kind = IMOperandKind.Reference, Values = new List<IMOperand>() { refValue } };
+        }
+
+        public static IMOperand Identifier(string identifier)
+        {
+            return new IMOperand() { DataType = DataType.VOID, Kind = IMOperandKind.Identifier, Name = identifier };
         }
 
     }

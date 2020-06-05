@@ -127,7 +127,7 @@ namespace erc
 
         public static IMOperation Call(string functionName, IMOperand result, List<IMOperand> paramValues)
         {
-            var allOperands = new List<IMOperand>() { IMOperand.ConstructorImmediate(DataType.STRING, functionName), result };
+            var allOperands = new List<IMOperand>() { IMOperand.Identifier(functionName), result };
             allOperands.AddRange(paramValues);
             return new IMOperation() { Instruction = IMInstruction.CALL, Operands = allOperands };
         }
@@ -139,12 +139,12 @@ namespace erc
 
         public static IMOperation Jmp(string labelName)
         {
-            return new IMOperation(IMInstruction.JMP, IMOperand.ConstructorImmediate(DataType.STRING, labelName));
+            return new IMOperation(IMInstruction.JMP, IMOperand.Identifier(labelName));
         }
 
         public static IMOperation JmpNe(string labelName)
         {
-            return new IMOperation(IMInstruction.JMPNE, IMOperand.ConstructorImmediate(DataType.STRING, labelName));
+            return new IMOperation(IMInstruction.JMPNE, IMOperand.Identifier(labelName));
         }
 
         public static IMOperation Cmp(IMOperand operand1, IMOperand operand2)
@@ -160,6 +160,16 @@ namespace erc
         public static IMOperation MovNe(IMOperand target, IMOperand source)
         {
             return new IMOperation(IMInstruction.MOVNE, target, source);
+        }
+
+        public static IMOperation SetE(IMOperand target)
+        {
+            return new IMOperation(IMInstruction.SETE, target);
+        }
+
+        public static IMOperation SetNE(IMOperand target)
+        {
+            return new IMOperation(IMInstruction.SETNE, target);
         }
 
         public static IMOperation Nop()
@@ -179,21 +189,21 @@ namespace erc
 
         public static IMOperation Labl(string labelName)
         {
-            return new IMOperation(IMInstruction.LABL, IMOperand.Constructor(DataType.STRING, IMOperand.Immediate(DataType.STRING, labelName)));
+            return new IMOperation(IMInstruction.LABL, IMOperand.Identifier(labelName));
         }
 
         public static IMOperation Cmnt(string text)
         {
-            return new IMOperation(IMInstruction.CMNT, IMOperand.Constructor(DataType.STRING, IMOperand.Immediate(DataType.STRING, text)));
+            return new IMOperation(IMInstruction.CMNT, IMOperand.Identifier(text));
         }
 
         public static IMOperation Extfn(string name, string externalName, string libName)
         {
             return new IMOperation(
                 IMInstruction.EXTFN,
-                IMOperand.ConstructorImmediate(DataType.STRING, name),
-                IMOperand.ConstructorImmediate(DataType.STRING, externalName),
-                IMOperand.ConstructorImmediate(DataType.STRING, libName)
+                IMOperand.Identifier(name),
+                IMOperand.Identifier(externalName),
+                IMOperand.Identifier(libName)
             );
         }
 
