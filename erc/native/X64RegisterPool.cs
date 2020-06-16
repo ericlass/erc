@@ -11,8 +11,15 @@ namespace erc
         public X64RegisterPool()
         {
             //These should not be used for variables or so
+            _excluded.Add(X64Register.RAX.Group);
+            _excluded.Add(X64Register.R10.Group);
+            _excluded.Add(X64Register.R11.Group);
             _excluded.Add(X64Register.RSP.Group);
             _excluded.Add(X64Register.RBP.Group);
+
+            _excluded.Add(X64Register.XMM4.Group);
+            _excluded.Add(X64Register.XMM5.Group);
+            _excluded.Add(X64Register.XMM6.Group);
         }
 
         public void Reset()

@@ -155,19 +155,8 @@ namespace erc
             {
                 return _functionScope.LocalsLocations[operand.FullName];
             }
-            else if (operand.Kind == IMOperandKind.Constructor)
-            {
-                return GenerateConstructor(output, operand);
-            }
             else
                 throw new Exception("Operand has no location in function scope and is not a constructor. This should not happen. Given: " + operand);
-        }
-
-        private X64StorageLocation GenerateConstructor(List<string> output, IMOperand operand)
-        {
-            Assert.Check(operand.Kind == IMOperandKind.Constructor, "Given operand must be constructor! Given: " + operand.Kind);
-            //TODO: Implement
-            return X64StorageLocation.DataSection("DUMMY");
         }
 
         private void GeneratePush(List<string> output, IMOperation operation)

@@ -83,7 +83,7 @@ namespace erc
                             }
                             else if (operand.Kind == IMOperandKind.Reference)
                             {
-                                var addressLocation = locationMap[operand.Values[0].FullName];
+                                var addressLocation = locationMap[operand.ChildValue.FullName];
                                 Assert.Check(addressLocation.Kind == X64StorageLocationKind.Register, "Address location for reference operand must be in register!");
                                 locationMap.Add(operand.FullName, X64StorageLocation.HeapInRegister(addressLocation.Register, 0));
                             }
@@ -92,36 +92,26 @@ namespace erc
                 }
             }
 
-            //Data Section (full immediate constructors)
+            //Data Section (immediates)
             var dataEntries = new List<Tuple<DataType, string>>();
             foreach (var operation in function.Body)
             {
                 foreach (var operand in operation.Operands)
                 {
-                    if (operand != null && operand.Kind == IMOperandKind.Constructor && !locationMap.ContainsKey(operand.FullName))
+                    if (operand != null && operand.Kind == IMOperandKind.Immediate && !locationMap.ContainsKey(operand.FullName))
                     {
-                        var isFullImmediate = operand.Values.TrueForAll((op) => op.Kind == IMOperandKind.Immediate);
-                        if (isFullImmediate)
-                        {
-                            var valueStrings = new List<string>(operand.Values.Count);
-                            foreach (var value in operand.Values)
-                            {
-                                var elementType = value.DataType;
-                                var x64ElementType = X64DataTypeProperties.GetProperties(elementType.Kind);
-                                var valStr = x64ElementType.ImmediateValueToAsmCode(value);
-                                valueStrings.Add(valStr);
-                            }
+                        var elementType = operand.DataType;
+                        var x64ElementType = X64DataTypeProperties.GetProperties(elementType.Kind);
+                        var valStr = x64ElementType.ImmediateValueToAsmCode(operand);
 
-                            _immediateCounter += 1;
-                            var immediateName = "imm_" + _immediateCounter;
-                            var valueStr = String.Join(",", valueStrings);
+                        _immediateCounter += 1;
+                        var immediateName = "imm_" + _immediateCounter;
 
-                            var x64DataType = X64DataTypeProperties.GetProperties(operand.DataType.Kind);
-                            var entry = immediateName + " " + x64DataType.ImmediateSize + " " + valueStr;
+                        var x64DataType = X64DataTypeProperties.GetProperties(operand.DataType.Kind);
+                        var entry = immediateName + " " + x64DataType.ImmediateSize + " " + valStr;
 
-                            dataEntries.Add(new Tuple<DataType, string>(operand.DataType, entry));
-                            locationMap.Add(operand.FullName, X64StorageLocation.DataSection(immediateName));
-                        }
+                        dataEntries.Add(new Tuple<DataType, string>(operand.DataType, entry));
+                        locationMap.Add(operand.FullName, X64StorageLocation.DataSection(immediateName));
                     }
                 }
             }
@@ -137,7 +127,8 @@ namespace erc
 
         private bool CanGoOnStack(DataType dataType)
         {
-            return dataType.Kind != DataTypeKind.STRING;
+            //Currently, all data types can go on the stack, so just return true.
+            return true;
         }
 
         /// <summary>

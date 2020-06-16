@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Windows.Forms;
 
 namespace erc
 {
@@ -130,6 +131,13 @@ namespace erc
             var allOperands = new List<IMOperand>() { IMOperand.Identifier(functionName), result };
             allOperands.AddRange(paramValues);
             return new IMOperation() { Instruction = IMInstruction.CALL, Operands = allOperands };
+        }
+
+        public static IMOperation GVec(IMOperand target, List<IMOperand> values)
+        {
+            var allOperands = new List<IMOperand>() { target };
+            allOperands.AddRange(values);
+            return new IMOperation() { Instruction = IMInstruction.GVEC, Operands = allOperands };
         }
 
         public static IMOperation Ret(IMOperand returnValue)

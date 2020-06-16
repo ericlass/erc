@@ -255,20 +255,11 @@ namespace erc
             {
                 case AstItemKind.Immediate:
                 case AstItemKind.DirectImmediate:
-                    var source = IMOperand.ConstructorImmediate(expression.DataType, expression.Value);
+                    var source = IMOperand.Immediate(expression.DataType, expression.Value);
                     return IMOperation.Mov(targetLocation, source).AsList;
 
                 case AstItemKind.Vector:
-                    if (IsFullImmediateVector(expression))
-                    {
-                        var values = expression.Children.ConvertAll<IMOperand>((c) => IMOperand.Immediate(c.DataType, c.Value));
-                        source = IMOperand.Constructor(expression.DataType, values);
-                        return IMOperation.Mov(targetLocation, source).AsList;
-                    }
-                    else
-                    {
-                        return GenerateVectorWithExpressions(expression, targetLocation);
-                    }
+                    return GenerateVectorWithExpressions(expression, targetLocation);
 
                 case AstItemKind.Variable:
                     var variable = _context.GetSymbol(expression.Identifier);
@@ -320,7 +311,7 @@ namespace erc
             result.AddRange(GenerateExpression(indexExpression, target));
 
             //Multiply by byte size of sub type
-            result.Add(IMOperation.Mul(target, target, IMOperand.ConstructorImmediate(DataType.U64, pointerType.ElementType.ByteSize)));
+            result.Add(IMOperation.Mul(target, target, IMOperand.Immediate(DataType.U64, pointerType.ElementType.ByteSize)));
 
             //Add base address
             result.Add(IMOperation.Add(target, target, symbol.Location));
@@ -343,8 +334,8 @@ namespace erc
             //var bytesExpression = expression.Children[0];
             //result.AddRange(GenerateExpression(bytesExpression, bytesLocation));
 
-            result.Add(IMOperation.Mov(bytesLocation, IMOperand.ConstructorImmediate(DataType.U64, (long)expression.Value)));
-            result.Add(IMOperation.Mul(bytesLocation, bytesLocation, IMOperand.ConstructorImmediate(DataType.U64, expression.DataType.ElementType.ByteSize)));
+            result.Add(IMOperation.Mov(bytesLocation, IMOperand.Immediate(DataType.U64, (long)expression.Value)));
+            result.Add(IMOperation.Mul(bytesLocation, bytesLocation, IMOperand.Immediate(DataType.U64, expression.DataType.ElementType.ByteSize)));
 
             result.Add(IMOperation.Aloc(targetLocation, bytesLocation));
             return result;
@@ -417,20 +408,12 @@ namespace erc
 
             if (operand.Kind == AstItemKind.Immediate)
             {
-                result = IMOperand.ConstructorImmediate(operand.DataType, operand.Value);
+                result = IMOperand.Immediate(operand.DataType, operand.Value);
             }
             else if (operand.Kind == AstItemKind.Vector)
             {
-                if (IsFullImmediateVector(operand))
-                {
-                    var values = operand.Children.ConvertAll<IMOperand>((c) => IMOperand.Immediate(c.DataType, c.Value));
-                    result = IMOperand.Constructor(operand.DataType, values);
-                }
-                else
-                {
-                    result = NewTempLocal(operand.DataType);
-                    output.AddRange(GenerateVectorWithExpressions(operand, result));
-                }
+                result = NewTempLocal(operand.DataType);
+                output.AddRange(GenerateVectorWithExpressions(operand, result));
             }
             else if (operand.Kind == AstItemKind.Variable)
             {
@@ -459,12 +442,11 @@ namespace erc
             for (int i = expression.Children.Count - 1; i >= 0; i--)
             {
                 var child = expression.Children[i];
-                var location = NewTempLocal(child.DataType);
-                operations.AddRange(GenerateExpression(child, location));
+                var location = GetOperandLocation(operations, child);
                 valueLocations.Add(location);
             }
 
-            operations.Add(IMOperation.Mov(targetLocation, IMOperand.Constructor(expression.DataType, valueLocations)));
+            operations.Add(IMOperation.GVec(targetLocation, valueLocations));
             return operations;
         }
 
@@ -542,14 +524,6 @@ namespace erc
             }
 
             ops.RemoveAll((a) => a.Instruction == IMInstruction.NOP);
-        }
-
-        private bool IsFullImmediateVector(AstItem vector)
-        {
-            if (vector.Kind != AstItemKind.Vector)
-                throw new Exception("Only vector items are expected!");
-
-            return vector.Children.TrueForAll((i) => i.Kind == AstItemKind.Immediate);
         }
 
     }

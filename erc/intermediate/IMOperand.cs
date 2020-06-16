@@ -10,7 +10,7 @@ namespace erc
         public IMOperandKind Kind { get; set; }
         public string Name { get; set; }
         public object ImmediateValue { get; set; } //Only used for immediates!
-        public List<IMOperand> Values { get; set; } = new List<IMOperand>();
+        public IMOperand ChildValue { get; set; }
         public DataType DataType { get; set; }
         
         public string FullName 
@@ -32,11 +32,8 @@ namespace erc
                 case IMOperandKind.Parameter:
                     return ParameterPrefix + Name;
 
-                case IMOperandKind.Constructor:
-                    return "#" + DataType.Name + "(" + String.Join(", ", Values) + ")";
-
                 case IMOperandKind.Immediate:
-                    return ImmediateValue.ToString();
+                    return DataType.Name + "(" + ImmediateValue.ToString() + ")";
 
                 case IMOperandKind.Global:
                     return "@" + Name;
@@ -45,7 +42,7 @@ namespace erc
                     return "'" + Name + "'";
 
                 case IMOperandKind.Reference:
-                    return "[" + Values[0] + "]";
+                    return "[" + ChildValue + "]";
 
                 default:
                     throw new Exception();
@@ -53,8 +50,8 @@ namespace erc
         }
 
         public static readonly IMOperand VOID = new IMOperand() { DataType = DataType.VOID, Kind = IMOperandKind.Global, Name = "void" };
-        public static readonly IMOperand BOOL_TRUE = IMOperand.Constructor(DataType.BOOL, IMOperand.Immediate(DataType.BOOL, 1));
-        public static readonly IMOperand BOOL_FALSE = IMOperand.Constructor(DataType.BOOL, IMOperand.Immediate(DataType.BOOL, 0));
+        public static readonly IMOperand BOOL_TRUE = IMOperand.Immediate(DataType.BOOL, 1);
+        public static readonly IMOperand BOOL_FALSE = IMOperand.Immediate(DataType.BOOL, 0);
 
         public static IMOperand Local(DataType dataType, string name)
         {
@@ -71,37 +68,6 @@ namespace erc
             return new IMOperand() { DataType = dataType, Kind = IMOperandKind.Immediate, ImmediateValue = value };
         }
 
-        public static IMOperand Constructor(DataType dataType, List<IMOperand> values)
-        {
-            return new IMOperand() { DataType = dataType, Kind = IMOperandKind.Constructor, Values = values };
-        }
-
-        public static IMOperand ConstructorImmediate(DataType dataType, object value)
-        {
-            var valueOp = Immediate(dataType, value);
-            return new IMOperand() { DataType = dataType, Kind = IMOperandKind.Constructor, Values = new List<IMOperand>() { valueOp } };
-        }
-
-        public static IMOperand Constructor(DataType dataType, IMOperand value)
-        {
-            return new IMOperand() { DataType = dataType, Kind = IMOperandKind.Constructor, Values = new List<IMOperand>() { value } };
-        }
-
-        public static IMOperand Constructor(DataType dataType, IMOperand value1, IMOperand value2)
-        {
-            return new IMOperand() { DataType = dataType, Kind = IMOperandKind.Constructor, Values = new List<IMOperand>() { value1, value2 } };
-        }
-
-        public static IMOperand Constructor(DataType dataType, IMOperand value1, IMOperand value2, IMOperand value3)
-        {
-            return new IMOperand() { DataType = dataType, Kind = IMOperandKind.Constructor, Values = new List<IMOperand>() { value1, value2, value3 } };
-        }
-
-        public static IMOperand Constructor(DataType dataType, IMOperand value1, IMOperand value2, IMOperand value3, IMOperand value4)
-        {
-            return new IMOperand() { DataType = dataType, Kind = IMOperandKind.Constructor, Values = new List<IMOperand>() { value1, value2, value3, value4 } };
-        }
-
         public static IMOperand Global(DataType dataType, string name)
         {
             return new IMOperand() { DataType = dataType, Kind = IMOperandKind.Global, Name = name };
@@ -109,7 +75,7 @@ namespace erc
 
         public static IMOperand Reference(DataType dataType, IMOperand refValue)
         {
-            return new IMOperand() { DataType = dataType, Kind = IMOperandKind.Reference, Values = new List<IMOperand>() { refValue } };
+            return new IMOperand() { DataType = dataType, Kind = IMOperandKind.Reference, ChildValue = refValue };
         }
 
         public static IMOperand Identifier(string identifier)

@@ -116,6 +116,7 @@ namespace erc
         LABL,
         CMNT,
         FREE,
-        EXTFN
+        EXTFN,
+        GVEC
     }
 }

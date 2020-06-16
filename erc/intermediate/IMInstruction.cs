@@ -29,7 +29,7 @@ namespace erc
         public static IMInstruction XOR  = new IMInstruction(IMInstructionKind.XOR, 3);   // <target>, <op1>, <op2>
         public static IMInstruction NOT  = new IMInstruction(IMInstructionKind.NOT, 2);   // <target>, <op1>
         public static IMInstruction NEG  = new IMInstruction(IMInstructionKind.NEG, 2);   // <target>, <op1>
-        public static IMInstruction CALL = new IMInstruction(IMInstructionKind.CALL, 1);  // <identifier>, [<target>], [<parameter_values>]
+        public static IMInstruction CALL = new IMInstruction(IMInstructionKind.CALL, 3);  // <identifier>, [<target>], [<parameter_values>]
         public static IMInstruction RET  = new IMInstruction(IMInstructionKind.RET, 1);   // <op>
         public static IMInstruction CMP  = new IMInstruction(IMInstructionKind.CMP, 2);   // <op1>, <op2>
         
@@ -135,5 +135,6 @@ namespace erc
         public static IMInstruction CMNT = new IMInstruction(IMInstructionKind.CMNT, 1);   // <identifier>
         public static IMInstruction FREE = new IMInstruction(IMInstructionKind.FREE, 1);   // <identifier>
         public static IMInstruction EXTFN = new IMInstruction(IMInstructionKind.EXTFN, 3); // <identifier>
+        public static IMInstruction GVEC = new IMInstruction(IMInstructionKind.GVEC, 4);   // <value_list>
     }
 }

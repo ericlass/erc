@@ -7,7 +7,6 @@ namespace erc
         Local,
         Parameter,
         Immediate,
-        Constructor,
         Global,
         Reference,
         Identifier
