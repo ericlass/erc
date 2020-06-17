@@ -41,9 +41,6 @@ namespace erc
             var semantic = new SemanticAnalysis();
             semantic.Analyze(context);
 
-            var processor = new PostProcessor();
-            processor.Process(context);
-
             var imGenerator = new IMCodeGenerator();
             imGenerator.Generate(context);
 

@@ -92,7 +92,6 @@
     <Compile Include="operators\RelationalOperator.cs" />
     <Compile Include="operators\SubtractionOperator.cs" />
     <Compile Include="operators\UnaryOperator.cs" />
-    <Compile Include="PostProcessor.cs" />
     <Compile Include="DataType.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ProgramScope.cs" />

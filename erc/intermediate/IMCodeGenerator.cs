@@ -66,7 +66,44 @@ namespace erc
             if (last.Instruction != IMInstruction.RET)
                 operations.Add(IMOperation.Ret(IMOperand.VOID));
 
+            InsertFreeInstructions(operations);
+
             return new IMFunction() { Definition = currentFunction, Body = operations };
+        }
+
+        private void InsertFreeInstructions(List<IMOperation> operations)
+        {
+            var knownVars = new HashSet<string>();
+            for (int i = operations.Count - 1; i >= 0; i--)
+            {
+                var operation = operations[i];
+                foreach (var operand in operation.Operands)
+                {
+                    if (operand != null && operand != IMOperand.VOID)
+                    {
+                        switch (operand.Kind)
+                        {
+                            case IMOperandKind.Local:
+                            case IMOperandKind.Parameter:
+                            case IMOperandKind.Global:
+                                if (!knownVars.Contains(operand.FullName))
+                                {
+                                    operations.Insert(i + 1, IMOperation.Free(operand));
+                                    knownVars.Add(operand.FullName);
+                                }
+                                break;
+
+                            case IMOperandKind.Reference:
+                                if (!knownVars.Contains(operand.ChildValue.FullName))
+                                {
+                                    operations.Insert(i + 1, IMOperation.Free(operand.ChildValue));
+                                    knownVars.Add(operand.ChildValue.FullName);
+                                }
+                                break;
+                        }
+                    }
+                }
+            }
         }
 
         private IIMObject GenerateExternalFunction(AstItem function)
@@ -98,15 +135,6 @@ namespace erc
 
                 case AstItemKind.DelPointer:
                     return GenerateDelPointer(statement);
-
-                case AstItemKind.VarScopeEnd:
-                    var variable = _context.GetSymbol(statement.Identifier);
-                    if (variable != null && variable.Kind == SymbolKind.Variable)
-                    {
-                        _context.RemoveVariable(variable);
-                        return IMOperation.Free(variable.Location).AsList;
-                    }
-                    break;
             }
 
             return new List<IMOperation>();
@@ -439,10 +467,18 @@ namespace erc
             var operations = new List<IMOperation>();
 
             var valueLocations = new List<IMOperand>(expression.Children.Count);
-            for (int i = expression.Children.Count - 1; i >= 0; i--)
+            for (int i = 0; i < expression.Children.Count; i++)
             {
                 var child = expression.Children[i];
-                var location = GetOperandLocation(operations, child);
+                IMOperand location;
+                if (child.Kind == AstItemKind.Expression)
+                {
+                    location = NewTempLocal(child.DataType);
+                    operations.AddRange(GenerateExpression(child, location));
+                }
+                else
+                    location = GetOperandLocation(operations, child);
+
                 valueLocations.Add(location);
             }
 

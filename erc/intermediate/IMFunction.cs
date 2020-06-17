@@ -21,7 +21,7 @@ namespace erc
             }
             frameStr += "]\n";
 
-            var operations = String.Join(";\n", Body.ConvertAll<string>((o) => "    " + o));
+            var operations = String.Join("\n", Body.ConvertAll<string>((o) => "    " + o));
             var parameters = String.Join(", ", Definition.Parameters.ConvertAll<string>((p) => p.DataType.Name));
 
             return frameStr + "fn " + Definition.Name + "(" + parameters + "): " + Definition.ReturnType.Name + "\n{\n" + operations + "\n}\n";
