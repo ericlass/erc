@@ -9,6 +9,7 @@ namespace erc
         public X64Register Register { get; set; }
         public long Offset { get; set; }
         public string DataName { get; set; }
+        public string ImmediateValue { get; set; }
 
         public override string ToString()
         {
@@ -18,7 +19,10 @@ namespace erc
                     return "register(" + Register + ")";
 
                 case X64StorageLocationKind.StackFromBase:
-                    return "stack(" + Offset + ")";
+                    return "stack_base(-" + Offset + ")";
+
+                case X64StorageLocationKind.StackFromTop:
+                    return "stack_top(+" + Offset + ")";
 
                 case X64StorageLocationKind.HeapForLocals:
                     return "heap_locals(" + Offset + ")";
@@ -28,6 +32,9 @@ namespace erc
 
                 case X64StorageLocationKind.DataSection:
                     return "data_section(" + DataName + ")";
+
+                case X64StorageLocationKind.Immediate:
+                    return "immediate(" + ImmediateValue + ")";
 
                 default:
                     throw new Exception("Unknown location kind: " + Kind);
@@ -44,6 +51,9 @@ namespace erc
                 case X64StorageLocationKind.StackFromBase:
                     return "[RBP+" + Offset + "]";
 
+                case X64StorageLocationKind.StackFromTop:
+                    return "[RSP-" + Offset + "]";
+
                 case X64StorageLocationKind.HeapForLocals:
                     return "[locals_heap+" + Offset + "]";
 
@@ -53,8 +63,24 @@ namespace erc
                 case X64StorageLocationKind.DataSection:
                     return "[" + DataName + "]";
 
+                case X64StorageLocationKind.Immediate:
+                    return ImmediateValue;
+
                 default:
                     throw new Exception("Unknown location kind: " + Kind);
+            }
+        }
+
+        public bool IsMemory
+        {
+            get
+            {
+                return
+                    Kind == X64StorageLocationKind.DataSection ||
+                    Kind == X64StorageLocationKind.HeapForLocals ||
+                    Kind == X64StorageLocationKind.HeapInRegister ||
+                    Kind == X64StorageLocationKind.StackFromBase ||
+                    Kind == X64StorageLocationKind.StackFromTop;
             }
         }
 
@@ -66,6 +92,10 @@ namespace erc
         public static X64StorageLocation StackFromBase(long offset)
         {
             return new X64StorageLocation() { Kind = X64StorageLocationKind.StackFromBase, Offset = offset };
+        }
+        public static X64StorageLocation StackFromTop(long offset)
+        {
+            return new X64StorageLocation() { Kind = X64StorageLocationKind.StackFromTop, Offset = offset };
         }
 
         public static X64StorageLocation HeapForLocals(long offset)
@@ -81,6 +111,11 @@ namespace erc
         public static X64StorageLocation DataSection(string dataName)
         {
             return new X64StorageLocation() { Kind = X64StorageLocationKind.DataSection, DataName = dataName };
+        }
+
+        public static X64StorageLocation Immediate(string value)
+        {
+            return new X64StorageLocation() { Kind = X64StorageLocationKind.Immediate, ImmediateValue = value };
         }
     }
 }

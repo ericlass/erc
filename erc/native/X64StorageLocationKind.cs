@@ -7,8 +7,10 @@ namespace erc
     {
         Register,
         StackFromBase,
+        StackFromTop,
         HeapForLocals,
         HeapInRegister,
-        DataSection
+        DataSection,
+        Immediate
     }
 }

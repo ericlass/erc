@@ -121,7 +121,8 @@ namespace erc
                 LocalsLocations = locationMap,
                 LocalsStackFrameSize = stackOffset,
                 LocalsHeapChunkSize = heapOffset,
-                DataEntries = dataEntries
+                DataEntries = dataEntries,
+                ReturnLocation = returnLocation
             };
         }
 

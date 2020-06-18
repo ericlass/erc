@@ -5,14 +5,21 @@ namespace erc
 {
     public abstract class ArithmeticOperator : IBinaryOperator
     {
-        private HashSet<DataType> _supportedDataTypes = new HashSet<DataType>() {
-                 DataType.I64,
-                 DataType.F32,
-                 DataType.F64,
-                 DataType.VEC4F,
-                 DataType.VEC8F,
-                 DataType.VEC2D,
-                 DataType.VEC4D
+        private HashSet<DataTypeKind> _supportedDataTypes = new HashSet<DataTypeKind>() {
+                 DataTypeKind.I8,
+                 DataTypeKind.I16,
+                 DataTypeKind.I32,
+                 DataTypeKind.I64,
+                 DataTypeKind.U8,
+                 DataTypeKind.U16,
+                 DataTypeKind.U32,
+                 DataTypeKind.U64,
+                 DataTypeKind.F32,
+                 DataTypeKind.F64,
+                 DataTypeKind.VEC4F,
+                 DataTypeKind.VEC8F,
+                 DataTypeKind.VEC2D,
+                 DataTypeKind.VEC4D
             };
 
         public abstract string Figure { get; }
@@ -23,7 +30,7 @@ namespace erc
             if (operand1Type != operand2Type)
                 throw new Exception("Data types of both operands must match for arithmetic operator! " + operand1Type + " != " + operand2Type);
 
-            if (!_supportedDataTypes.Contains(operand1Type))
+            if (!_supportedDataTypes.Contains(operand1Type.Kind))
                 throw new Exception("Datatype not supported for arithmetic operator: " + operand1Type);
         }        
 

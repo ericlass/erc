@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 
 namespace erc
@@ -77,6 +78,7 @@ namespace erc
             }
 
             _functionScope = null;
+            output.Add("");
         }
 
         private void GenerateOperation(List<string> output, IMOperation operation)
@@ -111,8 +113,12 @@ namespace erc
                     GenerateDiv(output, operation);
                     break;
 
-            
-                //default:
+                case IMInstructionKind.RET:
+                    GenerateRet(output, operation);
+                    break;
+
+
+                    //default:
                     //throw new Exception("");
             }
         }
@@ -125,20 +131,24 @@ namespace erc
             if (target.FullName == source.FullName)
                 return;
 
-            var dataType = source.DataType;
+            var targetLocation = GetOperandLocation(target);
+            var sourceLocation = GetOperandLocation(source);
+
+            Move(output, source.DataType, targetLocation, sourceLocation);
+        }
+
+        private void Move(List<string> output, DataType dataType, X64StorageLocation targetLocation, X64StorageLocation sourceLocation)
+        {
             var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
 
-            var targetLocation = GetOperandLocation(output, target);
-            var sourceLocation = GetOperandLocation(output, source);
-
             //Values on stack are not aligned, so we need to distinguish
-            X64Instruction instruction = null;
-            if (sourceLocation.Kind == X64StorageLocationKind.StackFromBase || targetLocation.Kind == X64StorageLocationKind.StackFromBase)
+            X64Instruction instruction;
+            if (sourceLocation.IsMemory || targetLocation.IsMemory)
                 instruction = x64DataType.MoveInstructionUnaligned;
             else
                 instruction = x64DataType.MoveInstructionAligned;
 
-            if (sourceLocation.Kind == X64StorageLocationKind.StackFromBase && targetLocation.Kind == X64StorageLocationKind.StackFromBase)
+            if (sourceLocation.IsMemory && targetLocation.IsMemory)
             {
                 //Cannot directly move between two memory locations, need to use accumulator register as temp location and do it in two steps
                 var accLocation = X64StorageLocation.AsRegister(x64DataType.Accumulator);
@@ -149,48 +159,150 @@ namespace erc
                 output.Add(FormatOperation(instruction, targetLocation, sourceLocation));
         }
 
-        private X64StorageLocation GetOperandLocation(List<string> output, IMOperand operand)
+        private X64StorageLocation GetOperandLocation(IMOperand operand)
         {
             if (_functionScope.LocalsLocations.ContainsKey(operand.FullName))
             {
                 return _functionScope.LocalsLocations[operand.FullName];
             }
             else
-                throw new Exception("Operand has no location in function scope and is not a constructor. This should not happen. Given: " + operand);
+                throw new Exception("Operand has no location in function scope! This should not happen. Given: " + operand);
         }
 
         private void GeneratePush(List<string> output, IMOperation operation)
         {
-            //...
+            var source = operation.Operands[0];
+            var dataType = source.DataType;
+            var sourceLocation = GetOperandLocation(source);
+            var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
+
+            if (sourceLocation.Kind != X64StorageLocationKind.Register)
+            {
+                var tempLocation = X64StorageLocation.AsRegister(x64DataType.Accumulator);
+                Move(output, dataType, tempLocation, sourceLocation);
+                sourceLocation = tempLocation;
+            }
+
+            if (dataType.IsVector)
+            {
+                output.Add(FormatOperation(X64Instruction.SUB, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(dataType.ByteSize.ToString())));
+                output.Add(FormatOperation(x64DataType.MoveInstructionUnaligned, X64StorageLocation.StackFromTop(0), sourceLocation));
+            }
+            else
+            {
+                output.Add(FormatOperation(X64Instruction.PUSH, sourceLocation));
+            }
         }
 
         private void GeneratePop(List<string> output, IMOperation operation)
         {
-            //...
+            var target = operation.Operands[0];
+            var dataType = target.DataType;
+            var targetLocation = GetOperandLocation(target);
+
+            if (targetLocation.Kind != X64StorageLocationKind.Register || dataType.IsVector)
+            {
+                Move(output, dataType, targetLocation, X64StorageLocation.StackFromTop(0));
+                output.Add(FormatOperation(X64Instruction.ADD, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(dataType.ByteSize.ToString())));
+            }
+            else
+            {
+                output.Add(FormatOperation(X64Instruction.POP, targetLocation));
+            }
         }
 
         private void GenerateAdd(List<string> output, IMOperation operation)
         {
-            //...
+            var operand1 = operation.Operands[1];
+            var dataType = operand1.DataType;
+            var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
+
+            GenerateArithmetic(output, x64DataType.AddInstruction, operation);
         }
 
         private void GenerateSub(List<string> output, IMOperation operation)
         {
-            //...
+            var operand1 = operation.Operands[1];
+            var dataType = operand1.DataType;
+            var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
+
+            GenerateArithmetic(output, x64DataType.SubInstruction, operation);
         }
 
         private void GenerateMul(List<string> output, IMOperation operation)
         {
-            //...
+            var operand1 = operation.Operands[1];
+            var dataType = operand1.DataType;
+            var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
+
+            GenerateArithmetic(output, x64DataType.MulInstruction, operation);
         }
 
         private void GenerateDiv(List<string> output, IMOperation operation)
         {
-            //...
+            var operand1 = operation.Operands[1];
+            var dataType = operand1.DataType;
+            var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
+
+            GenerateArithmetic(output, x64DataType.DivInstruction, operation);
+        }
+
+        private void GenerateArithmetic(List<string> output, X64Instruction instruction, IMOperation operation)
+        {
+            var target = operation.Operands[0];
+            var operand1 = operation.Operands[1];
+            var operand2 = operation.Operands[2];
+
+            var dataType = operand1.DataType;
+            var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
+
+            var targetLocation = GetOperandLocation(target);
+            var op1Location = GetOperandLocation(operand1);
+            var op2Location = GetOperandLocation(operand2);
+
+            switch (instruction.NumOperands)
+            {
+                case 1:
+                    var accLocation = X64StorageLocation.AsRegister(x64DataType.Accumulator);
+                    Move(output, dataType, accLocation, op1Location);
+                    output.Add(FormatOperation(instruction, op2Location));
+                    Move(output, dataType, targetLocation, accLocation);
+                    break;
+
+                case 2:
+                    Move(output, dataType, targetLocation, op1Location);
+                    output.Add(FormatOperation(instruction, targetLocation, op2Location));
+                    break;
+
+                case 3:
+                    output.Add(FormatOperation(instruction, targetLocation, op1Location, op2Location));
+                    break;
+
+                default:
+                    throw new Exception("Unexpected number of operands in instruction: " + instruction.Name);
+            }
+        }
+
+        private void GenerateRet(List<string> output, IMOperation operation)
+        {
+            var returnValue = operation.Operands[0];
+            if (returnValue.DataType.Kind != DataTypeKind.VOID)
+            {
+                var returnLocation = _functionScope.ReturnLocation;
+                var valueLocation = GetOperandLocation(returnValue);
+                Move(output, returnValue.DataType, returnLocation, valueLocation);
+            }
+
+            output.Add(FormatOperation(X64Instruction.RET));
         }
 
         //Methods for all other operation kinds follow here
         //IDEA: The ones that need a lot of code could be in another file (partial class)
+
+        private string FormatOperation(X64Instruction instruction)
+        {
+            return instruction.Name;
+        }
 
         private string FormatOperation(X64Instruction instruction, X64StorageLocation operand)
         {
