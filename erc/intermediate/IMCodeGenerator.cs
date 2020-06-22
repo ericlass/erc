@@ -436,6 +436,9 @@ namespace erc
 
             if (operand.Kind == AstItemKind.Immediate)
             {
+                if (operand.DataType.Kind == DataTypeKind.BOOL)
+                    return ((bool)operand.Value) ? IMOperand.BOOL_TRUE : IMOperand.BOOL_FALSE;
+
                 result = IMOperand.Immediate(operand.DataType, operand.Value);
             }
             else if (operand.Kind == AstItemKind.Vector)

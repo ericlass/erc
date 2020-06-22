@@ -17,8 +17,10 @@ namespace erc
         public X64Instruction SubInstruction { get; private set; }
         public X64Instruction DivInstruction { get; private set; }
         public X64Instruction MulInstruction { get; private set; }
-        //TODO: Add more instructions, for example for CMP, bitwise...
-        //TODO: Maybe put simple instruction -> instruction mapping in dictionary to make it more generic
+        public X64Instruction AndInstruction { get; private set; }
+        public X64Instruction OrInstruction { get; private set; }
+        public X64Instruction XorInstruction { get; private set; }
+        public X64Instruction NotInstruction { get; private set; }
         public Func<IMOperand, string> ImmediateValueToAsmCode { get; private set; }
 
         private X64DataTypeProperties()
@@ -55,7 +57,6 @@ namespace erc
                 [DataTypeKind.VEC4D] = VEC4D,
                 [DataTypeKind.BOOL] = BOOL,
                 [DataTypeKind.POINTER] = POINTER
-                //[DataTypeKind.STRING] = STRING
             };
         }
 
@@ -72,6 +73,10 @@ namespace erc
             SubInstruction = X64Instruction.SUB,
             DivInstruction = X64Instruction.DIV,
             MulInstruction = X64Instruction.MUL,
+            AndInstruction = X64Instruction.AND,
+            OrInstruction = X64Instruction.OR,
+            XorInstruction = X64Instruction.XOR,
+            NotInstruction = X64Instruction.NOT,
             ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 
@@ -89,6 +94,10 @@ namespace erc
             SubInstruction = X64Instruction.SUB,
             DivInstruction = X64Instruction.DIV,
             MulInstruction = X64Instruction.MUL,
+            AndInstruction = X64Instruction.AND,
+            OrInstruction = X64Instruction.OR,
+            XorInstruction = X64Instruction.XOR,
+            NotInstruction = X64Instruction.NOT,
             ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 
@@ -106,6 +115,10 @@ namespace erc
             SubInstruction = X64Instruction.SUB,
             DivInstruction = X64Instruction.DIV,
             MulInstruction = X64Instruction.MUL,
+            AndInstruction = X64Instruction.AND,
+            OrInstruction = X64Instruction.OR,
+            XorInstruction = X64Instruction.XOR,
+            NotInstruction = X64Instruction.NOT,
             ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 
@@ -123,6 +136,10 @@ namespace erc
             SubInstruction = X64Instruction.SUB,
             DivInstruction = X64Instruction.DIV,
             MulInstruction = X64Instruction.MUL,
+            AndInstruction = X64Instruction.AND,
+            OrInstruction = X64Instruction.OR,
+            XorInstruction = X64Instruction.XOR,
+            NotInstruction = X64Instruction.NOT,
             ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 
@@ -140,6 +157,10 @@ namespace erc
             SubInstruction = X64Instruction.SUB,
             DivInstruction = X64Instruction.IDIV,
             MulInstruction = X64Instruction.IMUL,
+            AndInstruction = X64Instruction.AND,
+            OrInstruction = X64Instruction.OR,
+            XorInstruction = X64Instruction.XOR,
+            NotInstruction = X64Instruction.NOT,
             ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 
@@ -157,6 +178,10 @@ namespace erc
             SubInstruction = X64Instruction.SUB,
             DivInstruction = X64Instruction.IDIV,
             MulInstruction = X64Instruction.IMUL,
+            AndInstruction = X64Instruction.AND,
+            OrInstruction = X64Instruction.OR,
+            XorInstruction = X64Instruction.XOR,
+            NotInstruction = X64Instruction.NOT,
             ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 
@@ -174,6 +199,10 @@ namespace erc
             SubInstruction = X64Instruction.SUB,
             DivInstruction = X64Instruction.IDIV,
             MulInstruction = X64Instruction.IMUL,
+            AndInstruction = X64Instruction.AND,
+            OrInstruction = X64Instruction.OR,
+            XorInstruction = X64Instruction.XOR,
+            NotInstruction = X64Instruction.NOT,
             ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 
@@ -191,6 +220,10 @@ namespace erc
             SubInstruction = X64Instruction.SUB,
             DivInstruction = X64Instruction.IDIV,
             MulInstruction = X64Instruction.IMUL,
+            AndInstruction = X64Instruction.AND,
+            OrInstruction = X64Instruction.OR,
+            XorInstruction = X64Instruction.XOR,
+            NotInstruction = X64Instruction.NOT,
             ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 
@@ -208,6 +241,9 @@ namespace erc
             SubInstruction = X64Instruction.SUBSS,
             DivInstruction = X64Instruction.DIVSS,
             MulInstruction = X64Instruction.MULSS,
+            AndInstruction = X64Instruction.PAND,
+            OrInstruction = X64Instruction.POR,
+            XorInstruction = X64Instruction.PXOR,
             ImmediateValueToAsmCode = (o) => ((float)o.ImmediateValue).ToCode()
         };
 
@@ -225,6 +261,9 @@ namespace erc
             SubInstruction = X64Instruction.SUBSD,
             DivInstruction = X64Instruction.DIVSD,
             MulInstruction = X64Instruction.MULSD,
+            AndInstruction = X64Instruction.PAND,
+            OrInstruction = X64Instruction.POR,
+            XorInstruction = X64Instruction.PXOR,
             ImmediateValueToAsmCode = (o) => ((double)o.ImmediateValue).ToCode()
         };
 
@@ -242,7 +281,10 @@ namespace erc
             AddInstruction = X64Instruction.ADDPS,
             SubInstruction = X64Instruction.SUBPS,
             DivInstruction = X64Instruction.DIVPS,
-            MulInstruction = X64Instruction.MULPS
+            MulInstruction = X64Instruction.MULPS,
+            AndInstruction = X64Instruction.PAND,
+            OrInstruction = X64Instruction.POR,
+            XorInstruction = X64Instruction.PXOR,
         };
 
 
@@ -259,7 +301,10 @@ namespace erc
             AddInstruction = X64Instruction.VADDPS,
             SubInstruction = X64Instruction.VSUBPS,
             DivInstruction = X64Instruction.VDIVPS,
-            MulInstruction = X64Instruction.VMULPS
+            MulInstruction = X64Instruction.VMULPS,
+            AndInstruction = X64Instruction.VPAND,
+            OrInstruction = X64Instruction.VPOR,
+            XorInstruction = X64Instruction.VPXOR,
         };
 
 
@@ -276,7 +321,10 @@ namespace erc
             AddInstruction = X64Instruction.ADDPD,
             SubInstruction = X64Instruction.SUBPD,
             DivInstruction = X64Instruction.DIVPD,
-            MulInstruction = X64Instruction.MULPD
+            MulInstruction = X64Instruction.MULPD,
+            AndInstruction = X64Instruction.PAND,
+            OrInstruction = X64Instruction.POR,
+            XorInstruction = X64Instruction.PXOR,
         };
 
 
@@ -293,7 +341,10 @@ namespace erc
             AddInstruction = X64Instruction.VADDPD,
             SubInstruction = X64Instruction.VSUBPD,
             DivInstruction = X64Instruction.VDIVPD,
-            MulInstruction = X64Instruction.VMULPD
+            MulInstruction = X64Instruction.VMULPD,
+            AndInstruction = X64Instruction.VPAND,
+            OrInstruction = X64Instruction.VPOR,
+            XorInstruction = X64Instruction.VPXOR,
         };
 
         private static readonly X64DataTypeProperties BOOL = new X64DataTypeProperties()
@@ -305,6 +356,10 @@ namespace erc
             TempRegister2 = X64Register.R11B,
             MoveInstructionAligned = X64Instruction.MOV,
             MoveInstructionUnaligned = X64Instruction.MOV,
+            AndInstruction = X64Instruction.AND,
+            OrInstruction = X64Instruction.OR,
+            XorInstruction = X64Instruction.XOR,
+            NotInstruction = X64Instruction.NOT,
             ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 
@@ -320,7 +375,11 @@ namespace erc
             AddInstruction = X64Instruction.ADD,
             SubInstruction = X64Instruction.SUB,
             DivInstruction = X64Instruction.DIV,
-            MulInstruction = X64Instruction.MUL
+            MulInstruction = X64Instruction.MUL,
+            AndInstruction = X64Instruction.AND,
+            OrInstruction = X64Instruction.OR,
+            XorInstruction = X64Instruction.XOR,
+            NotInstruction = X64Instruction.NOT,
         };
 
         /*private static readonly X64DataTypeProperties STRING = new X64DataTypeProperties()

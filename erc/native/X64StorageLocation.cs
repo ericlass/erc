@@ -71,6 +71,43 @@ namespace erc
             }
         }
 
+        public override bool Equals(object obj)
+        {
+            if (obj == null)
+                return false;
+
+            if (!(obj is X64StorageLocation))
+                return false;
+
+            var other = obj as X64StorageLocation;
+
+            if (Kind != other.Kind)
+                return false;
+
+            switch (Kind)
+            {
+                case X64StorageLocationKind.Register:
+                    return Register.Name == other.Register.Name;
+
+                case X64StorageLocationKind.StackFromBase:
+                case X64StorageLocationKind.StackFromTop:
+                case X64StorageLocationKind.HeapForLocals:
+                    return Offset == other.Offset;
+
+                case X64StorageLocationKind.HeapInRegister:
+                    return Register.Name == other.Register.Name && Offset == other.Offset;
+
+                case X64StorageLocationKind.DataSection:
+                    return DataName == other.DataName;
+
+                case X64StorageLocationKind.Immediate:
+                    return ImmediateValue == other.ImmediateValue;
+
+                default:
+                    throw new Exception("Unknown location kind: " + Kind);
+            }
+        }
+
         public bool IsMemory
         {
             get

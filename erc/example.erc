@@ -28,6 +28,8 @@ fn pointers() {
 
 fn boolean(p1: bool) {
 	let test = 5 >= 3;
+	test = test && true || test;
+	test = !test;
 	let g = 5;
 	if 1 <= 2 {
 		g = 2;

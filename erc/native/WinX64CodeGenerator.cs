@@ -27,6 +27,9 @@ namespace erc
             "xor ecx,ecx\n" +
             "call [ExitProcess]\n\n";
 
+        private const string ImportSection =
+            "\nsection '.idata' import data readable writeable\n";
+
         private CompilerContext _context;
         private X64FunctionFrame _functionScope;
         private X64MemoryManager _memoryManager = new X64MemoryManager();
@@ -35,6 +38,7 @@ namespace erc
         public void Generate(CompilerContext context)
         {
             _context = context;
+            var importedFunctions = new Dictionary<string, List<string>>();
 
             var asmSource = new List<string>();
             foreach (var obj in context.IMObjects)
@@ -46,12 +50,28 @@ namespace erc
                         break;
 
                     case IMObjectKind.ExternalFunction:
+                        var extFunc = obj as IMExternalFunction;
+
+                        List<string> functions = null;
+                        if (importedFunctions.ContainsKey(extFunc.LibName))
+                        {
+                            functions = importedFunctions[extFunc.LibName];
+                        }
+                        else
+                        {
+                            functions = new List<string>();
+                            importedFunctions.Add(extFunc.LibName, functions);
+                        }
+
+                        functions.Add(extFunc.ExternalName);
                         break;
 
                     default:
                         throw new Exception("");
                 }
             }
+
+            _dataEntries.Add(new Tuple<DataType, string>(DataType.U64, "erc_process_heap dq 0"));
 
             _dataEntries.Sort((o1, o2) => o2.Item1.ByteSize - o1.Item1.ByteSize);
             var nativeCode = new StringBuilder();
@@ -60,6 +80,31 @@ namespace erc
             nativeCode.Append("\n\n");
             nativeCode.Append(CodeSection);
             nativeCode.Append(String.Join("\n", asmSource));
+
+            nativeCode.AppendLine(ImportSection);
+
+            var libs = new List<string>();
+            var imports = new List<string>();
+
+            foreach (var library in importedFunctions)
+            {
+                var libName = library.Key;
+                var internalLibName = libName.Substring(0, libName.LastIndexOf('.'));
+                libs.Add(internalLibName + ",'" + libName + "'");
+
+                if (library.Value.Count > 0)
+                {
+                    var fns = new List<string>();
+                    foreach (var fnName in library.Value)
+                    {
+                        fns.Add("  " + fnName + ",'" + fnName + "'");
+                    }
+                    imports.Add("import " + internalLibName + ",\\\n" + String.Join(",\\\n", fns));
+                }
+            }
+
+            nativeCode.AppendLine("library " + String.Join(",\\\n", libs));
+            nativeCode.AppendLine(String.Join("\n", imports));
 
             context.NativeCode = nativeCode.ToString();
         }
@@ -113,6 +158,22 @@ namespace erc
                     GenerateDiv(output, operation);
                     break;
 
+                case IMInstructionKind.AND:
+                    GenerateAnd(output, operation);
+                    break;
+
+                case IMInstructionKind.OR:
+                    GenerateOr(output, operation);
+                    break;
+
+                case IMInstructionKind.XOR:
+                    GenerateXor(output, operation);
+                    break;
+
+                case IMInstructionKind.NOT:
+                    GenerateNot(output, operation);
+                    break;
+
                 case IMInstructionKind.RET:
                     GenerateRet(output, operation);
                     break;
@@ -139,6 +200,9 @@ namespace erc
 
         private void Move(List<string> output, DataType dataType, X64StorageLocation targetLocation, X64StorageLocation sourceLocation)
         {
+            if (targetLocation.Equals(sourceLocation))
+                return;
+
             var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
 
             //Values on stack are not aligned, so we need to distinguish
@@ -217,7 +281,7 @@ namespace erc
             var dataType = operand1.DataType;
             var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
 
-            GenerateArithmetic(output, x64DataType.AddInstruction, operation);
+            GenerateBinaryOperator(output, x64DataType.AddInstruction, operation);
         }
 
         private void GenerateSub(List<string> output, IMOperation operation)
@@ -226,7 +290,7 @@ namespace erc
             var dataType = operand1.DataType;
             var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
 
-            GenerateArithmetic(output, x64DataType.SubInstruction, operation);
+            GenerateBinaryOperator(output, x64DataType.SubInstruction, operation);
         }
 
         private void GenerateMul(List<string> output, IMOperation operation)
@@ -235,7 +299,7 @@ namespace erc
             var dataType = operand1.DataType;
             var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
 
-            GenerateArithmetic(output, x64DataType.MulInstruction, operation);
+            GenerateBinaryOperator(output, x64DataType.MulInstruction, operation);
         }
 
         private void GenerateDiv(List<string> output, IMOperation operation)
@@ -244,11 +308,13 @@ namespace erc
             var dataType = operand1.DataType;
             var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
 
-            GenerateArithmetic(output, x64DataType.DivInstruction, operation);
+            GenerateBinaryOperator(output, x64DataType.DivInstruction, operation);
         }
 
-        private void GenerateArithmetic(List<string> output, X64Instruction instruction, IMOperation operation)
+        private void GenerateBinaryOperator(List<string> output, X64Instruction instruction, IMOperation operation)
         {
+            Assert.Check(instruction != null, "No instruction given! Instruction must be non-null! Operation: " + operation);
+
             var target = operation.Operands[0];
             var operand1 = operation.Operands[1];
             var operand2 = operation.Operands[2];
@@ -279,7 +345,35 @@ namespace erc
                     break;
 
                 default:
-                    throw new Exception("Unexpected number of operands in instruction: " + instruction.Name);
+                    throw new Exception("Unexpected number of operands for binary operator instruction: " + instruction.Name);
+            }
+        }
+
+        private void GenerateUnaryOperator(List<string> output, X64Instruction instruction, IMOperation operation)
+        {
+            Assert.Check(instruction != null, "No instruction given! Instruction must be non-null! Operation: " + operation);
+
+            var target = operation.Operands[0];
+            var operand = operation.Operands[1];
+
+            var dataType = operand.DataType;
+
+            var targetLocation = GetOperandLocation(target);
+            var opLocation = GetOperandLocation(operand);
+
+            switch (instruction.NumOperands)
+            {
+                case 1:
+                    Move(output, dataType, targetLocation, opLocation);
+                    output.Add(FormatOperation(instruction, targetLocation));
+                    break;
+
+                case 2:
+                    output.Add(FormatOperation(instruction, targetLocation, opLocation));
+                    break;
+
+                default:
+                    throw new Exception("Unexpected number of operands in unary operator instruction: " + instruction.Name);
             }
         }
 
@@ -294,6 +388,42 @@ namespace erc
             }
 
             output.Add(FormatOperation(X64Instruction.RET));
+        }
+
+        private void GenerateAnd(List<string> output, IMOperation operation)
+        {
+            var operand1 = operation.Operands[1];
+            var dataType = operand1.DataType;
+            var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
+
+            GenerateBinaryOperator(output, x64DataType.AndInstruction, operation);
+        }
+
+        private void GenerateOr(List<string> output, IMOperation operation)
+        {
+            var operand1 = operation.Operands[1];
+            var dataType = operand1.DataType;
+            var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
+
+            GenerateBinaryOperator(output, x64DataType.OrInstruction, operation);
+        }
+
+        private void GenerateXor(List<string> output, IMOperation operation)
+        {
+            var operand1 = operation.Operands[1];
+            var dataType = operand1.DataType;
+            var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
+
+            GenerateBinaryOperator(output, x64DataType.XorInstruction, operation);
+        }
+
+        private void GenerateNot(List<string> output, IMOperation operation)
+        {
+            var operand1 = operation.Operands[1];
+            var dataType = operand1.DataType;
+            var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
+
+            GenerateUnaryOperator(output, x64DataType.NotInstruction, operation);
         }
 
         //Methods for all other operation kinds follow here
