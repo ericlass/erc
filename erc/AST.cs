@@ -42,7 +42,6 @@ namespace erc
         public IOperator Operator { get; set; } //Operator
         public string SourceLine { get; set; } //Source code line, only filled for statements
         public List<AstItem> Children { get; set; } = new List<AstItem>();
-        public bool DataGenerated { get; set; } = false; //Used to track which immediates have already been generated in the data section
 
         public IBinaryOperator BinaryOperator => (IBinaryOperator)Operator;
         public IUnaryOperator UnaryOperator => (IUnaryOperator)Operator;

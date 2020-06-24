@@ -307,7 +307,7 @@ namespace erc
 
                 case AstItemKind.Expression:
                     var ops = GenerateExpressionOperations(expression.Children, targetLocation);
-                    CollapsePushPop(ops);
+                    //CollapsePushPop(ops);
                     return ops;
 
                 default:
@@ -320,7 +320,6 @@ namespace erc
             var result = new List<IMOperation>();
             var symbol = _context.RequireSymbol(item.Identifier);
 
-            var elementType = symbol.DataType.ElementType;
             var tmpLocation = NewTempLocal(DataType.U64);
 
             result.AddRange(GenerateIndexAddressCalculation(item.Children[0], symbol, tmpLocation));
@@ -369,27 +368,49 @@ namespace erc
             return result;
         }
 
+        private class AstItemWithLocation : AstItem
+        {
+            public AstItem Item { get; set; }
+            public IMOperand Location { get; set; }
+
+            public AstItemWithLocation(AstItem item, IMOperand location)
+            {
+                Item = item;
+                Location = location;
+            }
+        }
+
         private List<IMOperation> GenerateExpressionOperations(List<AstItem> items, IMOperand targetLocation)
         {
             //Create copy of list so original is not modified
-            var terms = new List<AstItem>(items);
-
-            var target = targetLocation;
+            var terms = items.ConvertAll((a) => new AstItemWithLocation(a, null));
 
             var result = new List<IMOperation>();
             for (int i = 0; i < terms.Count; i++)
             {
-                var item = terms[i];
+                var term = terms[i];
+                var item = terms[i].Item;
                 if (item.Kind == AstItemKind.BinaryOperator)
                 {
-                    var operand1 = terms[i - 2];
-                    var operand2 = terms[i - 1];
+                    var operand1 = terms[i - 2].Item;
+                    var operand2 = terms[i - 1].Item;
 
-                    var op1Location = GetOperandLocation(result, operand1);
-                    var op2Location = GetOperandLocation(result, operand2);
+                    var target = NewTempLocal(targetLocation.DataType);
+
+                    IMOperand op1Location = null;
+                    if (operand1.Kind == AstItemKind.UnaryOperator || operand1.Kind == AstItemKind.BinaryOperator)
+                        op1Location = terms[i - 2].Location;
+                    else
+                        op1Location = GetOperandLocation(result, operand1);
+
+                    IMOperand op2Location = null;
+                    if (operand2.Kind == AstItemKind.UnaryOperator || operand2.Kind == AstItemKind.BinaryOperator)
+                        op2Location = terms[i - 1].Location;
+                    else
+                        op2Location = GetOperandLocation(result, operand2);
 
                     result.AddRange(item.BinaryOperator.Generate(target, op1Location, op2Location));
-                    result.Add(IMOperation.Push(target));
+                    term.Location = target;
 
                     //Remove the two operands from the expression, do not remove the current operator
                     //as it is required to know later that a value must be popped from stack
@@ -402,11 +423,17 @@ namespace erc
                 }
                 else if (item.Kind == AstItemKind.UnaryOperator)
                 {
-                    var operand = terms[i - 1];
-                    var opLocation = GetOperandLocation(result, operand);
+                    var operand = terms[i - 1].Item;
 
+                    IMOperand opLocation = null;
+                    if (operand.Kind == AstItemKind.UnaryOperator || operand.Kind == AstItemKind.BinaryOperator)
+                        opLocation = terms[i - 1].Location;
+                    else
+                        opLocation = GetOperandLocation(result, operand);
+
+                    var target = NewTempLocal(targetLocation.DataType);
                     result.AddRange(item.UnaryOperator.Generate(target, opLocation));
-                    result.Add(IMOperation.Push(target));
+                    term.Location = target;
 
                     //Remove the operand from the expression, do not remove the current operator
                     //as it is required to know later that a value must be popped from stack
@@ -417,9 +444,6 @@ namespace erc
                     i -= 1;
                 }
             }
-
-            //Remove trailing push, not required
-            result.RemoveAt(result.Count - 1);
 
             return result;
         }
