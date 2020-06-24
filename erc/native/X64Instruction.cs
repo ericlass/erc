@@ -70,6 +70,8 @@ namespace erc
 
         public static X64Instruction IMUL = new X64Instruction("IMUL", 1);
         public static X64Instruction IDIV = new X64Instruction("IDIV", 2);
+        
+        public static X64Instruction NEG = new X64Instruction("NEG", 1);
 
         //##### Comparison Instructions #####
 

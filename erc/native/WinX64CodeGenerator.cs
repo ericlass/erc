@@ -30,14 +30,12 @@ namespace erc
         private const string ImportSection =
             "\nsection '.idata' import data readable writeable\n";
 
-        private CompilerContext _context;
         private X64FunctionFrame _functionScope;
         private X64MemoryManager _memoryManager = new X64MemoryManager();
         private List<Tuple<DataType, string>> _dataEntries = new List<Tuple<DataType, string>>();
 
         public void Generate(CompilerContext context)
         {
-            _context = context;
             var importedFunctions = new Dictionary<string, List<string>>();
 
             var asmSource = new List<string>();
@@ -172,6 +170,10 @@ namespace erc
 
                 case IMInstructionKind.NOT:
                     GenerateNot(output, operation);
+                    break;
+
+                case IMInstructionKind.NEG:
+                    GenerateNeg(output, operation);
                     break;
 
                 case IMInstructionKind.RET:
@@ -320,15 +322,20 @@ namespace erc
             var operand2 = operation.Operands[2];
 
             var dataType = operand1.DataType;
-            var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
 
             var targetLocation = GetOperandLocation(target);
             var op1Location = GetOperandLocation(operand1);
             var op2Location = GetOperandLocation(operand2);
 
+            GenerateBinaryInstruction(output, instruction, dataType, targetLocation, op1Location, op2Location);
+        }
+
+        private void GenerateBinaryInstruction(List<string> output, X64Instruction instruction, DataType dataType, X64StorageLocation targetLocation, X64StorageLocation op1Location, X64StorageLocation op2Location)
+        {
             switch (instruction.NumOperands)
             {
                 case 1:
+                    var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
                     var accLocation = X64StorageLocation.AsRegister(x64DataType.Accumulator);
                     Move(output, dataType, accLocation, op1Location);
                     output.Add(FormatOperation(instruction, op2Location));
@@ -361,6 +368,11 @@ namespace erc
             var targetLocation = GetOperandLocation(target);
             var opLocation = GetOperandLocation(operand);
 
+            GenerateUnaryInstruction(output, instruction, dataType, targetLocation, opLocation);
+        }
+
+        private void GenerateUnaryInstruction(List<string> output, X64Instruction instruction, DataType dataType, X64StorageLocation targetLocation, X64StorageLocation opLocation)
+        {
             switch (instruction.NumOperands)
             {
                 case 1:
@@ -424,6 +436,45 @@ namespace erc
             var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
 
             GenerateUnaryOperator(output, x64DataType.NotInstruction, operation);
+        }
+
+        private void GenerateNeg(List<string> output, IMOperation operation)
+        {
+            var target = operation.Operands[0];
+            var operand = operation.Operands[1];
+            var dataType = operand.DataType;
+            var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
+
+            var targetLocation = GetOperandLocation(target);
+            var opLocation = GetOperandLocation(operand);
+
+            if (target.Equals(operand))
+            {
+                switch (dataType.Group)
+                {
+                    case DataTypeGroup.ScalarInteger:
+                        GenerateUnaryOperator(output, X64Instruction.NEG, operation);
+                        break;
+
+                    case DataTypeGroup.ScalarFloat:
+                    case DataTypeGroup.VectorFloat:
+                        var accLocation = X64StorageLocation.AsRegister(x64DataType.Accumulator);
+                        Move(output, dataType, accLocation, opLocation);
+                        output.Add(FormatOperation(x64DataType.XorInstruction, targetLocation, targetLocation));
+                        //CAUTION: Theoretical problem if the sub instruction would have only 1 operator it would override the
+                        //accumulator which holds the value to negate, but this is not the case for float scalars and vectors.
+                        GenerateBinaryInstruction(output, x64DataType.SubInstruction, dataType, targetLocation, targetLocation, accLocation);
+                        break;
+
+                    default:
+                        throw new Exception("Unsupported data type group: " + dataType);
+                }   
+            }
+            else
+            {
+                output.Add(FormatOperation(x64DataType.XorInstruction, targetLocation, targetLocation));
+                GenerateBinaryInstruction(output, x64DataType.SubInstruction, dataType, targetLocation, targetLocation, opLocation);
+            }
         }
 
         //Methods for all other operation kinds follow here
