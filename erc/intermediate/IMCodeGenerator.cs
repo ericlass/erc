@@ -236,14 +236,13 @@ namespace erc
 
             var tmpLocation = NewTempLocal(DataType.BOOL);
             result.AddRange(GenerateExpression(expression, tmpLocation));
-            result.Add(IMOperation.Cmp(tmpLocation, IMOperand.BOOL_TRUE));
 
             _ifLabelCounter += 1;
             var endLabel = "if_end_" + _ifLabelCounter;
 
             if (elseStatements == null)
             {
-                result.Add(IMOperation.JmpNe(endLabel));
+                result.Add(IMOperation.JmpNE(tmpLocation, IMOperand.BOOL_TRUE, endLabel));
 
                 foreach (var stat in ifStatements.Children)
                 {
@@ -257,7 +256,7 @@ namespace erc
                 _ifLabelCounter += 1;
                 var elseLabel = "if_else_" + _ifLabelCounter;
 
-                result.Add(IMOperation.JmpNe(elseLabel));
+                result.Add(IMOperation.JmpNE(tmpLocation, IMOperand.BOOL_TRUE, elseLabel));
 
                 foreach (var stat in ifStatements.Children)
                 {
@@ -385,6 +384,7 @@ namespace erc
             //Create copy of list so original is not modified
             var terms = items.ConvertAll((a) => new AstItemWithLocation(a, null));
 
+            IMOperand finalResultLocation = null;
             var result = new List<IMOperation>();
             for (int i = 0; i < terms.Count; i++)
             {
@@ -411,6 +411,7 @@ namespace erc
 
                     result.AddRange(item.BinaryOperator.Generate(target, op1Location, op2Location));
                     term.Location = target;
+                    finalResultLocation = target;
 
                     //Remove the two operands from the expression, do not remove the current operator
                     //as it is required to know later that a value must be popped from stack
@@ -434,6 +435,7 @@ namespace erc
                     var target = NewTempLocal(targetLocation.DataType);
                     result.AddRange(item.UnaryOperator.Generate(target, opLocation));
                     term.Location = target;
+                    finalResultLocation = target;
 
                     //Remove the operand from the expression, do not remove the current operator
                     //as it is required to know later that a value must be popped from stack
@@ -444,6 +446,9 @@ namespace erc
                     i -= 1;
                 }
             }
+
+            Assert.Check(finalResultLocation != null, "No result location found! This must not happen!");
+            result.Add(IMOperation.Mov(targetLocation, finalResultLocation));
 
             return result;
         }

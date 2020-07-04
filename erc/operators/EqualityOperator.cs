@@ -36,12 +36,10 @@ namespace erc
         {
             var result = new List<IMOperation>();
 
-            result.Add(IMOperation.Cmp(operand1, operand2));
-
             if (_negate)
-                result.Add(IMOperation.SetNE(target));
+                result.Add(IMOperation.SetNE(target, operand1, operand2));
             else
-                result.Add(IMOperation.SetE(target));
+                result.Add(IMOperation.SetE(target, operand1, operand2));
 
             return result;
         }

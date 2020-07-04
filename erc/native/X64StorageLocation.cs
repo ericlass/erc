@@ -108,6 +108,12 @@ namespace erc
             }
         }
 
+        public override int GetHashCode()
+        {
+            //Shut up the compiler
+            return base.GetHashCode();
+        }
+
         public bool IsMemory
         {
             get

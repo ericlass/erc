@@ -35,8 +35,7 @@ namespace erc
         {
             return new List<IMOperation>()
             {
-                IMOperation.Cmp(operand1, operand2),
-                IMOperation.Create(_setInstruction, new List<IMOperand>() { target })
+                IMOperation.Create(_setInstruction, new List<IMOperand>() { target, operand1, operand2 })
             };
         }
     }

@@ -150,34 +150,84 @@ namespace erc
             return new IMOperation(IMInstruction.JMP, IMOperand.Identifier(labelName));
         }
 
-        public static IMOperation JmpNe(string labelName)
+        public static IMOperation JmpE(IMOperand operand1, IMOperand operand2, string labelName)
         {
-            return new IMOperation(IMInstruction.JMPNE, IMOperand.Identifier(labelName));
+            return new IMOperation(IMInstruction.JMPE, IMOperand.Identifier(labelName), operand1, operand2);
         }
 
-        public static IMOperation Cmp(IMOperand operand1, IMOperand operand2)
+        public static IMOperation JmpNE(IMOperand operand1, IMOperand operand2, string labelName)
         {
-            return new IMOperation(IMInstruction.CMP, operand1, operand2);
+            return new IMOperation(IMInstruction.JMPNE, IMOperand.Identifier(labelName), operand1, operand2);
         }
 
-        public static IMOperation MovE(IMOperand target, IMOperand source)
+        public static IMOperation JmpG(IMOperand operand1, IMOperand operand2, string labelName)
         {
-            return new IMOperation(IMInstruction.MOVE, target, source);
+            return new IMOperation(IMInstruction.JMPG, IMOperand.Identifier(labelName), operand1, operand2);
         }
 
-        public static IMOperation MovNe(IMOperand target, IMOperand source)
+        public static IMOperation JmpGE(IMOperand operand1, IMOperand operand2, string labelName)
         {
-            return new IMOperation(IMInstruction.MOVNE, target, source);
+            return new IMOperation(IMInstruction.JMPGE, IMOperand.Identifier(labelName), operand1, operand2);
         }
 
-        public static IMOperation SetE(IMOperand target)
+        public static IMOperation JmpL(IMOperand operand1, IMOperand operand2, string labelName)
         {
-            return new IMOperation(IMInstruction.SETE, target);
+            return new IMOperation(IMInstruction.JMPL, IMOperand.Identifier(labelName), operand1, operand2);
         }
 
-        public static IMOperation SetNE(IMOperand target)
+        public static IMOperation JmpLE(IMOperand operand1, IMOperand operand2, string labelName)
         {
-            return new IMOperation(IMInstruction.SETNE, target);
+            return new IMOperation(IMInstruction.JMPLE, IMOperand.Identifier(labelName), operand1, operand2);
+        }
+
+        public static IMOperation JmpZ(IMOperand operand1, IMOperand operand2, string labelName)
+        {
+            return new IMOperation(IMInstruction.JMPZ, IMOperand.Identifier(labelName), operand1, operand2);
+        }
+
+        public static IMOperation JmpNZ(IMOperand operand1, IMOperand operand2, string labelName)
+        {
+            return new IMOperation(IMInstruction.JMPNZ, IMOperand.Identifier(labelName), operand1, operand2);
+        }
+
+        public static IMOperation SetE(IMOperand target, IMOperand operand1, IMOperand operand2)
+        {
+            return new IMOperation(IMInstruction.SETE, target, operand1, operand2);
+        }
+
+        public static IMOperation SetNE(IMOperand target, IMOperand operand1, IMOperand operand2)
+        {
+            return new IMOperation(IMInstruction.SETNE, target, operand1, operand2);
+        }
+
+        public static IMOperation SetL(IMOperand target, IMOperand operand1, IMOperand operand2)
+        {
+            return new IMOperation(IMInstruction.SETL, target, operand1, operand2);
+        }
+
+        public static IMOperation SetLE(IMOperand target, IMOperand operand1, IMOperand operand2)
+        {
+            return new IMOperation(IMInstruction.SETLE, target, operand1, operand2);
+        }
+
+        public static IMOperation SetG(IMOperand target, IMOperand operand1, IMOperand operand2)
+        {
+            return new IMOperation(IMInstruction.SETG, target, operand1, operand2);
+        }
+
+        public static IMOperation SetGE(IMOperand target, IMOperand operand1, IMOperand operand2)
+        {
+            return new IMOperation(IMInstruction.SETGE, target, operand1, operand2);
+        }
+
+        public static IMOperation SetZ(IMOperand target, IMOperand operand1, IMOperand operand2)
+        {
+            return new IMOperation(IMInstruction.SETZ, target, operand1, operand2);
+        }
+
+        public static IMOperation SetNnZ(IMOperand target, IMOperand operand1, IMOperand operand2)
+        {
+            return new IMOperation(IMInstruction.SETNZ, target, operand1, operand2);
         }
 
         public static IMOperation Nop()

@@ -37,8 +37,8 @@ namespace erc
         public static IBinaryOperator ADD = new AdditionOperator();
         public static IBinaryOperator SUB = new SubtractionOperator();
 
-        public static IBinaryOperator LessThan = new RelationalOperator("<", IMInstruction.SETB);
-        public static IBinaryOperator LessThanOrEqual = new RelationalOperator("<=", IMInstruction.SETBE);
+        public static IBinaryOperator LessThan = new RelationalOperator("<", IMInstruction.SETL);
+        public static IBinaryOperator LessThanOrEqual = new RelationalOperator("<=", IMInstruction.SETLE);
         public static IBinaryOperator GreaterThan = new RelationalOperator(">", IMInstruction.SETG);
         public static IBinaryOperator GreaterThanOrEqual = new RelationalOperator(">=", IMInstruction.SETGE);
 
