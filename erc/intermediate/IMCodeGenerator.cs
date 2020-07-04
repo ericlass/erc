@@ -384,7 +384,6 @@ namespace erc
             //Create copy of list so original is not modified
             var terms = items.ConvertAll((a) => new AstItemWithLocation(a, null));
 
-            IMOperand finalResultLocation = null;
             var result = new List<IMOperation>();
             for (int i = 0; i < terms.Count; i++)
             {
@@ -395,7 +394,11 @@ namespace erc
                     var operand1 = terms[i - 2].Item;
                     var operand2 = terms[i - 1].Item;
 
-                    var target = NewTempLocal(targetLocation.DataType);
+                    //The last operation in the expression can be done in the final target location. Before that, use temp local
+                    var target = targetLocation;
+                    var isLastOperation = terms.Count == 3;
+                    if (!isLastOperation)
+                        target = NewTempLocal(targetLocation.DataType);
 
                     IMOperand op1Location = null;
                     if (operand1.Kind == AstItemKind.UnaryOperator || operand1.Kind == AstItemKind.BinaryOperator)
@@ -411,7 +414,6 @@ namespace erc
 
                     result.AddRange(item.BinaryOperator.Generate(target, op1Location, op2Location));
                     term.Location = target;
-                    finalResultLocation = target;
 
                     //Remove the two operands from the expression, do not remove the current operator
                     //as it is required to know later that a value must be popped from stack
@@ -432,10 +434,14 @@ namespace erc
                     else
                         opLocation = GetOperandLocation(result, operand);
 
-                    var target = NewTempLocal(targetLocation.DataType);
+                    //The last operation in the expression can be done in the final target location. Before that, use temp local
+                    var target = targetLocation;
+                    var isLastOperation = terms.Count == 2;
+                    if (!isLastOperation)
+                        target = NewTempLocal(targetLocation.DataType);
+
                     result.AddRange(item.UnaryOperator.Generate(target, opLocation));
                     term.Location = target;
-                    finalResultLocation = target;
 
                     //Remove the operand from the expression, do not remove the current operator
                     //as it is required to know later that a value must be popped from stack
@@ -446,9 +452,6 @@ namespace erc
                     i -= 1;
                 }
             }
-
-            Assert.Check(finalResultLocation != null, "No result location found! This must not happen!");
-            result.Add(IMOperation.Mov(targetLocation, finalResultLocation));
 
             return result;
         }
