@@ -152,42 +152,42 @@ namespace erc
 
         public static IMOperation JmpE(IMOperand operand1, IMOperand operand2, string labelName)
         {
-            return new IMOperation(IMInstruction.JMPE, IMOperand.Identifier(labelName), operand1, operand2);
+            return new IMOperation(IMInstruction.JMPE, operand1, operand2, IMOperand.Identifier(labelName));
         }
 
         public static IMOperation JmpNE(IMOperand operand1, IMOperand operand2, string labelName)
         {
-            return new IMOperation(IMInstruction.JMPNE, IMOperand.Identifier(labelName), operand1, operand2);
+            return new IMOperation(IMInstruction.JMPNE, operand1, operand2, IMOperand.Identifier(labelName));
         }
 
         public static IMOperation JmpG(IMOperand operand1, IMOperand operand2, string labelName)
         {
-            return new IMOperation(IMInstruction.JMPG, IMOperand.Identifier(labelName), operand1, operand2);
+            return new IMOperation(IMInstruction.JMPG, operand1, operand2, IMOperand.Identifier(labelName));
         }
 
         public static IMOperation JmpGE(IMOperand operand1, IMOperand operand2, string labelName)
         {
-            return new IMOperation(IMInstruction.JMPGE, IMOperand.Identifier(labelName), operand1, operand2);
+            return new IMOperation(IMInstruction.JMPGE, operand1, operand2, IMOperand.Identifier(labelName));
         }
 
         public static IMOperation JmpL(IMOperand operand1, IMOperand operand2, string labelName)
         {
-            return new IMOperation(IMInstruction.JMPL, IMOperand.Identifier(labelName), operand1, operand2);
+            return new IMOperation(IMInstruction.JMPL, operand1, operand2, IMOperand.Identifier(labelName));
         }
 
         public static IMOperation JmpLE(IMOperand operand1, IMOperand operand2, string labelName)
         {
-            return new IMOperation(IMInstruction.JMPLE, IMOperand.Identifier(labelName), operand1, operand2);
+            return new IMOperation(IMInstruction.JMPLE, operand1, operand2, IMOperand.Identifier(labelName));
         }
 
         public static IMOperation JmpZ(IMOperand operand1, IMOperand operand2, string labelName)
         {
-            return new IMOperation(IMInstruction.JMPZ, IMOperand.Identifier(labelName), operand1, operand2);
+            return new IMOperation(IMInstruction.JMPZ, operand1, operand2, IMOperand.Identifier(labelName));
         }
 
         public static IMOperation JmpNZ(IMOperand operand1, IMOperand operand2, string labelName)
         {
-            return new IMOperation(IMInstruction.JMPNZ, IMOperand.Identifier(labelName), operand1, operand2);
+            return new IMOperation(IMInstruction.JMPNZ, operand1, operand2, IMOperand.Identifier(labelName));
         }
 
         public static IMOperation SetE(IMOperand target, IMOperand operand1, IMOperand operand2)

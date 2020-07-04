@@ -79,28 +79,49 @@ namespace erc
         public static X64Instruction CMP = new X64Instruction("CMP", 2);
 
         //Scalar float
-        public static X64Instruction CMPSS = new X64Instruction("CMPSS", 3);
-        public static X64Instruction CMPSD = new X64Instruction("CMPSD", 3);
-
         public static X64Instruction COMISS = new X64Instruction("COMISS", 2);
-        public static X64Instruction UCOMISS = new X64Instruction("UCOMISS", 2);
         public static X64Instruction COMISD = new X64Instruction("COMISD", 2);
-        public static X64Instruction UCOMISD = new X64Instruction("UCOMISD", 2);
 
-        //Packed float
-        public static X64Instruction CMPPS = new X64Instruction("CMPPS", 3);
-        public static X64Instruction CMPPD = new X64Instruction("CMPPD", 3);
-        public static X64Instruction VCMPPS = new X64Instruction("VCMPPS", 4);
-        public static X64Instruction VCMPPD = new X64Instruction("VCMPPD", 4);
+        //vec4f
+        public static X64Instruction CMPEQPS = new X64Instruction("CMPEQPS", 2);
+        public static X64Instruction CMPLTPS = new X64Instruction("CMPLTPS", 2);
+        public static X64Instruction CMPLEPS = new X64Instruction("CMPLEPS", 2);
+        public static X64Instruction CMPNEQPS = new X64Instruction("CMPEQPS", 2);
+        public static X64Instruction CMPNLTPS = new X64Instruction("CMPLTPS", 2);
+        public static X64Instruction CMPNLEPS = new X64Instruction("CMPLEPS", 2);
 
-        //Packed int
-        public static X64Instruction PCMPEQQ = new X64Instruction("PCMPEQQ", 2);
-        public static X64Instruction VPCMPEQQ = new X64Instruction("VPCMPEQQ", 3);
+        //vec2d
+        public static X64Instruction CMPEQPD = new X64Instruction("CMPEQPD", 2);
+        public static X64Instruction CMPLTPD = new X64Instruction("CMPLTPD", 2);
+        public static X64Instruction CMPLEPD = new X64Instruction("CMPLEPD", 2);
+        public static X64Instruction CMPNEQPD = new X64Instruction("CMPEQPD", 2);
+        public static X64Instruction CMPNLTPD = new X64Instruction("CMPLTPD", 2);
+        public static X64Instruction CMPNLEPD = new X64Instruction("CMPLEPD", 2);
+
+        //vec8f
+        public static X64Instruction VCMPEQPS = new X64Instruction("VCMPEQPS", 3);
+        public static X64Instruction VCMPLTPS = new X64Instruction("VCMPLTPS", 3);
+        public static X64Instruction VCMPLEPS = new X64Instruction("VCMPLEPS", 3);
+        public static X64Instruction VCMPNEQPS = new X64Instruction("VCMPEQPS", 3);
+        public static X64Instruction VCMPNLTPS = new X64Instruction("VCMPLTPS", 3);
+        public static X64Instruction VCMPNLEPS = new X64Instruction("VCMPLEPS", 3);
+
+        //vec4d
+        public static X64Instruction VCMPEQPD = new X64Instruction("VCMPEQPD", 3);
+        public static X64Instruction VCMPLTPD = new X64Instruction("VCMPLTPD", 3);
+        public static X64Instruction VCMPLEPD = new X64Instruction("VCMPLEPD", 3);
+        public static X64Instruction VCMPNEQPD = new X64Instruction("VCMPEQPD", 3);
+        public static X64Instruction VCMPNLTPD = new X64Instruction("VCMPLTPD", 3);
+        public static X64Instruction VCMPNLEPD = new X64Instruction("VCMPLEPD", 3);
 
         //##### Jump Instructions #####
         public static X64Instruction JMP = new X64Instruction("JMP", 1);
         public static X64Instruction JE = new X64Instruction("JE", 1);
         public static X64Instruction JNE = new X64Instruction("JNE", 1);
+        public static X64Instruction JL = new X64Instruction("JL", 1);
+        public static X64Instruction JLE = new X64Instruction("JLE", 1);
+        public static X64Instruction JG = new X64Instruction("JG", 1);
+        public static X64Instruction JGE = new X64Instruction("JGE", 1);
         public static X64Instruction JZ = new X64Instruction("JZ", 1);
         public static X64Instruction JNZ = new X64Instruction("JNZ", 1);
 
@@ -115,26 +136,6 @@ namespace erc
         public static X64Instruction SUBSD = new X64Instruction("SUBSD", 2);
         public static X64Instruction MULSD = new X64Instruction("MULSD", 2);
         public static X64Instruction DIVSD = new X64Instruction("DIVSD", 2);
-
-        public static X64Instruction PADDB = new X64Instruction("PADDB", 2);
-        public static X64Instruction PSUBB = new X64Instruction("PSUBB", 2);
-        public static X64Instruction PMULB = new X64Instruction("PMULB", 2);
-        public static X64Instruction PDIVB = new X64Instruction("PDIVB", 2);
-
-        public static X64Instruction PADDW = new X64Instruction("PADDW", 2);
-        public static X64Instruction PSUBW = new X64Instruction("PSUBW", 2);
-        public static X64Instruction PMULW = new X64Instruction("PMULW", 2);
-        public static X64Instruction PDIVW = new X64Instruction("PDIVW", 2);
-
-        public static X64Instruction PADDD = new X64Instruction("PADDD", 2);
-        public static X64Instruction PSUBD = new X64Instruction("PSUBD", 2);
-        public static X64Instruction PMULD = new X64Instruction("PMULD", 2);
-        public static X64Instruction PDIVD = new X64Instruction("PDIVD", 2);
-
-        public static X64Instruction PADDQ = new X64Instruction("PADDQ", 2);
-        public static X64Instruction PSUBQ = new X64Instruction("PSUBQ", 2);
-        public static X64Instruction PMULQ = new X64Instruction("PMULQ", 2);
-        public static X64Instruction PDIVQ = new X64Instruction("PDIVQ", 2);
 
         public static X64Instruction ADDPS = new X64Instruction("ADDPS", 2);
         public static X64Instruction SUBPS = new X64Instruction("SUBPS", 2);
@@ -164,26 +165,6 @@ namespace erc
         public static X64Instruction VSUBSD = new X64Instruction("VSUBSD", 3);
         public static X64Instruction VMULSD = new X64Instruction("VMULSD", 3);
         public static X64Instruction VDIVSD = new X64Instruction("VDIVSD", 3);
-
-        public static X64Instruction VPADDB = new X64Instruction("VPADDB", 3);
-        public static X64Instruction VPSUBB = new X64Instruction("VPSUBB", 3);
-        public static X64Instruction VPMULB = new X64Instruction("VPMULB", 3);
-        public static X64Instruction VPDIVB = new X64Instruction("VPDIVB", 3);
-
-        public static X64Instruction VPADDW = new X64Instruction("VPADDW", 3);
-        public static X64Instruction VPSUBW = new X64Instruction("VPSUBW", 3);
-        public static X64Instruction VPMULW = new X64Instruction("VPMULW", 3);
-        public static X64Instruction VPDIVW = new X64Instruction("VPDIVW", 3);
-
-        public static X64Instruction VPADDD = new X64Instruction("VPADDD", 3);
-        public static X64Instruction VPSUBD = new X64Instruction("VPSUBD", 3);
-        public static X64Instruction VPMULD = new X64Instruction("VPMULD", 3);
-        public static X64Instruction VPDIVD = new X64Instruction("VPDIVD", 3);
-
-        public static X64Instruction VPADDQ = new X64Instruction("VPADDQ", 3);
-        public static X64Instruction VPSUBQ = new X64Instruction("VPSUBQ", 3);
-        public static X64Instruction VPMULQ = new X64Instruction("VPMULQ", 3);
-        public static X64Instruction VPDIVQ = new X64Instruction("VPDIVQ", 3);
 
         public static X64Instruction VADDPS = new X64Instruction("VADDPS", 3);
         public static X64Instruction VSUBPS = new X64Instruction("VSUBPS", 3);

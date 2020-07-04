@@ -234,6 +234,7 @@ namespace erc
 
             var result = new List<IMOperation>();
 
+            //OPTIMIZE: If "expression" is a simple, one operator operation, generate the JMP instruction directly instead of going through the temp location
             var tmpLocation = NewTempLocal(DataType.BOOL);
             result.AddRange(GenerateExpression(expression, tmpLocation));
 

@@ -21,6 +21,13 @@ namespace erc
         public X64Instruction OrInstruction { get; private set; }
         public X64Instruction XorInstruction { get; private set; }
         public X64Instruction NotInstruction { get; private set; }
+        public X64Instruction CmpEqualInstruction { get; private set; }
+        public X64Instruction CmpNotEqualInstruction { get; private set; }
+        public X64Instruction CmpLessThanInstruction { get; private set; }
+        public X64Instruction CmpLessThanOrEqualInstruction { get; private set; }
+        public X64Instruction CmpGreaterThanInstruction { get; private set; }
+        public X64Instruction CmpGreaterThanOrEqualInstruction { get; private set; }
+        public X64Instruction MoveMaskInstruction { get; private set; }
         public Func<IMOperand, string> ImmediateValueToAsmCode { get; private set; }
 
         private X64DataTypeProperties()
@@ -285,6 +292,13 @@ namespace erc
             AndInstruction = X64Instruction.PAND,
             OrInstruction = X64Instruction.POR,
             XorInstruction = X64Instruction.PXOR,
+            CmpEqualInstruction = X64Instruction.CMPEQPS,
+            CmpNotEqualInstruction = X64Instruction.CMPNEQPS,
+            CmpLessThanInstruction = X64Instruction.CMPLTPS,
+            CmpLessThanOrEqualInstruction = X64Instruction.CMPLEPS,
+            CmpGreaterThanInstruction = X64Instruction.CMPNLEPS,
+            CmpGreaterThanOrEqualInstruction = X64Instruction.CMPNLTPS,
+            MoveMaskInstruction = X64Instruction.MOVMSKPS
         };
 
 
@@ -305,6 +319,13 @@ namespace erc
             AndInstruction = X64Instruction.VPAND,
             OrInstruction = X64Instruction.VPOR,
             XorInstruction = X64Instruction.VPXOR,
+            CmpEqualInstruction = X64Instruction.VCMPEQPS,
+            CmpNotEqualInstruction = X64Instruction.VCMPNEQPS,
+            CmpLessThanInstruction = X64Instruction.VCMPLTPS,
+            CmpLessThanOrEqualInstruction = X64Instruction.VCMPLEPS,
+            CmpGreaterThanInstruction = X64Instruction.VCMPNLEPS,
+            CmpGreaterThanOrEqualInstruction = X64Instruction.VCMPNLTPS,
+            MoveMaskInstruction = X64Instruction.VMOVMSKPS
         };
 
 
@@ -325,6 +346,13 @@ namespace erc
             AndInstruction = X64Instruction.PAND,
             OrInstruction = X64Instruction.POR,
             XorInstruction = X64Instruction.PXOR,
+            CmpEqualInstruction = X64Instruction.CMPEQPD,
+            CmpNotEqualInstruction = X64Instruction.CMPNEQPD,
+            CmpLessThanInstruction = X64Instruction.CMPLTPD,
+            CmpLessThanOrEqualInstruction = X64Instruction.CMPLEPD,
+            CmpGreaterThanInstruction = X64Instruction.CMPNLEPD,
+            CmpGreaterThanOrEqualInstruction = X64Instruction.CMPNLTPD,
+            MoveMaskInstruction = X64Instruction.MOVMSKPD
         };
 
 
@@ -345,6 +373,13 @@ namespace erc
             AndInstruction = X64Instruction.VPAND,
             OrInstruction = X64Instruction.VPOR,
             XorInstruction = X64Instruction.VPXOR,
+            CmpEqualInstruction = X64Instruction.VCMPEQPD,
+            CmpNotEqualInstruction = X64Instruction.VCMPNEQPD,
+            CmpLessThanInstruction = X64Instruction.VCMPLTPD,
+            CmpLessThanOrEqualInstruction = X64Instruction.VCMPLEPD,
+            CmpGreaterThanInstruction = X64Instruction.VCMPNLEPD,
+            CmpGreaterThanOrEqualInstruction = X64Instruction.VCMPNLTPD,
+            MoveMaskInstruction = X64Instruction.VMOVMSKPD
         };
 
         private static readonly X64DataTypeProperties BOOL = new X64DataTypeProperties()
