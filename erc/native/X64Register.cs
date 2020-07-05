@@ -200,14 +200,29 @@ namespace erc
 
         public static DataType GetDefaultDataType(X64Register register)
         {
-            if (register.ByteSize == 8)
-                return DataType.I64;
-            else if (register.ByteSize == 16)
-                return DataType.VEC2D;
-            else if (register.ByteSize == 32)
-                return DataType.VEC4D;
-            else
-                throw new Exception("Unknown register size: " + register);
+            switch (register.ByteSize)
+            {
+                case 1:
+                    return DataType.U8;
+
+                case 2:
+                    return DataType.U16;
+
+                case 4:
+                    return DataType.U32;
+
+                case 8:
+                    return DataType.U64;
+
+                case 16:
+                    return DataType.VEC2D;
+
+                case 32:
+                    return DataType.VEC4D;
+
+                default:
+                    throw new Exception("Unknown register size: " + register);
+            }
         }
 
         /*********************************************/

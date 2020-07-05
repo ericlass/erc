@@ -31,12 +31,16 @@ namespace erc
         private const string ImportSection =
             "\nsection '.idata' import data readable writeable\n";
 
+        private CompilerContext _context;
         private X64FunctionFrame _functionScope;
+        private Function _currentFunction;
+        private List<X64Register> _usedRegisters = new List<X64Register>();
         private X64MemoryManager _memoryManager = new X64MemoryManager();
         private List<Tuple<DataType, string>> _dataEntries = new List<Tuple<DataType, string>>();
 
         public void Generate(CompilerContext context)
         {
+            _context = context;
             var importedFunctions = new Dictionary<string, List<string>>();
 
             var asmSource = new List<string>();
@@ -116,11 +120,15 @@ namespace erc
             function.FunctionFrame = _functionScope;
             _dataEntries.AddRange(_functionScope.DataEntries);
 
+            _currentFunction = function.Definition;
+            _usedRegisters.Clear();
+
             foreach (var operation in function.Body)
             {
                 GenerateOperation(output, operation);
             }
 
+            _currentFunction = null;
             _functionScope = null;
             output.Add("");
         }
@@ -213,9 +221,35 @@ namespace erc
                     GenerateJmpGE(output, operation);
                     break;
 
+                case IMInstructionKind.CALL:
+                    GenerateCall(output, operation);
+                    break;
+
+                case IMInstructionKind.FREE:
+                    var location = RequireOperandLocation(operation.Operands[0]);
+                    if (location.Kind == X64StorageLocationKind.Register)
+                    {
+                        if (!_usedRegisters.Remove(location.Register))
+                            throw new Exception("Trying to free a register that is not in use: " + location.Register);
+                    }
+                    break;
+
 
                     //default:
                     //throw new Exception("");
+            }
+
+            //Track list of used registers for saving them on function call
+            foreach (var operand in operation.Operands)
+            {
+                var location = GetOperandLocation(operand);
+                if (location != null && location.Kind == X64StorageLocationKind.Register)
+                {
+                    if (!_usedRegisters.Contains(location.Register))
+                    {
+                        _usedRegisters.Add(location.Register);
+                    }
+                }
             }
         }
 
@@ -227,8 +261,8 @@ namespace erc
             if (target.FullName == source.FullName)
                 return;
 
-            var targetLocation = GetOperandLocation(target);
-            var sourceLocation = GetOperandLocation(source);
+            var targetLocation = RequireOperandLocation(target);
+            var sourceLocation = RequireOperandLocation(source);
 
             Move(output, source.DataType, targetLocation, sourceLocation);
         }
@@ -260,19 +294,36 @@ namespace erc
 
         private X64StorageLocation GetOperandLocation(IMOperand operand)
         {
+            if (operand == null)
+                return null;
+
             if (_functionScope.LocalsLocations.ContainsKey(operand.FullName))
             {
                 return _functionScope.LocalsLocations[operand.FullName];
             }
             else
+                return null;
+        }
+
+        private X64StorageLocation RequireOperandLocation(IMOperand operand)
+        {
+            var result = GetOperandLocation(operand);
+            if (result == null)
                 throw new Exception("Operand has no location in function scope! This should not happen. Given: " + operand);
+
+            return result;
         }
 
         private void GeneratePush(List<string> output, IMOperation operation)
         {
             var source = operation.Operands[0];
             var dataType = source.DataType;
-            var sourceLocation = GetOperandLocation(source);
+            var sourceLocation = RequireOperandLocation(source);
+            sourceLocation = GeneratePushInternal(output, dataType, sourceLocation);
+        }
+
+        private X64StorageLocation GeneratePushInternal(List<string> output, DataType dataType, X64StorageLocation sourceLocation)
+        {
             var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
 
             if (sourceLocation.Kind != X64StorageLocationKind.Register)
@@ -291,14 +342,21 @@ namespace erc
             {
                 output.Add(FormatOperation(X64Instruction.PUSH, sourceLocation));
             }
+
+            return sourceLocation;
         }
 
         private void GeneratePop(List<string> output, IMOperation operation)
         {
             var target = operation.Operands[0];
             var dataType = target.DataType;
-            var targetLocation = GetOperandLocation(target);
+            var targetLocation = RequireOperandLocation(target);
 
+            GeneratePopInternal(output, dataType, targetLocation);
+        }
+
+        private void GeneratePopInternal(List<string> output, DataType dataType, X64StorageLocation targetLocation)
+        {
             if (targetLocation.Kind != X64StorageLocationKind.Register || dataType.IsVector)
             {
                 Move(output, dataType, targetLocation, X64StorageLocation.StackFromTop(0));
@@ -356,9 +414,9 @@ namespace erc
 
             var dataType = operand1.DataType;
 
-            var targetLocation = GetOperandLocation(target);
-            var op1Location = GetOperandLocation(operand1);
-            var op2Location = GetOperandLocation(operand2);
+            var targetLocation = RequireOperandLocation(target);
+            var op1Location = RequireOperandLocation(operand1);
+            var op2Location = RequireOperandLocation(operand2);
 
             GenerateBinaryInstruction(output, instruction, dataType, targetLocation, op1Location, op2Location);
         }
@@ -398,8 +456,8 @@ namespace erc
 
             var dataType = operand.DataType;
 
-            var targetLocation = GetOperandLocation(target);
-            var opLocation = GetOperandLocation(operand);
+            var targetLocation = RequireOperandLocation(target);
+            var opLocation = RequireOperandLocation(operand);
 
             GenerateUnaryInstruction(output, instruction, dataType, targetLocation, opLocation);
         }
@@ -428,7 +486,7 @@ namespace erc
             if (returnValue.DataType.Kind != DataTypeKind.VOID)
             {
                 var returnLocation = _functionScope.ReturnLocation;
-                var valueLocation = GetOperandLocation(returnValue);
+                var valueLocation = RequireOperandLocation(returnValue);
                 Move(output, returnValue.DataType, returnLocation, valueLocation);
             }
 
@@ -478,8 +536,8 @@ namespace erc
             var dataType = operand.DataType;
             var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
 
-            var targetLocation = GetOperandLocation(target);
-            var opLocation = GetOperandLocation(operand);
+            var targetLocation = RequireOperandLocation(target);
+            var opLocation = RequireOperandLocation(operand);
 
             if (target.Equals(operand))
             {
@@ -564,8 +622,8 @@ namespace erc
 
             var dataType = op1.DataType;
 
-            var op1Location = GetOperandLocation(op1);
-            var op2Location = GetOperandLocation(op2);
+            var op1Location = RequireOperandLocation(op1);
+            var op2Location = RequireOperandLocation(op2);
 
             switch (dataType.Kind)
             {
@@ -623,6 +681,79 @@ namespace erc
 
                 default:
                     throw new Exception("Unknown data type kind: " + dataType);
+            }
+        }
+
+        private void GenerateCall(List<string> output, IMOperation operation)
+        {
+            var allOperands = operation.Operands;
+            var functionName = allOperands[0].Name;
+            var resultTarget = allOperands[1];
+            var parameterValues = allOperands.GetRange(2, allOperands.Count - 2);
+
+            var function = _context.RequireFunction(functionName);
+
+            //List of registers that need to be restored
+            var savedRegisters = new List<X64Register>();
+
+            //Push used registers
+            foreach (var register in _usedRegisters)
+            {
+                GeneratePushInternal(output, X64Register.GetDefaultDataType(register), X64StorageLocation.AsRegister(register));
+                savedRegisters.Add(register);
+            }
+
+            //Push parameter registers of current function
+            for (int p = 0; p < _currentFunction.Parameters.Count; p++)
+            {
+                var parameter = _currentFunction.Parameters[p];
+                var paramLocation = RequireOperandLocation(IMOperand.Parameter(parameter.DataType, p + 1));
+                if (paramLocation.Kind == X64StorageLocationKind.Register && savedRegisters.Contains(paramLocation.Register))
+                {
+                    GeneratePushInternal(output, parameter.DataType, paramLocation);
+                    savedRegisters.Add(paramLocation.Register);
+                }
+            }
+
+            //Generate parameter values in desired locations
+            var parameterLocations = _memoryManager.GetParameterLocations(function);
+            Assert.Check(parameterLocations.Count == parameterValues.Count, "Inconsitent number of parameters and locations: " + parameterLocations.Count + " != " + parameterValues.Count);
+            for (int i = 0; i < parameterValues.Count; i++)
+            {
+                var value = parameterValues[i];
+                var valueLocation = RequireOperandLocation(value);
+                var location = parameterLocations[i];
+                Move(output, value.DataType, location, valueLocation);
+            }
+
+            //Add 32 bytes shadow space
+            output.Add(FormatOperation(X64Instruction.SUB, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate("0x20")));
+            output.Add(FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RBP), X64StorageLocation.AsRegister(X64Register.RSP)));
+
+            //Finally, call function
+            if (function.IsExtern)
+                output.Add(FormatOperation(X64Instruction.CALL, X64StorageLocation.Immediate("[" + function.ExternalName + "]")));
+            else
+                output.Add(FormatOperation(X64Instruction.CALL, X64StorageLocation.Immediate("fn_" + function.Name)));
+
+            //Remove shadow space
+            output.Add(FormatOperation(X64Instruction.ADD, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate("0x20")));
+
+            //Move result value (if exists) to target location (if required)
+            X64StorageLocation targetLocation = null;
+            if (resultTarget != null && !resultTarget.IsVoid)
+                targetLocation = RequireOperandLocation(resultTarget);
+
+            if (function.ReturnType != DataType.VOID && targetLocation != null)
+            {
+                Move(output, function.ReturnType, targetLocation, _memoryManager.GetFunctionReturnLocation(function));
+            }
+
+            //Restore saved registers in reverse order from stack
+            savedRegisters.Reverse();
+            foreach (var register in savedRegisters)
+            {
+                GeneratePopInternal(output, X64Register.GetDefaultDataType(register), X64StorageLocation.AsRegister(register));
             }
         }
 

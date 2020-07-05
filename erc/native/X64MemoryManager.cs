@@ -138,7 +138,7 @@ namespace erc
         /// <param name="dataType">The parameter data type.</param>
         /// <param name="index">The zero based parameter index.</param>
         /// <returns></returns>
-        private List<X64StorageLocation> GetParameterLocations(Function function)
+        public List<X64StorageLocation> GetParameterLocations(Function function)
         {
             _freeParameterRRegisters.Clear();
             _freeParameterRRegisters.Push(X64RegisterGroup.R9);
@@ -221,7 +221,7 @@ namespace erc
             return result;
         }
 
-        private X64StorageLocation GetFunctionReturnLocation(Function function)
+        public X64StorageLocation GetFunctionReturnLocation(Function function)
         {
             DataType returnType = function.ReturnType;
 
