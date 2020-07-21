@@ -333,8 +333,10 @@ namespace erc
                 sourceLocation = tempLocation;
             }
 
-            if (dataType.IsVector)
+            if (dataType.IsVector || dataType.ByteSize == 1)
             {
+                //No Push for vectors
+                //No Push for 1-byte operands
                 output.Add(FormatOperation(X64Instruction.SUB, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(dataType.ByteSize.ToString())));
                 output.Add(FormatOperation(x64DataType.MoveInstructionUnaligned, X64StorageLocation.StackFromTop(0), sourceLocation));
             }
@@ -357,8 +359,11 @@ namespace erc
 
         private void GeneratePopInternal(List<string> output, DataType dataType, X64StorageLocation targetLocation)
         {
-            if (targetLocation.Kind != X64StorageLocationKind.Register || dataType.IsVector)
+            if (targetLocation.Kind != X64StorageLocationKind.Register || dataType.IsVector || dataType.ByteSize == 1)
             {
+                //No Pop to other than register
+                //No Pop for vectors
+                //No Pop for 1-byte operands
                 Move(output, dataType, targetLocation, X64StorageLocation.StackFromTop(0));
                 output.Add(FormatOperation(X64Instruction.ADD, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(dataType.ByteSize.ToString())));
             }
