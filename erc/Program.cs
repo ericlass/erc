@@ -70,7 +70,7 @@ namespace erc
             Console.WriteLine("==========");
             Console.WriteLine(nativeCode);
 
-            Clipboard.SetText(immediateCode + "\n\n\n" + nativeCode);
+            Clipboard.SetText(context.AST.ToTreeString() + "\n\n\n" + immediateCode + "\n\n\n" + nativeCode);
 
             Console.WriteLine();
             Console.WriteLine("Compilation took: " + compilationTime + " ms");

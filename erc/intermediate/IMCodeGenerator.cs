@@ -399,7 +399,7 @@ namespace erc
                     var target = targetLocation;
                     var isLastOperation = terms.Count == 3;
                     if (!isLastOperation)
-                        target = NewTempLocal(targetLocation.DataType);
+                        target = NewTempLocal(item.BinaryOperator.GetReturnType(operand1.DataType, operand2.DataType));
 
                     IMOperand op1Location = null;
                     if (operand1.Kind == AstItemKind.UnaryOperator || operand1.Kind == AstItemKind.BinaryOperator)
@@ -439,7 +439,7 @@ namespace erc
                     var target = targetLocation;
                     var isLastOperation = terms.Count == 2;
                     if (!isLastOperation)
-                        target = NewTempLocal(targetLocation.DataType);
+                        target = NewTempLocal(item.UnaryOperator.GetReturnType(operand.DataType));
 
                     result.AddRange(item.UnaryOperator.Generate(target, opLocation));
                     term.Location = target;
