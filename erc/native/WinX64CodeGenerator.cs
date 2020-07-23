@@ -9,6 +9,7 @@ namespace erc
     public class WinX64CodeGenerator
     {
         private const string ProcessHeapImmName = "erc_process_heap";
+        private const string U32ZeroImmName = "erc_u32_zero";
 
         private const string CodeHeader =
             "format PE64 NX GUI 6.0\n" +
@@ -74,7 +75,8 @@ namespace erc
                 }
             }
 
-            _dataEntries.Add(new Tuple<DataType, string>(DataType.U64, "erc_process_heap dq 0"));
+            _dataEntries.Add(new Tuple<DataType, string>(DataType.U64, ProcessHeapImmName + " dq 0"));
+            _dataEntries.Add(new Tuple<DataType, string>(DataType.U64, U32ZeroImmName + " dd 0"));
 
             _dataEntries.Sort((o1, o2) => o2.Item1.ByteSize - o1.Item1.ByteSize);
             var nativeCode = new StringBuilder();
@@ -257,6 +259,10 @@ namespace erc
                     GenerateCall(output, operation);
                     break;
 
+                case IMInstructionKind.ALOC:
+                    GenerateAloc(output, operation);
+                    break;
+
                 case IMInstructionKind.FREE:
                     var location = RequireOperandLocation(operation.Operands[0]);
                     if (location.Kind == X64StorageLocationKind.Register)
@@ -330,9 +336,11 @@ namespace erc
                 return null;
 
             if (_functionScope.LocalsLocations.ContainsKey(operand.FullName))
-            {
                 return _functionScope.LocalsLocations[operand.FullName];
-            }
+            else if (operand.Name == ProcessHeapImmName)
+                return X64StorageLocation.DataSection(ProcessHeapImmName);
+            else if (operand.Name == U32ZeroImmName)
+                return X64StorageLocation.DataSection(U32ZeroImmName);
             else
                 return null;
         }
@@ -725,6 +733,15 @@ namespace erc
                 default:
                     throw new Exception("Unknown data type kind: " + dataType);
             }
+        }
+
+        private void GenerateAloc(List<string> output, IMOperation operation)
+        {
+            var target = operation.Operands[0];
+            var numBytes = operation.Operands[1];
+
+            var functionCall = IMOperation.Call("erc_heap_alloc", target, new List<IMOperand>() { IMOperand.Global(DataType.U64, ProcessHeapImmName), IMOperand.Global(DataType.U32, U32ZeroImmName), numBytes });
+            GenerateCall(output, functionCall);
         }
 
         private void GenerateCall(List<string> output, IMOperation operation)
