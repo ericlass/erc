@@ -125,6 +125,16 @@ namespace erc
         public static X64Instruction JZ = new X64Instruction("JZ", 1);
         public static X64Instruction JNZ = new X64Instruction("JNZ", 1);
 
+        //##### Jump Instructions #####
+        public static X64Instruction SETE = new X64Instruction("SETE", 1);
+        public static X64Instruction SETNE = new X64Instruction("SETNE", 1);
+        public static X64Instruction SETL = new X64Instruction("SETL", 1);
+        public static X64Instruction SETLE = new X64Instruction("SETLE", 1);
+        public static X64Instruction SETG = new X64Instruction("SETG", 1);
+        public static X64Instruction SETGE = new X64Instruction("SETGE", 1);
+        public static X64Instruction SETZ = new X64Instruction("SETZ", 1);
+        public static X64Instruction SETNZ = new X64Instruction("SETNZ", 1);
+
         //##### Legacy SSE instructions for XMM registers #####
 
         public static X64Instruction ADDSS = new X64Instruction("ADDSS", 2);

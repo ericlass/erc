@@ -221,6 +221,38 @@ namespace erc
                     GenerateJmpGE(output, operation);
                     break;
 
+                case IMInstructionKind.SETE:
+                    GenerateSetE(output, operation);
+                    break;
+
+                case IMInstructionKind.SETNE:
+                    GenerateSetNE(output, operation);
+                    break;
+
+                case IMInstructionKind.SETL:
+                    GenerateSetL(output, operation);
+                    break;
+
+                case IMInstructionKind.SETLE:
+                    GenerateSetLE(output, operation);
+                    break;
+
+                case IMInstructionKind.SETG:
+                    GenerateSetG(output, operation);
+                    break;
+
+                case IMInstructionKind.SETGE:
+                    GenerateSetGE(output, operation);
+                    break;
+
+                case IMInstructionKind.NOP:
+                    output.Add(FormatOperation(X64Instruction.NOP));
+                    break;
+
+                case IMInstructionKind.CMNT:
+                    GenerateComment(output, operation);
+                    break;
+
                 case IMInstructionKind.CALL:
                     GenerateCall(output, operation);
                     break;
@@ -312,6 +344,12 @@ namespace erc
                 throw new Exception("Operand has no location in function scope! This should not happen. Given: " + operand);
 
             return result;
+        }
+
+        private void GenerateComment(List<string> output, IMOperation operation)
+        {
+            var comment = operation.Operands[0];
+            output.Add("; " + comment.Name);
         }
 
         private void GeneratePush(List<string> output, IMOperation operation)
@@ -759,6 +797,115 @@ namespace erc
             foreach (var register in savedRegisters)
             {
                 GeneratePopInternal(output, X64Register.GetDefaultDataType(register), X64StorageLocation.AsRegister(register));
+            }
+        }
+
+        private void GenerateSetE(List<string> output, IMOperation operation)
+        {
+            var x64DataType = X64DataTypeProperties.GetProperties(operation.Operands[1].DataType.Kind);
+            GenerateSetX(output, operation, X64Instruction.SETE, x64DataType.CmpEqualInstruction);
+        }
+
+        private void GenerateSetNE(List<string> output, IMOperation operation)
+        {
+            var x64DataType = X64DataTypeProperties.GetProperties(operation.Operands[1].DataType.Kind);
+            GenerateSetX(output, operation, X64Instruction.SETNE, x64DataType.CmpNotEqualInstruction);
+        }
+
+        private void GenerateSetL(List<string> output, IMOperation operation)
+        {
+            var x64DataType = X64DataTypeProperties.GetProperties(operation.Operands[1].DataType.Kind);
+            GenerateSetX(output, operation, X64Instruction.SETL, x64DataType.CmpLessThanInstruction);
+        }
+
+        private void GenerateSetLE(List<string> output, IMOperation operation)
+        {
+            var x64DataType = X64DataTypeProperties.GetProperties(operation.Operands[1].DataType.Kind);
+            GenerateSetX(output, operation, X64Instruction.SETLE, x64DataType.CmpLessThanOrEqualInstruction);
+        }
+
+        private void GenerateSetG(List<string> output, IMOperation operation)
+        {
+            var x64DataType = X64DataTypeProperties.GetProperties(operation.Operands[1].DataType.Kind);
+            GenerateSetX(output, operation, X64Instruction.SETG, x64DataType.CmpGreaterThanInstruction);
+        }
+
+        private void GenerateSetGE(List<string> output, IMOperation operation)
+        {
+            var x64DataType = X64DataTypeProperties.GetProperties(operation.Operands[1].DataType.Kind);
+            GenerateSetX(output, operation, X64Instruction.SETGE, x64DataType.CmpGreaterThanOrEqualInstruction);
+        }
+
+        private void GenerateSetX(List<string> output, IMOperation operation, X64Instruction scalarSetInstruction, X64Instruction vectorCmpInstruction)
+        {
+            var target = operation.Operands[0];
+            Assert.Check(target.DataType.ByteSize == 1, "Can only SETcc to byte sized types!");
+
+            var op1 = operation.Operands[1];
+            var op2 = operation.Operands[2];
+
+            var dataType = op1.DataType;
+
+            var targetLocation = RequireOperandLocation(target);
+            var op1Location = RequireOperandLocation(op1);
+            var op2Location = RequireOperandLocation(op2);
+
+            switch (dataType.Kind)
+            {
+                case DataTypeKind.I8:
+                case DataTypeKind.I16:
+                case DataTypeKind.I32:
+                case DataTypeKind.I64:
+                case DataTypeKind.U8:
+                case DataTypeKind.U16:
+                case DataTypeKind.U32:
+                case DataTypeKind.U64:
+                case DataTypeKind.BOOL:
+                case DataTypeKind.POINTER:
+                    output.Add(FormatOperation(X64Instruction.CMP, op1Location, op2Location));
+                    output.Add(FormatOperation(scalarSetInstruction, targetLocation));
+                    break;
+
+                case DataTypeKind.F32:
+                case DataTypeKind.F64:
+                    var cmpInstruction = X64Instruction.COMISS;
+                    if (dataType.Kind == DataTypeKind.F64)
+                        cmpInstruction = X64Instruction.COMISD;
+
+                    output.Add(FormatOperation(cmpInstruction, op1Location, op2Location));
+                    output.Add(FormatOperation(scalarSetInstruction, targetLocation));
+                    break;
+
+                case DataTypeKind.VEC4F:
+                case DataTypeKind.VEC8F:
+                case DataTypeKind.VEC2D:
+                case DataTypeKind.VEC4D:
+                    var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
+                    var cmpResultLocation = X64StorageLocation.AsRegister(x64DataType.Accumulator);
+                    var maskLocation = X64StorageLocation.AsRegister(X64DataTypeProperties.GetProperties(DataTypeKind.U32).Accumulator);
+
+                    switch (vectorCmpInstruction.NumOperands)
+                    {
+                        case 2:
+                            Move(output, dataType, cmpResultLocation, op1Location);
+                            output.Add(FormatOperation(vectorCmpInstruction, cmpResultLocation, op2Location));
+                            break;
+
+                        case 3:
+                            output.Add(FormatOperation(vectorCmpInstruction, cmpResultLocation, op1Location, op2Location));
+                            break;
+
+                        default:
+                            throw new Exception("Unsupported number of operands for instruction: " + vectorCmpInstruction);
+                    }
+
+                    output.Add(FormatOperation(x64DataType.MoveMaskInstruction, maskLocation, cmpResultLocation));
+                    output.Add(FormatOperation(X64Instruction.CMP, maskLocation, X64StorageLocation.Immediate("0xF")));
+                    output.Add(FormatOperation(X64Instruction.SETE, targetLocation));
+                    break;
+
+                default:
+                    throw new Exception("Unknown data type kind: " + dataType);
             }
         }
 

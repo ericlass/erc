@@ -255,16 +255,6 @@ namespace erc
             return new IMOperation(IMInstruction.CMNT, IMOperand.Identifier(text));
         }
 
-        public static IMOperation Extfn(string name, string externalName, string libName)
-        {
-            return new IMOperation(
-                IMInstruction.EXTFN,
-                IMOperand.Identifier(name),
-                IMOperand.Identifier(externalName),
-                IMOperand.Identifier(libName)
-            );
-        }
-
         public static IMOperation Free(IMOperand operand)
         {
             return new IMOperation(IMInstruction.FREE, operand);
