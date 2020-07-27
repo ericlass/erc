@@ -263,6 +263,14 @@ namespace erc
                     GenerateAloc(output, operation);
                     break;
 
+                case IMInstructionKind.DEL:
+                    GenerateDel(output, operation);
+                    break;
+
+                case IMInstructionKind.GVEC:
+                    GenerateGVEC(output, operation);
+                    break;
+
                 case IMInstructionKind.FREE:
                     var location = RequireOperandLocation(operation.Operands[0]);
                     if (location.Kind == X64StorageLocationKind.Register)
@@ -379,16 +387,17 @@ namespace erc
                 sourceLocation = tempLocation;
             }
 
-            if (dataType.IsVector || dataType.ByteSize == 1)
+            //PUSH only word, double-word or quad-word scalars and pointer in GP registers. byte-ints, scalar-floats and vectors must be MOVed.
+            if (dataType.Kind == DataTypeKind.POINTER || (dataType.Group == DataTypeGroup.ScalarInteger && dataType.ByteSize > 1))
+            {
+                output.Add(FormatOperation(X64Instruction.PUSH, sourceLocation));
+            }
+            else
             {
                 //No Push for vectors
                 //No Push for 1-byte operands
                 output.Add(FormatOperation(X64Instruction.SUB, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(dataType.ByteSize.ToString())));
                 output.Add(FormatOperation(x64DataType.MoveInstructionUnaligned, X64StorageLocation.StackFromTop(0), sourceLocation));
-            }
-            else
-            {
-                output.Add(FormatOperation(X64Instruction.PUSH, sourceLocation));
             }
 
             return sourceLocation;
@@ -744,6 +753,13 @@ namespace erc
             GenerateCall(output, functionCall);
         }
 
+        private void GenerateDel(List<string> output, IMOperation operation)
+        {
+            var target = operation.Operands[0];
+            var functionCall = IMOperation.Call("erc_heap_free", null, new List<IMOperand>() { IMOperand.Global(DataType.U64, ProcessHeapImmName), IMOperand.Global(DataType.U32, U32ZeroImmName), target });
+            GenerateCall(output, functionCall);
+        }
+
         private void GenerateCall(List<string> output, IMOperation operation)
         {
             var allOperands = operation.Operands;
@@ -862,6 +878,7 @@ namespace erc
             var op2 = operation.Operands[2];
 
             var dataType = op1.DataType;
+            var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
 
             var targetLocation = RequireOperandLocation(target);
             var op1Location = RequireOperandLocation(op1);
@@ -879,6 +896,12 @@ namespace erc
                 case DataTypeKind.U64:
                 case DataTypeKind.BOOL:
                 case DataTypeKind.POINTER:
+                    if (op1Location.IsMemory && op2Location.IsMemory)
+                    {
+                        var newLocation = X64StorageLocation.AsRegister(x64DataType.Accumulator);
+                        Move(output, dataType, newLocation, op1Location);
+                        op1Location = newLocation;
+                    }
                     output.Add(FormatOperation(X64Instruction.CMP, op1Location, op2Location));
                     output.Add(FormatOperation(scalarSetInstruction, targetLocation));
                     break;
@@ -897,7 +920,6 @@ namespace erc
                 case DataTypeKind.VEC8F:
                 case DataTypeKind.VEC2D:
                 case DataTypeKind.VEC4D:
-                    var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
                     var cmpResultLocation = X64StorageLocation.AsRegister(x64DataType.Accumulator);
                     var maskLocation = X64StorageLocation.AsRegister(X64DataTypeProperties.GetProperties(DataTypeKind.U32).Accumulator);
 
@@ -925,6 +947,40 @@ namespace erc
                     throw new Exception("Unknown data type kind: " + dataType);
             }
         }
+
+        private void GenerateGVEC(List<string> output, IMOperation operation)
+        {
+            var allOperands = operation.Operands;
+            var target = allOperands[0];
+            var values = allOperands.GetRange(1, allOperands.Count - 1);
+
+            var targetDataType = target.DataType;
+            Assert.Check(targetDataType.IsVector, "Expected vector type, given: " + targetDataType);
+            Assert.Check(values.Count == targetDataType.NumElements, "Vector type " + targetDataType + " required " + targetDataType.NumElements + ", but " + values.Count + " given!");
+
+            //Save current stack pointer
+            //TODO: Fix: RSI might be used by an operand!
+            output.Add(FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RSI), X64StorageLocation.AsRegister(X64Register.RSP)));
+
+            //Align stack correctly
+            var invertedByteSize = targetDataType.ByteSize * -1;
+            output.Add(FormatOperation(X64Instruction.AND, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(invertedByteSize.ToString())));
+
+            //Generate vector on stack
+            foreach (var value in values)
+            {
+                var valueLocation = RequireOperandLocation(value);
+                GeneratePushInternal(output, value.DataType, valueLocation);
+            }
+
+            //Move final vector value to target location
+            var targetLocation = RequireOperandLocation(target);
+            Move(output, targetDataType, targetLocation, X64StorageLocation.StackFromTop(0));
+
+            //Restore stack pointer
+            output.Add(FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.AsRegister(X64Register.RSI)));
+        }
+
 
         //Methods for all other operation kinds follow here
         //IDEA: The ones that need a lot of code could be in another file (partial class)

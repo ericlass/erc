@@ -53,11 +53,11 @@ namespace erc
         public static IMInstruction SETZ  = new IMInstruction(IMInstructionKind.SETZ, 3);   // <target>, <op>
 
         public static IMInstruction NOP  = new IMInstruction(IMInstructionKind.NOP, 0);    //X
-        public static IMInstruction ALOC = new IMInstruction(IMInstructionKind.ALOC, 2);   // <target>, <num_bytes>
-        public static IMInstruction DEL  = new IMInstruction(IMInstructionKind.DEL, 1);    // <target>
+        public static IMInstruction ALOC = new IMInstruction(IMInstructionKind.ALOC, 2);   //X <target>, <num_bytes>
+        public static IMInstruction DEL  = new IMInstruction(IMInstructionKind.DEL, 1);    //X <target>
         public static IMInstruction LABL = new IMInstruction(IMInstructionKind.LABL, 1);   //X <identifier>
         public static IMInstruction CMNT = new IMInstruction(IMInstructionKind.CMNT, 1);   //X <identifier>
         public static IMInstruction FREE = new IMInstruction(IMInstructionKind.FREE, 1);   //X <identifier>
-        public static IMInstruction GVEC = new IMInstruction(IMInstructionKind.GVEC, 4);   // <value_list>
+        public static IMInstruction GVEC = new IMInstruction(IMInstructionKind.GVEC, 4);   //X <value_list>
     }
 }

@@ -283,7 +283,12 @@ namespace erc
             {
                 case AstItemKind.Immediate:
                 case AstItemKind.DirectImmediate:
-                    var source = IMOperand.Immediate(expression.DataType, expression.Value);
+                    IMOperand source;
+                    if (expression.DataType.Kind == DataTypeKind.BOOL)
+                        source = ((bool)expression.Value) ? IMOperand.BOOL_TRUE : IMOperand.BOOL_FALSE;
+                    else
+                        source = IMOperand.Immediate(expression.DataType, expression.Value);
+
                     return IMOperation.Mov(targetLocation, source).AsList;
 
                 case AstItemKind.Vector:
