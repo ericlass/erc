@@ -132,13 +132,18 @@ namespace erc
             return true;
         }
 
-        /// <summary>
-        /// Get storage location for function parameter of given data type and zero based index.
-        /// </summary>
-        /// <param name="dataType">The parameter data type.</param>
-        /// <param name="index">The zero based parameter index.</param>
-        /// <returns></returns>
         public List<X64StorageLocation> GetParameterLocations(Function function)
+        {
+            var paramTypes = function.Parameters.ConvertAll<DataType>((p) => p.DataType);
+            return GetParameterLocations(paramTypes);
+        }
+
+        /// <summary>
+        /// Get storage locations for parameter of given function.
+        /// </summary>
+        /// <param name="function">The function.</param>
+        /// <returns>List of locations in the order of the parameters.</returns>
+        private List<X64StorageLocation> GetParameterLocations(List<DataType> parameterTypes)
         {
             _freeParameterRRegisters.Clear();
             _freeParameterRRegisters.Push(X64RegisterGroup.R9);
@@ -155,9 +160,9 @@ namespace erc
             var result = new List<X64StorageLocation>();
 
             var paramOffset = 0;
-            foreach (var parameter in function.Parameters)
+            foreach (var paramType in parameterTypes)
             {
-                if (parameter.DataType.Group == DataTypeGroup.ScalarInteger || parameter.DataType.Kind == DataTypeKind.BOOL || parameter.DataType.Kind == DataTypeKind.POINTER)
+                if (paramType.Group == DataTypeGroup.ScalarInteger || paramType.Kind == DataTypeKind.BOOL || paramType.Kind == DataTypeKind.POINTER)
                 {
                     if (_freeParameterRRegisters.Count > 0)
                     {
