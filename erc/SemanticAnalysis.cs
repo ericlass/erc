@@ -139,7 +139,7 @@ namespace erc
             if (variable == null)
                 throw new Exception("Undeclared variable: '" + item.Identifier + "' at: " + item);
 
-            if (!variable.DataType.IsPointer)
+            if (variable.DataType.Kind != DataTypeKind.POINTER)
                 throw new Exception("Cannot del non-pointer data type: " + variable.DataType + " at: " + item);
 
             //TODO: Check that the pointer is one that was created with "new" and not some other self-created one
@@ -211,7 +211,7 @@ namespace erc
                     break;
 
                 case AstItemKind.PointerDeref:
-                    Assert.Check(variable.DataType.IsPointer, "Can only derefence pointer type, got: " + variable.DataType);
+                    Assert.Check(variable.DataType.Kind == DataTypeKind.POINTER, "Can only derefence pointer type, got: " + variable.DataType);
                     Assert.Check(variable.DataType.ElementType == item.DataType, "Cannot assign value of type " + item.DataType + " to dereferenced pointer type " + variable.DataType);
                     break;
 
@@ -280,7 +280,7 @@ namespace erc
         private DataType CheckIndexAccess(AstItem expression)
         {
             var symbol = _context.RequireSymbol(expression.Identifier);
-            Assert.Check(symbol.DataType.IsPointer, "Index access can only be done on pointer types. Type use: " + symbol.DataType);
+            Assert.Check(symbol.DataType.Kind == DataTypeKind.POINTER, "Index access can only be done on pointer types. Type use: " + symbol.DataType);
 
             var indexExpression = expression.Children[0];
             var indexExpType = CheckExpression(indexExpression);
@@ -303,14 +303,14 @@ namespace erc
 
         private void CheckNewPointer(AstItem expression)
         {
-            if (!expression.DataType.IsPointer)
+            if (expression.DataType.Kind != DataTypeKind.POINTER)
                 throw new Exception("Datatype for new pointer node must be reference! Found in: " + expression);
 
             DataType elementType = expression.DataType.ElementType;
             if (elementType == null)
                 throw new Exception("Pointer type must have element type != null! Found in: " + expression);
 
-            if (elementType.IsPointer)
+            if (elementType.Kind == DataTypeKind.POINTER)
                 throw new Exception("Cannot have pointer to pointer! Found in: " + expression);
 
             var amountValue = expression.Value;
@@ -529,7 +529,7 @@ namespace erc
 
         private object ParseImmediate(string str, DataType dataType)
         {
-            if (dataType == DataType.BOOL)
+            if (dataType.Kind == DataTypeKind.BOOL)
             {
                 if (str == "true")
                     return true;
@@ -546,28 +546,47 @@ namespace erc
         {
             var last = str[str.Length - 1];
 
-            if (dataType == DataType.F32)
+            switch (dataType.Kind)
             {
-                if (last == 'f')
-                    return float.Parse(str.Substring(0, str.Length - 1), CultureInfo.InvariantCulture);
-                else
-                    return float.Parse(str, CultureInfo.InvariantCulture);
-            }
+                case DataTypeKind.I8:
+                    return sbyte.Parse(str);
 
-            if (dataType == DataType.F64)
-            {
-                if (last == 'd')
-                    return double.Parse(str.Substring(0, str.Length - 1), CultureInfo.InvariantCulture);
-                else
-                    return double.Parse(str, CultureInfo.InvariantCulture);
-            }
+                case DataTypeKind.I16:
+                    return short.Parse(str);
 
-            if (dataType == DataType.I64)
-            {
-                return long.Parse(str);
-            }
+                case DataTypeKind.I32:
+                    return int.Parse(str);
 
-            throw new Exception("Unsupported number type: " + dataType + " for value " + str);
+                case DataTypeKind.I64:
+                    return long.Parse(str);
+
+                case DataTypeKind.U8:
+                    return byte.Parse(str);
+
+                case DataTypeKind.U16:
+                    return ushort.Parse(str);
+
+                case DataTypeKind.U32:
+                    return uint.Parse(str);
+
+                case DataTypeKind.U64:
+                    return ulong.Parse(str);
+
+                case DataTypeKind.F32:
+                    if (last == 'f')
+                        return float.Parse(str.Substring(0, str.Length - 1), CultureInfo.InvariantCulture);
+                    else
+                        return float.Parse(str, CultureInfo.InvariantCulture);
+
+                case DataTypeKind.F64:
+                    if (last == 'd')
+                        return double.Parse(str.Substring(0, str.Length - 1), CultureInfo.InvariantCulture);
+                    else
+                        return double.Parse(str, CultureInfo.InvariantCulture);
+
+                default:
+                    throw new Exception("Unsupported number type: " + dataType + " for value " + str);
+            }
         }
 
     }

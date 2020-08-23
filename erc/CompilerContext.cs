@@ -8,7 +8,9 @@ namespace erc
         public string Source { get; set; }
         public List<Token> Tokens { get; set; }
         public AstItem AST { get; set; }
+        public List<IIMObject> IMObjects { get; set; }
         public SimpleLogger Logger { get; } = new SimpleLogger();
+        public string NativeCode { get; set; }
 
         private ProgramScope _programScope = new ProgramScope();
         private FunctionScope _functionScope = null;
@@ -101,6 +103,15 @@ namespace erc
             return _programScope.GetFunction(name);
         }
 
+        public Function RequireFunction(string name)
+        {
+            var result = GetFunction(name);
+            if (result == null)
+                throw new Exception("Undeclared function: " + name);
+
+            return result;
+        }
+
         public Function CurrentFunction
         {
             get
@@ -125,17 +136,6 @@ namespace erc
         public void RemoveFunction(string name)
         {
             _programScope.RemoveFunction(name);
-        }
-
-        public RegisterPool RegisterPool
-        {
-            get
-            {
-                if (_functionScope == null)
-                    throw new Exception("Not in function, cannot get register pool!");
-
-                return _functionScope.RegisterPool;
-            }
         }
 
     }

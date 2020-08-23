@@ -5,6 +5,7 @@ namespace erc
 {
     public partial class CodeGenerator
     {
+        /*
         /// <summary>
         /// Generate the required operations for moving a value from one location to another.
         /// </summary>
@@ -15,7 +16,7 @@ namespace erc
         public static List<Operation> Move(DataType dataType, Operand source, Operand target)
         {
             //Values on stack are not align, so need to distinguish
-            Instruction instruction = null;
+            X64Instruction instruction = null;
             if (source.IsStack() || target.IsStack())
                 instruction = dataType.MoveInstructionUnaligned;
             else
@@ -52,13 +53,13 @@ namespace erc
 
             //TODO: make sure value is aligned on stack. Is this actually possible? How to keep track of the alignment-gaps
 
-            if (dataType == DataType.I64)
+            if (dataType.Kind == DataTypeKind.I64)
             {
-                result.Add(new Operation() { DataType = dataType, Instruction = Instruction.PUSH, Operand1 = source });
+                result.Add(new Operation() { DataType = dataType, Instruction = X64Instruction.PUSH, Operand1 = source });
             }
             else
             {
-                result.Add(new Operation(dataType, Instruction.SUB_IMM, Operand.AsRegister(Register.RSP), Operand.Immediate(dataType.ByteSize)));
+                result.Add(new Operation(dataType, X64Instruction.SUB_IMM, Operand.AsRegister(X64Register.RSP), Operand.Immediate(dataType.ByteSize)));
                 result.Add(new Operation(dataType, dataType.MoveInstructionUnaligned, Operand.StackFromTop(0), source));
             }
 
@@ -78,18 +79,19 @@ namespace erc
 
             var result = new List<Operation>();
 
-            if (dataType == DataType.I64)
+            if (dataType.Kind == DataTypeKind.I64)
             {
-                result.Add(new Operation() { DataType = dataType, Instruction = Instruction.POP, Operand1 = target });
+                result.Add(new Operation() { DataType = dataType, Instruction = X64Instruction.POP, Operand1 = target });
             }
             else
             {
                 result.Add(new Operation(dataType, dataType.MoveInstructionUnaligned, target, Operand.StackFromTop(0)));
-                result.Add(new Operation(dataType, Instruction.ADD_IMM, Operand.AsRegister(Register.RSP), Operand.Immediate(dataType.ByteSize)));
+                result.Add(new Operation(dataType, X64Instruction.ADD_IMM, Operand.AsRegister(X64Register.RSP), Operand.Immediate(dataType.ByteSize)));
             }
 
             return result;
         }
+        */
 
     }
 }

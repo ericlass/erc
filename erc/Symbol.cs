@@ -7,7 +7,7 @@ namespace erc
         public string Name { get; set; }
         public SymbolKind Kind { get; set; }
         public DataType DataType { get; set; }
-        public Operand Location { get; set; }
+        public IMOperand Location { get; set; }
 
         public Symbol(string name, SymbolKind kind, DataType dataType)
         {

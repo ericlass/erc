@@ -12,7 +12,6 @@ namespace erc
         Immediate,
         DirectImmediate,
         Variable,
-        VarScopeEnd,
         Vector,
         Expression,
         BinaryOperator,
@@ -43,7 +42,6 @@ namespace erc
         public IOperator Operator { get; set; } //Operator
         public string SourceLine { get; set; } //Source code line, only filled for statements
         public List<AstItem> Children { get; set; } = new List<AstItem>();
-        public bool DataGenerated { get; set; } = false; //Used to track which immediates have already been generated in the data section
 
         public IBinaryOperator BinaryOperator => (IBinaryOperator)Operator;
         public IUnaryOperator UnaryOperator => (IUnaryOperator)Operator;
@@ -64,9 +62,6 @@ namespace erc
                 case AstItemKind.VarDecl:
                 case AstItemKind.Assignment:
                     return Kind + ": " + DataType + "(" + Children[0] + ")";
-
-                case AstItemKind.VarScopeEnd:
-                    return Kind + ": " + Identifier;
 
                 case AstItemKind.Immediate:
                     return Kind + ": " + DataType + "(" + Value + ")";
@@ -111,7 +106,6 @@ namespace erc
                 case AstItemKind.IndexAccess:
                     return Kind + ": \"" + Identifier + "\" (" + DataType + ")";
 
-                case AstItemKind.VarScopeEnd:
                 case AstItemKind.FunctionCall:
                     return Kind + ": \"" + Identifier + "\"";
 
@@ -249,11 +243,6 @@ namespace erc
                 DataType = dataType,
                 Children = children
             };
-        }
-
-        public static AstItem VarScopeEnd(string varName)
-        {
-            return new AstItem { Kind = AstItemKind.VarScopeEnd, Identifier = varName };
         }
 
         public static AstItem Parameter(string name, DataType dataType)

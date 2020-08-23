@@ -24,7 +24,7 @@ namespace erc
             return operand2Type;
         }
 
-        public List<Operation> Generate(DataType dataType, Operand target, Operand operand1, DataType operand1Type, Operand operand2, DataType operand2Type)
+        public List<IMOperation> Generate(IMOperand target, IMOperand operand1, IMOperand operand2)
         {
             throw new NotImplementedException();
         }

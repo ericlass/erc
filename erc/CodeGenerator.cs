@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Text;
 
 namespace erc
 {
     public partial class CodeGenerator
     {
-        private const string ProcessHeapImmName = "erc_process_heap";
+        /*private const string ProcessHeapImmName = "erc_process_heap";
 
         private const string CodeHeader =
             "format PE64 NX GUI 6.0\n" +
@@ -579,7 +578,7 @@ namespace erc
 
                     var op2Location = GetOperandLocation(result, operand2, item.DataType.TempRegister2);
 
-                    result.AddRange(item.BinaryOperator.Generate(item.DataType, target, op1Location, operand1.DataType, op2Location, operand2.DataType));
+                    //result.AddRange(item.BinaryOperator.Generate(item.DataType, target, op1Location, operand1.DataType, op2Location, operand2.DataType));
 
                     //Free usage of temp register, if required
                     if (op1Location == item.DataType.TempRegister1)
@@ -600,7 +599,9 @@ namespace erc
                 {
                     var operand = terms[i - 1];
                     var opLocation = GetOperandLocation(result, operand, item.DataType.TempRegister1);
-                    result.AddRange(item.UnaryOperator.Generate(item.DataType, target, opLocation));
+
+                    //result.AddRange(item.UnaryOperator.Generate(item.DataType, target, opLocation));
+
                     result.Add(new Operation(item.DataType, Instruction.V_PUSH, target));
 
                     //Remove the operand from the expression, do not remove the current operator
@@ -930,6 +931,6 @@ namespace erc
 
             return vector.Children.TrueForAll((i) => i.Kind == AstItemKind.Immediate);
         }
-
+        */
     }
 }

@@ -13,8 +13,6 @@ namespace erc
     {
         private Dictionary<string, Symbol> _parameters = new Dictionary<string, Symbol>();
 
-        public RegisterPool RegisterPool { get; } = new RegisterPool();
-
         public FunctionScope(Function function)
         {
             Function = function;

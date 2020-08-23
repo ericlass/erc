@@ -8,21 +8,10 @@ namespace erc
         public string Figure => "*";
         public int Precedence => 23;
 
-        public List<Operation> Generate(DataType dataType, Operand target, Operand operand)
+        public List<IMOperation> Generate(IMOperand target, IMOperand operand)
         {
-            var result = new List<Operation>();
-
-            var opLocation = operand;
-            if (operand.Kind != OperandKind.Register)
-            {
-                //Need to use DataType.U64 here because actual pointer type is not available here anymore
-                opLocation = DataType.U64.Accumulator;
-                result.Add(new Operation(DataType.U64, Instruction.MOV, opLocation, operand));
-            }
-
-            result.AddRange(CodeGenerator.Move(dataType, Operand.HeapAddressInRegister(opLocation.Register), target));
-
-            return result;
+            var reference = IMOperand.Reference(operand.DataType, operand);
+            return IMOperation.Mov(target, reference).AsList;
         }
 
         public DataType GetReturnType(DataType operandType)
@@ -32,7 +21,7 @@ namespace erc
 
         public void ValidateOperandType(DataType operandType)
         {
-            if (!operandType.IsPointer)
+            if (operandType.Kind != DataTypeKind.POINTER)
                 throw new Exception("Can only dereference pointers with '*', given: " + operandType);
         }
     }

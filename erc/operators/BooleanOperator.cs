@@ -5,12 +5,12 @@ namespace erc
 {
     public class BooleanOperator : IBinaryOperator
     {
-        private Instruction _instruction;
+        private IMInstruction _instruction;
 
         public string Figure { get; }
         public int Precedence { get; }
 
-        public BooleanOperator(string figure, Instruction instruction, int precedence)
+        public BooleanOperator(string figure, IMInstruction instruction, int precedence)
         {
             _instruction = instruction;
             Figure = figure;
@@ -31,28 +31,9 @@ namespace erc
             return DataType.BOOL;
         }
 
-        public List<Operation> Generate(DataType dataType, Operand target, Operand operand1, DataType operand1Type, Operand operand2, DataType operand2Type)
+        public List<IMOperation> Generate(IMOperand target, IMOperand operand1, IMOperand operand2)
         {
-            //General contract: target MUST be a register
-            if (target.Kind != OperandKind.Register)
-                throw new Exception("Target location must be a register! Given: " + target);
-
-            var result = new List<Operation>();
-
-            //Move operand1 to target
-            result.AddRange(CodeGenerator.Move(dataType, operand1, target));
-
-            //Move operand2 to register, if required
-            var op2Location = operand2;
-            if (op2Location.Kind != OperandKind.Register)
-            {
-                op2Location = dataType.TempRegister1;
-                result.AddRange(CodeGenerator.Move(dataType, operand2, op2Location));
-            }
-
-            result.Add(new Operation(dataType, _instruction, target, op2Location));
-
-            return result;
+            return new IMOperation(_instruction, target, operand1, operand2).AsList;
         }
     }
 

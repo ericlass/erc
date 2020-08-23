@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace erc
 {
@@ -17,9 +14,9 @@ namespace erc
             Precedence = precedence;
         }
 
-        public List<Operation> Generate(DataType dataType, Operand target, Operand operand1, DataType operand1Type, Operand operand2, DataType operand2Type)
+        public List<IMOperation> Generate(IMOperand target, IMOperand operand1, IMOperand operand2)
         {
-            throw new NotImplementedException();
+            return IMOperation.Nop().AsList;
         }
 
         public DataType GetReturnType(DataType operand1Type, DataType operand2Type)
