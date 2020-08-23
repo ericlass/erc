@@ -165,15 +165,15 @@ namespace erc
                         //Also need to pop MM register to keep param position correct!
                         _freeParameterMMRegisters.Pop();
 
-                        result.Add(X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegister(group, parameter.DataType)));
+                        result.Add(X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegister(group, paramType)));
                     }
                     else
                     {
                         result.Add(X64StorageLocation.StackFromBase(paramOffset));
-                        paramOffset += parameter.DataType.ByteSize;
+                        paramOffset += paramType.ByteSize;
                     }
                 }
-                else if (parameter.DataType == DataType.F32 || parameter.DataType == DataType.F64)
+                else if (paramType == DataType.F32 || paramType == DataType.F64)
                 {
                     if (_freeParameterMMRegisters.Count > 0)
                     {
@@ -181,41 +181,33 @@ namespace erc
                         //Also need to pop R register to keep param position correct!
                         _freeParameterRRegisters.Pop();
 
-                        result.Add(X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegister(group, parameter.DataType)));
+                        result.Add(X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegister(group, paramType)));
                     }
                     else
                     {
                         result.Add(X64StorageLocation.StackFromBase(paramOffset));
-                        paramOffset += parameter.DataType.ByteSize;
+                        paramOffset += paramType.ByteSize;
                     }
                 }
-                else if (parameter.DataType.IsVector)
+                else if (paramType.IsVector)
                 {
-                    if (function.IsExtern)
+                    //This differs from Win64 calling convention. The register are there, why not use them?
+                    if (_freeParameterMMRegisters.Count > 0)
                     {
-                        //Win64, put vector in memory and pass pointer at runtime
-                        throw new NotImplementedException();
+                        var group = _freeParameterMMRegisters.Pop();
+                        //Also need to pop R register to keep param position correct!
+                        _freeParameterRRegisters.Pop();
+
+                        result.Add(X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegister(group, paramType)));
                     }
                     else
                     {
-                        //This differs from Win64 calling convention. The register are there, why not use them?
-                        if (_freeParameterMMRegisters.Count > 0)
-                        {
-                            var group = _freeParameterMMRegisters.Pop();
-                            //Also need to pop R register to keep param position correct!
-                            _freeParameterRRegisters.Pop();
-
-                            result.Add(X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegister(group, parameter.DataType)));
-                        }
-                        else
-                        {
-                            result.Add(X64StorageLocation.StackFromBase(paramOffset));
-                            paramOffset += parameter.DataType.ByteSize;
-                        }
+                        result.Add(X64StorageLocation.StackFromBase(paramOffset));
+                        paramOffset += paramType.ByteSize;
                     }
                 }
                 else
-                    throw new Exception("Unknown data type: " + parameter.DataType);
+                    throw new Exception("Unknown data type: " + paramType);
             }
 
             return result;
@@ -223,8 +215,11 @@ namespace erc
 
         public X64StorageLocation GetFunctionReturnLocation(Function function)
         {
-            DataType returnType = function.ReturnType;
+            return GetFunctionReturnLocation(function.ReturnType);
+        }
 
+        private X64StorageLocation GetFunctionReturnLocation(DataType returnType)
+        {
             if (returnType.Group == DataTypeGroup.ScalarInteger)
                 return X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegister(X64RegisterGroup.A, returnType));
             else if (returnType.Kind == DataTypeKind.POINTER)
