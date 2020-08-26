@@ -20,5 +20,14 @@ namespace erc
 
             return result;
         }
+
+        public Token PopExpected(TokenKind expected1, TokenKind expected2)
+        {
+            var result = Pop();
+            if (result.Kind != expected1 && result.Kind != expected2)
+                throw new Exception("Expected '" + expected1 + "' or '" + expected2 + "' token, got: " + result);
+
+            return result;
+        }
     }
 }

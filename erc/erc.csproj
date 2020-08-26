@@ -45,8 +45,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assert.cs" />
-    <Compile Include="DataTypeGroup.cs" />
-    <Compile Include="DataTypeKind.cs" />
+    <Compile Include="datatypes\DataTypeGroup.cs" />
+    <Compile Include="datatypes\DataTypeKind.cs" />
+    <Compile Include="datatypes\EnumElement.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="intermediate\IIMObject.cs" />
     <Compile Include="intermediate\IMCodeGenerator.cs" />
@@ -72,8 +73,6 @@
     <Compile Include="operators\BooleanInversionOperator.cs" />
     <Compile Include="operators\BooleanOperator.cs" />
     <Compile Include="operators\CastingOperator.cs" />
-    <Compile Include="CodeGenerator.cs" />
-    <Compile Include="CodeGeneratorMovement.cs" />
     <Compile Include="CompilerContext.cs" />
     <Compile Include="operators\DivisionOperator.cs" />
     <Compile Include="operators\EqualityOperator.cs" />
@@ -92,7 +91,7 @@
     <Compile Include="operators\RelationalOperator.cs" />
     <Compile Include="operators\SubtractionOperator.cs" />
     <Compile Include="operators\UnaryOperator.cs" />
-    <Compile Include="DataType.cs" />
+    <Compile Include="datatypes\DataType.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="ProgramScope.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

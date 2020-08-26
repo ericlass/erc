@@ -11,6 +11,7 @@ namespace erc
         Other,
         ScalarInteger,
         ScalarFloat,
-        VectorFloat
+        VectorFloat,
+        Custom
     }
 }

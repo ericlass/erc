@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Reflection;
 
 namespace erc
@@ -16,6 +15,8 @@ namespace erc
         public int NumElements { get; private set; }
         public DataType ElementType { get; private set; }
         public DataTypeGroup Group { get; private set; }
+        public string CustomTypeName { get; private set; }
+        public List<EnumElement> EnumElements { get; private set; }
 
         public string Name 
         { 
@@ -23,6 +24,8 @@ namespace erc
             {
                 if (Kind == DataTypeKind.POINTER)
                     return ElementType.Name + "*";
+                else if (Kind == DataTypeKind.ENUM)
+                    return CustomTypeName;
 
                 return Kind.ToString().ToLower();
             }
@@ -263,6 +266,25 @@ namespace erc
                 ElementType = subType,
                 NumElements = 1,
                 Group = DataTypeGroup.ScalarInteger,
+            };
+
+            DataType.GetAllValues().Add(newType);
+            return newType;
+        }
+
+        public static DataType Enum(string typeName, List<EnumElement> elements)
+        {
+            var newType = new DataType
+            {
+                Kind = DataTypeKind.ENUM,
+                ByteSize = 4,
+                IsVector = false,
+                IsSigned = false,
+                ElementType = U32,
+                NumElements = elements.Count,
+                Group = DataTypeGroup.Custom,
+                CustomTypeName = typeName,
+                EnumElements = elements
             };
 
             DataType.GetAllValues().Add(newType);

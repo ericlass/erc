@@ -16,35 +16,84 @@ namespace erc
         {
             _context = context;
 
-            AddAllFunctionsToScope(_context.AST);
+            AddAllFunctionsAndTypesToScope(_context.AST);
             Check(_context.AST);
         }
 
-        private void AddAllFunctionsToScope(AstItem item)
+        private void AddAllFunctionsAndTypesToScope(AstItem item)
         {
-            foreach (var funcItem in item.Children)
+            foreach (var topItem in item.Children)
             {
-                if (funcItem.Kind != AstItemKind.FunctionDecl && funcItem.Kind != AstItemKind.ExternFunctionDecl)
-                    throw new Exception("Expected function declaration, got " + funcItem);
+                if (topItem.Kind == AstItemKind.FunctionDecl || topItem.Kind == AstItemKind.ExternFunctionDecl)
+                {
+                    string externalName = null;
+                    if (topItem.Kind == AstItemKind.ExternFunctionDecl)
+                        externalName = topItem.Value2 as string;
 
-                string externalName = null;
-                if (funcItem.Kind == AstItemKind.ExternFunctionDecl)
-                    externalName = funcItem.Value2 as string;
+                    var parameters = topItem.Children[0].Children;
+                    var funcParams = parameters.ConvertAll((p) => new Symbol(p.Identifier, SymbolKind.Parameter, p.DataType));
+                    var function = new Function(topItem.Identifier, topItem.DataType, funcParams, externalName);
+                    function.IsExtern = topItem.Kind == AstItemKind.ExternFunctionDecl;
+                    //This fails if function with same name was already declared
+                    _context.AddFunction(function);
+                }
+                else if (topItem.Kind == AstItemKind.EnumDecl)
+                {
+                    var enumName = topItem.Identifier;
 
-                var parameters = funcItem.Children[0].Children;
-                var funcParams = parameters.ConvertAll((p) => new Symbol(p.Identifier, SymbolKind.Parameter, p.DataType));
-                var function = new Function(funcItem.Identifier, funcItem.DataType, funcParams, externalName);
-                function.IsExtern = funcItem.Kind == AstItemKind.ExternFunctionDecl;
-                //This fails if function with same name was already declared
-                _context.AddFunction(function);
+                    var existing = DataType.FindByName(enumName);
+                    if (existing != null)
+                        throw new Exception("Enum with name '" + enumName + "' already declared!");
+
+                    var elements = topItem.Children.ConvertAll((e) => new EnumElement(e.Identifier, (int)e.Value));
+                    DataType.Enum(enumName, elements);
+                }
             }
         }
 
         private void Check(AstItem item)
         {
-            foreach (var function in item.Children)
+            foreach (var child in item.Children)
             {
-                CheckFunction(function);
+                switch (child.Kind)
+                {
+                    case AstItemKind.FunctionDecl:
+                    case AstItemKind.ExternFunctionDecl:
+                        CheckFunction(child);
+                        break;
+
+                    case AstItemKind.EnumDecl:
+                        CheckEnumDecl(child);
+                        break;
+
+                    default:
+                        throw new Exception("Unexpected AST item at top level: " + child);
+                }                    
+            }
+        }
+
+        private void CheckEnumDecl(AstItem item)
+        {
+            var enumName = item.Identifier;
+            var enumType = DataType.FindByName(enumName);
+            Assert.Check(enumType != null, "Enum type not found: " + enumName);
+            Assert.Check(enumType.Kind == DataTypeKind.ENUM, "Data type is not a enum: " + enumName);
+            Assert.Check(enumType.EnumElements != null && enumType.EnumElements.Count > 0, "Enum does not have any elements: " + enumName);
+
+            //Check for duplicate element names (ignore case) and indexes
+            var elementSet = new HashSet<string>();
+            var indexSet = new HashSet<int>();
+            foreach (var element in enumType.EnumElements)
+            {
+                var lowerName = element.Name.ToLower();
+                if (elementSet.Contains(lowerName))
+                    throw new Exception("Duplicate enum element name " + element.Name + " in enum " + enumName);
+
+                if (indexSet.Contains(element.Index))
+                    throw new Exception("Duplicate enum element index " + element.Index + " for element " + element.Name + " in enum " + enumName);
+
+                elementSet.Add(lowerName);
+                indexSet.Add(element.Index);
             }
         }
 

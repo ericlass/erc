@@ -20,6 +20,7 @@ namespace erc
         VEC2D,
         VEC4D,
         BOOL,
-        POINTER
+        POINTER,
+        ENUM
     }
 }

@@ -31,6 +31,7 @@ namespace erc
             _excluded.Add(X64Register.XMM0.Group);
             _excluded.Add(X64Register.XMM1.Group);
             _excluded.Add(X64Register.XMM2.Group);
+
             _excluded.Add(X64Register.XMM3.Group);
 
             //Accumulator and operand registers

@@ -29,7 +29,9 @@ namespace erc
         IndexAccess,
         UnaryOperator,
         // Used as target for assignments.
-        PointerDeref
+        PointerDeref,
+        EnumDecl,
+        EnumElement
     }
 
     public class AstItem
@@ -333,6 +335,19 @@ namespace erc
         {
             //Data type is set by semantic analysis
             return new AstItem { Kind = AstItemKind.IndexAccess, Identifier = varName, Children = { indexExpression } };
+        }
+
+        public static AstItem EnumElement(string elementName, int index)
+        {
+            return new AstItem { Kind = AstItemKind.EnumElement, Identifier = elementName, Value = index };
+        }
+
+        public static AstItem EnumDecl(string enumName, List<AstItem> enumElements)
+        {
+            if (!enumElements.TrueForAll((e) => e.Kind == AstItemKind.EnumElement))
+                throw new Exception("All enum element AST items must be of kind EnumElement!");
+
+            return new AstItem { Kind = AstItemKind.EnumDecl, Identifier = enumName, Children = enumElements };
         }
 
     }

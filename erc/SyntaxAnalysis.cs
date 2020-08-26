@@ -29,6 +29,10 @@ namespace erc
                         result.Add(ReadFuncDecl(tokens));
                         break;
 
+                    case TokenKind.Enum:
+                        result.Add(ReadEnumDecl(tokens));
+                        break;
+
                     default:
                         throw new Exception("Unexpected token. Expected Fn, found: " + token);
                 }
@@ -36,6 +40,51 @@ namespace erc
                 token = tokens.Current();
             }
             return result;
+        }
+
+        private AstItem ReadEnumDecl(TokenIterator tokens)
+        {
+            //Skip "enum"
+            tokens.Pop();
+
+            var enumName = tokens.PopExpected(TokenKind.Word).Value;
+            
+            tokens.PopExpected(TokenKind.CurlyBracketOpen);
+
+            var currentIndex = 0;
+            var elements = new List<AstItem>();
+            var current = tokens.Current();
+            while (current.Kind != TokenKind.CurlyBracketClose)
+            {
+                var elementName = tokens.PopExpected(TokenKind.Word).Value;
+                var next = tokens.Pop();
+
+                switch (next.Kind)
+                {
+                    case TokenKind.AssigmnentOperator:
+                        var indexStr = tokens.PopExpected(TokenKind.Number).Value;
+                        var index = int.Parse(indexStr);
+                        if (index < currentIndex)
+                            throw new Exception("Invalid enum element index for " + enumName + "." + elementName + "! Must be >= " + currentIndex);
+                        currentIndex = index;
+                        next = tokens.PopExpected(TokenKind.Comma, TokenKind.CurlyBracketClose);
+                        break;
+
+                    case TokenKind.Comma:
+                    case TokenKind.CurlyBracketClose:
+                        //Nothing to do here, but also no error
+                        break;
+
+                    default:
+                        throw new Exception("Unexpected token in enum declaration: " + next);
+                }
+
+                elements.Add(AstItem.EnumElement(elementName, currentIndex));
+                currentIndex += 1;
+                current = next;
+            }
+
+            return AstItem.EnumDecl(enumName, elements);
         }
 
         private AstItem ReadFuncDecl(TokenIterator tokens)

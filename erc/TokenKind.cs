@@ -32,6 +32,7 @@ namespace erc
         String,
         New,
         Del,
-        Comment
+        Comment,
+        Enum
     }
 }

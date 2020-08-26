@@ -21,9 +21,22 @@ namespace erc
             _context = context;
 
             var codeLines = new List<IIMObject>();
-            foreach (var function in context.AST.Children)
+            foreach (var item in context.AST.Children)
             {
-                codeLines.Add(GenerateFunction(function));
+                switch (item.Kind)
+                {
+                    case AstItemKind.FunctionDecl:
+                    case AstItemKind.ExternFunctionDecl:
+                        codeLines.Add(GenerateFunction(item));
+                        break;
+                    
+                    case AstItemKind.EnumDecl:
+                        break;
+                    
+                    default:
+                        throw new Exception("Unexpected AST item on top level: " + item);
+                }
+
                 _tempLocalCounter = 0;
             }
 

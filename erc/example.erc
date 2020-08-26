@@ -3,6 +3,13 @@ fn main() {
 	boolean(true);
 }
 
+enum TestType {
+	None,
+	Some,
+	Never = 7,
+	Ultimate = 8
+}
+
 fn expressions() {
 	//Testing single line comment
 	
