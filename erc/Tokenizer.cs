@@ -42,7 +42,6 @@ namespace erc
             ['}'] = TokenKind.CurlyBracketClose,
             ['['] = TokenKind.SquareBracketOpen,
             [']'] = TokenKind.SquareBracketClose,
-            [':'] = TokenKind.TypeOperator,
             [','] = TokenKind.Comma
         };
 
@@ -100,6 +99,12 @@ namespace erc
             {
                 value = c.ToString();
                 type = TokenKind.AssigmnentOperator;
+                iterator.Step();
+            }
+            else if (c == ':' && iterator.Next() != ':')
+            {
+                value = c.ToString();
+                type = TokenKind.TypeOperator;
                 iterator.Step();
             }
             else if (_specialCharacterTypes.ContainsKey(c))

@@ -31,7 +31,9 @@ namespace erc
         // Used as target for assignments.
         PointerDeref,
         EnumDecl,
-        EnumElement
+        EnumElement,
+        Identifier,
+        Type
     }
 
     public class AstItem
@@ -92,6 +94,12 @@ namespace erc
                 case AstItemKind.ExternFunctionDecl:
                     return Kind + ": " + Identifier + "(" + String.Join(", ", Children) + ")";
 
+                case AstItemKind.Type:
+                    return Kind + ": " + DataType.ElementType.Name;
+
+                case AstItemKind.Identifier:
+                    return Kind + ": " + Identifier;
+
                 default:
                     return Kind.ToString();
             }
@@ -123,6 +131,12 @@ namespace erc
                 case AstItemKind.BinaryOperator:
                 case AstItemKind.UnaryOperator:
                     return Kind + ": " + this.Operator.Figure;
+
+                case AstItemKind.Type:
+                    return Kind + ": (" + DataType.ElementType.Name + ")";
+
+                case AstItemKind.Identifier:
+                    return Kind + ": " + Identifier;
 
                 default:
                     return Kind.ToString();
@@ -348,6 +362,16 @@ namespace erc
                 throw new Exception("All enum element AST items must be of kind EnumElement!");
 
             return new AstItem { Kind = AstItemKind.EnumDecl, Identifier = enumName, Children = enumElements };
+        }
+
+        public static AstItem AsIdentifier(string identifier)
+        {
+            return new AstItem { Kind = AstItemKind.Identifier, Identifier = identifier };
+        }
+
+        public static AstItem AsType(DataType dataType)
+        {
+            return new AstItem { Kind = AstItemKind.Type, DataType = dataType };
         }
 
     }

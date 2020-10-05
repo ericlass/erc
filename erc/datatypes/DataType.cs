@@ -265,7 +265,7 @@ namespace erc
                 IsSigned = false,
                 ElementType = subType,
                 NumElements = 1,
-                Group = DataTypeGroup.ScalarInteger,
+                Group = DataTypeGroup.ScalarInteger
             };
 
             DataType.GetAllValues().Add(newType);
@@ -288,6 +288,23 @@ namespace erc
             };
 
             DataType.GetAllValues().Add(newType);
+            return newType;
+        }
+
+        public static DataType Type(DataType subType)
+        {
+            var newType = new DataType
+            {
+                Kind = DataTypeKind.TYPE,
+                ByteSize = 1,
+                IsVector = false,
+                IsSigned = false,
+                ElementType = subType,
+                NumElements = 1,
+                Group = DataTypeGroup.Other
+            };
+
+            //Do not add these to the list. They are no use there.
             return newType;
         }
 

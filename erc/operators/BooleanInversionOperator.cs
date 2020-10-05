@@ -13,15 +13,15 @@ namespace erc
             return IMOperation.Not(target, operand).AsList;
         }
 
-        public DataType GetReturnType(DataType operandType)
+        public DataType GetReturnType(AstItem operand)
         {
             return DataType.BOOL;
         }
 
-        public void ValidateOperandType(DataType operandType)
+        public void ValidateOperand(AstItem operand)
         {
-            if (operandType != DataType.BOOL)
-                throw new Exception("! operator can only be applied to bool, got: " + operandType);
+            if (operand.DataType != DataType.BOOL)
+                throw new Exception("! operator can only be applied to bool, got: " + operand.DataType);
         }
     }
 }

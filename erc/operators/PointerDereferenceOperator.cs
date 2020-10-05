@@ -14,15 +14,15 @@ namespace erc
             return IMOperation.Mov(target, reference).AsList;
         }
 
-        public DataType GetReturnType(DataType operandType)
+        public DataType GetReturnType(AstItem operand)
         {
-            return operandType.ElementType;
+            return operand.DataType.ElementType;
         }
 
-        public void ValidateOperandType(DataType operandType)
+        public void ValidateOperand(AstItem operand)
         {
-            if (operandType.Kind != DataTypeKind.POINTER)
-                throw new Exception("Can only dereference pointers with '*', given: " + operandType);
+            if (operand.DataType.Kind != DataTypeKind.POINTER)
+                throw new Exception("Can only dereference pointers with '*', given: " + operand.DataType);
         }
     }
 }

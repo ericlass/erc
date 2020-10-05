@@ -417,7 +417,7 @@ namespace erc
                     var target = targetLocation;
                     var isLastOperation = terms.Count == 3;
                     if (!isLastOperation)
-                        target = NewTempLocal(item.BinaryOperator.GetReturnType(operand1.DataType, operand2.DataType));
+                        target = NewTempLocal(item.BinaryOperator.GetReturnType(operand1, operand2));
 
                     IMOperand op1Location = null;
                     if (operand1.Kind == AstItemKind.UnaryOperator || operand1.Kind == AstItemKind.BinaryOperator)
@@ -457,7 +457,7 @@ namespace erc
                     var target = targetLocation;
                     var isLastOperation = terms.Count == 2;
                     if (!isLastOperation)
-                        target = NewTempLocal(item.UnaryOperator.GetReturnType(operand.DataType));
+                        target = NewTempLocal(item.UnaryOperator.GetReturnType(operand));
 
                     result.AddRange(item.UnaryOperator.Generate(target, opLocation));
                     term.Location = target;
@@ -511,6 +511,11 @@ namespace erc
             {
                 result = NewTempLocal(operand.DataType);
                 output.Add(IMOperation.Pop(result));
+            }
+            else if (operand.Kind == AstItemKind.Type || operand.Kind == AstItemKind.Identifier)
+            {
+                result = IMOperand.Identifier(operand.Identifier);
+                result.DataType = operand.DataType;
             }
 
             return result;

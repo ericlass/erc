@@ -33,6 +33,7 @@ namespace erc
         New,
         Del,
         Comment,
-        Enum
+        Enum,
+        DeferredIdentifier
     }
 }

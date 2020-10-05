@@ -19,12 +19,12 @@ namespace erc
             return IMOperation.Nop().AsList;
         }
 
-        public DataType GetReturnType(DataType operand1Type, DataType operand2Type)
+        public DataType GetReturnType(AstItem operand1, AstItem operand2)
         {
             return DataType.VOID;
         }
 
-        public void ValidateOperandTypes(DataType operand1Type, DataType operand2Type)
+        public void ValidateOperands(AstItem operand1, AstItem operand2)
         {
         }
     }

@@ -16,9 +16,12 @@ namespace erc
             _setInstruction = setInstruction;
         }
 
-        public void ValidateOperandTypes(DataType operand1Type, DataType operand2Type)
+        public void ValidateOperands(AstItem operand1, AstItem operand2)
         {
-            if (operand1Type != operand2Type)
+            var operand1Type = operand1.DataType;
+            var operand2Type = operand2.DataType;
+
+            if (operand1Type.Kind != operand2Type.Kind)
                 throw new Exception("Data types of both operands must match for relational operator '" + Figure + "'! " + operand1Type + " != " + operand2Type);
 
             //Can only compare scalar values
@@ -26,7 +29,7 @@ namespace erc
                 throw new Exception("Datatype not supported for relational operator '" + Figure + "': " + operand1Type);
         }
 
-        public DataType GetReturnType(DataType operand1Type, DataType operand2Type)
+        public DataType GetReturnType(AstItem operand1, AstItem operand2)
         {
             return DataType.BOOL;
         }

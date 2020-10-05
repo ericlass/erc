@@ -5,8 +5,8 @@ namespace erc
 {
     public interface IUnaryOperator : IOperator
     {
-        void ValidateOperandType(DataType operandType);
-        DataType GetReturnType(DataType operandType);
+        void ValidateOperand(AstItem operand);
+        DataType GetReturnType(AstItem operand);
         List<IMOperation> Generate(IMOperand target, IMOperand operand);
     }
 

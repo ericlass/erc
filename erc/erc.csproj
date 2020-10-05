@@ -75,6 +75,7 @@
     <Compile Include="operators\CastingOperator.cs" />
     <Compile Include="CompilerContext.cs" />
     <Compile Include="operators\DivisionOperator.cs" />
+    <Compile Include="operators\StaticAccessOperator.cs" />
     <Compile Include="operators\EqualityOperator.cs" />
     <Compile Include="Function.cs" />
     <Compile Include="FunctionScope.cs" />

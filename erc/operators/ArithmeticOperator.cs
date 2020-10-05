@@ -25,18 +25,21 @@ namespace erc
         public abstract string Figure { get; }
         public abstract int Precedence { get; }
 
-        public void ValidateOperandTypes(DataType operand1Type, DataType operand2Type)
+        public void ValidateOperands(AstItem operand1, AstItem operand2)
         {
-            if (operand1Type != operand2Type)
+            var operand1Type = operand1.DataType;
+            var operand2Type = operand2.DataType;
+
+            if (operand1Type.Kind != operand2Type.Kind)
                 throw new Exception("Data types of both operands must match for arithmetic operator! " + operand1Type + " != " + operand2Type);
 
             if (!_supportedDataTypes.Contains(operand1Type.Kind))
                 throw new Exception("Datatype not supported for arithmetic operator: " + operand1Type);
         }        
 
-        public DataType GetReturnType(DataType operand1Type, DataType operand2Type)
+        public DataType GetReturnType(AstItem operand1, AstItem operand2)
         {
-            return operand1Type;
+            return operand1.DataType;
         }
 
         public abstract List<IMOperation> Generate(IMOperand target, IMOperand operand1, IMOperand operand2);
