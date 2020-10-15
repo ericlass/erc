@@ -34,7 +34,7 @@ namespace erc
                 throw new Exception("Data types of both operands must match for arithmetic operator! " + operand1Type + " != " + operand2Type);
 
             if (!_supportedDataTypes.Contains(operand1Type.Kind))
-                throw new Exception("Datatype not supported for arithmetic operator: " + operand1Type);
+                throw new Exception("Datatype not supported for arithmetic operator '" + Figure + "': " + operand1Type);
         }        
 
         public DataType GetReturnType(AstItem operand1, AstItem operand2)

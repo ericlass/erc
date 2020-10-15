@@ -45,6 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assert.cs" />
+    <Compile Include="AstOptimizer.cs" />
     <Compile Include="datatypes\DataTypeGroup.cs" />
     <Compile Include="datatypes\DataTypeKind.cs" />
     <Compile Include="datatypes\EnumElement.cs" />

@@ -10,6 +10,11 @@ enum TestType {
 	Ultimate = 8
 }
 
+enum TestType2 {
+	Some,
+	Ding
+}
+
 fn enums() {
 	let test = TestType::Some;
 	test = TestType::Never;

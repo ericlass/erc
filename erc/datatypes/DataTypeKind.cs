@@ -5,7 +5,6 @@ namespace erc
     public enum DataTypeKind
     {
         VOID,
-        TYPE,
         I8,
         I16,
         I32,

@@ -295,7 +295,6 @@ namespace erc
             switch (expression.Kind)
             {
                 case AstItemKind.Immediate:
-                case AstItemKind.DirectImmediate:
                     IMOperand source;
                     if (expression.DataType.Kind == DataTypeKind.BOOL)
                         source = ((bool)expression.Value) ? IMOperand.BOOL_TRUE : IMOperand.BOOL_FALSE;
@@ -324,9 +323,10 @@ namespace erc
                     return GenerateIndexAccess(expression, targetLocation);
 
                 case AstItemKind.Expression:
-                    var ops = GenerateExpressionOperations(expression.Children, targetLocation);
-                    //CollapsePushPop(ops);
-                    return ops;
+                    if (expression.Children.Count == 1)
+                        return GenerateExpression(expression.Children[0], targetLocation);
+                    else
+                        return GenerateExpressionOperations(expression.Children, targetLocation);
 
                 default:
                     return new List<IMOperation>();
@@ -543,82 +543,6 @@ namespace erc
 
             operations.Add(IMOperation.GVec(targetLocation, valueLocations));
             return operations;
-        }
-
-        private void CollapsePushPop(List<IMOperation> ops)
-        {
-            for (int i = 0; i < ops.Count; i++)
-            {
-                var popOp = ops[i];
-                if (popOp.Instruction == IMInstruction.POP)
-                {
-                    for (int j = i; j >= 0; j--)
-                    {
-                        var pushOp = ops[j];
-                        if (pushOp.Instruction == IMInstruction.PUSH)
-                        {
-                            var source = pushOp.Operands[0];
-                            var target = popOp.Operands[0];
-                            if (source != target)
-                            {
-                                //Check if source location has changed between the push and pop
-                                var hasChanged = false;
-                                for (int k = j + 1; k < i; k++)
-                                {
-                                    var checkOp = ops[k];
-                                    if (checkOp.Instruction != IMInstruction.NOP && checkOp.Instruction != IMInstruction.POP)
-                                    {
-                                        if (checkOp.Operands[0] == source)
-                                        {
-                                            hasChanged = true;
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                if (!hasChanged)
-                                {
-                                    //Transform pop to direct move in-place
-                                    popOp.Instruction = IMInstruction.MOV;
-
-                                    popOp.Operands[0] = target;
-                                    popOp.Operands.Add(source);
-
-                                    //Make push a nop so it is removed below
-                                    pushOp.Instruction = IMInstruction.NOP;
-                                }
-                            }
-                            else
-                            {
-                                //Check if source location has changed between the push and pop
-                                var hasChanged = false;
-                                for (int k = j + 1; k < i; k++)
-                                {
-                                    var checkOp = ops[k];
-                                    if (checkOp.Instruction != IMInstruction.NOP && checkOp.Instruction != IMInstruction.POP)
-                                    {
-                                        if (checkOp.Operands[0] == source)
-                                        {
-                                            hasChanged = true;
-                                            break;
-                                        }
-                                    }
-                                }
-
-                                //If not, push/pop can simply be removed.
-                                if (!hasChanged)
-                                {
-                                    pushOp.Instruction = IMInstruction.NOP;
-                                    popOp.Instruction = IMInstruction.NOP;
-                                }
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
-
-            ops.RemoveAll((a) => a.Instruction == IMInstruction.NOP);
         }
 
     }

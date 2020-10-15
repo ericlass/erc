@@ -7,6 +7,7 @@ namespace erc
     public class SemanticAnalysis
     {
         private CompilerContext _context;
+        private AstOptimizer _optimizer = new AstOptimizer();
 
         public SemanticAnalysis()
         {
@@ -18,6 +19,7 @@ namespace erc
 
             AddAllFunctionsAndTypesToScope(_context.AST);
             Check(_context.AST);
+            _optimizer.Optimize(_context.AST);
         }
 
         private void AddAllFunctionsAndTypesToScope(AstItem item)
@@ -333,7 +335,7 @@ namespace erc
             if (dataType != null)
             {
                 //Item is a data type reference
-                expression.DataType = DataType.Type(dataType);
+                expression.DataType = dataType;
                 expression.Kind = AstItemKind.Type;
                 return;
             }

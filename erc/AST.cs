@@ -10,7 +10,6 @@ namespace erc
         VarDecl,
         Assignment,
         Immediate,
-        DirectImmediate,
         Variable,
         Vector,
         Expression,
@@ -225,14 +224,6 @@ namespace erc
         {
             var result = new AstItem(AstItemKind.Immediate);
             result.Value = value;
-            return result;
-        }
-
-        public static AstItem DirectImmediate(long value)
-        {
-            var result = new AstItem(AstItemKind.DirectImmediate);
-            result.Value = value;
-            result.DataType = DataType.U64;
             return result;
         }
 
