@@ -171,6 +171,10 @@ namespace erc
             {
                 CheckIfStatement(item);
             }
+            else if (item.Kind == AstItemKind.For)
+            {
+                CheckForLoop(item);
+            }
             else if (item.Kind == AstItemKind.DelPointer)
             {
                 CheckPointerDeletion(item);
@@ -201,10 +205,7 @@ namespace erc
             _context.EnterBlock();
 
             var statements = item.Children[1].Children;
-            foreach (var statement in statements)
-            {
-                CheckStatement(statement);
-            }
+            statements.ForEach((s) => CheckStatement(s));
 
             _context.LeaveBlock();
 
@@ -213,14 +214,30 @@ namespace erc
             if (elseStatements != null)
             {
                 _context.EnterBlock();
-
-                foreach (var statement in elseStatements.Children)
-                {
-                    CheckStatement(statement);
-                }
-
+                elseStatements.Children.ForEach((s) => CheckStatement(s));
                 _context.LeaveBlock();
             }
+        }
+
+        private void CheckForLoop(AstItem item)
+        {
+            var varName = item.Identifier;
+            var startExpression = item.Children[0];
+            var endExpression = item.Children[1];
+            var statements = item.Children[2];
+
+            CheckExpression(startExpression);
+            Assert.Check(startExpression.DataType.Kind == DataTypeKind.I64, "For loop start expression must be type i64! Given: " + startExpression.DataType);
+
+            CheckExpression(endExpression);
+            Assert.Check(endExpression.DataType.Kind == DataTypeKind.I64, "For loop end expression must be type i64! Given: " + endExpression.DataType);
+
+            _context.EnterBlock();
+            _context.AddVariable(new Symbol(varName, SymbolKind.Variable, DataType.I64));
+
+            statements.Children.ForEach((s) => CheckStatement(s));
+
+            _context.LeaveBlock();
         }
 
         private void CheckReturnStatement(AstItem item)

@@ -251,6 +251,10 @@ namespace erc
 
                     break;
 
+                case TokenKind.For:
+                    result = ReadForLoop(tokens);
+                    break;
+
                 case TokenKind.CurlyBracketClose:
                     //End of function
                     return null;

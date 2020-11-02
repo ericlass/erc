@@ -298,7 +298,7 @@ namespace erc
         internal static AstItem ForLoop(string varName, AstItem startExpression, AstItem endExpression, List<AstItem> statements)
         {
             var statementList = StatementList(statements);
-            return new AstItem { Kind = AstItemKind.FunctionDecl, Identifier = varName, Children = new List<AstItem>() { startExpression, endExpression, statementList } };
+            return new AstItem { Kind = AstItemKind.For, Identifier = varName, Children = new List<AstItem>() { startExpression, endExpression, statementList } };
         }
 
         public static AstItem AsOperator(IBinaryOperator oper)

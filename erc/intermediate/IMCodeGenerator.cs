@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace erc
 {
@@ -9,12 +8,6 @@ namespace erc
         private CompilerContext _context = null;
         private long _ifLabelCounter = 0;
         private long _tempLocalCounter = 0;
-
-        private IMOperand NewTempLocal(DataType dataType)
-        {
-            _tempLocalCounter += 1;
-            return IMOperand.Local(dataType, _tempLocalCounter.ToString());
-        }
 
         public void Generate(CompilerContext context)
         {
@@ -146,6 +139,9 @@ namespace erc
                 case AstItemKind.If:
                     return GenerateIfStatement(statement);
 
+                case AstItemKind.For:
+                    return GenerateForLoop(statement);
+
                 case AstItemKind.DelPointer:
                     return GenerateDelPointer(statement);
             }
@@ -251,8 +247,7 @@ namespace erc
             var tmpLocation = NewTempLocal(DataType.BOOL);
             result.AddRange(GenerateExpression(expression, tmpLocation));
 
-            _ifLabelCounter += 1;
-            var endLabel = "if_end_" + _ifLabelCounter;
+            var endLabel = NewLabelName();
 
             if (elseStatements == null)
             {
@@ -267,8 +262,7 @@ namespace erc
             }
             else
             {
-                _ifLabelCounter += 1;
-                var elseLabel = "if_else_" + _ifLabelCounter;
+                var elseLabel = NewLabelName();
 
                 result.Add(IMOperation.JmpNE(tmpLocation, IMOperand.BOOL_TRUE, elseLabel));
 
@@ -286,6 +280,48 @@ namespace erc
 
                 result.Add(IMOperation.Labl(endLabel));
             }
+
+            return result;
+        }
+
+        private List<IMOperation> GenerateForLoop(AstItem statement)
+        {
+            var varName = statement.Identifier;
+            var startExpression = statement.Children[0];
+            var endExpression = statement.Children[1];
+            var statements = statement.Children[2];
+
+            var varLocation = IMOperand.Local(DataType.I64, varName);
+            var startLabelName = NewLabelName();
+            var endLabelName = NewLabelName();
+
+            var counterVariable = new Symbol(varName, SymbolKind.Variable, DataType.I64);
+            _context.AddVariable(counterVariable);
+            counterVariable.Location = varLocation;
+
+            var result = new List<IMOperation>();
+
+            //Evaluate start value expression before loop
+            result.AddRange(GenerateExpression(startExpression, varLocation));
+            //Start label
+            result.Add(IMOperation.Labl(startLabelName));
+
+            //Evaluate end value expression inside loop
+            var endLocation = NewTempLocal(DataType.I64);
+            result.AddRange(GenerateExpression(endExpression, endLocation));
+            //Go to end once end value has been reached
+            result.Add(IMOperation.JmpG(varLocation, endLocation, endLabelName));
+
+            //Generate loop body
+            foreach (var stat in statements.Children)
+            {
+                result.AddRange(GenerateStatement(stat));
+            }
+
+            //Go to loop start
+            result.Add(IMOperation.Jmp(startLabelName));
+            //End label
+            result.Add(IMOperation.Labl(endLabelName));
 
             return result;
         }
@@ -543,6 +579,18 @@ namespace erc
 
             operations.Add(IMOperation.GVec(targetLocation, valueLocations));
             return operations;
+        }
+
+        private string NewLabelName()
+        {
+            _ifLabelCounter += 1;
+            return "label_" + _ifLabelCounter;
+        }
+
+        private IMOperand NewTempLocal(DataType dataType)
+        {
+            _tempLocalCounter += 1;
+            return IMOperand.Local(dataType, _tempLocalCounter.ToString());
         }
 
     }

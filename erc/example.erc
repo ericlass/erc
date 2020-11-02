@@ -15,6 +15,12 @@ enum TestType2 {
 	Ding
 }
 
+fn loops() {
+	for i in 0 to 5 {
+		let x = i + 1;
+	}
+}
+
 fn enums() {
 	let test = TestType::Some;
 	test = TestType::Never;
