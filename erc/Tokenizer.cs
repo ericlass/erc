@@ -29,6 +29,7 @@ namespace erc
             ["for"] = TokenKind.For,
             ["in"] = TokenKind.In,
             ["to"] = TokenKind.To,
+            ["inc"] = TokenKind.Inc,
             ["ext"] = TokenKind.Ext,
             ["new"] = TokenKind.New,
             ["del"] = TokenKind.Del,

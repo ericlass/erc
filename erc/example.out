@@ -1,0 +1,1212 @@
+Programm
+    FunctionDecl: "main" (void)
+        ParameterList
+        StatementList
+            FunctionCall: "boolean"
+                Immediate: True (bool)
+    EnumDecl
+        EnumElement
+        EnumElement
+        EnumElement
+        EnumElement
+    EnumDecl
+        EnumElement
+        EnumElement
+    FunctionDecl: "loops" (void)
+        ParameterList
+        StatementList
+            For
+                Immediate: 0 (i64)
+                Immediate: 5 (i64)
+                Immediate: 1 (i64)
+                StatementList
+                    VarDecl: "x" (i64)
+                        Expression
+                            Variable: "i" (i64)
+                            Immediate: 1 (i64)
+                            BinaryOperator: +
+    FunctionDecl: "enums" (void)
+        ParameterList
+        StatementList
+            VarDecl: "test" (TestType)
+                Expression
+                    Immediate: 1 (u32)
+            Assignment
+                Variable: "test" (TestType)
+                Expression
+                    Immediate: 7 (u32)
+            VarDecl: "same" (bool)
+                Expression
+                    Immediate: 0 (u32)
+                    Immediate: 1 (u32)
+                    BinaryOperator: ==
+    FunctionDecl: "expressions" (void)
+        ParameterList
+        StatementList
+            VarDecl: "a" (i64)
+                Expression
+                    Immediate: 1 (i64)
+                    Immediate: 2 (i64)
+                    BinaryOperator: +
+            Assignment
+                Variable: "a" (i64)
+                Expression
+                    Immediate: 3 (i64)
+                    UnaryOperator: -
+                    Immediate: 6 (i64)
+                    UnaryOperator: -
+                    BinaryOperator: *
+                    UnaryOperator: -
+    FunctionDecl: "pointers" (void)
+        ParameterList
+        StatementList
+            VarDecl: "p" (i64*)
+                NewPointer
+            Assignment
+                PointerDeref: "p" (i64)
+                Immediate: 5 (i64)
+            Assignment
+                IndexAccess: "p" (i64)
+                    Immediate: 2 (i64)
+                Immediate: 8 (i64)
+            VarDecl: "x" (i64)
+                IndexAccess: "p" (i64)
+                    Immediate: 0 (i64)
+            VarDecl: "y" (i64)
+                Expression
+                    Variable: "p" (i64*)
+                    UnaryOperator: *
+            DelPointer
+    FunctionDecl: "boolean" (void)
+        ParameterList
+            Parameter: "p1" (bool)
+        StatementList
+            VarDecl: "test" (bool)
+                Expression
+                    Immediate: 5 (i64)
+                    Immediate: 3 (i64)
+                    BinaryOperator: >=
+            Assignment
+                Variable: "test" (bool)
+                Expression
+                    Variable: "test" (bool)
+                    Immediate: True (bool)
+                    BinaryOperator: &&
+                    Variable: "test" (bool)
+                    BinaryOperator: ||
+            Assignment
+                Variable: "test" (bool)
+                Expression
+                    Variable: "test" (bool)
+                    UnaryOperator: !
+            VarDecl: "g" (i64)
+                Immediate: 5 (i64)
+            If
+                Expression
+                    Immediate: 1 (i64)
+                    Immediate: 2 (i64)
+                    BinaryOperator: <=
+                StatementList
+                    Assignment
+                        Variable: "g" (i64)
+                        Immediate: 2 (i64)
+                    VarDecl: "j" (f32)
+                        Immediate: 1.0 (f32)
+                StatementList
+                    Assignment
+                        Variable: "g" (i64)
+                        Immediate: 7 (i64)
+            VarDecl: "x" (bool)
+                Expression
+                    Immediate: 5 (i64)
+                    Immediate: 3 (i64)
+                    Immediate: 2 (i64)
+                    BinaryOperator: +
+                    BinaryOperator: >
+            VarDecl: "v1" (vec4f)
+                Vector
+                    Immediate: 1.0 (f32)
+                    Immediate: 2.0 (f32)
+                    Immediate: 3.0 (f32)
+                    Immediate: 4.0 (f32)
+            VarDecl: "v2" (vec4f)
+                Vector
+                    Immediate: 1.0 (f32)
+                    Immediate: 2.0 (f32)
+                    Immediate: 3.0 (f32)
+                    Immediate: 4.0 (f32)
+            If
+                Expression
+                    Variable: "v1" (vec4f)
+                    Variable: "v2" (vec4f)
+                    BinaryOperator: !=
+                StatementList
+                    Return
+    ExternFunctionDecl: "last_error" (i64) ["GetLastError"; "Kernel32.dll"]
+        ParameterList
+    FunctionDecl: "fn_calls" (void)
+        ParameterList
+        StatementList
+            VarDecl: "err_code" (i64)
+                FunctionCall: "last_error"
+            If
+                Expression
+                    Variable: "err_code" (i64)
+                    Immediate: 0 (i64)
+                    BinaryOperator: ==
+                StatementList
+                    Return
+            VarDecl: "kx" (i64)
+                Expression
+                    Immediate: 5 (i64)
+                    Immediate: 7 (i64)
+                    Immediate: 3 (i64)
+                    BinaryOperator: +
+                    BinaryOperator: *
+            VarDecl: "x6" (vec4d)
+                Vector
+                    Immediate: 1.0 (f64)
+                    Immediate: 2.0 (f64)
+                    Immediate: 3.0 (f64)
+                    Immediate: 4.0 (f64)
+            VarDecl: "k2" (vec4d)
+                Expression
+                    FunctionCall: "add"
+                        Variable: "x6" (vec4d)
+                        Variable: "x6" (vec4d)
+                    FunctionCall: "add"
+                        Variable: "x6" (vec4d)
+                        Variable: "x6" (vec4d)
+                    BinaryOperator: +
+    FunctionDecl: "add" (vec4d)
+        ParameterList
+            Parameter: "pa" (vec4d)
+            Parameter: "pb" (vec4d)
+        StatementList
+            Return
+                Expression
+                    Variable: "pa" (vec4d)
+                    Variable: "pb" (vec4d)
+                    Variable: "pa" (vec4d)
+                    BinaryOperator: *
+                    BinaryOperator: +
+    FunctionDecl: "add2" (i8)
+        ParameterList
+            Parameter: "pa" (i8)
+            Parameter: "pb" (i8)
+        StatementList
+            Return
+                Expression
+                    Variable: "pa" (i8)
+                    Variable: "pb" (i8)
+                    Variable: "pa" (i8)
+                    BinaryOperator: *
+                    BinaryOperator: +
+    FunctionDecl: "add3" (u16)
+        ParameterList
+            Parameter: "pa" (u16)
+            Parameter: "pb" (u16)
+        StatementList
+            Return
+                Expression
+                    Variable: "pa" (u16)
+                    Variable: "pb" (u16)
+                    Variable: "pa" (u16)
+                    BinaryOperator: *
+                    BinaryOperator: +
+    FunctionDecl: "types" (void)
+        ParameterList
+        StatementList
+            VarDecl: "a" (i64)
+                Expression
+                    Immediate: 5 (i64)
+                    Immediate: 6 (i64)
+                    BinaryOperator: *
+                    Immediate: 7 (i64)
+                    Immediate: 8 (i64)
+                    BinaryOperator: *
+                    BinaryOperator: +
+            VarDecl: "b" (f32)
+                Immediate: 1.5 (f32)
+            VarDecl: "c" (f32)
+                Variable: "b" (f32)
+            VarDecl: "d" (f64)
+                Immediate: 1.2 (f64)
+            VarDecl: "e" (f64)
+                Immediate: 0.5 (f64)
+            VarDecl: "k" (f64)
+                Expression
+                    Variable: "e" (f64)
+                    Variable: "d" (f64)
+                    BinaryOperator: *
+            Assignment
+                Variable: "k" (f64)
+                Expression
+                    Variable: "k" (f64)
+                    Immediate: 2.0 (f64)
+                    BinaryOperator: +
+            VarDecl: "x3" (vec4f)
+                Vector
+                    Immediate: 1.0 (f32)
+                    Immediate: 2.0 (f32)
+                    Immediate: 3.0 (f32)
+                    Immediate: 4.0 (f32)
+            VarDecl: "x4" (vec8f)
+                Vector
+                    Immediate: 1.0 (f32)
+                    Immediate: 2.0 (f32)
+                    Immediate: 3.0 (f32)
+                    Immediate: 4.0 (f32)
+                    Immediate: 1.0 (f32)
+                    Immediate: 2.0 (f32)
+                    Immediate: 3.0 (f32)
+                    Immediate: 4.0 (f32)
+            VarDecl: "x5" (vec2d)
+                Vector
+                    Immediate: 1.0 (f64)
+                    Immediate: 2.0 (f64)
+            VarDecl: "x6" (vec4d)
+                Vector
+                    Immediate: 1.0 (f64)
+                    Immediate: 2.0 (f64)
+                    Immediate: 3.0 (f64)
+                    Immediate: 4.0 (f64)
+            VarDecl: "y" (vec2d)
+                Expression
+                    Variable: "x5" (vec2d)
+                    Variable: "x5" (vec2d)
+                    BinaryOperator: +
+            VarDecl: "abc" (vec4d)
+                Vector
+                    Immediate: 1.0 (f64)
+                    Expression
+                        Variable: "d" (f64)
+                        Immediate: 2.0 (f64)
+                        BinaryOperator: *
+                    Expression
+                        Immediate: 2.0 (f64)
+                        Variable: "d" (f64)
+                        BinaryOperator: *
+                        Immediate: 3.0 (f64)
+                        BinaryOperator: +
+                    Expression
+                        Variable: "d" (f64)
+                        Immediate: 4.0 (f64)
+                        BinaryOperator: /
+            VarDecl: "xyz" (vec2d)
+                Expression
+                    Vector
+                        Variable: "d" (f64)
+                        Variable: "e" (f64)
+                    Vector
+                        Variable: "e" (f64)
+                        Variable: "d" (f64)
+                    BinaryOperator: +
+    ExternFunctionDecl: "erc_exit_process" (void) ["ExitProcess"; "Kernel32.dll"]
+        ParameterList
+            Parameter: "exit_code" (u32)
+    ExternFunctionDecl: "erc_get_process_heap" (void*) ["GetProcessHeap"; "Kernel32.dll"]
+        ParameterList
+    ExternFunctionDecl: "erc_heap_alloc" (void*) ["HeapAlloc"; "Kernel32.dll"]
+        ParameterList
+            Parameter: "heap" (void*)
+            Parameter: "flags" (u32)
+            Parameter: "bytes" (u64)
+    ExternFunctionDecl: "erc_heap_free" (bool) ["HeapFree"; "Kernel32.dll"]
+        ParameterList
+            Parameter: "heap" (void*)
+            Parameter: "flags" (u32)
+            Parameter: "mem" (void*)
+
+
+
+[stack: 0, heap: 0]
+[
+  %1	: register(BL),
+  bool(1)	: data_section(imm_1),
+]
+fn main(): void
+{
+    MOV %1, bool(1)
+    CALL 'boolean', , %1
+    FREE %1
+    RET @void
+}
+
+[stack: 0, heap: 0]
+[
+  %i	: register(RBX),
+  %1	: register(RSI),
+  %2	: register(RDI),
+  %x	: register(RDI),
+  i64(0)	: data_section(imm_2),
+  i64(1)	: data_section(imm_3),
+  i64(5)	: data_section(imm_4),
+]
+fn loops(): void
+{
+    MOV %i, i64(0)
+    MOV %1, i64(1)
+    LABL 'label_1'
+    MOV %2, i64(5)
+    JMPG %i, %2, 'label_2'
+    FREE %2
+    ADD %x, %i, i64(1)
+    FREE %x
+    ADD %i, %i, %1
+    FREE %1
+    FREE %i
+    JMP 'label_1'
+    LABL 'label_2'
+    RET @void
+}
+
+[stack: 0, heap: 0]
+[
+  %test	: register(EBX),
+  %same	: register(BL),
+  u32(1)	: data_section(imm_5),
+  u32(7)	: data_section(imm_6),
+  u32(0)	: data_section(imm_7),
+]
+fn enums(): void
+{
+    MOV %test, u32(1)
+    MOV %test, u32(7)
+    FREE %test
+    SETE %same, u32(0), u32(1)
+    FREE %same
+    RET @void
+}
+
+[stack: 0, heap: 0]
+[
+  %a	: register(RBX),
+  %1	: register(RSI),
+  %2	: register(RDI),
+  %3	: register(R12),
+  i64(1)	: data_section(imm_8),
+  i64(2)	: data_section(imm_9),
+  i64(3)	: data_section(imm_10),
+  i64(6)	: data_section(imm_11),
+]
+fn expressions(): void
+{
+    ADD %a, i64(1), i64(2)
+    NEG %1, i64(3)
+    NEG %2, i64(6)
+    MUL %3, %1, %2
+    FREE %2
+    FREE %1
+    NEG %a, %3
+    FREE %3
+    FREE %a
+    RET @void
+}
+
+[stack: 0, heap: 0]
+[
+  %1	: register(RBX),
+  %p	: register(RSI),
+  [%p]	: heap_register(RSI+0),
+  %2	: register(RBX),
+  [%2]	: heap_register(RBX+0),
+  %3	: register(RBX),
+  %x	: register(RDI),
+  [%3]	: heap_register(RBX+0),
+  %y	: register(RBX),
+  u64(5)	: data_section(imm_12),
+  u64(8)	: data_section(imm_13),
+  i64(5)	: data_section(imm_14),
+  i64(2)	: data_section(imm_15),
+  i64(8)	: data_section(imm_16),
+  i64(0)	: data_section(imm_17),
+]
+fn pointers(): void
+{
+    MOV %1, u64(5)
+    MUL %1, %1, u64(8)
+    ALOC %p, %1
+    FREE %1
+    MOV [%p], i64(5)
+    MOV %2, i64(2)
+    MUL %2, %2, u64(8)
+    ADD %2, %2, %p
+    MOV [%2], i64(8)
+    FREE %2
+    MOV %3, i64(0)
+    MUL %3, %3, u64(8)
+    ADD %3, %3, %p
+    MOV %x, [%3]
+    FREE %3
+    FREE %x
+    MOV %y, [%p]
+    FREE %y
+    DEL %p
+    FREE %p
+    RET @void
+}
+
+[stack: 0, heap: 0]
+[
+  $1	: register(CL),
+  %test	: register(BL),
+  %1	: register(SIL),
+  %g	: register(RBX),
+  %2	: register(SIL),
+  %j	: register(XMM7),
+  %3	: register(RBX),
+  %x	: register(SIL),
+  %v1	: register(XMM7),
+  %v2	: register(XMM8),
+  %4	: register(BL),
+  i64(5)	: data_section(imm_18),
+  i64(3)	: data_section(imm_19),
+  bool(1)	: data_section(imm_20),
+  i64(1)	: data_section(imm_21),
+  i64(2)	: data_section(imm_22),
+  f32(1)	: data_section(imm_23),
+  i64(7)	: data_section(imm_24),
+  f32(2)	: data_section(imm_25),
+  f32(3)	: data_section(imm_26),
+  f32(4)	: data_section(imm_27),
+]
+fn boolean(bool): void
+{
+    SETGE %test, i64(5), i64(3)
+    AND %1, %test, bool(1)
+    OR %test, %1, %test
+    FREE %1
+    NOT %test, %test
+    FREE %test
+    MOV %g, i64(5)
+    SETLE %2, i64(1), i64(2)
+    JMPNE %2, bool(1), 'label_4'
+    FREE %2
+    MOV %g, i64(2)
+    MOV %j, f32(1)
+    FREE %j
+    JMP 'label_3'
+    LABL 'label_4'
+    MOV %g, i64(7)
+    FREE %g
+    LABL 'label_3'
+    ADD %3, i64(3), i64(2)
+    SETG %x, i64(5), %3
+    FREE %3
+    FREE %x
+    GVEC %v1, f32(1), f32(2), f32(3), f32(4)
+    GVEC %v2, f32(1), f32(2), f32(3), f32(4)
+    SETNE %4, %v1, %v2
+    FREE %v2
+    FREE %v1
+    JMPNE %4, bool(1), 'label_5'
+    FREE %4
+    RET @void
+    LABL 'label_5'
+    RET @void
+}
+
+ext fn['GetLastError', 'Kernel32.dll'] last_error(): i64
+
+[stack: 0, heap: 0]
+[
+  %err_code	: register(RBX),
+  %1	: register(SIL),
+  %2	: register(RBX),
+  %kx	: register(RSI),
+  %x6	: register(YMM7),
+  %4	: register(YMM8),
+  %5	: register(YMM9),
+  %3	: register(YMM10),
+  %7	: register(YMM8),
+  %8	: register(YMM9),
+  %6	: register(YMM7),
+  %k2	: register(YMM8),
+  i64(0)	: data_section(imm_28),
+  bool(1)	: data_section(imm_29),
+  i64(7)	: data_section(imm_30),
+  i64(3)	: data_section(imm_31),
+  i64(5)	: data_section(imm_32),
+  f64(1)	: data_section(imm_33),
+  f64(2)	: data_section(imm_34),
+  f64(3)	: data_section(imm_35),
+  f64(4)	: data_section(imm_36),
+]
+fn fn_calls(): void
+{
+    CALL 'last_error', %err_code
+    SETE %1, %err_code, i64(0)
+    FREE %err_code
+    JMPNE %1, bool(1), 'label_6'
+    FREE %1
+    RET @void
+    LABL 'label_6'
+    ADD %2, i64(7), i64(3)
+    MUL %kx, i64(5), %2
+    FREE %2
+    FREE %kx
+    GVEC %x6, f64(1), f64(2), f64(3), f64(4)
+    MOV %4, %x6
+    MOV %5, %x6
+    CALL 'add', %3, %4, %5
+    FREE %5
+    FREE %4
+    MOV %7, %x6
+    MOV %8, %x6
+    FREE %x6
+    CALL 'add', %6, %7, %8
+    FREE %8
+    FREE %7
+    ADD %k2, %3, %6
+    FREE %6
+    FREE %3
+    FREE %k2
+    RET @void
+}
+
+[stack: 0, heap: 0]
+[
+  $1	: register(YMM0),
+  $2	: register(YMM1),
+  %2	: register(YMM7),
+  %1	: register(YMM8),
+]
+fn add(vec4d, vec4d): vec4d
+{
+    MUL %2, $2, $1
+    FREE $2
+    ADD %1, $1, %2
+    FREE %2
+    FREE $1
+    RET %1
+    FREE %1
+}
+
+[stack: 0, heap: 0]
+[
+  $1	: register(CL),
+  $2	: register(DL),
+  %2	: register(BL),
+  %1	: register(SIL),
+]
+fn add2(i8, i8): i8
+{
+    MUL %2, $2, $1
+    FREE $2
+    ADD %1, $1, %2
+    FREE %2
+    FREE $1
+    RET %1
+    FREE %1
+}
+
+[stack: 0, heap: 0]
+[
+  $1	: register(CX),
+  $2	: register(DX),
+  %2	: register(BX),
+  %1	: register(SI),
+]
+fn add3(u16, u16): u16
+{
+    MUL %2, $2, $1
+    FREE $2
+    ADD %1, $1, %2
+    FREE %2
+    FREE $1
+    RET %1
+    FREE %1
+}
+
+[stack: 0, heap: 0]
+[
+  %1	: register(RBX),
+  %2	: register(RSI),
+  %a	: register(RDI),
+  %b	: register(XMM7),
+  %c	: register(XMM8),
+  %d	: register(XMM7),
+  %e	: register(XMM8),
+  %k	: register(XMM9),
+  %x3	: register(XMM9),
+  %x4	: register(YMM9),
+  %x5	: register(XMM9),
+  %x6	: register(YMM10),
+  %y	: register(XMM10),
+  %3	: register(XMM9),
+  %5	: register(XMM10),
+  %4	: register(XMM11),
+  %6	: register(XMM10),
+  %abc	: register(YMM12),
+  %7	: register(XMM9),
+  %8	: register(XMM10),
+  %xyz	: register(XMM7),
+  i64(5)	: data_section(imm_37),
+  i64(6)	: data_section(imm_38),
+  i64(7)	: data_section(imm_39),
+  i64(8)	: data_section(imm_40),
+  f32(1,5)	: data_section(imm_41),
+  f64(1,2)	: data_section(imm_42),
+  f64(0,5)	: data_section(imm_43),
+  f64(2)	: data_section(imm_44),
+  f32(1)	: data_section(imm_45),
+  f32(2)	: data_section(imm_46),
+  f32(3)	: data_section(imm_47),
+  f32(4)	: data_section(imm_48),
+  f64(1)	: data_section(imm_49),
+  f64(3)	: data_section(imm_50),
+  f64(4)	: data_section(imm_51),
+]
+fn types(): void
+{
+    MUL %1, i64(5), i64(6)
+    MUL %2, i64(7), i64(8)
+    ADD %a, %1, %2
+    FREE %2
+    FREE %1
+    FREE %a
+    MOV %b, f32(1,5)
+    MOV %c, %b
+    FREE %b
+    FREE %c
+    MOV %d, f64(1,2)
+    MOV %e, f64(0,5)
+    MUL %k, %e, %d
+    ADD %k, %k, f64(2)
+    FREE %k
+    GVEC %x3, f32(1), f32(2), f32(3), f32(4)
+    FREE %x3
+    GVEC %x4, f32(1), f32(2), f32(3), f32(4), f32(1), f32(2), f32(3), f32(4)
+    FREE %x4
+    GVEC %x5, f64(1), f64(2)
+    GVEC %x6, f64(1), f64(2), f64(3), f64(4)
+    FREE %x6
+    ADD %y, %x5, %x5
+    FREE %x5
+    FREE %y
+    MUL %3, %d, f64(2)
+    MUL %5, f64(2), %d
+    ADD %4, %5, f64(3)
+    FREE %5
+    DIV %6, %d, f64(4)
+    GVEC %abc, f64(1), %3, %4, %6
+    FREE %6
+    FREE %4
+    FREE %3
+    FREE %abc
+    GVEC %7, %d, %e
+    GVEC %8, %e, %d
+    FREE %d
+    FREE %e
+    ADD %xyz, %7, %8
+    FREE %8
+    FREE %7
+    FREE %xyz
+    RET @void
+}
+
+ext fn['ExitProcess', 'Kernel32.dll'] erc_exit_process(u32): void
+
+ext fn['GetProcessHeap', 'Kernel32.dll'] erc_get_process_heap(): void*
+
+ext fn['HeapAlloc', 'Kernel32.dll'] erc_heap_alloc(void*, u32, u64): void*
+
+ext fn['HeapFree', 'Kernel32.dll'] erc_heap_free(void*, u32, void*): bool
+
+
+
+format PE64 NX GUI 6.0
+entry start
+include 'win64a.inc'
+
+section '.data' data readable writeable
+
+erc_u32_zero dd 0
+imm_24 dq 7
+erc_process_heap dq 0
+imm_28 dq 0
+imm_44 dq 2.0
+imm_30 dq 7
+imm_31 dq 3
+imm_32 dq 5
+imm_33 dq 1.0
+imm_34 dq 2.0
+imm_35 dq 3.0
+imm_36 dq 4.0
+imm_37 dq 5
+imm_38 dq 6
+imm_39 dq 7
+imm_40 dq 8
+imm_22 dq 2
+imm_43 dq 0.5
+imm_21 dq 1
+imm_11 dq 6
+imm_2 dq 0
+imm_3 dq 1
+imm_4 dq 5
+imm_51 dq 4.0
+imm_50 dq 3.0
+imm_49 dq 1.0
+imm_8 dq 1
+imm_9 dq 2
+imm_10 dq 3
+imm_19 dq 3
+imm_42 dq 1.2
+imm_13 dq 8
+imm_14 dq 5
+imm_15 dq 2
+imm_16 dq 8
+imm_17 dq 0
+imm_18 dq 5
+imm_12 dq 5
+imm_45 dd 1.0
+imm_46 dd 2.0
+imm_47 dd 3.0
+imm_48 dd 4.0
+imm_27 dd 4.0
+imm_26 dd 3.0
+imm_25 dd 2.0
+imm_23 dd 1.0
+imm_7 dd 0
+imm_6 dd 7
+imm_5 dd 1
+imm_41 dd 1.5
+imm_29 db 1
+imm_20 db 1
+imm_1 db 1
+
+section '.text' code readable executable
+start:
+call [GetProcessHeap]
+mov [erc_process_heap], rax
+push rbp
+mov rbp, rsp
+call fn_main
+pop rbp
+xor ecx,ecx
+call [ExitProcess]
+
+fn_main:
+MOV BL, [imm_1]
+SUB RSP, 1
+MOV [RSP-0], BL
+MOV CL, BL
+SUB RSP, 0x20
+MOV RBP, RSP
+CALL fn_boolean
+ADD RSP, 0x20
+MOV BL, [RSP-0]
+ADD RSP, 1
+RET
+
+fn_loops:
+MOV RBX, [imm_2]
+MOV RSI, [imm_3]
+label_1:
+MOV RDI, [imm_4]
+CMP RBX, RDI
+JG label_2
+MOV RDI, RBX
+ADD RDI, [imm_3]
+ADD RBX, RSI
+JMP label_1
+label_2:
+RET
+
+fn_enums:
+MOV EBX, [imm_5]
+MOV EBX, [imm_6]
+MOV EAX, [imm_7]
+CMP EAX, [imm_5]
+SETE BL
+RET
+
+fn_expressions:
+MOV RBX, [imm_8]
+ADD RBX, [imm_9]
+XOR RSI, RSI
+SUB RSI, [imm_10]
+XOR RDI, RDI
+SUB RDI, [imm_11]
+MOV RAX, RSI
+IMUL RDI
+MOV R12, RAX
+XOR RBX, RBX
+SUB RBX, R12
+RET
+
+fn_pointers:
+MOV RBX, [imm_12]
+MOV RAX, RBX
+MUL [imm_13]
+MOV RBX, RAX
+PUSH RBX
+MOV RCX, [erc_process_heap]
+MOV EDX, [erc_u32_zero]
+MOV R8, RBX
+SUB RSP, 0x20
+MOV RBP, RSP
+CALL [HeapAlloc]
+ADD RSP, 0x20
+MOV RSI, RAX
+POP RBX
+MOV RAX, [imm_14]
+MOV [RSI+0], RAX
+MOV RBX, [imm_15]
+MOV RAX, RBX
+MUL [imm_13]
+MOV RBX, RAX
+ADD RBX, RSI
+MOV RAX, [imm_16]
+MOV [RBX+0], RAX
+MOV RBX, [imm_17]
+MOV RAX, RBX
+MUL [imm_13]
+MOV RBX, RAX
+ADD RBX, RSI
+MOV RDI, [RBX+0]
+MOV RBX, [RSI+0]
+PUSH RSI
+PUSH RDI
+PUSH RBX
+MOV RCX, [erc_process_heap]
+MOV EDX, [erc_u32_zero]
+MOV R8, RSI
+SUB RSP, 0x20
+MOV RBP, RSP
+CALL [HeapFree]
+ADD RSP, 0x20
+POP RBX
+POP RDI
+POP RSI
+RET
+
+fn_boolean:
+MOV RAX, [imm_18]
+CMP RAX, [imm_19]
+SETGE BL
+MOV SIL, BL
+AND SIL, [imm_20]
+MOV BL, SIL
+OR BL, BL
+NOT BL
+MOV RBX, [imm_18]
+MOV RAX, [imm_21]
+CMP RAX, [imm_22]
+SETLE SIL
+CMP SIL, [imm_20]
+JNE label_4
+MOV RBX, [imm_22]
+MOVSS XMM7, [imm_23]
+JMP label_3
+label_4:
+MOV RBX, [imm_24]
+label_3:
+MOV RBX, [imm_19]
+ADD RBX, [imm_22]
+CMP [imm_18], RBX
+SETG SIL
+MOV RSI, RSP
+AND RSP, -16
+MOVSS XMM4, [imm_23]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVSS XMM4, [imm_25]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVSS XMM4, [imm_26]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVSS XMM4, [imm_27]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVUPS XMM7, [RSP-0]
+MOV RSP, RSI
+MOV RSI, RSP
+AND RSP, -16
+MOVSS XMM4, [imm_23]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVSS XMM4, [imm_25]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVSS XMM4, [imm_26]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVSS XMM4, [imm_27]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVUPS XMM8, [RSP-0]
+MOV RSP, RSI
+MOVAPS XMM4, XMM7
+CMPEQPS XMM4, XMM8
+MOVMSKPS EAX, XMM4
+CMP EAX, 0xF
+SETE BL
+CMP BL, [imm_20]
+JNE label_5
+RET
+label_5:
+RET
+
+fn_fn_calls:
+SUB RSP, 0x20
+MOV RBP, RSP
+CALL [GetLastError]
+ADD RSP, 0x20
+MOV RBX, RAX
+CMP RBX, [imm_28]
+SETE SIL
+CMP SIL, [imm_29]
+JNE label_6
+RET
+label_6:
+MOV RBX, [imm_30]
+ADD RBX, [imm_31]
+MOV RAX, [imm_32]
+IMUL RBX
+MOV RSI, RAX
+MOV RSI, RSP
+AND RSP, -32
+MOVSD XMM4, [imm_33]
+SUB RSP, 8
+MOVSD [RSP-0], XMM4
+MOVSD XMM4, [imm_34]
+SUB RSP, 8
+MOVSD [RSP-0], XMM4
+MOVSD XMM4, [imm_35]
+SUB RSP, 8
+MOVSD [RSP-0], XMM4
+MOVSD XMM4, [imm_36]
+SUB RSP, 8
+MOVSD [RSP-0], XMM4
+VMOVUPD YMM7, [RSP-0]
+MOV RSP, RSI
+VMOVAPD YMM8, YMM7
+VMOVAPD YMM9, YMM7
+SUB RSP, 1
+MOV [RSP-0], SIL
+PUSH RBX
+PUSH RSI
+SUB RSP, 32
+VMOVUPD [RSP-0], YMM7
+SUB RSP, 32
+VMOVUPD [RSP-0], YMM8
+SUB RSP, 32
+VMOVUPD [RSP-0], YMM9
+VMOVAPD YMM0, YMM8
+VMOVAPD YMM1, YMM9
+SUB RSP, 0x20
+MOV RBP, RSP
+CALL fn_add
+ADD RSP, 0x20
+VMOVAPD YMM10, YMM0
+VMOVUPD YMM9, [RSP-0]
+ADD RSP, 32
+VMOVUPD YMM8, [RSP-0]
+ADD RSP, 32
+VMOVUPD YMM7, [RSP-0]
+ADD RSP, 32
+POP RSI
+POP RBX
+MOV SIL, [RSP-0]
+ADD RSP, 1
+VMOVAPD YMM8, YMM7
+VMOVAPD YMM9, YMM7
+SUB RSP, 1
+MOV [RSP-0], SIL
+PUSH RBX
+PUSH RSI
+SUB RSP, 32
+VMOVUPD [RSP-0], YMM10
+SUB RSP, 32
+VMOVUPD [RSP-0], YMM9
+SUB RSP, 32
+VMOVUPD [RSP-0], YMM8
+SUB RSP, 32
+VMOVUPD [RSP-0], YMM7
+VMOVAPD YMM0, YMM8
+VMOVAPD YMM1, YMM9
+SUB RSP, 0x20
+MOV RBP, RSP
+CALL fn_add
+ADD RSP, 0x20
+VMOVAPD YMM7, YMM0
+VMOVUPD YMM7, [RSP-0]
+ADD RSP, 32
+VMOVUPD YMM8, [RSP-0]
+ADD RSP, 32
+VMOVUPD YMM9, [RSP-0]
+ADD RSP, 32
+VMOVUPD YMM10, [RSP-0]
+ADD RSP, 32
+POP RSI
+POP RBX
+MOV SIL, [RSP-0]
+ADD RSP, 1
+VADDPD YMM8, YMM10, YMM7
+RET
+
+fn_add:
+VMULPD YMM7, YMM1, YMM0
+VADDPD YMM8, YMM0, YMM7
+VMOVAPD YMM0, YMM8
+RET
+
+fn_add2:
+MOV AL, DL
+IMUL CL
+MOV BL, AL
+MOV SIL, CL
+ADD SIL, BL
+MOV AL, SIL
+RET
+
+fn_add3:
+MOV AX, DX
+MUL CX
+MOV BX, AX
+MOV SI, CX
+ADD SI, BX
+MOV AX, SI
+RET
+
+fn_types:
+MOV RAX, [imm_37]
+IMUL [imm_38]
+MOV RBX, RAX
+MOV RAX, [imm_39]
+IMUL [imm_40]
+MOV RSI, RAX
+MOV RDI, RBX
+ADD RDI, RSI
+MOVSS XMM7, [imm_41]
+MOVSS XMM8, XMM7
+MOVSD XMM7, [imm_42]
+MOVSD XMM8, [imm_43]
+MOVSD XMM9, XMM8
+MULSD XMM9, XMM7
+ADDSD XMM9, [imm_44]
+MOV RSI, RSP
+AND RSP, -16
+MOVSS XMM4, [imm_45]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVSS XMM4, [imm_46]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVSS XMM4, [imm_47]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVSS XMM4, [imm_48]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVUPS XMM9, [RSP-0]
+MOV RSP, RSI
+MOV RSI, RSP
+AND RSP, -32
+MOVSS XMM4, [imm_45]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVSS XMM4, [imm_46]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVSS XMM4, [imm_47]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVSS XMM4, [imm_48]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVSS XMM4, [imm_45]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVSS XMM4, [imm_46]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVSS XMM4, [imm_47]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVSS XMM4, [imm_48]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+VMOVUPS YMM9, [RSP-0]
+MOV RSP, RSI
+MOV RSI, RSP
+AND RSP, -16
+MOVSD XMM4, [imm_49]
+SUB RSP, 8
+MOVSD [RSP-0], XMM4
+MOVSD XMM4, [imm_44]
+SUB RSP, 8
+MOVSD [RSP-0], XMM4
+MOVUPD XMM9, [RSP-0]
+MOV RSP, RSI
+MOV RSI, RSP
+AND RSP, -32
+MOVSD XMM4, [imm_49]
+SUB RSP, 8
+MOVSD [RSP-0], XMM4
+MOVSD XMM4, [imm_44]
+SUB RSP, 8
+MOVSD [RSP-0], XMM4
+MOVSD XMM4, [imm_50]
+SUB RSP, 8
+MOVSD [RSP-0], XMM4
+MOVSD XMM4, [imm_51]
+SUB RSP, 8
+MOVSD [RSP-0], XMM4
+VMOVUPD YMM10, [RSP-0]
+MOV RSP, RSI
+MOVAPD XMM10, XMM9
+ADDPD XMM10, XMM9
+MOVSD XMM9, XMM7
+MULSD XMM9, [imm_44]
+MOVSD XMM10, [imm_44]
+MULSD XMM10, XMM7
+MOVSD XMM11, XMM10
+ADDSD XMM11, [imm_50]
+MOVSD XMM10, XMM7
+DIVSD XMM10, [imm_51]
+MOV RSI, RSP
+AND RSP, -32
+MOVSD XMM4, [imm_49]
+SUB RSP, 8
+MOVSD [RSP-0], XMM4
+SUB RSP, 8
+MOVSD [RSP-0], XMM9
+SUB RSP, 8
+MOVSD [RSP-0], XMM11
+SUB RSP, 8
+MOVSD [RSP-0], XMM10
+VMOVUPD YMM12, [RSP-0]
+MOV RSP, RSI
+MOV RSI, RSP
+AND RSP, -16
+SUB RSP, 8
+MOVSD [RSP-0], XMM7
+SUB RSP, 8
+MOVSD [RSP-0], XMM8
+MOVUPD XMM9, [RSP-0]
+MOV RSP, RSI
+MOV RSI, RSP
+AND RSP, -16
+SUB RSP, 8
+MOVSD [RSP-0], XMM8
+SUB RSP, 8
+MOVSD [RSP-0], XMM7
+MOVUPD XMM10, [RSP-0]
+MOV RSP, RSI
+MOVAPD XMM7, XMM9
+ADDPD XMM7, XMM10
+RET
+
+section '.idata' import data readable writeable
+
+library Kernel32,'Kernel32.dll'
+import Kernel32,\
+  GetLastError,'GetLastError',\
+  ExitProcess,'ExitProcess',\
+  GetProcessHeap,'GetProcessHeap',\
+  HeapAlloc,'HeapAlloc',\
+  HeapFree,'HeapFree'

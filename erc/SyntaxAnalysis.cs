@@ -307,11 +307,22 @@ namespace erc
             tokens.PopExpected(TokenKind.In);
             var startExpression = ReadExpression(tokens, TokenKind.To);
             tokens.PopExpected(TokenKind.To);
-            var endExpression = ReadExpression(tokens, TokenKind.CurlyBracketOpen);
-            tokens.PopExpected(TokenKind.CurlyBracketOpen);
+            var endExpression = ReadExpression(tokens, new List<TokenKind>() { TokenKind.CurlyBracketOpen, TokenKind.Inc });
+
+            var next = tokens.Pop();
+
+            AstItem incExpression = AstItem.Immediate("1");
+            if (next.Kind == TokenKind.Inc)
+            {
+                incExpression = ReadExpression(tokens, TokenKind.CurlyBracketOpen);
+                tokens.PopExpected(TokenKind.CurlyBracketOpen);
+            }
+            else
+                Assert.Check(next.Kind == TokenKind.CurlyBracketOpen, "Expected 'inc' or '{', got: " + next);
+
             var statements = ReadStatements(tokens);
             tokens.PopExpected(TokenKind.CurlyBracketClose);
-            return AstItem.ForLoop(varName.Value, startExpression, endExpression, statements);
+            return AstItem.ForLoop(varName.Value, startExpression, endExpression, incExpression, statements);
         }
 
         private AstItem ReadFuncCall(TokenIterator tokens)
@@ -452,17 +463,23 @@ namespace erc
             return result;
         }
 
-        private AstItem ReadExpression(TokenIterator tokens, Nullable<TokenKind> terminator)
+        private AstItem ReadExpression(TokenIterator tokens, TokenKind terminator)
+        {
+            var terminators = new List<TokenKind>() { terminator };
+            return ReadExpression(tokens, terminators);
+        }
+
+        private AstItem ReadExpression(TokenIterator tokens, List<TokenKind> terminators)
         {
             var expTokens = new List<Token>();
-            if (terminator == null)
+            if (terminators == null)
             {
                 expTokens.AddRange(tokens.ToList());
             }
             else
             {
                 var tok = tokens.Current();
-                while (tok != null && tok.Kind != terminator.Value)
+                while (tok != null && !terminators.Contains(tok.Kind))
                 {
                     expTokens.Add(tok);
                     tokens.Step();

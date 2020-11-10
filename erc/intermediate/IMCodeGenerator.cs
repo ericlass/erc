@@ -289,9 +289,11 @@ namespace erc
             var varName = statement.Identifier;
             var startExpression = statement.Children[0];
             var endExpression = statement.Children[1];
-            var statements = statement.Children[2];
+            var incExpression = statement.Children[2];
+            var statements = statement.Children[3];
 
             var varLocation = IMOperand.Local(DataType.I64, varName);
+            var incLocation = NewTempLocal(DataType.I64);
             var startLabelName = NewLabelName();
             var endLabelName = NewLabelName();
 
@@ -303,6 +305,8 @@ namespace erc
 
             //Evaluate start value expression before loop
             result.AddRange(GenerateExpression(startExpression, varLocation));
+            //Evaluate increment value expression before loop
+            result.AddRange(GenerateExpression(incExpression, incLocation));
             //Start label
             result.Add(IMOperation.Labl(startLabelName));
 
@@ -318,6 +322,8 @@ namespace erc
                 result.AddRange(GenerateStatement(stat));
             }
 
+            //Increment Counter
+            result.Add(IMOperation.Add(varLocation, varLocation, incLocation));
             //Go to loop start
             result.Add(IMOperation.Jmp(startLabelName));
             //End label

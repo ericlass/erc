@@ -28,6 +28,7 @@ namespace erc
         For,
         In,
         To,
+        Inc,
         Ext,
         String,
         New,
