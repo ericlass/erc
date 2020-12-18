@@ -23,6 +23,9 @@ Modern, powerful programming language for modern x64 CPUs. erc is made with perf
 
 ## Example
 Here's an example that shows some features. Please note that the syntax is very likely to change on the road to version 1.0.
+
+Also see [example.erc](erc/example.erc) for more code examples and [example.out](erc/example.out) for example compiler output (abstract syntax tree, immediate code, x64 assembly).
+
 ```rust
 //Entry point for application
 fn main()
