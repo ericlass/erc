@@ -175,6 +175,10 @@ namespace erc
             {
                 CheckForLoop(item);
             }
+            else if (item.Kind == AstItemKind.While)
+            {
+                CheckWhileLoop(item);
+            }
             else if (item.Kind == AstItemKind.DelPointer)
             {
                 CheckPointerDeletion(item);
@@ -241,6 +245,19 @@ namespace erc
 
             statements.Children.ForEach((s) => CheckStatement(s));
 
+            _context.LeaveBlock();
+        }
+
+        private void CheckWhileLoop(AstItem item)
+        {
+            var whileExpression = item.Children[0];
+            var statements = item.Children[1];
+
+            CheckExpression(whileExpression);
+            Assert.Check(whileExpression.DataType.Kind == DataTypeKind.BOOL, "While loop expression must be of type bool! Given: " + whileExpression.DataType);
+
+            _context.EnterBlock();
+            statements.Children.ForEach((s) => CheckStatement(s));
             _context.LeaveBlock();
         }
 

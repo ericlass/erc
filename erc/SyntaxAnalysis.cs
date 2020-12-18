@@ -255,6 +255,10 @@ namespace erc
                     result = ReadForLoop(tokens);
                     break;
 
+                case TokenKind.While:
+                    result = ReadWhileLoop(tokens);
+                    break;
+
                 case TokenKind.CurlyBracketClose:
                     //End of function
                     return null;
@@ -299,9 +303,9 @@ namespace erc
             return AstItem.IfStatement(expression, statements, elseStatements);
         }
 
-        protected AstItem ReadForLoop(TokenIterator tokens)
+        private AstItem ReadForLoop(TokenIterator tokens)
         {
-            //for i in 0..5 {...}
+            //for i in 0..5 [inc 1] {...}
             tokens.PopExpected(TokenKind.For);
             var varName = tokens.PopExpected(TokenKind.Word);
             tokens.PopExpected(TokenKind.In);
@@ -323,6 +327,17 @@ namespace erc
             var statements = ReadStatements(tokens);
             tokens.PopExpected(TokenKind.CurlyBracketClose);
             return AstItem.ForLoop(varName.Value, startExpression, endExpression, incExpression, statements);
+        }
+
+        private AstItem ReadWhileLoop(TokenIterator tokens)
+        {
+            //while a > 5 {...}
+            tokens.PopExpected(TokenKind.While);
+            var whileExpression = ReadExpression(tokens, TokenKind.CurlyBracketOpen);
+            tokens.PopExpected(TokenKind.CurlyBracketOpen);
+            var statements = ReadStatements(tokens);
+            tokens.PopExpected(TokenKind.CurlyBracketClose);
+            return AstItem.WhileLoop(whileExpression, statements);
         }
 
         private AstItem ReadFuncCall(TokenIterator tokens)

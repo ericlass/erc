@@ -142,6 +142,9 @@ namespace erc
                 case AstItemKind.For:
                     return GenerateForLoop(statement);
 
+                case AstItemKind.While:
+                    return GenerateWhileLoop(statement);
+
                 case AstItemKind.DelPointer:
                     return GenerateDelPointer(statement);
             }
@@ -324,6 +327,38 @@ namespace erc
 
             //Increment Counter
             result.Add(IMOperation.Add(varLocation, varLocation, incLocation));
+            //Go to loop start
+            result.Add(IMOperation.Jmp(startLabelName));
+            //End label
+            result.Add(IMOperation.Labl(endLabelName));
+
+            return result;
+        }
+
+        private List<IMOperation> GenerateWhileLoop(AstItem statement)
+        {
+            var whileExpression = statement.Children[0];
+            var statements = statement.Children[1];
+
+            var testLocation = NewTempLocal(DataType.BOOL);
+            var startLabelName = NewLabelName();
+            var endLabelName = NewLabelName();
+
+            var result = new List<IMOperation>();
+
+            //Start label
+            result.Add(IMOperation.Labl(startLabelName));
+            //Evaluate loop expression
+            result.AddRange(GenerateExpression(whileExpression, testLocation));
+            //If expression evaluates to false, jump to end label
+            result.Add(IMOperation.JmpE(testLocation, IMOperand.BOOL_FALSE, endLabelName));
+
+            //Generate loop body
+            foreach (var stat in statements.Children)
+            {
+                result.AddRange(GenerateStatement(stat));
+            }
+
             //Go to loop start
             result.Add(IMOperation.Jmp(startLabelName));
             //End label

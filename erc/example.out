@@ -2,8 +2,7 @@ Programm
     FunctionDecl: "main" (void)
         ParameterList
         StatementList
-            FunctionCall: "boolean"
-                Immediate: True (bool)
+            FunctionCall: "loops"
     EnumDecl
         EnumElement
         EnumElement
@@ -25,6 +24,20 @@ Programm
                             Variable: "i" (i64)
                             Immediate: 1 (i64)
                             BinaryOperator: +
+            VarDecl: "a" (i64)
+                Immediate: 5 (i64)
+            While
+                Expression
+                    Variable: "a" (i64)
+                    Immediate: 0 (i64)
+                    BinaryOperator: >
+                StatementList
+                    Assignment
+                        Variable: "a" (i64)
+                        Expression
+                            Variable: "a" (i64)
+                            Immediate: 1 (i64)
+                            BinaryOperator: -
     FunctionDecl: "enums" (void)
         ParameterList
         StatementList
@@ -322,14 +335,10 @@ Programm
 
 [stack: 0, heap: 0]
 [
-  %1	: register(BL),
-  bool(1)	: data_section(imm_1),
 ]
 fn main(): void
 {
-    MOV %1, bool(1)
-    CALL 'boolean', , %1
-    FREE %1
+    CALL 'loops', 
     RET @void
 }
 
@@ -339,9 +348,12 @@ fn main(): void
   %1	: register(RSI),
   %2	: register(RDI),
   %x	: register(RDI),
-  i64(0)	: data_section(imm_2),
-  i64(1)	: data_section(imm_3),
-  i64(5)	: data_section(imm_4),
+  %a	: register(RBX),
+  %3	: register(SIL),
+  i64(0)	: data_section(imm_1),
+  i64(1)	: data_section(imm_2),
+  i64(5)	: data_section(imm_3),
+  bool(0)	: data_section(imm_4),
 ]
 fn loops(): void
 {
@@ -358,6 +370,15 @@ fn loops(): void
     FREE %i
     JMP 'label_1'
     LABL 'label_2'
+    MOV %a, i64(5)
+    LABL 'label_3'
+    SETG %3, %a, i64(0)
+    JMPE %3, bool(0), 'label_4'
+    FREE %3
+    SUB %a, %a, i64(1)
+    FREE %a
+    JMP 'label_3'
+    LABL 'label_4'
     RET @void
 }
 
@@ -481,16 +502,16 @@ fn boolean(bool): void
     FREE %test
     MOV %g, i64(5)
     SETLE %2, i64(1), i64(2)
-    JMPNE %2, bool(1), 'label_4'
+    JMPNE %2, bool(1), 'label_6'
     FREE %2
     MOV %g, i64(2)
     MOV %j, f32(1)
     FREE %j
-    JMP 'label_3'
-    LABL 'label_4'
+    JMP 'label_5'
+    LABL 'label_6'
     MOV %g, i64(7)
     FREE %g
-    LABL 'label_3'
+    LABL 'label_5'
     ADD %3, i64(3), i64(2)
     SETG %x, i64(5), %3
     FREE %3
@@ -500,10 +521,10 @@ fn boolean(bool): void
     SETNE %4, %v1, %v2
     FREE %v2
     FREE %v1
-    JMPNE %4, bool(1), 'label_5'
+    JMPNE %4, bool(1), 'label_7'
     FREE %4
     RET @void
-    LABL 'label_5'
+    LABL 'label_7'
     RET @void
 }
 
@@ -538,10 +559,10 @@ fn fn_calls(): void
     CALL 'last_error', %err_code
     SETE %1, %err_code, i64(0)
     FREE %err_code
-    JMPNE %1, bool(1), 'label_6'
+    JMPNE %1, bool(1), 'label_8'
     FREE %1
     RET @void
-    LABL 'label_6'
+    LABL 'label_8'
     ADD %2, i64(7), i64(3)
     MUL %kx, i64(5), %2
     FREE %2
@@ -722,11 +743,8 @@ include 'win64a.inc'
 
 section '.data' data readable writeable
 
-erc_u32_zero dd 0
-imm_24 dq 7
-erc_process_heap dq 0
+imm_1 dq 0
 imm_28 dq 0
-imm_44 dq 2.0
 imm_30 dq 7
 imm_31 dq 3
 imm_32 dq 5
@@ -734,47 +752,50 @@ imm_33 dq 1.0
 imm_34 dq 2.0
 imm_35 dq 3.0
 imm_36 dq 4.0
+erc_process_heap dq 0
 imm_37 dq 5
-imm_38 dq 6
 imm_39 dq 7
 imm_40 dq 8
-imm_22 dq 2
+imm_42 dq 1.2
 imm_43 dq 0.5
-imm_21 dq 1
-imm_11 dq 6
-imm_2 dq 0
-imm_3 dq 1
-imm_4 dq 5
-imm_51 dq 4.0
-imm_50 dq 3.0
+imm_44 dq 2.0
 imm_49 dq 1.0
+imm_50 dq 3.0
+imm_51 dq 4.0
+imm_38 dq 6
+imm_24 dq 7
+erc_u32_zero dd 0
+imm_10 dq 3
 imm_8 dq 1
 imm_9 dq 2
-imm_10 dq 3
-imm_19 dq 3
-imm_42 dq 1.2
+imm_22 dq 2
+imm_11 dq 6
+imm_12 dq 5
 imm_13 dq 8
 imm_14 dq 5
-imm_15 dq 2
 imm_16 dq 8
-imm_17 dq 0
+imm_15 dq 2
 imm_18 dq 5
-imm_12 dq 5
+imm_19 dq 3
+imm_3 dq 5
+imm_2 dq 1
+imm_21 dq 1
+imm_17 dq 0
 imm_45 dd 1.0
-imm_46 dd 2.0
 imm_47 dd 3.0
 imm_48 dd 4.0
-imm_27 dd 4.0
-imm_26 dd 3.0
-imm_25 dd 2.0
+imm_46 dd 2.0
+imm_5 dd 1
 imm_23 dd 1.0
 imm_7 dd 0
-imm_6 dd 7
-imm_5 dd 1
 imm_41 dd 1.5
+imm_26 dd 3.0
+imm_25 dd 2.0
+imm_6 dd 7
+imm_27 dd 4.0
 imm_29 db 1
 imm_20 db 1
-imm_1 db 1
+imm_4 db 0
 
 section '.text' code readable executable
 start:
@@ -788,30 +809,33 @@ xor ecx,ecx
 call [ExitProcess]
 
 fn_main:
-MOV BL, [imm_1]
-SUB RSP, 1
-MOV [RSP-0], BL
-MOV CL, BL
 SUB RSP, 0x20
 MOV RBP, RSP
-CALL fn_boolean
+CALL fn_loops
 ADD RSP, 0x20
-MOV BL, [RSP-0]
-ADD RSP, 1
 RET
 
 fn_loops:
-MOV RBX, [imm_2]
-MOV RSI, [imm_3]
+MOV RBX, [imm_1]
+MOV RSI, [imm_2]
 label_1:
-MOV RDI, [imm_4]
+MOV RDI, [imm_3]
 CMP RBX, RDI
 JG label_2
 MOV RDI, RBX
-ADD RDI, [imm_3]
+ADD RDI, [imm_2]
 ADD RBX, RSI
 JMP label_1
 label_2:
+MOV RBX, [imm_3]
+label_3:
+CMP RBX, [imm_1]
+SETG SIL
+CMP SIL, [imm_4]
+JE label_4
+SUB RBX, [imm_2]
+JMP label_3
+label_4:
 RET
 
 fn_enums:
@@ -896,13 +920,13 @@ MOV RAX, [imm_21]
 CMP RAX, [imm_22]
 SETLE SIL
 CMP SIL, [imm_20]
-JNE label_4
+JNE label_6
 MOV RBX, [imm_22]
 MOVSS XMM7, [imm_23]
-JMP label_3
-label_4:
+JMP label_5
+label_6:
 MOV RBX, [imm_24]
-label_3:
+label_5:
 MOV RBX, [imm_19]
 ADD RBX, [imm_22]
 CMP [imm_18], RBX
@@ -945,9 +969,9 @@ MOVMSKPS EAX, XMM4
 CMP EAX, 0xF
 SETE BL
 CMP BL, [imm_20]
-JNE label_5
+JNE label_7
 RET
-label_5:
+label_7:
 RET
 
 fn_fn_calls:
@@ -959,9 +983,9 @@ MOV RBX, RAX
 CMP RBX, [imm_28]
 SETE SIL
 CMP SIL, [imm_29]
-JNE label_6
+JNE label_8
 RET
-label_6:
+label_8:
 MOV RBX, [imm_30]
 ADD RBX, [imm_31]
 MOV RAX, [imm_32]

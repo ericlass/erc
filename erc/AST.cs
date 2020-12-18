@@ -23,6 +23,7 @@ namespace erc
         Return,
         If,
         For,
+        While,
         NewPointer,
         DelPointer,
         IndexAccess,
@@ -295,10 +296,16 @@ namespace erc
             return new AstItem { Kind = AstItemKind.Return, DataType = dataType, Children = new List<AstItem> { value } };
         }
 
-        internal static AstItem ForLoop(string varName, AstItem startExpression, AstItem endExpression, AstItem incExpression, List<AstItem> statements)
+        public static AstItem ForLoop(string varName, AstItem startExpression, AstItem endExpression, AstItem incExpression, List<AstItem> statements)
         {
             var statementList = StatementList(statements);
             return new AstItem { Kind = AstItemKind.For, Identifier = varName, Children = new List<AstItem>() { startExpression, endExpression, incExpression, statementList } };
+        }
+
+        public static AstItem WhileLoop(AstItem whileExpression, List<AstItem> statements)
+        {
+            var statementList = StatementList(statements);
+            return new AstItem { Kind = AstItemKind.While, Children = new List<AstItem>() { whileExpression, statementList } };
         }
 
         public static AstItem AsOperator(IBinaryOperator oper)
