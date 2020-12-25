@@ -13,14 +13,14 @@ namespace erc
         {
             _context = context;
 
-            var codeLines = new List<IIMObject>();
+            var imObjects = new List<IIMObject>();
             foreach (var item in context.AST.Children)
             {
                 switch (item.Kind)
                 {
                     case AstItemKind.FunctionDecl:
                     case AstItemKind.ExternFunctionDecl:
-                        codeLines.Add(GenerateFunction(item));
+                        imObjects.Add(GenerateFunction(item));
                         break;
                     
                     case AstItemKind.EnumDecl:
@@ -33,7 +33,7 @@ namespace erc
                 _tempLocalCounter = 0;
             }
 
-            _context.IMObjects = codeLines;
+            _context.IMObjects = imObjects;
         }
 
         private IIMObject GenerateFunction(AstItem function)
@@ -61,7 +61,7 @@ namespace erc
             foreach (var statement in statements.Children)
             {
                 //result.Add(IMOperation.Cmnt(statement.SourceLine));
-                operations.AddRange(GenerateStatement(statement));
+                GenerateStatement(operations, statement);
             }
 
             _context.LeaveBlock();
@@ -79,6 +79,7 @@ namespace erc
 
         private void InsertFreeInstructions(List<IMOperation> operations)
         {
+            //TODO: This is a little too simple as it doesn't take into account scope. For example, the counter variable in a for loop get's a "free" in each iteration.
             var knownVars = new HashSet<string>();
             for (int i = operations.Count - 1; i >= 0; i--)
             {
@@ -120,55 +121,61 @@ namespace erc
             return new IMExternalFunction() { Definition = definition, ExternalName = fnName, LibName = libName };
         }
 
-        private List<IMOperation> GenerateStatement(AstItem statement)
+        private void GenerateStatement(List<IMOperation> output, AstItem statement)
         {
             switch (statement.Kind)
             {
                 case AstItemKind.VarDecl:
-                    return GenerateVarDecl(statement);
+                    GenerateVarDecl(output, statement);
+                    break;
 
                 case AstItemKind.Assignment:
-                    return GenerateAssignment(statement);
+                    GenerateAssignment(output, statement);
+                    break;
 
                 case AstItemKind.FunctionCall:
-                    return GenerateFunctionCall(statement, null);
+                    GenerateFunctionCall(output, statement, null);
+                    break;
 
                 case AstItemKind.Return:
-                    return GenerateReturn(statement);
+                    GenerateReturn(output, statement);
+                    break;
 
                 case AstItemKind.If:
-                    return GenerateIfStatement(statement);
+                    GenerateIfStatement(output, statement);
+                    break;
 
                 case AstItemKind.For:
-                    return GenerateForLoop(statement);
+                    GenerateForLoop(output, statement);
+                    break;
 
                 case AstItemKind.While:
-                    return GenerateWhileLoop(statement);
+                    GenerateWhileLoop(output, statement);
+                    break;
 
                 case AstItemKind.Break:
-                    return GenerateBreak();
+                    GenerateBreak(output);
+                    break;
 
                 case AstItemKind.DelPointer:
-                    return GenerateDelPointer(statement);
+                    GenerateDelPointer(output, statement);
+                    break;
             }
-
-            return new List<IMOperation>();
         }
 
-        private List<IMOperation> GenerateVarDecl(AstItem statement)
+        private void GenerateVarDecl(List<IMOperation> output, AstItem statement)
         {
             var variable = new Symbol(statement.Identifier, SymbolKind.Variable, statement.DataType);
             var location = IMOperand.Local(variable.DataType, variable.Name);
             variable.Location = location;
             _context.AddVariable(variable);
 
-            return GenerateExpression(statement.Children[0], location);
+            GenerateExpression(output, statement.Children[0], location);
         }
 
-        private List<IMOperation> GenerateAssignment(AstItem statement)
+        private void GenerateAssignment(List<IMOperation> output, AstItem statement)
         {
             //No need to check if variable was already declared or declared. That is already check by syntax analysis!
-            var result = new List<IMOperation>();
             var target = statement.Children[0];
             IMOperand targetLocation;
             var symbol = _context.RequireSymbol(statement.Children[0].Identifier);
@@ -181,7 +188,7 @@ namespace erc
 
                 case AstItemKind.IndexAccess:
                     var tmpLocation = NewTempLocal(DataType.U64);
-                    result.AddRange(GenerateIndexAddressCalculation(target.Children[0], symbol, tmpLocation));
+                    GenerateIndexAddressCalculation(output, target.Children[0], symbol, tmpLocation);
                     targetLocation = IMOperand.Reference(symbol.DataType, tmpLocation);
                     break;
 
@@ -193,13 +200,11 @@ namespace erc
                     throw new Exception("Unsupported target item for assignment: " + target);
             }
 
-            result.AddRange(GenerateExpression(statement.Children[1], targetLocation));
-            return result;
+            GenerateExpression(output, statement.Children[1], targetLocation);
         }
 
-        private List<IMOperation> GenerateFunctionCall(AstItem funcCall, IMOperand targetLocation)
+        private void GenerateFunctionCall(List<IMOperation> output, AstItem funcCall, IMOperand targetLocation)
         {
-            var result = new List<IMOperation>();
             var function = _context.GetFunction(funcCall.Identifier);
 
             //Generate parameter values in desired locations
@@ -211,34 +216,30 @@ namespace erc
                 var expression = funcCall.Children[i];
                 var location = NewTempLocal(parameter.DataType);
                 paramLocations.Add(location);
-                result.AddRange(GenerateExpression(expression, location));
+                GenerateExpression(output, expression, location);
             }
 
-            result.Add(IMOperation.Call(function.Name, targetLocation, paramLocations));
-
-            return result;
+            output.Add(IMOperation.Call(function.Name, targetLocation, paramLocations));
         }
 
-        private List<IMOperation> GenerateReturn(AstItem statement)
+        private void GenerateReturn(List<IMOperation> output, AstItem statement)
         {
             if (statement.Kind != AstItemKind.Return)
                 throw new Exception("Expected return statement, got " + statement);
 
-            var result = new List<IMOperation>();
             var function = _context.CurrentFunction;
 
             var returnLocation = IMOperand.VOID;
             if (function.ReturnType != DataType.VOID)
             {
                 returnLocation = NewTempLocal(function.ReturnType);
-                result.AddRange(GenerateExpression(statement.Children[0], returnLocation));
+                GenerateExpression(output, statement.Children[0], returnLocation);
             }
 
-            result.Add(IMOperation.Ret(returnLocation));
-            return result;
+            output.Add(IMOperation.Ret(returnLocation));
         }
 
-        private List<IMOperation> GenerateIfStatement(AstItem statement)
+        private void GenerateIfStatement(List<IMOperation> output, AstItem statement)
         {
             if (statement.Kind != AstItemKind.If)
                 throw new Exception("Expected if statement, got " + statement);
@@ -247,57 +248,53 @@ namespace erc
             var ifStatements = statement.Children[1];
             var elseStatements = statement.Children[2];
 
-            var result = new List<IMOperation>();
-
             //OPTIMIZE: If "expression" is a simple, one operator operation, generate the JMP instruction directly instead of going through the temp location!
             //IE: single "break" statement => directly jump to end label
             var tmpLocation = NewTempLocal(DataType.BOOL);
-            result.AddRange(GenerateExpression(expression, tmpLocation));
+            GenerateExpression(output, expression, tmpLocation);
 
             var endLabel = NewLabelName();
 
             if (elseStatements == null)
             {
-                result.Add(IMOperation.JmpNE(tmpLocation, IMOperand.BOOL_TRUE, endLabel));
+                output.Add(IMOperation.JmpNE(tmpLocation, IMOperand.BOOL_TRUE, endLabel));
 
                 _context.EnterBlock();
                 foreach (var stat in ifStatements.Children)
                 {
-                    result.AddRange(GenerateStatement(stat));
+                    GenerateStatement(output, stat);
                 }
                 _context.LeaveBlock();
 
-                result.Add(IMOperation.Labl(endLabel));
+                output.Add(IMOperation.Labl(endLabel));
             }
             else
             {
                 var elseLabel = NewLabelName();
 
-                result.Add(IMOperation.JmpNE(tmpLocation, IMOperand.BOOL_TRUE, elseLabel));
+                output.Add(IMOperation.JmpNE(tmpLocation, IMOperand.BOOL_TRUE, elseLabel));
 
                 _context.EnterBlock();
                 foreach (var stat in ifStatements.Children)
                 {
-                    result.AddRange(GenerateStatement(stat));
+                    GenerateStatement(output, stat);
                 }
                 _context.LeaveBlock();
-                result.Add(IMOperation.Jmp(endLabel));
+                output.Add(IMOperation.Jmp(endLabel));
 
-                result.Add(IMOperation.Labl(elseLabel));
+                output.Add(IMOperation.Labl(elseLabel));
                 _context.EnterBlock();
                 foreach (var stat in elseStatements.Children)
                 {
-                    result.AddRange(GenerateStatement(stat));
+                    GenerateStatement(output, stat);
                 }
                 _context.LeaveBlock();
 
-                result.Add(IMOperation.Labl(endLabel));
+                output.Add(IMOperation.Labl(endLabel));
             }
-
-            return result;
         }
 
-        private List<IMOperation> GenerateForLoop(AstItem statement)
+        private void GenerateForLoop(List<IMOperation> output, AstItem statement)
         {
             var varName = statement.Identifier;
             var startExpression = statement.Children[0];
@@ -314,40 +311,36 @@ namespace erc
             _context.AddVariable(counterVariable);
             counterVariable.Location = varLocation;
 
-            var result = new List<IMOperation>();
-
             //Evaluate start value expression before loop
-            result.AddRange(GenerateExpression(startExpression, varLocation));
+            GenerateExpression(output, startExpression, varLocation);
             //Evaluate increment value expression before loop
-            result.AddRange(GenerateExpression(incExpression, incLocation));
+            GenerateExpression(output, incExpression, incLocation);
             //Start label
-            result.Add(IMOperation.Labl(startLabelName));
+            output.Add(IMOperation.Labl(startLabelName));
 
             //Evaluate end value expression inside loop
             var endLocation = NewTempLocal(DataType.I64);
-            result.AddRange(GenerateExpression(endExpression, endLocation));
+            GenerateExpression(output, endExpression, endLocation);
             //Go to end once end value has been reached
-            result.Add(IMOperation.JmpG(varLocation, endLocation, endLabelName));
+            output.Add(IMOperation.JmpG(varLocation, endLocation, endLabelName));
 
             //Generate loop body
             _context.EnterBlock(endLabelName);
             foreach (var stat in statements.Children)
             {
-                result.AddRange(GenerateStatement(stat));
+                GenerateStatement(output, stat);
             }
             _context.LeaveBlock();
 
             //Increment Counter
-            result.Add(IMOperation.Add(varLocation, varLocation, incLocation));
+            output.Add(IMOperation.Add(varLocation, varLocation, incLocation));
             //Go to loop start
-            result.Add(IMOperation.Jmp(startLabelName));
+            output.Add(IMOperation.Jmp(startLabelName));
             //End label
-            result.Add(IMOperation.Labl(endLabelName));
-
-            return result;
+            output.Add(IMOperation.Labl(endLabelName));
         }
 
-        private List<IMOperation> GenerateWhileLoop(AstItem statement)
+        private void GenerateWhileLoop(List<IMOperation> output, AstItem statement)
         {
             var whileExpression = statement.Children[0];
             var statements = statement.Children[1];
@@ -356,39 +349,35 @@ namespace erc
             var startLabelName = NewLabelName();
             var endLabelName = NewLabelName();
 
-            var result = new List<IMOperation>();
-
             //Start label
-            result.Add(IMOperation.Labl(startLabelName));
+            output.Add(IMOperation.Labl(startLabelName));
             //Evaluate loop expression
-            result.AddRange(GenerateExpression(whileExpression, testLocation));
+            GenerateExpression(output, whileExpression, testLocation);
             //If expression evaluates to false, jump to end label
-            result.Add(IMOperation.JmpE(testLocation, IMOperand.BOOL_FALSE, endLabelName));
+            output.Add(IMOperation.JmpE(testLocation, IMOperand.BOOL_FALSE, endLabelName));
 
             //Generate loop body
             _context.EnterBlock(endLabelName);
             foreach (var stat in statements.Children)
             {
-                result.AddRange(GenerateStatement(stat));
+                GenerateStatement(output, stat);
             }
             _context.LeaveBlock();
 
             //Go to loop start
-            result.Add(IMOperation.Jmp(startLabelName));
+            output.Add(IMOperation.Jmp(startLabelName));
             //End label
-            result.Add(IMOperation.Labl(endLabelName));
-
-            return result;
+            output.Add(IMOperation.Labl(endLabelName));
         }
 
-        private List<IMOperation> GenerateBreak()
+        private void GenerateBreak(List<IMOperation> output)
         {
             var endLabelName = _context.GetCurrentScopeEndLabel();
             Assert.Check(endLabelName != null, "No end label for break statement in current scope!");
-            return new List<IMOperation>() { IMOperation.Jmp(endLabelName) };
+            output.Add(IMOperation.Jmp(endLabelName));
         }
 
-        private List<IMOperation> GenerateExpression(AstItem expression, IMOperand targetLocation)
+        private void GenerateExpression(List<IMOperation> output, AstItem expression, IMOperand targetLocation)
         {
             switch (expression.Kind)
             {
@@ -399,89 +388,82 @@ namespace erc
                     else
                         source = IMOperand.Immediate(expression.DataType, expression.Value);
 
-                    return IMOperation.Mov(targetLocation, source).AsList;
+                    output.Add(IMOperation.Mov(targetLocation, source));
+                    break;
 
                 case AstItemKind.Vector:
-                    return GenerateVectorWithExpressions(expression, targetLocation);
+                    GenerateVectorWithExpressions(output, expression, targetLocation);
+                    break;
 
                 case AstItemKind.Variable:
                     var variable = _context.GetSymbol(expression.Identifier);
                     if (variable.Location != targetLocation)
-                        return IMOperation.Mov(targetLocation, variable.Location).AsList;
-                    else
-                        return new List<IMOperation>();
+                        output.Add(IMOperation.Mov(targetLocation, variable.Location));
+                    break;
 
                 case AstItemKind.FunctionCall:
-                    return GenerateFunctionCall(expression, targetLocation);
+                    GenerateFunctionCall(output, expression, targetLocation);
+                    break;
 
                 case AstItemKind.NewPointer:
-                    return GenerateNewPointer(expression, targetLocation);
+                    GenerateNewPointer(output, expression, targetLocation);
+                    break;
 
                 case AstItemKind.IndexAccess:
-                    return GenerateIndexAccess(expression, targetLocation);
+                    GenerateIndexAccess(output, expression, targetLocation);
+                    break;
 
                 case AstItemKind.Expression:
                     if (expression.Children.Count == 1)
-                        return GenerateExpression(expression.Children[0], targetLocation);
+                        GenerateExpression(output, expression.Children[0], targetLocation);
                     else
-                        return GenerateExpressionOperations(expression.Children, targetLocation);
-
-                default:
-                    return new List<IMOperation>();
+                        GenerateExpressionOperations(output, expression.Children, targetLocation);
+                    break;
             }
         }
 
-        private List<IMOperation> GenerateIndexAccess(AstItem item, IMOperand targetLocation)
+        private void GenerateIndexAccess(List<IMOperation> output, AstItem item, IMOperand targetLocation)
         {
-            var result = new List<IMOperation>();
             var symbol = _context.RequireSymbol(item.Identifier);
-
             var tmpLocation = NewTempLocal(DataType.U64);
 
-            result.AddRange(GenerateIndexAddressCalculation(item.Children[0], symbol, tmpLocation));
+            GenerateIndexAddressCalculation(output, item.Children[0], symbol, tmpLocation);
 
             //Move value to target
-            result.Add(IMOperation.Mov(targetLocation, IMOperand.Reference(symbol.DataType, tmpLocation)));
-
-            return result;
+            output.Add(IMOperation.Mov(targetLocation, IMOperand.Reference(symbol.DataType, tmpLocation)));
         }
 
-        private List<IMOperation> GenerateIndexAddressCalculation(AstItem indexExpression, Symbol symbol, IMOperand target)
+        private void GenerateIndexAddressCalculation(List<IMOperation> output, AstItem indexExpression, Symbol symbol, IMOperand target)
         {
             var pointerType = symbol.DataType;
-            var result = new List<IMOperation>();
             //Get index into accumulator
-            result.AddRange(GenerateExpression(indexExpression, target));
+            GenerateExpression(output, indexExpression, target);
 
             //Multiply by byte size of sub type
-            result.Add(IMOperation.Mul(target, target, IMOperand.Immediate(DataType.U64, pointerType.ElementType.ByteSize)));
+            output.Add(IMOperation.Mul(target, target, IMOperand.Immediate(DataType.U64, pointerType.ElementType.ByteSize)));
 
             //Add base address
-            result.Add(IMOperation.Add(target, target, symbol.Location));
-
-            return result;
+            output.Add(IMOperation.Add(target, target, symbol.Location));
         }
 
-        private List<IMOperation> GenerateDelPointer(AstItem expression)
+        private void GenerateDelPointer(List<IMOperation> output, AstItem expression)
         {
             var variable = _context.RequireSymbol(expression.Identifier);
-            return IMOperation.Del(variable.Location).AsList;
+            output.Add(IMOperation.Del(variable.Location));
         }
 
-        private List<IMOperation> GenerateNewPointer(AstItem expression, IMOperand targetLocation)
+        private void GenerateNewPointer(List<IMOperation> output, AstItem expression, IMOperand targetLocation)
         {
-            var result = new List<IMOperation>();
-
             var bytesLocation = NewTempLocal(DataType.U64);
-            
+
+            //TODO: Why is this commented?
             //var bytesExpression = expression.Children[0];
-            //result.AddRange(GenerateExpression(bytesExpression, bytesLocation));
+            //GenerateExpression(output, bytesExpression, bytesLocation);
 
-            result.Add(IMOperation.Mov(bytesLocation, IMOperand.Immediate(DataType.U64, (long)expression.Value)));
-            result.Add(IMOperation.Mul(bytesLocation, bytesLocation, IMOperand.Immediate(DataType.U64, expression.DataType.ElementType.ByteSize)));
+            output.Add(IMOperation.Mov(bytesLocation, IMOperand.Immediate(DataType.U64, (long)expression.Value)));
+            output.Add(IMOperation.Mul(bytesLocation, bytesLocation, IMOperand.Immediate(DataType.U64, expression.DataType.ElementType.ByteSize)));
 
-            result.Add(IMOperation.Aloc(targetLocation, bytesLocation));
-            return result;
+            output.Add(IMOperation.Aloc(targetLocation, bytesLocation));
         }
 
         private class AstItemWithLocation : AstItem
@@ -496,12 +478,11 @@ namespace erc
             }
         }
 
-        private List<IMOperation> GenerateExpressionOperations(List<AstItem> items, IMOperand targetLocation)
+        private void GenerateExpressionOperations(List<IMOperation> output, List<AstItem> items, IMOperand targetLocation)
         {
             //Create copy of list so original is not modified
             var terms = items.ConvertAll((a) => new AstItemWithLocation(a, null));
 
-            var result = new List<IMOperation>();
             for (int i = 0; i < terms.Count; i++)
             {
                 var term = terms[i];
@@ -521,15 +502,15 @@ namespace erc
                     if (operand1.Kind == AstItemKind.UnaryOperator || operand1.Kind == AstItemKind.BinaryOperator)
                         op1Location = terms[i - 2].Location;
                     else
-                        op1Location = GetOperandLocation(result, operand1);
+                        op1Location = GetOperandLocation(output, operand1);
 
                     IMOperand op2Location = null;
                     if (operand2.Kind == AstItemKind.UnaryOperator || operand2.Kind == AstItemKind.BinaryOperator)
                         op2Location = terms[i - 1].Location;
                     else
-                        op2Location = GetOperandLocation(result, operand2);
+                        op2Location = GetOperandLocation(output, operand2);
 
-                    result.AddRange(item.BinaryOperator.Generate(target, op1Location, op2Location));
+                    output.AddRange(item.BinaryOperator.Generate(target, op1Location, op2Location));
                     term.Location = target;
 
                     //Remove the two operands from the expression, do not remove the current operator
@@ -549,7 +530,7 @@ namespace erc
                     if (operand.Kind == AstItemKind.UnaryOperator || operand.Kind == AstItemKind.BinaryOperator)
                         opLocation = terms[i - 1].Location;
                     else
-                        opLocation = GetOperandLocation(result, operand);
+                        opLocation = GetOperandLocation(output, operand);
 
                     //The last operation in the expression can be done in the final target location. Before that, use temp local
                     var target = targetLocation;
@@ -557,7 +538,7 @@ namespace erc
                     if (!isLastOperation)
                         target = NewTempLocal(item.UnaryOperator.GetReturnType(operand));
 
-                    result.AddRange(item.UnaryOperator.Generate(target, opLocation));
+                    output.AddRange(item.UnaryOperator.Generate(target, opLocation));
                     term.Location = target;
 
                     //Remove the operand from the expression, do not remove the current operator
@@ -569,8 +550,6 @@ namespace erc
                     i -= 1;
                 }
             }
-
-            return result;
         }
 
         /// <summary>
@@ -593,7 +572,7 @@ namespace erc
             else if (operand.Kind == AstItemKind.Vector)
             {
                 result = NewTempLocal(operand.DataType);
-                output.AddRange(GenerateVectorWithExpressions(operand, result));
+                GenerateVectorWithExpressions(output, operand, result);
             }
             else if (operand.Kind == AstItemKind.Variable)
             {
@@ -603,7 +582,7 @@ namespace erc
             else if (operand.Kind == AstItemKind.FunctionCall)
             {
                 result = NewTempLocal(operand.DataType);
-                output.AddRange(GenerateFunctionCall(operand, result));
+                GenerateFunctionCall(output, operand, result);
             }
             else if (operand.Kind == AstItemKind.BinaryOperator || operand.Kind == AstItemKind.UnaryOperator)
             {
@@ -619,10 +598,8 @@ namespace erc
             return result;
         }
 
-        private List<IMOperation> GenerateVectorWithExpressions(AstItem expression, IMOperand targetLocation)
+        private void GenerateVectorWithExpressions(List<IMOperation> output, AstItem expression, IMOperand targetLocation)
         {
-            var operations = new List<IMOperation>();
-
             var valueLocations = new List<IMOperand>(expression.Children.Count);
             for (int i = 0; i < expression.Children.Count; i++)
             {
@@ -631,16 +608,15 @@ namespace erc
                 if (child.Kind == AstItemKind.Expression)
                 {
                     location = NewTempLocal(child.DataType);
-                    operations.AddRange(GenerateExpression(child, location));
+                    GenerateExpression(output, child, location);
                 }
                 else
-                    location = GetOperandLocation(operations, child);
+                    location = GetOperandLocation(output, child);
 
                 valueLocations.Add(location);
             }
 
-            operations.Add(IMOperation.GVec(targetLocation, valueLocations));
-            return operations;
+            output.Add(IMOperation.GVec(targetLocation, valueLocations));
         }
 
         private string NewLabelName()
