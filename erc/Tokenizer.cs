@@ -28,6 +28,7 @@ namespace erc
             ["to"] = TokenKind.To,
             ["for"] = TokenKind.For,
             ["while"] = TokenKind.While,
+            ["break"] = TokenKind.Break,
             ["in"] = TokenKind.In,
             ["to"] = TokenKind.To,
             ["inc"] = TokenKind.Inc,

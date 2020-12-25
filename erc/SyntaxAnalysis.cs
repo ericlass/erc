@@ -259,6 +259,10 @@ namespace erc
                     result = ReadWhileLoop(tokens);
                     break;
 
+                case TokenKind.Break:
+                    result = ReadBreak(tokens);
+                    break;
+
                 case TokenKind.CurlyBracketClose:
                     //End of function
                     return null;
@@ -272,6 +276,13 @@ namespace erc
                 result.SourceLine = String.Join(" ", lineTokens.ConvertAll<string>((a) => a.Value));
 
             return result;
+        }
+
+        private static AstItem ReadBreak(TokenIterator tokens)
+        {
+            tokens.PopExpected(TokenKind.Break);
+            tokens.PopExpected(TokenKind.StatementTerminator);
+            return AstItem.Break();
         }
 
         private AstItem ReadDelStatement(TokenIterator tokens)

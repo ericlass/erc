@@ -6,6 +6,8 @@ namespace erc
 {
     public class SemanticAnalysis
     {
+        private const string FakeEndLabelName = "scope-end-label";
+
         private CompilerContext _context;
         private AstOptimizer _optimizer = new AstOptimizer();
 
@@ -179,6 +181,10 @@ namespace erc
             {
                 CheckWhileLoop(item);
             }
+            else if (item.Kind == AstItemKind.Break)
+            {
+                CheckBreakStatement();
+            }
             else if (item.Kind == AstItemKind.DelPointer)
             {
                 CheckPointerDeletion(item);
@@ -240,7 +246,7 @@ namespace erc
             CheckExpression(incExpression);
             Assert.Check(incExpression.DataType.Kind == DataTypeKind.I64, "For loop increment expression must be type i64! Given: " + incExpression.DataType);
 
-            _context.EnterBlock();
+            _context.EnterBlock(FakeEndLabelName);
             _context.AddVariable(new Symbol(varName, SymbolKind.Variable, DataType.I64));
 
             statements.Children.ForEach((s) => CheckStatement(s));
@@ -256,9 +262,14 @@ namespace erc
             CheckExpression(whileExpression);
             Assert.Check(whileExpression.DataType.Kind == DataTypeKind.BOOL, "While loop expression must be of type bool! Given: " + whileExpression.DataType);
 
-            _context.EnterBlock();
+            _context.EnterBlock(FakeEndLabelName);
             statements.Children.ForEach((s) => CheckStatement(s));
             _context.LeaveBlock();
+        }
+
+        private void CheckBreakStatement()
+        {
+            Assert.Check(_context.GetCurrentScopeEndLabel() != null, "break statement is not inside any breakable scope!");
         }
 
         private void CheckReturnStatement(AstItem item)

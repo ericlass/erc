@@ -27,6 +27,7 @@ namespace erc
         False,
         For,
         While,
+        Break,
         In,
         To,
         Inc,

@@ -8,20 +8,38 @@ namespace erc
     /// </summary>
     public class BlockScope
     {
-        public BlockScope Parent { get; set; }
         private Dictionary<string, Symbol> _variables = new Dictionary<string, Symbol>();
+        private string _endLabelName = null;
+
+        public BlockScope Parent { get; set; }
 
         public BlockScope(BlockScope parent)
         {
             Parent = parent;
         }
 
-        public Symbol GetVariabe(string name)
+        public BlockScope(BlockScope parent, string endLabelName)
+        {
+            Parent = parent;
+            _endLabelName = endLabelName;
+        }
+
+        public Symbol GetVariable(string name)
         {
             if (_variables.ContainsKey(name))
                 return _variables[name];
             else if (Parent != null)
-                return Parent.GetVariabe(name);
+                return Parent.GetVariable(name);
+            else
+                return null;
+        }
+
+        public string GetEndLabel()
+        {
+            if (_endLabelName != null)
+                return _endLabelName;
+            else if (Parent != null)
+                return Parent.GetEndLabel();
             else
                 return null;
         }

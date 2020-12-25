@@ -41,10 +41,21 @@ namespace erc
 
         public void EnterBlock()
         {
+            EnterBlock(null);
+        }
+
+        public void EnterBlock(string endLabel)
+        {
             if (_functionScope == null)
                 throw new Exception("Cannot enter block if not inside function!");
 
-            _blockScope = new BlockScope(_blockScope);
+            _blockScope = new BlockScope(_blockScope, endLabel);
+        }
+
+        public string GetCurrentScopeEndLabel()
+        {
+            Assert.Check(_blockScope != null, "Trying to get end label for scope, but not inside block scope!");
+            return _blockScope.GetEndLabel();
         }
 
         public void LeaveBlock()
@@ -60,7 +71,7 @@ namespace erc
             Symbol result = null;
 
             if (_blockScope != null)
-                result = _blockScope.GetVariabe(name);
+                result = _blockScope.GetVariable(name);
 
             if (result == null && _functionScope != null)
                 result = _functionScope.GetParameter(name);

@@ -145,6 +145,9 @@ namespace erc
                 case AstItemKind.While:
                     return GenerateWhileLoop(statement);
 
+                case AstItemKind.Break:
+                    return GenerateBreak();
+
                 case AstItemKind.DelPointer:
                     return GenerateDelPointer(statement);
             }
@@ -246,7 +249,8 @@ namespace erc
 
             var result = new List<IMOperation>();
 
-            //OPTIMIZE: If "expression" is a simple, one operator operation, generate the JMP instruction directly instead of going through the temp location
+            //OPTIMIZE: If "expression" is a simple, one operator operation, generate the JMP instruction directly instead of going through the temp location!
+            //IE: single "break" statement => directly jump to end label
             var tmpLocation = NewTempLocal(DataType.BOOL);
             result.AddRange(GenerateExpression(expression, tmpLocation));
 
@@ -256,10 +260,12 @@ namespace erc
             {
                 result.Add(IMOperation.JmpNE(tmpLocation, IMOperand.BOOL_TRUE, endLabel));
 
+                _context.EnterBlock();
                 foreach (var stat in ifStatements.Children)
                 {
                     result.AddRange(GenerateStatement(stat));
                 }
+                _context.LeaveBlock();
 
                 result.Add(IMOperation.Labl(endLabel));
             }
@@ -269,17 +275,21 @@ namespace erc
 
                 result.Add(IMOperation.JmpNE(tmpLocation, IMOperand.BOOL_TRUE, elseLabel));
 
+                _context.EnterBlock();
                 foreach (var stat in ifStatements.Children)
                 {
                     result.AddRange(GenerateStatement(stat));
                 }
+                _context.LeaveBlock();
                 result.Add(IMOperation.Jmp(endLabel));
 
                 result.Add(IMOperation.Labl(elseLabel));
+                _context.EnterBlock();
                 foreach (var stat in elseStatements.Children)
                 {
                     result.AddRange(GenerateStatement(stat));
                 }
+                _context.LeaveBlock();
 
                 result.Add(IMOperation.Labl(endLabel));
             }
@@ -320,10 +330,12 @@ namespace erc
             result.Add(IMOperation.JmpG(varLocation, endLocation, endLabelName));
 
             //Generate loop body
+            _context.EnterBlock(endLabelName);
             foreach (var stat in statements.Children)
             {
                 result.AddRange(GenerateStatement(stat));
             }
+            _context.LeaveBlock();
 
             //Increment Counter
             result.Add(IMOperation.Add(varLocation, varLocation, incLocation));
@@ -354,10 +366,12 @@ namespace erc
             result.Add(IMOperation.JmpE(testLocation, IMOperand.BOOL_FALSE, endLabelName));
 
             //Generate loop body
+            _context.EnterBlock(endLabelName);
             foreach (var stat in statements.Children)
             {
                 result.AddRange(GenerateStatement(stat));
             }
+            _context.LeaveBlock();
 
             //Go to loop start
             result.Add(IMOperation.Jmp(startLabelName));
@@ -365,6 +379,13 @@ namespace erc
             result.Add(IMOperation.Labl(endLabelName));
 
             return result;
+        }
+
+        private List<IMOperation> GenerateBreak()
+        {
+            var endLabelName = _context.GetCurrentScopeEndLabel();
+            Assert.Check(endLabelName != null, "No end label for break statement in current scope!");
+            return new List<IMOperation>() { IMOperation.Jmp(endLabelName) };
         }
 
         private List<IMOperation> GenerateExpression(AstItem expression, IMOperand targetLocation)

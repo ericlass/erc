@@ -24,6 +24,13 @@ Programm
                             Variable: "i" (i64)
                             Immediate: 1 (i64)
                             BinaryOperator: +
+                    If
+                        Expression
+                            Variable: "x" (i64)
+                            Immediate: 2 (i64)
+                            BinaryOperator: >
+                        StatementList
+                            Break
             VarDecl: "a" (i64)
                 Immediate: 5 (i64)
             While
@@ -38,6 +45,7 @@ Programm
                             Variable: "a" (i64)
                             Immediate: 1 (i64)
                             BinaryOperator: -
+                    Break
     FunctionDecl: "enums" (void)
         ParameterList
         StatementList
@@ -348,12 +356,15 @@ fn main(): void
   %1	: register(RSI),
   %2	: register(RDI),
   %x	: register(RDI),
+  %3	: register(R12B),
   %a	: register(RBX),
-  %3	: register(SIL),
+  %4	: register(SIL),
   i64(0)	: data_section(imm_1),
   i64(1)	: data_section(imm_2),
   i64(5)	: data_section(imm_3),
-  bool(0)	: data_section(imm_4),
+  i64(2)	: data_section(imm_4),
+  bool(1)	: data_section(imm_5),
+  bool(0)	: data_section(imm_6),
 ]
 fn loops(): void
 {
@@ -364,21 +375,27 @@ fn loops(): void
     JMPG %i, %2, 'label_2'
     FREE %2
     ADD %x, %i, i64(1)
+    SETG %3, %x, i64(2)
     FREE %x
+    JMPNE %3, bool(1), 'label_3'
+    FREE %3
+    JMP 'label_2'
+    LABL 'label_3'
     ADD %i, %i, %1
     FREE %1
     FREE %i
     JMP 'label_1'
     LABL 'label_2'
     MOV %a, i64(5)
-    LABL 'label_3'
-    SETG %3, %a, i64(0)
-    JMPE %3, bool(0), 'label_4'
-    FREE %3
+    LABL 'label_4'
+    SETG %4, %a, i64(0)
+    JMPE %4, bool(0), 'label_5'
+    FREE %4
     SUB %a, %a, i64(1)
     FREE %a
-    JMP 'label_3'
-    LABL 'label_4'
+    JMP 'label_5'
+    JMP 'label_4'
+    LABL 'label_5'
     RET @void
 }
 
@@ -386,9 +403,9 @@ fn loops(): void
 [
   %test	: register(EBX),
   %same	: register(BL),
-  u32(1)	: data_section(imm_5),
-  u32(7)	: data_section(imm_6),
-  u32(0)	: data_section(imm_7),
+  u32(1)	: data_section(imm_7),
+  u32(7)	: data_section(imm_8),
+  u32(0)	: data_section(imm_9),
 ]
 fn enums(): void
 {
@@ -406,10 +423,10 @@ fn enums(): void
   %1	: register(RSI),
   %2	: register(RDI),
   %3	: register(R12),
-  i64(1)	: data_section(imm_8),
-  i64(2)	: data_section(imm_9),
-  i64(3)	: data_section(imm_10),
-  i64(6)	: data_section(imm_11),
+  i64(1)	: data_section(imm_10),
+  i64(2)	: data_section(imm_11),
+  i64(3)	: data_section(imm_12),
+  i64(6)	: data_section(imm_13),
 ]
 fn expressions(): void
 {
@@ -436,12 +453,12 @@ fn expressions(): void
   %x	: register(RDI),
   [%3]	: heap_register(RBX+0),
   %y	: register(RBX),
-  u64(5)	: data_section(imm_12),
-  u64(8)	: data_section(imm_13),
-  i64(5)	: data_section(imm_14),
-  i64(2)	: data_section(imm_15),
-  i64(8)	: data_section(imm_16),
-  i64(0)	: data_section(imm_17),
+  u64(5)	: data_section(imm_14),
+  u64(8)	: data_section(imm_15),
+  i64(5)	: data_section(imm_16),
+  i64(2)	: data_section(imm_17),
+  i64(8)	: data_section(imm_18),
+  i64(0)	: data_section(imm_19),
 ]
 fn pointers(): void
 {
@@ -481,16 +498,16 @@ fn pointers(): void
   %v1	: register(XMM7),
   %v2	: register(XMM8),
   %4	: register(BL),
-  i64(5)	: data_section(imm_18),
-  i64(3)	: data_section(imm_19),
-  bool(1)	: data_section(imm_20),
-  i64(1)	: data_section(imm_21),
-  i64(2)	: data_section(imm_22),
-  f32(1)	: data_section(imm_23),
-  i64(7)	: data_section(imm_24),
-  f32(2)	: data_section(imm_25),
-  f32(3)	: data_section(imm_26),
-  f32(4)	: data_section(imm_27),
+  i64(5)	: data_section(imm_20),
+  i64(3)	: data_section(imm_21),
+  bool(1)	: data_section(imm_22),
+  i64(1)	: data_section(imm_23),
+  i64(2)	: data_section(imm_24),
+  f32(1)	: data_section(imm_25),
+  i64(7)	: data_section(imm_26),
+  f32(2)	: data_section(imm_27),
+  f32(3)	: data_section(imm_28),
+  f32(4)	: data_section(imm_29),
 ]
 fn boolean(bool): void
 {
@@ -502,16 +519,16 @@ fn boolean(bool): void
     FREE %test
     MOV %g, i64(5)
     SETLE %2, i64(1), i64(2)
-    JMPNE %2, bool(1), 'label_6'
+    JMPNE %2, bool(1), 'label_7'
     FREE %2
     MOV %g, i64(2)
     MOV %j, f32(1)
     FREE %j
-    JMP 'label_5'
-    LABL 'label_6'
+    JMP 'label_6'
+    LABL 'label_7'
     MOV %g, i64(7)
     FREE %g
-    LABL 'label_5'
+    LABL 'label_6'
     ADD %3, i64(3), i64(2)
     SETG %x, i64(5), %3
     FREE %3
@@ -521,10 +538,10 @@ fn boolean(bool): void
     SETNE %4, %v1, %v2
     FREE %v2
     FREE %v1
-    JMPNE %4, bool(1), 'label_7'
+    JMPNE %4, bool(1), 'label_8'
     FREE %4
     RET @void
-    LABL 'label_7'
+    LABL 'label_8'
     RET @void
 }
 
@@ -544,25 +561,25 @@ ext fn['GetLastError', 'Kernel32.dll'] last_error(): i64
   %8	: register(YMM9),
   %6	: register(YMM7),
   %k2	: register(YMM8),
-  i64(0)	: data_section(imm_28),
-  bool(1)	: data_section(imm_29),
-  i64(7)	: data_section(imm_30),
-  i64(3)	: data_section(imm_31),
-  i64(5)	: data_section(imm_32),
-  f64(1)	: data_section(imm_33),
-  f64(2)	: data_section(imm_34),
-  f64(3)	: data_section(imm_35),
-  f64(4)	: data_section(imm_36),
+  i64(0)	: data_section(imm_30),
+  bool(1)	: data_section(imm_31),
+  i64(7)	: data_section(imm_32),
+  i64(3)	: data_section(imm_33),
+  i64(5)	: data_section(imm_34),
+  f64(1)	: data_section(imm_35),
+  f64(2)	: data_section(imm_36),
+  f64(3)	: data_section(imm_37),
+  f64(4)	: data_section(imm_38),
 ]
 fn fn_calls(): void
 {
     CALL 'last_error', %err_code
     SETE %1, %err_code, i64(0)
     FREE %err_code
-    JMPNE %1, bool(1), 'label_8'
+    JMPNE %1, bool(1), 'label_9'
     FREE %1
     RET @void
-    LABL 'label_8'
+    LABL 'label_9'
     ADD %2, i64(7), i64(3)
     MUL %kx, i64(5), %2
     FREE %2
@@ -663,21 +680,21 @@ fn add3(u16, u16): u16
   %7	: register(XMM9),
   %8	: register(XMM10),
   %xyz	: register(XMM7),
-  i64(5)	: data_section(imm_37),
-  i64(6)	: data_section(imm_38),
-  i64(7)	: data_section(imm_39),
-  i64(8)	: data_section(imm_40),
-  f32(1,5)	: data_section(imm_41),
-  f64(1,2)	: data_section(imm_42),
-  f64(0,5)	: data_section(imm_43),
-  f64(2)	: data_section(imm_44),
-  f32(1)	: data_section(imm_45),
-  f32(2)	: data_section(imm_46),
-  f32(3)	: data_section(imm_47),
-  f32(4)	: data_section(imm_48),
-  f64(1)	: data_section(imm_49),
-  f64(3)	: data_section(imm_50),
-  f64(4)	: data_section(imm_51),
+  i64(5)	: data_section(imm_39),
+  i64(6)	: data_section(imm_40),
+  i64(7)	: data_section(imm_41),
+  i64(8)	: data_section(imm_42),
+  f32(1,5)	: data_section(imm_43),
+  f64(1,2)	: data_section(imm_44),
+  f64(0,5)	: data_section(imm_45),
+  f64(2)	: data_section(imm_46),
+  f32(1)	: data_section(imm_47),
+  f32(2)	: data_section(imm_48),
+  f32(3)	: data_section(imm_49),
+  f32(4)	: data_section(imm_50),
+  f64(1)	: data_section(imm_51),
+  f64(3)	: data_section(imm_52),
+  f64(4)	: data_section(imm_53),
 ]
 fn types(): void
 {
@@ -744,58 +761,60 @@ include 'win64a.inc'
 section '.data' data readable writeable
 
 imm_1 dq 0
-imm_28 dq 0
-imm_30 dq 7
-imm_31 dq 3
-imm_32 dq 5
-imm_33 dq 1.0
-imm_34 dq 2.0
-imm_35 dq 3.0
-imm_36 dq 4.0
 erc_process_heap dq 0
-imm_37 dq 5
-imm_39 dq 7
-imm_40 dq 8
-imm_42 dq 1.2
-imm_43 dq 0.5
-imm_44 dq 2.0
-imm_49 dq 1.0
-imm_50 dq 3.0
-imm_51 dq 4.0
-imm_38 dq 6
-imm_24 dq 7
+imm_30 dq 0
+imm_32 dq 7
+imm_33 dq 3
+imm_34 dq 5
+imm_35 dq 1.0
+imm_36 dq 2.0
+imm_37 dq 3.0
+imm_38 dq 4.0
+imm_39 dq 5
+imm_40 dq 6
+imm_41 dq 7
+imm_42 dq 8
+imm_44 dq 1.2
+imm_45 dq 0.5
+imm_46 dq 2.0
+imm_51 dq 1.0
+imm_52 dq 3.0
+imm_53 dq 4.0
+imm_26 dq 7
+imm_24 dq 2
 erc_u32_zero dd 0
-imm_10 dq 3
-imm_8 dq 1
-imm_9 dq 2
-imm_22 dq 2
-imm_11 dq 6
-imm_12 dq 5
-imm_13 dq 8
+imm_11 dq 2
+imm_10 dq 1
+imm_23 dq 1
+imm_12 dq 3
+imm_13 dq 6
 imm_14 dq 5
-imm_16 dq 8
-imm_15 dq 2
-imm_18 dq 5
-imm_19 dq 3
+imm_15 dq 8
+imm_16 dq 5
+imm_17 dq 2
+imm_19 dq 0
+imm_4 dq 2
+imm_20 dq 5
 imm_3 dq 5
+imm_21 dq 3
 imm_2 dq 1
-imm_21 dq 1
-imm_17 dq 0
-imm_45 dd 1.0
-imm_47 dd 3.0
-imm_48 dd 4.0
-imm_46 dd 2.0
-imm_5 dd 1
-imm_23 dd 1.0
-imm_7 dd 0
-imm_41 dd 1.5
-imm_26 dd 3.0
-imm_25 dd 2.0
-imm_6 dd 7
-imm_27 dd 4.0
-imm_29 db 1
-imm_20 db 1
-imm_4 db 0
+imm_18 dq 8
+imm_48 dd 2.0
+imm_50 dd 4.0
+imm_49 dd 3.0
+imm_47 dd 1.0
+imm_28 dd 3.0
+imm_43 dd 1.5
+imm_8 dd 7
+imm_9 dd 0
+imm_29 dd 4.0
+imm_27 dd 2.0
+imm_25 dd 1.0
+imm_7 dd 1
+imm_6 db 0
+imm_5 db 1
+imm_31 db 1
+imm_22 db 1
 
 section '.text' code readable executable
 start:
@@ -824,35 +843,42 @@ CMP RBX, RDI
 JG label_2
 MOV RDI, RBX
 ADD RDI, [imm_2]
+CMP RDI, [imm_4]
+SETG R12B
+CMP R12B, [imm_5]
+JNE label_3
+JMP label_2
+label_3:
 ADD RBX, RSI
 JMP label_1
 label_2:
 MOV RBX, [imm_3]
-label_3:
+label_4:
 CMP RBX, [imm_1]
 SETG SIL
-CMP SIL, [imm_4]
-JE label_4
+CMP SIL, [imm_6]
+JE label_5
 SUB RBX, [imm_2]
-JMP label_3
-label_4:
+JMP label_5
+JMP label_4
+label_5:
 RET
 
 fn_enums:
-MOV EBX, [imm_5]
-MOV EBX, [imm_6]
-MOV EAX, [imm_7]
-CMP EAX, [imm_5]
+MOV EBX, [imm_7]
+MOV EBX, [imm_8]
+MOV EAX, [imm_9]
+CMP EAX, [imm_7]
 SETE BL
 RET
 
 fn_expressions:
-MOV RBX, [imm_8]
-ADD RBX, [imm_9]
+MOV RBX, [imm_10]
+ADD RBX, [imm_11]
 XOR RSI, RSI
-SUB RSI, [imm_10]
+SUB RSI, [imm_12]
 XOR RDI, RDI
-SUB RDI, [imm_11]
+SUB RDI, [imm_13]
 MOV RAX, RSI
 IMUL RDI
 MOV R12, RAX
@@ -861,9 +887,9 @@ SUB RBX, R12
 RET
 
 fn_pointers:
-MOV RBX, [imm_12]
+MOV RBX, [imm_14]
 MOV RAX, RBX
-MUL [imm_13]
+MUL [imm_15]
 MOV RBX, RAX
 PUSH RBX
 MOV RCX, [erc_process_heap]
@@ -875,18 +901,18 @@ CALL [HeapAlloc]
 ADD RSP, 0x20
 MOV RSI, RAX
 POP RBX
-MOV RAX, [imm_14]
-MOV [RSI+0], RAX
-MOV RBX, [imm_15]
-MOV RAX, RBX
-MUL [imm_13]
-MOV RBX, RAX
-ADD RBX, RSI
 MOV RAX, [imm_16]
-MOV [RBX+0], RAX
+MOV [RSI+0], RAX
 MOV RBX, [imm_17]
 MOV RAX, RBX
-MUL [imm_13]
+MUL [imm_15]
+MOV RBX, RAX
+ADD RBX, RSI
+MOV RAX, [imm_18]
+MOV [RBX+0], RAX
+MOV RBX, [imm_19]
+MOV RAX, RBX
+MUL [imm_15]
 MOV RBX, RAX
 ADD RBX, RSI
 MOV RDI, [RBX+0]
@@ -907,58 +933,58 @@ POP RSI
 RET
 
 fn_boolean:
-MOV RAX, [imm_18]
-CMP RAX, [imm_19]
+MOV RAX, [imm_20]
+CMP RAX, [imm_21]
 SETGE BL
 MOV SIL, BL
-AND SIL, [imm_20]
+AND SIL, [imm_22]
 MOV BL, SIL
 OR BL, BL
 NOT BL
-MOV RBX, [imm_18]
-MOV RAX, [imm_21]
-CMP RAX, [imm_22]
+MOV RBX, [imm_20]
+MOV RAX, [imm_23]
+CMP RAX, [imm_24]
 SETLE SIL
-CMP SIL, [imm_20]
-JNE label_6
-MOV RBX, [imm_22]
-MOVSS XMM7, [imm_23]
-JMP label_5
-label_6:
+CMP SIL, [imm_22]
+JNE label_7
 MOV RBX, [imm_24]
-label_5:
-MOV RBX, [imm_19]
-ADD RBX, [imm_22]
-CMP [imm_18], RBX
+MOVSS XMM7, [imm_25]
+JMP label_6
+label_7:
+MOV RBX, [imm_26]
+label_6:
+MOV RBX, [imm_21]
+ADD RBX, [imm_24]
+CMP [imm_20], RBX
 SETG SIL
 MOV RSI, RSP
 AND RSP, -16
-MOVSS XMM4, [imm_23]
-SUB RSP, 4
-MOVSS [RSP-0], XMM4
 MOVSS XMM4, [imm_25]
 SUB RSP, 4
 MOVSS [RSP-0], XMM4
-MOVSS XMM4, [imm_26]
+MOVSS XMM4, [imm_27]
 SUB RSP, 4
 MOVSS [RSP-0], XMM4
-MOVSS XMM4, [imm_27]
+MOVSS XMM4, [imm_28]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVSS XMM4, [imm_29]
 SUB RSP, 4
 MOVSS [RSP-0], XMM4
 MOVUPS XMM7, [RSP-0]
 MOV RSP, RSI
 MOV RSI, RSP
 AND RSP, -16
-MOVSS XMM4, [imm_23]
-SUB RSP, 4
-MOVSS [RSP-0], XMM4
 MOVSS XMM4, [imm_25]
 SUB RSP, 4
 MOVSS [RSP-0], XMM4
-MOVSS XMM4, [imm_26]
+MOVSS XMM4, [imm_27]
 SUB RSP, 4
 MOVSS [RSP-0], XMM4
-MOVSS XMM4, [imm_27]
+MOVSS XMM4, [imm_28]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVSS XMM4, [imm_29]
 SUB RSP, 4
 MOVSS [RSP-0], XMM4
 MOVUPS XMM8, [RSP-0]
@@ -968,10 +994,10 @@ CMPEQPS XMM4, XMM8
 MOVMSKPS EAX, XMM4
 CMP EAX, 0xF
 SETE BL
-CMP BL, [imm_20]
-JNE label_7
+CMP BL, [imm_22]
+JNE label_8
 RET
-label_7:
+label_8:
 RET
 
 fn_fn_calls:
@@ -980,29 +1006,29 @@ MOV RBP, RSP
 CALL [GetLastError]
 ADD RSP, 0x20
 MOV RBX, RAX
-CMP RBX, [imm_28]
+CMP RBX, [imm_30]
 SETE SIL
-CMP SIL, [imm_29]
-JNE label_8
+CMP SIL, [imm_31]
+JNE label_9
 RET
-label_8:
-MOV RBX, [imm_30]
-ADD RBX, [imm_31]
-MOV RAX, [imm_32]
+label_9:
+MOV RBX, [imm_32]
+ADD RBX, [imm_33]
+MOV RAX, [imm_34]
 IMUL RBX
 MOV RSI, RAX
 MOV RSI, RSP
 AND RSP, -32
-MOVSD XMM4, [imm_33]
-SUB RSP, 8
-MOVSD [RSP-0], XMM4
-MOVSD XMM4, [imm_34]
-SUB RSP, 8
-MOVSD [RSP-0], XMM4
 MOVSD XMM4, [imm_35]
 SUB RSP, 8
 MOVSD [RSP-0], XMM4
 MOVSD XMM4, [imm_36]
+SUB RSP, 8
+MOVSD [RSP-0], XMM4
+MOVSD XMM4, [imm_37]
+SUB RSP, 8
+MOVSD [RSP-0], XMM4
+MOVSD XMM4, [imm_38]
 SUB RSP, 8
 MOVSD [RSP-0], XMM4
 VMOVUPD YMM7, [RSP-0]
@@ -1097,43 +1123,49 @@ MOV AX, SI
 RET
 
 fn_types:
-MOV RAX, [imm_37]
-IMUL [imm_38]
-MOV RBX, RAX
 MOV RAX, [imm_39]
 IMUL [imm_40]
+MOV RBX, RAX
+MOV RAX, [imm_41]
+IMUL [imm_42]
 MOV RSI, RAX
 MOV RDI, RBX
 ADD RDI, RSI
-MOVSS XMM7, [imm_41]
+MOVSS XMM7, [imm_43]
 MOVSS XMM8, XMM7
-MOVSD XMM7, [imm_42]
-MOVSD XMM8, [imm_43]
+MOVSD XMM7, [imm_44]
+MOVSD XMM8, [imm_45]
 MOVSD XMM9, XMM8
 MULSD XMM9, XMM7
-ADDSD XMM9, [imm_44]
+ADDSD XMM9, [imm_46]
 MOV RSI, RSP
 AND RSP, -16
-MOVSS XMM4, [imm_45]
-SUB RSP, 4
-MOVSS [RSP-0], XMM4
-MOVSS XMM4, [imm_46]
-SUB RSP, 4
-MOVSS [RSP-0], XMM4
 MOVSS XMM4, [imm_47]
 SUB RSP, 4
 MOVSS [RSP-0], XMM4
 MOVSS XMM4, [imm_48]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVSS XMM4, [imm_49]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVSS XMM4, [imm_50]
 SUB RSP, 4
 MOVSS [RSP-0], XMM4
 MOVUPS XMM9, [RSP-0]
 MOV RSP, RSI
 MOV RSI, RSP
 AND RSP, -32
-MOVSS XMM4, [imm_45]
+MOVSS XMM4, [imm_47]
 SUB RSP, 4
 MOVSS [RSP-0], XMM4
-MOVSS XMM4, [imm_46]
+MOVSS XMM4, [imm_48]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVSS XMM4, [imm_49]
+SUB RSP, 4
+MOVSS [RSP-0], XMM4
+MOVSS XMM4, [imm_50]
 SUB RSP, 4
 MOVSS [RSP-0], XMM4
 MOVSS XMM4, [imm_47]
@@ -1142,42 +1174,36 @@ MOVSS [RSP-0], XMM4
 MOVSS XMM4, [imm_48]
 SUB RSP, 4
 MOVSS [RSP-0], XMM4
-MOVSS XMM4, [imm_45]
+MOVSS XMM4, [imm_49]
 SUB RSP, 4
 MOVSS [RSP-0], XMM4
-MOVSS XMM4, [imm_46]
-SUB RSP, 4
-MOVSS [RSP-0], XMM4
-MOVSS XMM4, [imm_47]
-SUB RSP, 4
-MOVSS [RSP-0], XMM4
-MOVSS XMM4, [imm_48]
+MOVSS XMM4, [imm_50]
 SUB RSP, 4
 MOVSS [RSP-0], XMM4
 VMOVUPS YMM9, [RSP-0]
 MOV RSP, RSI
 MOV RSI, RSP
 AND RSP, -16
-MOVSD XMM4, [imm_49]
+MOVSD XMM4, [imm_51]
 SUB RSP, 8
 MOVSD [RSP-0], XMM4
-MOVSD XMM4, [imm_44]
+MOVSD XMM4, [imm_46]
 SUB RSP, 8
 MOVSD [RSP-0], XMM4
 MOVUPD XMM9, [RSP-0]
 MOV RSP, RSI
 MOV RSI, RSP
 AND RSP, -32
-MOVSD XMM4, [imm_49]
-SUB RSP, 8
-MOVSD [RSP-0], XMM4
-MOVSD XMM4, [imm_44]
-SUB RSP, 8
-MOVSD [RSP-0], XMM4
-MOVSD XMM4, [imm_50]
-SUB RSP, 8
-MOVSD [RSP-0], XMM4
 MOVSD XMM4, [imm_51]
+SUB RSP, 8
+MOVSD [RSP-0], XMM4
+MOVSD XMM4, [imm_46]
+SUB RSP, 8
+MOVSD [RSP-0], XMM4
+MOVSD XMM4, [imm_52]
+SUB RSP, 8
+MOVSD [RSP-0], XMM4
+MOVSD XMM4, [imm_53]
 SUB RSP, 8
 MOVSD [RSP-0], XMM4
 VMOVUPD YMM10, [RSP-0]
@@ -1185,16 +1211,16 @@ MOV RSP, RSI
 MOVAPD XMM10, XMM9
 ADDPD XMM10, XMM9
 MOVSD XMM9, XMM7
-MULSD XMM9, [imm_44]
-MOVSD XMM10, [imm_44]
+MULSD XMM9, [imm_46]
+MOVSD XMM10, [imm_46]
 MULSD XMM10, XMM7
 MOVSD XMM11, XMM10
-ADDSD XMM11, [imm_50]
+ADDSD XMM11, [imm_52]
 MOVSD XMM10, XMM7
-DIVSD XMM10, [imm_51]
+DIVSD XMM10, [imm_53]
 MOV RSI, RSP
 AND RSP, -32
-MOVSD XMM4, [imm_49]
+MOVSD XMM4, [imm_51]
 SUB RSP, 8
 MOVSD [RSP-0], XMM4
 SUB RSP, 8

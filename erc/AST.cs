@@ -24,6 +24,7 @@ namespace erc
         If,
         For,
         While,
+        Break,
         NewPointer,
         DelPointer,
         IndexAccess,
@@ -306,6 +307,11 @@ namespace erc
         {
             var statementList = StatementList(statements);
             return new AstItem { Kind = AstItemKind.While, Children = new List<AstItem>() { whileExpression, statementList } };
+        }
+
+        public static AstItem Break()
+        {
+            return new AstItem { Kind = AstItemKind.Break };
         }
 
         public static AstItem AsOperator(IBinaryOperator oper)
