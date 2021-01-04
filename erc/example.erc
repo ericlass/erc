@@ -53,8 +53,8 @@ fn pointers() {
 	*p = 5;
 	p[2] = 8;
 
-	let x = p[0];
-	let y = *p;
+	let x = p[0] + 7;
+	let y = *p + 3;
 
 	del p;
 }

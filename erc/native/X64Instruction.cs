@@ -26,6 +26,7 @@ namespace erc
         public static X64Instruction POP = new X64Instruction("POP", 1);
 
         public static X64Instruction MOV = new X64Instruction("MOV", 2);
+        public static X64Instruction MOVZX = new X64Instruction("MOVZX", 2);
         public static X64Instruction CMOVE = new X64Instruction("CMOVE", 2);
         public static X64Instruction CMOVNE = new X64Instruction("CMOVNE", 2);
         public static X64Instruction CMOVB = new X64Instruction("CMOVB", 2);

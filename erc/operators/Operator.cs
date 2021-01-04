@@ -49,6 +49,7 @@ namespace erc
         public static IBinaryOperator OR_BOOL = new BooleanOperator("||", IMInstruction.OR, 11);
 
         public static IBinaryOperator STATIC_ACCESS = new StaticAccessOperator();
+        public static IBinaryOperator TYPECAST = new TypeCastOperator();
 
         //Only required for expression parsing, no code generated
         public static IBinaryOperator ROUND_BRACKET_OPEN = new NoOpOperator("(", 1);

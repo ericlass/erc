@@ -59,5 +59,6 @@ namespace erc
         public static IMInstruction CMNT = new IMInstruction(IMInstructionKind.CMNT, 1);   //X <identifier>
         public static IMInstruction FREE = new IMInstruction(IMInstructionKind.FREE, 1);   //X <identifier>
         public static IMInstruction GVEC = new IMInstruction(IMInstructionKind.GVEC, 4);   //X <value_list>
+        public static IMInstruction CAST = new IMInstruction(IMInstructionKind.CAST, 2);   //X <target>, <source>
     }
 }

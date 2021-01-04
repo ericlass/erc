@@ -532,10 +532,6 @@ namespace erc
                 {
                     result = ReadNewPointer(tokenIter);
                 }
-                else if (token.Kind == TokenKind.Word && next.Kind == TokenKind.SquareBracketOpen)
-                {
-                    result = ReadIndexAccess(tokenIter);
-                }
                 else
                 {
                     //Math Expression
@@ -625,25 +621,38 @@ namespace erc
 
         private AstItem ReadSingleAstItem(TokenIterator tokens)
         {
-            AstItem result = null;
+            AstItem result;
             var token = tokens.Current();
 
             if (token.Kind == TokenKind.Word)
             {
                 var next = tokens.Next();
-                if (next != null && next.Kind == TokenKind.RoundBracketOpen)
+                if (next != null)
                 {
-                    var dataType = DataType.FindByName(token.Value);
-                    if (dataType != null && dataType.IsVector)
+                    if (next.Kind == TokenKind.RoundBracketOpen)
                     {
-                        //Vector construction with specific vector type name, i.e. "vec4f(...)"
-                        result = ReadVector(tokens);
+                        var dataType = DataType.FindByName(token.Value);
+                        if (dataType != null && dataType.IsVector)
+                        {
+                            //Vector construction with specific vector type name, i.e. "vec4f(...)"
+                            result = ReadVector(tokens);
+                            tokens.StepBack();
+                        }
+                        else
+                        {
+                            result = ReadFuncCall(tokens);
+                            tokens.StepBack();
+                        }
+                    }
+                    else if (next.Kind == TokenKind.SquareBracketOpen)
+                    {
+                        result = ReadIndexAccess(tokens);
                         tokens.StepBack();
                     }
                     else
                     {
-                        result = ReadFuncCall(tokens);
-                        tokens.StepBack();
+                        //Not sure what identifier is here. Could be type name, variable etc. Will be specified in next steps.
+                        result = AstItem.AsIdentifier(token.Value);
                     }
                 }
                 else
@@ -732,7 +741,7 @@ namespace erc
         {
             var oper = Operator.Parse(op);
             if (oper == null)
-                throw new Exception("Unsupported math operator: " + op);
+                throw new Exception("Unsupported expression operator: " + op);
 
             return oper;
         }
@@ -760,7 +769,7 @@ namespace erc
             //Convert infix to postfix
             foreach (var item in infix)
             {
-                if (item.Kind == AstItemKind.Immediate || item.Kind == AstItemKind.Variable || item.Kind == AstItemKind.Vector || item.Kind == AstItemKind.FunctionCall || item.Kind == AstItemKind.Type || item.Kind == AstItemKind.Identifier)
+                if (item.Kind == AstItemKind.Immediate || item.Kind == AstItemKind.Variable || item.Kind == AstItemKind.Vector || item.Kind == AstItemKind.FunctionCall || item.Kind == AstItemKind.Type || item.Kind == AstItemKind.Identifier || item.Kind == AstItemKind.IndexAccess)
                 {
                     output.Add(item);
                 }

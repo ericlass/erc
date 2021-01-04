@@ -89,6 +89,11 @@ namespace erc
                 //Handle special reserved words
                 if (_reservedWordTypes.ContainsKey(value))
                     type = _reservedWordTypes[value];
+
+                //Check for operators that are made of letters
+                var op = Operator.Parse(value);
+                if (op != null)
+                    type = TokenKind.ExpressionOperator;
             }
             else if (IsDigit(c))
             {

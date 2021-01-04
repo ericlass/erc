@@ -91,12 +91,17 @@ Programm
                     Immediate: 2 (i64)
                 Immediate: 8 (i64)
             VarDecl: "x" (i64)
-                IndexAccess: "p" (i64)
-                    Immediate: 0 (i64)
+                Expression
+                    IndexAccess: "p" (i64)
+                        Immediate: 0 (i64)
+                    Immediate: 7 (i64)
+                    BinaryOperator: +
             VarDecl: "y" (i64)
                 Expression
                     Variable: "p" (i64*)
                     UnaryOperator: *
+                    Immediate: 3 (i64)
+                    BinaryOperator: +
             DelPointer
     FunctionDecl: "boolean" (void)
         ParameterList
@@ -449,16 +454,20 @@ fn expressions(): void
   [%p]	: heap_register(RSI+0),
   %2	: register(RBX),
   [%2]	: heap_register(RBX+0),
-  %3	: register(RBX),
-  %x	: register(RDI),
-  [%3]	: heap_register(RBX+0),
-  %y	: register(RBX),
+  %4	: register(RBX),
+  %3	: register(RDI),
+  [%4]	: heap_register(RBX+0),
+  %x	: register(RBX),
+  %5	: register(RBX),
+  %y	: register(RDI),
   u64(5)	: data_section(imm_14),
   u64(8)	: data_section(imm_15),
   i64(5)	: data_section(imm_16),
   i64(2)	: data_section(imm_17),
   i64(8)	: data_section(imm_18),
   i64(0)	: data_section(imm_19),
+  i64(7)	: data_section(imm_20),
+  i64(3)	: data_section(imm_21),
 ]
 fn pointers(): void
 {
@@ -472,13 +481,17 @@ fn pointers(): void
     ADD %2, %2, %p
     MOV [%2], i64(8)
     FREE %2
-    MOV %3, i64(0)
-    MUL %3, %3, u64(8)
-    ADD %3, %3, %p
-    MOV %x, [%3]
+    MOV %4, i64(0)
+    MUL %4, %4, u64(8)
+    ADD %4, %4, %p
+    MOV %3, [%4]
+    FREE %4
+    ADD %x, %3, i64(7)
     FREE %3
     FREE %x
-    MOV %y, [%p]
+    MOV %5, [%p]
+    ADD %y, %5, i64(3)
+    FREE %5
     FREE %y
     DEL %p
     FREE %p
@@ -498,16 +511,16 @@ fn pointers(): void
   %v1	: register(XMM7),
   %v2	: register(XMM8),
   %4	: register(BL),
-  i64(5)	: data_section(imm_20),
-  i64(3)	: data_section(imm_21),
-  bool(1)	: data_section(imm_22),
-  i64(1)	: data_section(imm_23),
-  i64(2)	: data_section(imm_24),
-  f32(1)	: data_section(imm_25),
-  i64(7)	: data_section(imm_26),
-  f32(2)	: data_section(imm_27),
-  f32(3)	: data_section(imm_28),
-  f32(4)	: data_section(imm_29),
+  i64(5)	: data_section(imm_22),
+  i64(3)	: data_section(imm_23),
+  bool(1)	: data_section(imm_24),
+  i64(1)	: data_section(imm_25),
+  i64(2)	: data_section(imm_26),
+  f32(1)	: data_section(imm_27),
+  i64(7)	: data_section(imm_28),
+  f32(2)	: data_section(imm_29),
+  f32(3)	: data_section(imm_30),
+  f32(4)	: data_section(imm_31),
 ]
 fn boolean(bool): void
 {
@@ -561,15 +574,15 @@ ext fn['GetLastError', 'Kernel32.dll'] last_error(): i64
   %8	: register(YMM9),
   %6	: register(YMM7),
   %k2	: register(YMM8),
-  i64(0)	: data_section(imm_30),
-  bool(1)	: data_section(imm_31),
-  i64(7)	: data_section(imm_32),
-  i64(3)	: data_section(imm_33),
-  i64(5)	: data_section(imm_34),
-  f64(1)	: data_section(imm_35),
-  f64(2)	: data_section(imm_36),
-  f64(3)	: data_section(imm_37),
-  f64(4)	: data_section(imm_38),
+  i64(0)	: data_section(imm_32),
+  bool(1)	: data_section(imm_33),
+  i64(7)	: data_section(imm_34),
+  i64(3)	: data_section(imm_35),
+  i64(5)	: data_section(imm_36),
+  f64(1)	: data_section(imm_37),
+  f64(2)	: data_section(imm_38),
+  f64(3)	: data_section(imm_39),
+  f64(4)	: data_section(imm_40),
 ]
 fn fn_calls(): void
 {
@@ -680,21 +693,21 @@ fn add3(u16, u16): u16
   %7	: register(XMM9),
   %8	: register(XMM10),
   %xyz	: register(XMM7),
-  i64(5)	: data_section(imm_39),
-  i64(6)	: data_section(imm_40),
-  i64(7)	: data_section(imm_41),
-  i64(8)	: data_section(imm_42),
-  f32(1,5)	: data_section(imm_43),
-  f64(1,2)	: data_section(imm_44),
-  f64(0,5)	: data_section(imm_45),
-  f64(2)	: data_section(imm_46),
-  f32(1)	: data_section(imm_47),
-  f32(2)	: data_section(imm_48),
-  f32(3)	: data_section(imm_49),
-  f32(4)	: data_section(imm_50),
-  f64(1)	: data_section(imm_51),
-  f64(3)	: data_section(imm_52),
-  f64(4)	: data_section(imm_53),
+  i64(5)	: data_section(imm_41),
+  i64(6)	: data_section(imm_42),
+  i64(7)	: data_section(imm_43),
+  i64(8)	: data_section(imm_44),
+  f32(1,5)	: data_section(imm_45),
+  f64(1,2)	: data_section(imm_46),
+  f64(0,5)	: data_section(imm_47),
+  f64(2)	: data_section(imm_48),
+  f32(1)	: data_section(imm_49),
+  f32(2)	: data_section(imm_50),
+  f32(3)	: data_section(imm_51),
+  f32(4)	: data_section(imm_52),
+  f64(1)	: data_section(imm_53),
+  f64(3)	: data_section(imm_54),
+  f64(4)	: data_section(imm_55),
 ]
 fn types(): void
 {
@@ -761,60 +774,62 @@ include 'win64a.inc'
 section '.data' data readable writeable
 
 imm_1 dq 0
+imm_28 dq 7
 erc_process_heap dq 0
-imm_30 dq 0
-imm_32 dq 7
-imm_33 dq 3
-imm_34 dq 5
-imm_35 dq 1.0
-imm_36 dq 2.0
-imm_37 dq 3.0
-imm_38 dq 4.0
-imm_39 dq 5
-imm_40 dq 6
-imm_41 dq 7
-imm_42 dq 8
-imm_44 dq 1.2
-imm_45 dq 0.5
-imm_46 dq 2.0
-imm_51 dq 1.0
-imm_52 dq 3.0
-imm_53 dq 4.0
-imm_26 dq 7
-imm_24 dq 2
+imm_32 dq 0
+imm_34 dq 7
+imm_35 dq 3
+imm_36 dq 5
+imm_37 dq 1.0
+imm_38 dq 2.0
+imm_39 dq 3.0
+imm_26 dq 2
+imm_40 dq 4.0
+imm_42 dq 6
+imm_43 dq 7
+imm_44 dq 8
+imm_46 dq 1.2
+imm_47 dq 0.5
+imm_48 dq 2.0
+imm_53 dq 1.0
+imm_54 dq 3.0
+imm_55 dq 4.0
+imm_41 dq 5
+imm_25 dq 1
 erc_u32_zero dd 0
-imm_11 dq 2
+imm_23 dq 3
+imm_2 dq 1
+imm_3 dq 5
+imm_4 dq 2
 imm_10 dq 1
-imm_23 dq 1
 imm_12 dq 3
 imm_13 dq 6
 imm_14 dq 5
 imm_15 dq 8
 imm_16 dq 5
-imm_17 dq 2
-imm_19 dq 0
-imm_4 dq 2
-imm_20 dq 5
-imm_3 dq 5
-imm_21 dq 3
-imm_2 dq 1
+imm_11 dq 2
 imm_18 dq 8
-imm_48 dd 2.0
-imm_50 dd 4.0
-imm_49 dd 3.0
-imm_47 dd 1.0
-imm_28 dd 3.0
-imm_43 dd 1.5
+imm_22 dq 5
+imm_19 dq 0
+imm_21 dq 3
+imm_20 dq 7
+imm_17 dq 2
+imm_27 dd 1.0
+imm_52 dd 4.0
+imm_51 dd 3.0
+imm_50 dd 2.0
+imm_49 dd 1.0
+imm_7 dd 1
+imm_45 dd 1.5
 imm_8 dd 7
 imm_9 dd 0
-imm_29 dd 4.0
-imm_27 dd 2.0
-imm_25 dd 1.0
-imm_7 dd 1
-imm_6 db 0
+imm_30 dd 3.0
+imm_31 dd 4.0
+imm_29 dd 2.0
 imm_5 db 1
-imm_31 db 1
-imm_22 db 1
+imm_24 db 1
+imm_33 db 1
+imm_6 db 0
 
 section '.text' code readable executable
 start:
@@ -902,24 +917,28 @@ ADD RSP, 0x20
 MOV RSI, RAX
 POP RBX
 MOV RAX, [imm_16]
-MOV [RSI+0], RAX
+MOV [RSI], RAX
 MOV RBX, [imm_17]
 MOV RAX, RBX
 MUL [imm_15]
 MOV RBX, RAX
 ADD RBX, RSI
 MOV RAX, [imm_18]
-MOV [RBX+0], RAX
+MOV [RBX], RAX
 MOV RBX, [imm_19]
 MOV RAX, RBX
 MUL [imm_15]
 MOV RBX, RAX
 ADD RBX, RSI
-MOV RDI, [RBX+0]
-MOV RBX, [RSI+0]
+MOV RDI, [RBX]
+MOV RBX, RDI
+ADD RBX, [imm_20]
+MOV RBX, [RSI]
+MOV RDI, RBX
+ADD RDI, [imm_21]
 PUSH RSI
-PUSH RDI
 PUSH RBX
+PUSH RDI
 MOV RCX, [erc_process_heap]
 MOV EDX, [erc_u32_zero]
 MOV R8, RSI
@@ -927,74 +946,74 @@ SUB RSP, 0x20
 MOV RBP, RSP
 CALL [HeapFree]
 ADD RSP, 0x20
-POP RBX
 POP RDI
+POP RBX
 POP RSI
 RET
 
 fn_boolean:
-MOV RAX, [imm_20]
-CMP RAX, [imm_21]
+MOV RAX, [imm_22]
+CMP RAX, [imm_23]
 SETGE BL
 MOV SIL, BL
-AND SIL, [imm_22]
+AND SIL, [imm_24]
 MOV BL, SIL
 OR BL, BL
 NOT BL
-MOV RBX, [imm_20]
-MOV RAX, [imm_23]
-CMP RAX, [imm_24]
+MOV RBX, [imm_22]
+MOV RAX, [imm_25]
+CMP RAX, [imm_26]
 SETLE SIL
-CMP SIL, [imm_22]
+CMP SIL, [imm_24]
 JNE label_7
-MOV RBX, [imm_24]
-MOVSS XMM7, [imm_25]
+MOV RBX, [imm_26]
+MOVSS XMM7, [imm_27]
 JMP label_6
 label_7:
-MOV RBX, [imm_26]
+MOV RBX, [imm_28]
 label_6:
-MOV RBX, [imm_21]
-ADD RBX, [imm_24]
-CMP [imm_20], RBX
+MOV RBX, [imm_23]
+ADD RBX, [imm_26]
+CMP [imm_22], RBX
 SETG SIL
 MOV RSI, RSP
 AND RSP, -16
-MOVSS XMM4, [imm_25]
-SUB RSP, 4
-MOVSS [RSP-0], XMM4
 MOVSS XMM4, [imm_27]
 SUB RSP, 4
-MOVSS [RSP-0], XMM4
-MOVSS XMM4, [imm_28]
-SUB RSP, 4
-MOVSS [RSP-0], XMM4
+MOVSS [RSP], XMM4
 MOVSS XMM4, [imm_29]
 SUB RSP, 4
-MOVSS [RSP-0], XMM4
-MOVUPS XMM7, [RSP-0]
+MOVSS [RSP], XMM4
+MOVSS XMM4, [imm_30]
+SUB RSP, 4
+MOVSS [RSP], XMM4
+MOVSS XMM4, [imm_31]
+SUB RSP, 4
+MOVSS [RSP], XMM4
+MOVUPS XMM7, [RSP]
 MOV RSP, RSI
 MOV RSI, RSP
 AND RSP, -16
-MOVSS XMM4, [imm_25]
-SUB RSP, 4
-MOVSS [RSP-0], XMM4
 MOVSS XMM4, [imm_27]
 SUB RSP, 4
-MOVSS [RSP-0], XMM4
-MOVSS XMM4, [imm_28]
-SUB RSP, 4
-MOVSS [RSP-0], XMM4
+MOVSS [RSP], XMM4
 MOVSS XMM4, [imm_29]
 SUB RSP, 4
-MOVSS [RSP-0], XMM4
-MOVUPS XMM8, [RSP-0]
+MOVSS [RSP], XMM4
+MOVSS XMM4, [imm_30]
+SUB RSP, 4
+MOVSS [RSP], XMM4
+MOVSS XMM4, [imm_31]
+SUB RSP, 4
+MOVSS [RSP], XMM4
+MOVUPS XMM8, [RSP]
 MOV RSP, RSI
 MOVAPS XMM4, XMM7
 CMPEQPS XMM4, XMM8
 MOVMSKPS EAX, XMM4
 CMP EAX, 0xF
 SETE BL
-CMP BL, [imm_22]
+CMP BL, [imm_24]
 JNE label_8
 RET
 label_8:
@@ -1006,45 +1025,45 @@ MOV RBP, RSP
 CALL [GetLastError]
 ADD RSP, 0x20
 MOV RBX, RAX
-CMP RBX, [imm_30]
+CMP RBX, [imm_32]
 SETE SIL
-CMP SIL, [imm_31]
+CMP SIL, [imm_33]
 JNE label_9
 RET
 label_9:
-MOV RBX, [imm_32]
-ADD RBX, [imm_33]
-MOV RAX, [imm_34]
+MOV RBX, [imm_34]
+ADD RBX, [imm_35]
+MOV RAX, [imm_36]
 IMUL RBX
 MOV RSI, RAX
 MOV RSI, RSP
 AND RSP, -32
-MOVSD XMM4, [imm_35]
-SUB RSP, 8
-MOVSD [RSP-0], XMM4
-MOVSD XMM4, [imm_36]
-SUB RSP, 8
-MOVSD [RSP-0], XMM4
 MOVSD XMM4, [imm_37]
 SUB RSP, 8
-MOVSD [RSP-0], XMM4
+MOVSD [RSP], XMM4
 MOVSD XMM4, [imm_38]
 SUB RSP, 8
-MOVSD [RSP-0], XMM4
-VMOVUPD YMM7, [RSP-0]
+MOVSD [RSP], XMM4
+MOVSD XMM4, [imm_39]
+SUB RSP, 8
+MOVSD [RSP], XMM4
+MOVSD XMM4, [imm_40]
+SUB RSP, 8
+MOVSD [RSP], XMM4
+VMOVUPD YMM7, [RSP]
 MOV RSP, RSI
 VMOVAPD YMM8, YMM7
 VMOVAPD YMM9, YMM7
 SUB RSP, 1
-MOV [RSP-0], SIL
+MOV [RSP], SIL
 PUSH RBX
 PUSH RSI
 SUB RSP, 32
-VMOVUPD [RSP-0], YMM7
+VMOVUPD [RSP], YMM7
 SUB RSP, 32
-VMOVUPD [RSP-0], YMM8
+VMOVUPD [RSP], YMM8
 SUB RSP, 32
-VMOVUPD [RSP-0], YMM9
+VMOVUPD [RSP], YMM9
 VMOVAPD YMM0, YMM8
 VMOVAPD YMM1, YMM9
 SUB RSP, 0x20
@@ -1052,30 +1071,30 @@ MOV RBP, RSP
 CALL fn_add
 ADD RSP, 0x20
 VMOVAPD YMM10, YMM0
-VMOVUPD YMM9, [RSP-0]
+VMOVUPD YMM9, [RSP]
 ADD RSP, 32
-VMOVUPD YMM8, [RSP-0]
+VMOVUPD YMM8, [RSP]
 ADD RSP, 32
-VMOVUPD YMM7, [RSP-0]
+VMOVUPD YMM7, [RSP]
 ADD RSP, 32
 POP RSI
 POP RBX
-MOV SIL, [RSP-0]
+MOV SIL, [RSP]
 ADD RSP, 1
 VMOVAPD YMM8, YMM7
 VMOVAPD YMM9, YMM7
 SUB RSP, 1
-MOV [RSP-0], SIL
+MOV [RSP], SIL
 PUSH RBX
 PUSH RSI
 SUB RSP, 32
-VMOVUPD [RSP-0], YMM10
+VMOVUPD [RSP], YMM10
 SUB RSP, 32
-VMOVUPD [RSP-0], YMM9
+VMOVUPD [RSP], YMM9
 SUB RSP, 32
-VMOVUPD [RSP-0], YMM8
+VMOVUPD [RSP], YMM8
 SUB RSP, 32
-VMOVUPD [RSP-0], YMM7
+VMOVUPD [RSP], YMM7
 VMOVAPD YMM0, YMM8
 VMOVAPD YMM1, YMM9
 SUB RSP, 0x20
@@ -1083,17 +1102,17 @@ MOV RBP, RSP
 CALL fn_add
 ADD RSP, 0x20
 VMOVAPD YMM7, YMM0
-VMOVUPD YMM7, [RSP-0]
+VMOVUPD YMM7, [RSP]
 ADD RSP, 32
-VMOVUPD YMM8, [RSP-0]
+VMOVUPD YMM8, [RSP]
 ADD RSP, 32
-VMOVUPD YMM9, [RSP-0]
+VMOVUPD YMM9, [RSP]
 ADD RSP, 32
-VMOVUPD YMM10, [RSP-0]
+VMOVUPD YMM10, [RSP]
 ADD RSP, 32
 POP RSI
 POP RBX
-MOV SIL, [RSP-0]
+MOV SIL, [RSP]
 ADD RSP, 1
 VADDPD YMM8, YMM10, YMM7
 RET
@@ -1123,129 +1142,129 @@ MOV AX, SI
 RET
 
 fn_types:
-MOV RAX, [imm_39]
-IMUL [imm_40]
-MOV RBX, RAX
 MOV RAX, [imm_41]
 IMUL [imm_42]
+MOV RBX, RAX
+MOV RAX, [imm_43]
+IMUL [imm_44]
 MOV RSI, RAX
 MOV RDI, RBX
 ADD RDI, RSI
-MOVSS XMM7, [imm_43]
+MOVSS XMM7, [imm_45]
 MOVSS XMM8, XMM7
-MOVSD XMM7, [imm_44]
-MOVSD XMM8, [imm_45]
+MOVSD XMM7, [imm_46]
+MOVSD XMM8, [imm_47]
 MOVSD XMM9, XMM8
 MULSD XMM9, XMM7
-ADDSD XMM9, [imm_46]
+ADDSD XMM9, [imm_48]
 MOV RSI, RSP
 AND RSP, -16
-MOVSS XMM4, [imm_47]
-SUB RSP, 4
-MOVSS [RSP-0], XMM4
-MOVSS XMM4, [imm_48]
-SUB RSP, 4
-MOVSS [RSP-0], XMM4
 MOVSS XMM4, [imm_49]
 SUB RSP, 4
-MOVSS [RSP-0], XMM4
+MOVSS [RSP], XMM4
 MOVSS XMM4, [imm_50]
 SUB RSP, 4
-MOVSS [RSP-0], XMM4
-MOVUPS XMM9, [RSP-0]
+MOVSS [RSP], XMM4
+MOVSS XMM4, [imm_51]
+SUB RSP, 4
+MOVSS [RSP], XMM4
+MOVSS XMM4, [imm_52]
+SUB RSP, 4
+MOVSS [RSP], XMM4
+MOVUPS XMM9, [RSP]
 MOV RSP, RSI
 MOV RSI, RSP
 AND RSP, -32
-MOVSS XMM4, [imm_47]
-SUB RSP, 4
-MOVSS [RSP-0], XMM4
-MOVSS XMM4, [imm_48]
-SUB RSP, 4
-MOVSS [RSP-0], XMM4
 MOVSS XMM4, [imm_49]
 SUB RSP, 4
-MOVSS [RSP-0], XMM4
+MOVSS [RSP], XMM4
 MOVSS XMM4, [imm_50]
 SUB RSP, 4
-MOVSS [RSP-0], XMM4
-MOVSS XMM4, [imm_47]
+MOVSS [RSP], XMM4
+MOVSS XMM4, [imm_51]
 SUB RSP, 4
-MOVSS [RSP-0], XMM4
-MOVSS XMM4, [imm_48]
+MOVSS [RSP], XMM4
+MOVSS XMM4, [imm_52]
 SUB RSP, 4
-MOVSS [RSP-0], XMM4
+MOVSS [RSP], XMM4
 MOVSS XMM4, [imm_49]
 SUB RSP, 4
-MOVSS [RSP-0], XMM4
+MOVSS [RSP], XMM4
 MOVSS XMM4, [imm_50]
 SUB RSP, 4
-MOVSS [RSP-0], XMM4
-VMOVUPS YMM9, [RSP-0]
+MOVSS [RSP], XMM4
+MOVSS XMM4, [imm_51]
+SUB RSP, 4
+MOVSS [RSP], XMM4
+MOVSS XMM4, [imm_52]
+SUB RSP, 4
+MOVSS [RSP], XMM4
+VMOVUPS YMM9, [RSP]
 MOV RSP, RSI
 MOV RSI, RSP
 AND RSP, -16
-MOVSD XMM4, [imm_51]
-SUB RSP, 8
-MOVSD [RSP-0], XMM4
-MOVSD XMM4, [imm_46]
-SUB RSP, 8
-MOVSD [RSP-0], XMM4
-MOVUPD XMM9, [RSP-0]
-MOV RSP, RSI
-MOV RSI, RSP
-AND RSP, -32
-MOVSD XMM4, [imm_51]
-SUB RSP, 8
-MOVSD [RSP-0], XMM4
-MOVSD XMM4, [imm_46]
-SUB RSP, 8
-MOVSD [RSP-0], XMM4
-MOVSD XMM4, [imm_52]
-SUB RSP, 8
-MOVSD [RSP-0], XMM4
 MOVSD XMM4, [imm_53]
 SUB RSP, 8
-MOVSD [RSP-0], XMM4
-VMOVUPD YMM10, [RSP-0]
+MOVSD [RSP], XMM4
+MOVSD XMM4, [imm_48]
+SUB RSP, 8
+MOVSD [RSP], XMM4
+MOVUPD XMM9, [RSP]
+MOV RSP, RSI
+MOV RSI, RSP
+AND RSP, -32
+MOVSD XMM4, [imm_53]
+SUB RSP, 8
+MOVSD [RSP], XMM4
+MOVSD XMM4, [imm_48]
+SUB RSP, 8
+MOVSD [RSP], XMM4
+MOVSD XMM4, [imm_54]
+SUB RSP, 8
+MOVSD [RSP], XMM4
+MOVSD XMM4, [imm_55]
+SUB RSP, 8
+MOVSD [RSP], XMM4
+VMOVUPD YMM10, [RSP]
 MOV RSP, RSI
 MOVAPD XMM10, XMM9
 ADDPD XMM10, XMM9
 MOVSD XMM9, XMM7
-MULSD XMM9, [imm_46]
-MOVSD XMM10, [imm_46]
+MULSD XMM9, [imm_48]
+MOVSD XMM10, [imm_48]
 MULSD XMM10, XMM7
 MOVSD XMM11, XMM10
-ADDSD XMM11, [imm_52]
+ADDSD XMM11, [imm_54]
 MOVSD XMM10, XMM7
-DIVSD XMM10, [imm_53]
+DIVSD XMM10, [imm_55]
 MOV RSI, RSP
 AND RSP, -32
-MOVSD XMM4, [imm_51]
+MOVSD XMM4, [imm_53]
 SUB RSP, 8
-MOVSD [RSP-0], XMM4
+MOVSD [RSP], XMM4
 SUB RSP, 8
-MOVSD [RSP-0], XMM9
+MOVSD [RSP], XMM9
 SUB RSP, 8
-MOVSD [RSP-0], XMM11
+MOVSD [RSP], XMM11
 SUB RSP, 8
-MOVSD [RSP-0], XMM10
-VMOVUPD YMM12, [RSP-0]
+MOVSD [RSP], XMM10
+VMOVUPD YMM12, [RSP]
 MOV RSP, RSI
 MOV RSI, RSP
 AND RSP, -16
 SUB RSP, 8
-MOVSD [RSP-0], XMM7
+MOVSD [RSP], XMM7
 SUB RSP, 8
-MOVSD [RSP-0], XMM8
-MOVUPD XMM9, [RSP-0]
+MOVSD [RSP], XMM8
+MOVUPD XMM9, [RSP]
 MOV RSP, RSI
 MOV RSI, RSP
 AND RSP, -16
 SUB RSP, 8
-MOVSD [RSP-0], XMM8
+MOVSD [RSP], XMM8
 SUB RSP, 8
-MOVSD [RSP-0], XMM7
-MOVUPD XMM10, [RSP-0]
+MOVSD [RSP], XMM7
+MOVUPD XMM10, [RSP]
 MOV RSP, RSI
 MOVAPD XMM7, XMM9
 ADDPD XMM7, XMM10

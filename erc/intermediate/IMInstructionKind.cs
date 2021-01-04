@@ -41,6 +41,7 @@ namespace erc
         LABL,
         CMNT,
         FREE,
-        GVEC
+        GVEC,
+        CAST
     }
 }

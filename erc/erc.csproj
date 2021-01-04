@@ -61,11 +61,13 @@
     <Compile Include="intermediate\IMOperation.cs" />
     <Compile Include="intermediate\IMInstructionKind.cs" />
     <Compile Include="native\WinX64CodeGenerator.cs" />
+    <Compile Include="native\X64CodeFormat.cs" />
     <Compile Include="native\X64DataTypeProperties.cs" />
     <Compile Include="native\X64FunctionFrame.cs" />
     <Compile Include="native\X64MemoryManager.cs" />
     <Compile Include="native\X64StorageLocation.cs" />
     <Compile Include="native\X64StorageLocationKind.cs" />
+    <Compile Include="native\X64TypeCast.cs" />
     <Compile Include="operators\AdditionOperator.cs" />
     <Compile Include="operators\ArithmeticNegationOperator.cs" />
     <Compile Include="operators\ArithmeticOperator.cs" />
@@ -73,8 +75,10 @@
     <Compile Include="BlockScope.cs" />
     <Compile Include="operators\BooleanInversionOperator.cs" />
     <Compile Include="operators\BooleanOperator.cs" />
-    <Compile Include="operators\CastingOperator.cs" />
     <Compile Include="CompilerContext.cs" />
+    <Compile Include="operators\casting\TypeCast.cs" />
+    <Compile Include="operators\casting\TypeCastOperator.cs" />
+    <Compile Include="operators\casting\TypeCastDefinition.cs" />
     <Compile Include="operators\DivisionOperator.cs" />
     <Compile Include="operators\StaticAccessOperator.cs" />
     <Compile Include="operators\EqualityOperator.cs" />
@@ -119,5 +123,6 @@
     </None>
     <EmbeddedResource Include="internal_lib.erc" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

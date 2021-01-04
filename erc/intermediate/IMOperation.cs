@@ -260,5 +260,10 @@ namespace erc
             return new IMOperation(IMInstruction.FREE, operand);
         }
 
+        public static IMOperation Cast(IMOperand target, IMOperand source)
+        {
+            return new IMOperation(IMInstruction.CAST, target, source);
+        }
+
     }
 }

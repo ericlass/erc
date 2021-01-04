@@ -466,7 +466,7 @@ namespace erc
             output.Add(IMOperation.Aloc(targetLocation, bytesLocation));
         }
 
-        private class AstItemWithLocation : AstItem
+        private class AstItemWithLocation
         {
             public AstItem Item { get; set; }
             public IMOperand Location { get; set; }
@@ -593,6 +593,11 @@ namespace erc
             {
                 result = IMOperand.Identifier(operand.Identifier);
                 result.DataType = operand.DataType;
+            }
+            else if (operand.Kind == AstItemKind.IndexAccess)
+            {
+                result = NewTempLocal(operand.DataType);
+                GenerateIndexAccess(output, operand, result);
             }
 
             return result;

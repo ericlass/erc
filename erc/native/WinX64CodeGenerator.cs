@@ -248,7 +248,7 @@ namespace erc
                     break;
 
                 case IMInstructionKind.NOP:
-                    output.Add(FormatOperation(X64Instruction.NOP));
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.NOP));
                     break;
 
                 case IMInstructionKind.CMNT:
@@ -331,11 +331,11 @@ namespace erc
             {
                 //Cannot directly move between two memory locations, need to use accumulator register as temp location and do it in two steps
                 var accLocation = X64StorageLocation.AsRegister(x64DataType.Accumulator);
-                output.Add(FormatOperation(instruction, accLocation, sourceLocation));
-                output.Add(FormatOperation(instruction, targetLocation, accLocation));
+                output.Add(X64CodeFormat.FormatOperation(instruction, accLocation, sourceLocation));
+                output.Add(X64CodeFormat.FormatOperation(instruction, targetLocation, accLocation));
             }
             else
-                output.Add(FormatOperation(instruction, targetLocation, sourceLocation));
+                output.Add(X64CodeFormat.FormatOperation(instruction, targetLocation, sourceLocation));
         }
 
         private X64StorageLocation GetOperandLocation(IMOperand operand)
@@ -390,14 +390,14 @@ namespace erc
             //PUSH only word, double-word or quad-word scalars and pointer in GP registers. byte-ints, scalar-floats and vectors must be MOVed.
             if (dataType.Kind == DataTypeKind.POINTER || (dataType.Group == DataTypeGroup.ScalarInteger && dataType.ByteSize > 1))
             {
-                output.Add(FormatOperation(X64Instruction.PUSH, sourceLocation));
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.PUSH, sourceLocation));
             }
             else
             {
                 //No Push for vectors
                 //No Push for 1-byte operands
-                output.Add(FormatOperation(X64Instruction.SUB, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(dataType.ByteSize.ToString())));
-                output.Add(FormatOperation(x64DataType.MoveInstructionUnaligned, X64StorageLocation.StackFromTop(0), sourceLocation));
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.SUB, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(dataType.ByteSize.ToString())));
+                output.Add(X64CodeFormat.FormatOperation(x64DataType.MoveInstructionUnaligned, X64StorageLocation.StackFromTop(0), sourceLocation));
             }
 
             return sourceLocation;
@@ -420,11 +420,11 @@ namespace erc
                 //No Pop for vectors
                 //No Pop for 1-byte operands
                 Move(output, dataType, targetLocation, X64StorageLocation.StackFromTop(0));
-                output.Add(FormatOperation(X64Instruction.ADD, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(dataType.ByteSize.ToString())));
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.ADD, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(dataType.ByteSize.ToString())));
             }
             else
             {
-                output.Add(FormatOperation(X64Instruction.POP, targetLocation));
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.POP, targetLocation));
             }
         }
 
@@ -489,17 +489,17 @@ namespace erc
                     var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
                     var accLocation = X64StorageLocation.AsRegister(x64DataType.Accumulator);
                     Move(output, dataType, accLocation, op1Location);
-                    output.Add(FormatOperation(instruction, op2Location));
+                    output.Add(X64CodeFormat.FormatOperation(instruction, op2Location));
                     Move(output, dataType, targetLocation, accLocation);
                     break;
 
                 case 2:
                     Move(output, dataType, targetLocation, op1Location);
-                    output.Add(FormatOperation(instruction, targetLocation, op2Location));
+                    output.Add(X64CodeFormat.FormatOperation(instruction, targetLocation, op2Location));
                     break;
 
                 case 3:
-                    output.Add(FormatOperation(instruction, targetLocation, op1Location, op2Location));
+                    output.Add(X64CodeFormat.FormatOperation(instruction, targetLocation, op1Location, op2Location));
                     break;
 
                 default:
@@ -528,11 +528,11 @@ namespace erc
             {
                 case 1:
                     Move(output, dataType, targetLocation, opLocation);
-                    output.Add(FormatOperation(instruction, targetLocation));
+                    output.Add(X64CodeFormat.FormatOperation(instruction, targetLocation));
                     break;
 
                 case 2:
-                    output.Add(FormatOperation(instruction, targetLocation, opLocation));
+                    output.Add(X64CodeFormat.FormatOperation(instruction, targetLocation, opLocation));
                     break;
 
                 default:
@@ -550,7 +550,7 @@ namespace erc
                 Move(output, returnValue.DataType, returnLocation, valueLocation);
             }
 
-            output.Add(FormatOperation(X64Instruction.RET));
+            output.Add(X64CodeFormat.FormatOperation(X64Instruction.RET));
         }
 
         private void GenerateAnd(List<string> output, IMOperation operation)
@@ -611,7 +611,7 @@ namespace erc
                     case DataTypeGroup.VectorFloat:
                         var accLocation = X64StorageLocation.AsRegister(x64DataType.Accumulator);
                         Move(output, dataType, accLocation, opLocation);
-                        output.Add(FormatOperation(x64DataType.XorInstruction, targetLocation, targetLocation));
+                        output.Add(X64CodeFormat.FormatOperation(x64DataType.XorInstruction, targetLocation, targetLocation));
                         //CAUTION: Theoretical problem if the sub instruction would have only 1 operator it would override the
                         //accumulator which holds the value to negate, but this is not the case for float scalars and vectors.
                         GenerateBinaryInstruction(output, x64DataType.SubInstruction, dataType, targetLocation, targetLocation, accLocation);
@@ -623,14 +623,14 @@ namespace erc
             }
             else
             {
-                output.Add(FormatOperation(x64DataType.XorInstruction, targetLocation, targetLocation));
+                output.Add(X64CodeFormat.FormatOperation(x64DataType.XorInstruction, targetLocation, targetLocation));
                 GenerateBinaryInstruction(output, x64DataType.SubInstruction, dataType, targetLocation, targetLocation, opLocation);
             }
         }
 
         private void GenerateJmp(List<string> output, IMOperation operation)
         {
-            output.Add(FormatOperation(X64Instruction.JMP, X64StorageLocation.Immediate(operation.Operands[0].Name)));
+            output.Add(X64CodeFormat.FormatOperation(X64Instruction.JMP, X64StorageLocation.Immediate(operation.Operands[0].Name)));
         }
 
         private void GenerateLabl(List<string> output, IMOperation operation)
@@ -697,8 +697,8 @@ namespace erc
                 case DataTypeKind.U64:
                 case DataTypeKind.BOOL:
                 case DataTypeKind.POINTER:
-                    output.Add(FormatOperation(X64Instruction.CMP, op1Location, op2Location));
-                    output.Add(FormatOperation(scalarJmpInstruction, X64StorageLocation.Immediate(label.Name)));
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.CMP, op1Location, op2Location));
+                    output.Add(X64CodeFormat.FormatOperation(scalarJmpInstruction, X64StorageLocation.Immediate(label.Name)));
                     break;
 
                 case DataTypeKind.F32:
@@ -707,8 +707,8 @@ namespace erc
                     if (dataType.Kind == DataTypeKind.F64)
                         cmpInstruction = X64Instruction.COMISD;
 
-                    output.Add(FormatOperation(cmpInstruction, op1Location, op2Location));
-                    output.Add(FormatOperation(scalarJmpInstruction, X64StorageLocation.Immediate(label.Name)));
+                    output.Add(X64CodeFormat.FormatOperation(cmpInstruction, op1Location, op2Location));
+                    output.Add(X64CodeFormat.FormatOperation(scalarJmpInstruction, X64StorageLocation.Immediate(label.Name)));
                     break;
 
                 case DataTypeKind.VEC4F:
@@ -723,20 +723,20 @@ namespace erc
                     {
                         case 2:
                             Move(output, dataType, cmpResultLocation, op1Location);
-                            output.Add(FormatOperation(vectorCmpInstruction, cmpResultLocation, op2Location));
+                            output.Add(X64CodeFormat.FormatOperation(vectorCmpInstruction, cmpResultLocation, op2Location));
                             break;
 
                         case 3:
-                            output.Add(FormatOperation(vectorCmpInstruction, cmpResultLocation, op1Location, op2Location));
+                            output.Add(X64CodeFormat.FormatOperation(vectorCmpInstruction, cmpResultLocation, op1Location, op2Location));
                             break;
 
                         default:
                             throw new Exception("Unsupported number of operands for instruction: " + vectorCmpInstruction);
                     }
 
-                    output.Add(FormatOperation(x64DataType.MoveMaskInstruction, maskLocation, cmpResultLocation));
-                    output.Add(FormatOperation(X64Instruction.CMP, maskLocation, X64StorageLocation.Immediate("0xF")));
-                    output.Add(FormatOperation(X64Instruction.JE, X64StorageLocation.Immediate(label.Name)));
+                    output.Add(X64CodeFormat.FormatOperation(x64DataType.MoveMaskInstruction, maskLocation, cmpResultLocation));
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.CMP, maskLocation, X64StorageLocation.Immediate("0xF")));
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.JE, X64StorageLocation.Immediate(label.Name)));
                     break;
 
                 default:
@@ -803,17 +803,17 @@ namespace erc
             }
 
             //Add 32 bytes shadow space
-            output.Add(FormatOperation(X64Instruction.SUB, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate("0x20")));
-            output.Add(FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RBP), X64StorageLocation.AsRegister(X64Register.RSP)));
+            output.Add(X64CodeFormat.FormatOperation(X64Instruction.SUB, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate("0x20")));
+            output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RBP), X64StorageLocation.AsRegister(X64Register.RSP)));
 
             //Finally, call function
             if (function.IsExtern)
-                output.Add(FormatOperation(X64Instruction.CALL, X64StorageLocation.Immediate("[" + function.ExternalName + "]")));
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.CALL, X64StorageLocation.Immediate("[" + function.ExternalName + "]")));
             else
-                output.Add(FormatOperation(X64Instruction.CALL, X64StorageLocation.Immediate("fn_" + function.Name)));
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.CALL, X64StorageLocation.Immediate("fn_" + function.Name)));
 
             //Remove shadow space
-            output.Add(FormatOperation(X64Instruction.ADD, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate("0x20")));
+            output.Add(X64CodeFormat.FormatOperation(X64Instruction.ADD, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate("0x20")));
 
             //Move result value (if exists) to target location (if required)
             X64StorageLocation targetLocation = null;
@@ -902,8 +902,8 @@ namespace erc
                         Move(output, dataType, newLocation, op1Location);
                         op1Location = newLocation;
                     }
-                    output.Add(FormatOperation(X64Instruction.CMP, op1Location, op2Location));
-                    output.Add(FormatOperation(scalarSetInstruction, targetLocation));
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.CMP, op1Location, op2Location));
+                    output.Add(X64CodeFormat.FormatOperation(scalarSetInstruction, targetLocation));
                     break;
 
                 case DataTypeKind.F32:
@@ -912,8 +912,8 @@ namespace erc
                     if (dataType.Kind == DataTypeKind.F64)
                         cmpInstruction = X64Instruction.COMISD;
 
-                    output.Add(FormatOperation(cmpInstruction, op1Location, op2Location));
-                    output.Add(FormatOperation(scalarSetInstruction, targetLocation));
+                    output.Add(X64CodeFormat.FormatOperation(cmpInstruction, op1Location, op2Location));
+                    output.Add(X64CodeFormat.FormatOperation(scalarSetInstruction, targetLocation));
                     break;
 
                 case DataTypeKind.VEC4F:
@@ -927,20 +927,20 @@ namespace erc
                     {
                         case 2:
                             Move(output, dataType, cmpResultLocation, op1Location);
-                            output.Add(FormatOperation(vectorCmpInstruction, cmpResultLocation, op2Location));
+                            output.Add(X64CodeFormat.FormatOperation(vectorCmpInstruction, cmpResultLocation, op2Location));
                             break;
 
                         case 3:
-                            output.Add(FormatOperation(vectorCmpInstruction, cmpResultLocation, op1Location, op2Location));
+                            output.Add(X64CodeFormat.FormatOperation(vectorCmpInstruction, cmpResultLocation, op1Location, op2Location));
                             break;
 
                         default:
                             throw new Exception("Unsupported number of operands for instruction: " + vectorCmpInstruction);
                     }
 
-                    output.Add(FormatOperation(x64DataType.MoveMaskInstruction, maskLocation, cmpResultLocation));
-                    output.Add(FormatOperation(X64Instruction.CMP, maskLocation, X64StorageLocation.Immediate("0xF")));
-                    output.Add(FormatOperation(X64Instruction.SETE, targetLocation));
+                    output.Add(X64CodeFormat.FormatOperation(x64DataType.MoveMaskInstruction, maskLocation, cmpResultLocation));
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.CMP, maskLocation, X64StorageLocation.Immediate("0xF")));
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.SETE, targetLocation));
                     break;
 
                 default:
@@ -960,11 +960,11 @@ namespace erc
 
             //Save current stack pointer
             //TODO: Fix: RSI might be used by an operand!
-            output.Add(FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RSI), X64StorageLocation.AsRegister(X64Register.RSP)));
+            output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RSI), X64StorageLocation.AsRegister(X64Register.RSP)));
 
             //Align stack correctly
             var invertedByteSize = targetDataType.ByteSize * -1;
-            output.Add(FormatOperation(X64Instruction.AND, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(invertedByteSize.ToString())));
+            output.Add(X64CodeFormat.FormatOperation(X64Instruction.AND, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(invertedByteSize.ToString())));
 
             //Generate vector on stack
             foreach (var value in values)
@@ -978,32 +978,12 @@ namespace erc
             Move(output, targetDataType, targetLocation, X64StorageLocation.StackFromTop(0));
 
             //Restore stack pointer
-            output.Add(FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.AsRegister(X64Register.RSI)));
+            output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.AsRegister(X64Register.RSI)));
         }
 
 
         //Methods for all other operation kinds follow here
         //IDEA: The ones that need a lot of code could be in another file (partial class)
-
-        private string FormatOperation(X64Instruction instruction)
-        {
-            return instruction.Name;
-        }
-
-        private string FormatOperation(X64Instruction instruction, X64StorageLocation operand)
-        {
-            return instruction.Name + " " + operand.ToCode();
-        }
-
-        private string FormatOperation(X64Instruction instruction, X64StorageLocation operand1, X64StorageLocation operand2)
-        {
-            return instruction.Name + " " + operand1.ToCode() + ", " + operand2.ToCode();
-        }
-
-        private string FormatOperation(X64Instruction instruction, X64StorageLocation operand1, X64StorageLocation operand2, X64StorageLocation operand3)
-        {
-            return instruction.Name + " " + operand1.ToCode() + ", " + operand2.ToCode() + ", " + operand3.ToCode();
-        }
 
     }
 }

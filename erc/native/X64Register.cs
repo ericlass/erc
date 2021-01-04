@@ -105,8 +105,6 @@ namespace erc
 
         public static X64Register GroupToSpecificRegister(X64RegisterGroup group, DataType dataType)
         {
-            var allRegisters = X64Register.GetAllValues();
-
             var byteSize = dataType.ByteSize;
             if (dataType.Group == DataTypeGroup.ScalarFloat)
             {
@@ -114,13 +112,19 @@ namespace erc
                 byteSize = DataType.VEC4F.ByteSize;
             }
 
+            return GroupToSpecificRegisterBySize(group, byteSize);
+        }
+
+        public static X64Register GroupToSpecificRegisterBySize(X64RegisterGroup group, int byteSize)
+        {
+            var allRegisters = X64Register.GetAllValues();
             var found = allRegisters.FindAll((r) => r.Group == group && r.ByteSize == byteSize);
 
             if (found.Count == 0)
-                throw new Exception("Could not find any register for group " + group + " and data type " + dataType);
+                throw new Exception("Could not find any register for group " + group + " and byte size " + byteSize);
 
             if (found.Count > 1)
-                throw new Exception("Found multiple registers for group " + group + " and data type " + dataType);
+                throw new Exception("Found multiple registers for group " + group + " and byte size " + byteSize);
 
             return found[0];
         }

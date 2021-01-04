@@ -49,16 +49,28 @@ namespace erc
                     return Register.ToString();
 
                 case X64StorageLocationKind.StackFromBase:
-                    return "[RBP+" + Offset + "]";
+                    if (Offset != 0)
+                        return "[RBP+" + Offset + "]";
+                    else
+                        return "[RBP]";
 
                 case X64StorageLocationKind.StackFromTop:
-                    return "[RSP-" + Offset + "]";
+                    if (Offset != 0)
+                        return "[RSP-" + Offset + "]";
+                    else
+                        return "[RSP]";
 
                 case X64StorageLocationKind.HeapForLocals:
-                    return "[locals_heap+" + Offset + "]";
+                    if (Offset != 0)
+                        return "[locals_heap+" + Offset + "]";
+                    else
+                        return "[locals_heap]";
 
                 case X64StorageLocationKind.HeapInRegister:
-                    return "[" + Register + "+" + Offset + "]";
+                    if (Offset != 0)
+                        return "[" + Register + "+" + Offset + "]";
+                    else
+                        return "[" + Register + "]";
 
                 case X64StorageLocationKind.DataSection:
                     return "[" + DataName + "]";
