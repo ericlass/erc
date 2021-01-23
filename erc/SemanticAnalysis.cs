@@ -80,9 +80,9 @@ namespace erc
         {
             var enumName = item.Identifier;
             var enumType = DataType.FindByName(enumName);
-            Assert.Check(enumType != null, "Enum type not found: " + enumName);
-            Assert.Check(enumType.Kind == DataTypeKind.ENUM, "Data type is not a enum: " + enumName);
-            Assert.Check(enumType.EnumElements != null && enumType.EnumElements.Count > 0, "Enum does not have any elements: " + enumName);
+            Assert.True(enumType != null, "Enum type not found: " + enumName);
+            Assert.DataTypeKind(enumType.Kind, DataTypeKind.ENUM, "Invalid enum data type");
+            Assert.True(enumType.EnumElements != null && enumType.EnumElements.Count > 0, "Enum does not have any elements: " + enumName);
 
             //Check for duplicate element names (ignore case) and indexes
             var elementSet = new HashSet<string>();
@@ -238,13 +238,13 @@ namespace erc
             var statements = item.Children[3];
 
             CheckExpression(startExpression);
-            Assert.Check(startExpression.DataType.Kind == DataTypeKind.I64, "For loop start expression must be type i64! Given: " + startExpression.DataType);
+            Assert.DataTypeKind(startExpression.DataType.Kind, DataTypeKind.I64, "Invalid data type for 'for' loop start expression");
 
             CheckExpression(endExpression);
-            Assert.Check(endExpression.DataType.Kind == DataTypeKind.I64, "For loop end expression must be type i64! Given: " + endExpression.DataType);
+            Assert.DataTypeKind(endExpression.DataType.Kind, DataTypeKind.I64, "Invalid data type for 'for' loop end expression");
 
             CheckExpression(incExpression);
-            Assert.Check(incExpression.DataType.Kind == DataTypeKind.I64, "For loop increment expression must be type i64! Given: " + incExpression.DataType);
+            Assert.DataTypeKind(incExpression.DataType.Kind, DataTypeKind.I64, "Invalid data type for 'for' loop increment expression");
 
             _context.EnterBlock(FakeEndLabelName);
             _context.AddVariable(new Symbol(varName, SymbolKind.Variable, DataType.I64));
@@ -260,7 +260,7 @@ namespace erc
             var statements = item.Children[1];
 
             CheckExpression(whileExpression);
-            Assert.Check(whileExpression.DataType.Kind == DataTypeKind.BOOL, "While loop expression must be of type bool! Given: " + whileExpression.DataType);
+            Assert.DataTypeKind(whileExpression.DataType.Kind, DataTypeKind.BOOL, "Invalid data type for 'while' loop expression");
 
             _context.EnterBlock(FakeEndLabelName);
             statements.Children.ForEach((s) => CheckStatement(s));
@@ -269,7 +269,7 @@ namespace erc
 
         private void CheckBreakStatement()
         {
-            Assert.Check(_context.GetCurrentScopeEndLabel() != null, "break statement is not inside any breakable scope!");
+            Assert.True(_context.GetCurrentScopeEndLabel() != null, "break statement is not inside any breakable scope!");
         }
 
         private void CheckReturnStatement(AstItem item)
@@ -293,8 +293,8 @@ namespace erc
             var target = item.Children[0];
 
             var variable = _context.GetSymbol(target.Identifier);
-            Assert.Check(variable != null, "Variable not declared: " + item);
-            Assert.Check(variable.IsAssignable, "Cannot assign to symbol: " + variable);
+            Assert.True(variable != null, "Variable not declared: " + item);
+            Assert.True(variable.IsAssignable, "Cannot assign to symbol: " + variable);
 
             item.DataType = CheckExpression(item.Children[1]);
             target.DataType = item.DataType;
@@ -302,17 +302,17 @@ namespace erc
             switch (target.Kind)
             {
                 case AstItemKind.Variable:
-                    Assert.Check(variable.DataType == item.DataType, "Cannot assign value of type " + item.DataType + " to variable " + variable);
+                    Assert.True(variable.DataType == item.DataType, "Cannot assign value of type " + item.DataType + " to variable " + variable);
                     break;
 
                 case AstItemKind.PointerDeref:
-                    Assert.Check(variable.DataType.Kind == DataTypeKind.POINTER, "Can only derefence pointer type, got: " + variable.DataType);
-                    Assert.Check(variable.DataType.ElementType == item.DataType, "Cannot assign value of type " + item.DataType + " to dereferenced pointer type " + variable.DataType);
+                    Assert.DataTypeKind(variable.DataType.Kind, DataTypeKind.POINTER, "Invalid data type for pointer dereference");
+                    Assert.True(variable.DataType.ElementType == item.DataType, "Cannot assign value of type " + item.DataType + " to dereferenced pointer type " + variable.DataType);
                     break;
 
                 case AstItemKind.IndexAccess:
                     target.DataType = CheckIndexAccess(target);
-                    Assert.Check(variable.DataType.ElementType == item.DataType, "Cannot assign value of type " + item.DataType + " to index access of type " + variable.DataType);
+                    Assert.True(variable.DataType.ElementType == item.DataType, "Cannot assign value of type " + item.DataType + " to index access of type " + variable.DataType);
                     break;
 
                 default:
@@ -406,7 +406,7 @@ namespace erc
         private DataType CheckIndexAccess(AstItem expression)
         {
             var symbol = _context.RequireSymbol(expression.Identifier);
-            Assert.Check(symbol.DataType.Kind == DataTypeKind.POINTER, "Index access can only be done on pointer types. Type use: " + symbol.DataType);
+            Assert.DataTypeKind(symbol.DataType.Kind, DataTypeKind.POINTER, "Invalid data type for index access");
 
             var indexExpression = expression.Children[0];
             var indexExpType = CheckExpression(indexExpression);

@@ -7,7 +7,7 @@ namespace erc
     {
         public void Optimize(AstItem programItem)
         {
-            Assert.Check(programItem.Kind == AstItemKind.Programm, "Programm AST item must be given!");
+            Assert.AstItemKind(programItem.Kind, AstItemKind.Programm, "Invalid AST item for optimization");
             EvaluateConstantExpressions(programItem);
         }
 
@@ -22,12 +22,12 @@ namespace erc
                     {
                         //Convert enum value access like "Enum::Value" to immediate values
                         var typeItem = item.Children[i - 2];
-                        Assert.Check(typeItem.Kind == AstItemKind.Type, "First operand must be data type, given: " + typeItem);
+                        Assert.AstItemKind(typeItem.Kind, AstItemKind.Type, "Invalid kind of first operand in expression");
                         var valueItem = item.Children[i - 1];
-                        Assert.Check(valueItem.Kind == AstItemKind.Identifier, "Second operand must be identifier, given: " + valueItem);
+                        Assert.AstItemKind(valueItem.Kind, AstItemKind.Identifier, "Invalid kind of second operand in expression");
 
                         var element = typeItem.DataType.EnumElements.Find((e) => e.Name == valueItem.Identifier);
-                        Assert.Check(element != null, "Enum element with name not found: " + valueItem.Identifier + " in enum: " + typeItem.Identifier);
+                        Assert.True(element != null, "Enum element with name not found: " + valueItem.Identifier + " in enum: " + typeItem.Identifier);
 
                         child.Kind = AstItemKind.Immediate;
                         child.DataType = DataType.U32;

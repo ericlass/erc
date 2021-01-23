@@ -15,28 +15,28 @@ namespace erc
 
         private IMOperation(IMInstruction instruction)
         {
-            Assert.Check(instruction.NumOperands == 0, "Instruction " + instruction.Name + " expected " + instruction.NumOperands + " operands, but none given!");
+            Assert.True(instruction.NumOperands == 0, "Instruction " + instruction.Name + " expected " + instruction.NumOperands + " operands, but none given!");
             Instruction = instruction;
             Operands = new List<IMOperand>(0);
         }
 
         private IMOperation(IMInstruction instruction, IMOperand operand1)
         {
-            Assert.Check(instruction.NumOperands == 1, "Instruction " + instruction.Name + " expected " + instruction.NumOperands + " operands, but 1 given!");
+            Assert.True(instruction.NumOperands == 1, "Instruction " + instruction.Name + " expected " + instruction.NumOperands + " operands, but 1 given!");
             Instruction = instruction;
             Operands = new List<IMOperand> { operand1 };
         }
 
         private IMOperation(IMInstruction instruction, IMOperand operand1, IMOperand operand2)
         {
-            Assert.Check(instruction.NumOperands == 2, "Instruction " + instruction.Name + " expected " + instruction.NumOperands + " operands, but 2 given!");
+            Assert.True(instruction.NumOperands == 2, "Instruction " + instruction.Name + " expected " + instruction.NumOperands + " operands, but 2 given!");
             Instruction = instruction;
             Operands = new List<IMOperand> { operand1, operand2 };
         }
 
         public IMOperation(IMInstruction instruction, IMOperand operand1, IMOperand operand2, IMOperand operand3)
         {
-            Assert.Check(instruction.NumOperands == 3, "Instruction " + instruction.Name + " expected " + instruction.NumOperands + " operands, but 3 given!");
+            Assert.True(instruction.NumOperands == 3, "Instruction " + instruction.Name + " expected " + instruction.NumOperands + " operands, but 3 given!");
             Instruction = instruction;
             Operands = new List<IMOperand> { operand1, operand2, operand3 };
         }

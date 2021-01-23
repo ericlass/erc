@@ -20,11 +20,11 @@ namespace erc
                 throw new Exception("Invalid combination of operands for static access member: " + operand1 + " and " + operand2 + "!");
 
             var enumType = operand1.DataType;
-            Assert.Check(enumType != null, "Enum type not found: " + operand1.Identifier);
-            Assert.Check(enumType.Kind == DataTypeKind.ENUM, "Enum data type expected, given: " + enumType);
+            Assert.True(enumType != null, "Enum type not found: " + operand1.Identifier);
+            Assert.DataTypeKind(enumType.Kind, DataTypeKind.ENUM, "Invalid type for left side of :: operator");
 
             var element = enumType.EnumElements.Find((e) => e.Name == operand2.Identifier);
-            Assert.Check(element != null, "Element '" + operand2.Identifier + "' not found in enum '" + operand1.Identifier + "'!");
+            Assert.True(element != null, "Element '" + operand2.Identifier + "' not found in enum '" + operand1.Identifier + "'!");
         }
 
         public List<IMOperation> Generate(IMOperand target, IMOperand operand1, IMOperand operand2)

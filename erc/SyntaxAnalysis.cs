@@ -333,7 +333,7 @@ namespace erc
                 tokens.PopExpected(TokenKind.CurlyBracketOpen);
             }
             else
-                Assert.Check(next.Kind == TokenKind.CurlyBracketOpen, "Expected 'inc' or '{', got: " + next);
+                Assert.True(next.Kind == TokenKind.CurlyBracketOpen, "Expected 'inc' or '{', got: " + next);
 
             var statements = ReadStatements(tokens);
             tokens.PopExpected(TokenKind.CurlyBracketClose);

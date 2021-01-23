@@ -373,7 +373,7 @@ namespace erc
         private void GenerateBreak(List<IMOperation> output)
         {
             var endLabelName = _context.GetCurrentScopeEndLabel();
-            Assert.Check(endLabelName != null, "No end label for break statement in current scope!");
+            Assert.True(endLabelName != null, "No end label for break statement in current scope!");
             output.Add(IMOperation.Jmp(endLabelName));
         }
 

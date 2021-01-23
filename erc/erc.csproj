@@ -64,6 +64,7 @@
     <Compile Include="native\X64CodeFormat.cs" />
     <Compile Include="native\X64DataTypeProperties.cs" />
     <Compile Include="native\X64FunctionFrame.cs" />
+    <Compile Include="native\X64GeneratorUtils.cs" />
     <Compile Include="native\X64MemoryManager.cs" />
     <Compile Include="native\X64StorageLocation.cs" />
     <Compile Include="native\X64StorageLocationKind.cs" />

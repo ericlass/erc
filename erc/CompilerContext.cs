@@ -54,7 +54,7 @@ namespace erc
 
         public string GetCurrentScopeEndLabel()
         {
-            Assert.Check(_blockScope != null, "Trying to get end label for scope, but not inside block scope!");
+            Assert.True(_blockScope != null, "Trying to get end label for scope, but not inside block scope!");
             return _blockScope.GetEndLabel();
         }
 

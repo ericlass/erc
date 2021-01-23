@@ -165,7 +165,7 @@ namespace erc
         public static X64Instruction MOVMSKPS = new X64Instruction("MOVMSKPS", 2);
         public static X64Instruction MOVMSKPD = new X64Instruction("MOVMSKPD", 2);
 
-        //##### VEX encdoed SSE instructions for YMM registers #####
+        //##### VEX encoded SSE instructions for YMM registers #####
 
         public static X64Instruction VADDSS = new X64Instruction("VADDSS", 3);
         public static X64Instruction VSUBSS = new X64Instruction("VSUBSS", 3);
@@ -195,6 +195,13 @@ namespace erc
         public static X64Instruction VMOVMSKPD = new X64Instruction("VMOVMSKPD", 2);
 
         public static X64Instruction VPSLLDQ = new X64Instruction("VPSLLDQ", 3);
+
+        //##### Conversion instructions #####
+        public static X64Instruction CVTSI2SS = new X64Instruction("CVTSI2SS", 2);
+        public static X64Instruction CVTSI2SD = new X64Instruction("CVTSI2SD", 2);
+
+        public static X64Instruction VCVTUSI2SS = new X64Instruction("VCVTUSI2SS", 3);
+        public static X64Instruction VCVTUSI2SD = new X64Instruction("VCVTUSI2SD", 3);
 
         //##### MISC #####
 

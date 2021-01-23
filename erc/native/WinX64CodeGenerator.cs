@@ -310,32 +310,7 @@ namespace erc
             var targetLocation = RequireOperandLocation(target);
             var sourceLocation = RequireOperandLocation(source);
 
-            Move(output, source.DataType, targetLocation, sourceLocation);
-        }
-
-        private void Move(List<string> output, DataType dataType, X64StorageLocation targetLocation, X64StorageLocation sourceLocation)
-        {
-            if (targetLocation.Equals(sourceLocation))
-                return;
-
-            var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
-
-            //Values on stack are not aligned, so we need to distinguish
-            X64Instruction instruction;
-            if (sourceLocation.IsMemory || targetLocation.IsMemory)
-                instruction = x64DataType.MoveInstructionUnaligned;
-            else
-                instruction = x64DataType.MoveInstructionAligned;
-
-            if (sourceLocation.IsMemory && targetLocation.IsMemory)
-            {
-                //Cannot directly move between two memory locations, need to use accumulator register as temp location and do it in two steps
-                var accLocation = X64StorageLocation.AsRegister(x64DataType.Accumulator);
-                output.Add(X64CodeFormat.FormatOperation(instruction, accLocation, sourceLocation));
-                output.Add(X64CodeFormat.FormatOperation(instruction, targetLocation, accLocation));
-            }
-            else
-                output.Add(X64CodeFormat.FormatOperation(instruction, targetLocation, sourceLocation));
+            X64GeneratorUtils.Move(output, source.DataType, targetLocation, sourceLocation);
         }
 
         private X64StorageLocation GetOperandLocation(IMOperand operand)
@@ -383,7 +358,7 @@ namespace erc
             if (sourceLocation.Kind != X64StorageLocationKind.Register)
             {
                 var tempLocation = X64StorageLocation.AsRegister(x64DataType.Accumulator);
-                Move(output, dataType, tempLocation, sourceLocation);
+                X64GeneratorUtils.Move(output, dataType, tempLocation, sourceLocation);
                 sourceLocation = tempLocation;
             }
 
@@ -419,7 +394,7 @@ namespace erc
                 //No Pop to other than register
                 //No Pop for vectors
                 //No Pop for 1-byte operands
-                Move(output, dataType, targetLocation, X64StorageLocation.StackFromTop(0));
+                X64GeneratorUtils.Move(output, dataType, targetLocation, X64StorageLocation.StackFromTop(0));
                 output.Add(X64CodeFormat.FormatOperation(X64Instruction.ADD, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(dataType.ByteSize.ToString())));
             }
             else
@@ -466,7 +441,7 @@ namespace erc
 
         private void GenerateBinaryOperator(List<string> output, X64Instruction instruction, IMOperation operation)
         {
-            Assert.Check(instruction != null, "No instruction given! Instruction must be non-null! Operation: " + operation);
+            Assert.True(instruction != null, "No instruction given! Instruction must be non-null! Operation: " + operation);
 
             var target = operation.Operands[0];
             var operand1 = operation.Operands[1];
@@ -488,13 +463,13 @@ namespace erc
                 case 1:
                     var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
                     var accLocation = X64StorageLocation.AsRegister(x64DataType.Accumulator);
-                    Move(output, dataType, accLocation, op1Location);
+                    X64GeneratorUtils.Move(output, dataType, accLocation, op1Location);
                     output.Add(X64CodeFormat.FormatOperation(instruction, op2Location));
-                    Move(output, dataType, targetLocation, accLocation);
+                    X64GeneratorUtils.Move(output, dataType, targetLocation, accLocation);
                     break;
 
                 case 2:
-                    Move(output, dataType, targetLocation, op1Location);
+                    X64GeneratorUtils.Move(output, dataType, targetLocation, op1Location);
                     output.Add(X64CodeFormat.FormatOperation(instruction, targetLocation, op2Location));
                     break;
 
@@ -509,7 +484,7 @@ namespace erc
 
         private void GenerateUnaryOperator(List<string> output, X64Instruction instruction, IMOperation operation)
         {
-            Assert.Check(instruction != null, "No instruction given! Instruction must be non-null! Operation: " + operation);
+            Assert.True(instruction != null, "No instruction given! Instruction must be non-null! Operation: " + operation);
 
             var target = operation.Operands[0];
             var operand = operation.Operands[1];
@@ -527,7 +502,7 @@ namespace erc
             switch (instruction.NumOperands)
             {
                 case 1:
-                    Move(output, dataType, targetLocation, opLocation);
+                    X64GeneratorUtils.Move(output, dataType, targetLocation, opLocation);
                     output.Add(X64CodeFormat.FormatOperation(instruction, targetLocation));
                     break;
 
@@ -547,7 +522,7 @@ namespace erc
             {
                 var returnLocation = _functionScope.ReturnLocation;
                 var valueLocation = RequireOperandLocation(returnValue);
-                Move(output, returnValue.DataType, returnLocation, valueLocation);
+                X64GeneratorUtils.Move(output, returnValue.DataType, returnLocation, valueLocation);
             }
 
             output.Add(X64CodeFormat.FormatOperation(X64Instruction.RET));
@@ -610,7 +585,7 @@ namespace erc
                     case DataTypeGroup.ScalarFloat:
                     case DataTypeGroup.VectorFloat:
                         var accLocation = X64StorageLocation.AsRegister(x64DataType.Accumulator);
-                        Move(output, dataType, accLocation, opLocation);
+                        X64GeneratorUtils.Move(output, dataType, accLocation, opLocation);
                         output.Add(X64CodeFormat.FormatOperation(x64DataType.XorInstruction, targetLocation, targetLocation));
                         //CAUTION: Theoretical problem if the sub instruction would have only 1 operator it would override the
                         //accumulator which holds the value to negate, but this is not the case for float scalars and vectors.
@@ -722,7 +697,7 @@ namespace erc
                     switch (vectorCmpInstruction.NumOperands)
                     {
                         case 2:
-                            Move(output, dataType, cmpResultLocation, op1Location);
+                            X64GeneratorUtils.Move(output, dataType, cmpResultLocation, op1Location);
                             output.Add(X64CodeFormat.FormatOperation(vectorCmpInstruction, cmpResultLocation, op2Location));
                             break;
 
@@ -793,13 +768,13 @@ namespace erc
 
             //Generate parameter values in desired locations
             var parameterLocations = _memoryManager.GetParameterLocations(function);
-            Assert.Check(parameterLocations.Count == parameterValues.Count, "Inconsitent number of parameters and locations: " + parameterLocations.Count + " != " + parameterValues.Count);
+            Assert.True(parameterLocations.Count == parameterValues.Count, "Inconsitent number of parameters and locations: " + parameterLocations.Count + " != " + parameterValues.Count);
             for (int i = 0; i < parameterValues.Count; i++)
             {
                 var value = parameterValues[i];
                 var valueLocation = RequireOperandLocation(value);
                 var location = parameterLocations[i];
-                Move(output, value.DataType, location, valueLocation);
+                X64GeneratorUtils.Move(output, value.DataType, location, valueLocation);
             }
 
             //Add 32 bytes shadow space
@@ -822,7 +797,7 @@ namespace erc
 
             if (function.ReturnType != DataType.VOID && targetLocation != null)
             {
-                Move(output, function.ReturnType, targetLocation, _memoryManager.GetFunctionReturnLocation(function));
+                X64GeneratorUtils.Move(output, function.ReturnType, targetLocation, _memoryManager.GetFunctionReturnLocation(function));
             }
 
             //Restore saved registers in reverse order from stack
@@ -872,7 +847,7 @@ namespace erc
         private void GenerateSetX(List<string> output, IMOperation operation, X64Instruction scalarSetInstruction, X64Instruction vectorCmpInstruction)
         {
             var target = operation.Operands[0];
-            Assert.Check(target.DataType.ByteSize == 1, "Can only SETcc to byte sized types!");
+            Assert.True(target.DataType.ByteSize == 1, "Can only SETcc to byte sized types!");
 
             var op1 = operation.Operands[1];
             var op2 = operation.Operands[2];
@@ -899,7 +874,7 @@ namespace erc
                     if (op1Location.IsMemory && op2Location.IsMemory)
                     {
                         var newLocation = X64StorageLocation.AsRegister(x64DataType.Accumulator);
-                        Move(output, dataType, newLocation, op1Location);
+                        X64GeneratorUtils.Move(output, dataType, newLocation, op1Location);
                         op1Location = newLocation;
                     }
                     output.Add(X64CodeFormat.FormatOperation(X64Instruction.CMP, op1Location, op2Location));
@@ -926,7 +901,7 @@ namespace erc
                     switch (vectorCmpInstruction.NumOperands)
                     {
                         case 2:
-                            Move(output, dataType, cmpResultLocation, op1Location);
+                            X64GeneratorUtils.Move(output, dataType, cmpResultLocation, op1Location);
                             output.Add(X64CodeFormat.FormatOperation(vectorCmpInstruction, cmpResultLocation, op2Location));
                             break;
 
@@ -955,8 +930,8 @@ namespace erc
             var values = allOperands.GetRange(1, allOperands.Count - 1);
 
             var targetDataType = target.DataType;
-            Assert.Check(targetDataType.IsVector, "Expected vector type, given: " + targetDataType);
-            Assert.Check(values.Count == targetDataType.NumElements, "Vector type " + targetDataType + " required " + targetDataType.NumElements + ", but " + values.Count + " given!");
+            Assert.True(targetDataType.IsVector, "Expected vector type, given: " + targetDataType);
+            Assert.True(values.Count == targetDataType.NumElements, "Vector type " + targetDataType + " required " + targetDataType.NumElements + ", but " + values.Count + " given!");
 
             //Save current stack pointer
             //TODO: Fix: RSI might be used by an operand!
@@ -975,15 +950,11 @@ namespace erc
 
             //Move final vector value to target location
             var targetLocation = RequireOperandLocation(target);
-            Move(output, targetDataType, targetLocation, X64StorageLocation.StackFromTop(0));
+            X64GeneratorUtils.Move(output, targetDataType, targetLocation, X64StorageLocation.StackFromTop(0));
 
             //Restore stack pointer
             output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.AsRegister(X64Register.RSI)));
         }
-
-
-        //Methods for all other operation kinds follow here
-        //IDEA: The ones that need a lot of code could be in another file (partial class)
 
     }
 }

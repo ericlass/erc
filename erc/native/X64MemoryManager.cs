@@ -78,13 +78,13 @@ namespace erc
                                     heapOffset += operand.DataType.ByteSize;
                                 }
 
-                                Assert.Check(location != null, "No location found for operand!");
+                                Assert.True(location != null, "No location found for operand!");
                                 locationMap.Add(operand.FullName, location);
                             }
                             else if (operand.Kind == IMOperandKind.Reference)
                             {
                                 var addressLocation = locationMap[operand.ChildValue.FullName];
-                                Assert.Check(addressLocation.Kind == X64StorageLocationKind.Register, "Address location for reference operand must be in register!");
+                                Assert.True(addressLocation.Kind == X64StorageLocationKind.Register, "Address location for reference operand must be in register!");
                                 locationMap.Add(operand.FullName, X64StorageLocation.HeapInRegister(addressLocation.Register, 0));
                             }
                         }
