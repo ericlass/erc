@@ -38,6 +38,7 @@ namespace erc
         private List<X64Register> _usedRegisters = new List<X64Register>();
         private X64MemoryManager _memoryManager = new X64MemoryManager();
         private List<Tuple<DataType, string>> _dataEntries = new List<Tuple<DataType, string>>();
+        private X64TypeCast _typeCastGenerator = new X64TypeCast();
 
         public void Generate(CompilerContext context)
         {
@@ -269,6 +270,10 @@ namespace erc
 
                 case IMInstructionKind.GVEC:
                     GenerateGVEC(output, operation);
+                    break;
+
+                case IMInstructionKind.CAST:
+                    GenerateCast(output, operation);
                     break;
 
                 case IMInstructionKind.FREE:
@@ -954,6 +959,17 @@ namespace erc
 
             //Restore stack pointer
             output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.AsRegister(X64Register.RSI)));
+        }
+
+        private void GenerateCast(List<string> output, IMOperation operation)
+        {
+            var allOperands = operation.Operands;
+            var target = allOperands[0];
+            var source = allOperands[1];
+
+            var targetLocation = RequireOperandLocation(target);
+            var sourceLocation = RequireOperandLocation(source);
+            _typeCastGenerator.Generate(output, targetLocation, target.DataType, sourceLocation, source.DataType);
         }
 
     }

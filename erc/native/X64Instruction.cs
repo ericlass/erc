@@ -27,6 +27,8 @@ namespace erc
 
         public static X64Instruction MOV = new X64Instruction("MOV", 2);
         public static X64Instruction MOVZX = new X64Instruction("MOVZX", 2);
+        public static X64Instruction MOVSX = new X64Instruction("MOVSX", 2);
+        public static X64Instruction MOVSXD = new X64Instruction("MOVSXD", 2);
         public static X64Instruction CMOVE = new X64Instruction("CMOVE", 2);
         public static X64Instruction CMOVNE = new X64Instruction("CMOVNE", 2);
         public static X64Instruction CMOVB = new X64Instruction("CMOVB", 2);
@@ -36,9 +38,13 @@ namespace erc
 
         public static X64Instruction MOVSS = new X64Instruction("MOVSS", 2);
         public static X64Instruction VMOVSS = new X64Instruction("VMOVSS", 2);
+        public static X64Instruction CVTSS2SI = new X64Instruction("CVTSS2SI", 2);
+        public static X64Instruction CVTSS2SD = new X64Instruction("CVTSS2SD", 2);
 
         public static X64Instruction MOVSD = new X64Instruction("MOVSD", 2);
         public static X64Instruction VMOVSD = new X64Instruction("VMOVSD", 2);
+        public static X64Instruction CVTSD2SI = new X64Instruction("CVTSD2SI", 2);
+        public static X64Instruction CVTSD2SS = new X64Instruction("CVTSD2SS", 2);
 
         public static X64Instruction MOVDQA = new X64Instruction("MOVDQA", 2, true);
         public static X64Instruction VMOVDQA = new X64Instruction("VMOVDQA", 2, true);

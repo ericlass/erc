@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace erc.native
+namespace erc
 {
     public class X64TypeCast
     {
@@ -121,7 +121,33 @@ namespace erc.native
                 [DataTypeKind.F32] = IntToFloat,
                 [DataTypeKind.F64] = IntToFloat,
                 [DataTypeKind.BOOL] = IntToBool,
-            }
+            },
+            [DataTypeKind.F32] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
+            {
+                [DataTypeKind.U8] = FloatToInt,
+                [DataTypeKind.U16] = FloatToInt,
+                [DataTypeKind.U32] = FloatToInt,
+                [DataTypeKind.U64] = FloatToInt,
+                [DataTypeKind.I8] = FloatToInt,
+                [DataTypeKind.I16] = FloatToInt,
+                [DataTypeKind.I32] = FloatToInt,
+                [DataTypeKind.I64] = FloatToInt,
+                [DataTypeKind.F32] = JustMove,
+                [DataTypeKind.F64] = F32toF64
+            },
+            [DataTypeKind.F64] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
+            {
+                [DataTypeKind.U8] = FloatToInt,
+                [DataTypeKind.U16] = FloatToInt,
+                [DataTypeKind.U32] = FloatToInt,
+                [DataTypeKind.U64] = FloatToInt,
+                [DataTypeKind.I8] = FloatToInt,
+                [DataTypeKind.I16] = FloatToInt,
+                [DataTypeKind.I32] = FloatToInt,
+                [DataTypeKind.I64] = FloatToInt,
+                [DataTypeKind.F32] = F64toF32,
+                [DataTypeKind.F64] = JustMove
+            },
         };
 
         /// <summary>
@@ -169,7 +195,7 @@ namespace erc.native
         {
             Assert.DataTypeGroup(sourceType.Group, DataTypeGroup.ScalarInteger, "Invalid target data type for zero extend");
             Assert.DataTypeGroup(targetType.Group, DataTypeGroup.ScalarInteger, "Invalid source data type for zero extend");
-            Assert.True(targetType.ByteSize >= sourceType.ByteSize, "Target type must have same or bigger byte size that source type! targetType: " + targetType + "; sourceType: " + sourceType);
+            Assert.True(targetType.ByteSize >= sourceType.ByteSize, "Target type must have same or bigger byte size than source type! targetType: " + targetType + "; sourceType: " + sourceType);
             Assert.True(target.Kind != X64StorageLocationKind.DataSection && target.Kind != X64StorageLocationKind.Immediate, "Cannot zero extend to target location: " + target);
 
             var x64TargetType = X64DataTypeProperties.GetProperties(targetType.Kind);
@@ -201,9 +227,51 @@ namespace erc.native
             }
         }
 
+        /// <summary>
+        /// Converts a signed scalar integer to a signed scalar integer of the same or bigger size using sign extension.
+        /// </summary>
+        /// <param name="output">The output to add ASM instructions to.</param>
+        /// <param name="target">The target where to put the converted value.</param>
+        /// <param name="targetType">The target data type.</param>
+        /// <param name="source">The location of the value that should be converted.</param>
+        /// <param name="sourceType">The type of the source value.</param>
         private static void SignExtend(List<string> output, X64StorageLocation target, DataType targetType, X64StorageLocation source, DataType sourceType)
         {
-            //TODO
+            Assert.DataTypeGroup(sourceType.Group, DataTypeGroup.ScalarInteger, "Invalid target data type for sign extend");
+            Assert.DataTypeGroup(targetType.Group, DataTypeGroup.ScalarInteger, "Invalid source data type for sign extend");
+            Assert.True(targetType.ByteSize >= sourceType.ByteSize, "Target type must have same or bigger byte size than source type! targetType: " + targetType + "; sourceType: " + sourceType);
+            Assert.True(sourceType.ByteSize <= 4, "Can only sign extend integers of 4 byte or less! sourceType: " + sourceType);
+            Assert.True(target.Kind != X64StorageLocationKind.DataSection && target.Kind != X64StorageLocationKind.Immediate, "Cannot sign extend to target location: " + target);
+
+            var extendInstruction = X64Instruction.MOVSX;
+            if (sourceType.ByteSize == 4)
+                extendInstruction = X64Instruction.MOVSXD;
+
+            if (target.Kind == X64StorageLocationKind.Register)
+            {
+                if (source.Kind == X64StorageLocationKind.Register)
+                    output.Add(X64CodeFormat.FormatOperation(extendInstruction, target, source));
+                else
+                {
+                    var x64SourceType = X64DataTypeProperties.GetProperties(sourceType.Kind);
+                    output.Add(X64CodeFormat.FormatOperation(extendInstruction, target.ToCode(), x64SourceType.OperandSize + " " + source.ToCode()));
+                }
+            }
+            else
+            {
+                var x64TargetType = X64DataTypeProperties.GetProperties(targetType.Kind);
+                var accLocation = X64StorageLocation.AsRegister(x64TargetType.Accumulator);
+
+                if (source.Kind == X64StorageLocationKind.Register)
+                    output.Add(X64CodeFormat.FormatOperation(extendInstruction, accLocation, source));
+                else
+                {
+                    var x64SourceType = X64DataTypeProperties.GetProperties(sourceType.Kind);
+                    output.Add(X64CodeFormat.FormatOperation(extendInstruction, accLocation.ToCode(), x64SourceType.OperandSize + " " + source.ToCode()));
+                }
+
+                X64GeneratorUtils.Move(output, targetType, target, accLocation);
+            }
         }
 
         /// <summary>
@@ -296,7 +364,7 @@ namespace erc.native
         }
 
         /// <summary>
-        /// Converts the given signed or unsiugned scalar integer value to a scalar float value.
+        /// Converts the given signed or unsigned scalar integer value to a scalar float value.
         /// </summary>
         /// <param name="output">The output to add ASM instructions to.</param>
         /// <param name="target">The target where to put the converted value.</param>
@@ -363,6 +431,109 @@ namespace erc.native
             //If temp location was used for conversion, move to actual target location now
             if (useTempTarget)
                 output.Add(X64CodeFormat.FormatOperation(x64TargetType.MoveInstructionAligned, target, targetLocation));
+        }
+
+        /// <summary>
+        /// Converts the given scalar float value to a signed or unsigned scalar int value.
+        /// </summary>
+        /// <param name="output">The output to add ASM instructions to.</param>
+        /// <param name="target">The target where to put the converted value.</param>
+        /// <param name="targetType">The target data type.</param>
+        /// <param name="source">The location of the value that should be converted.</param>
+        /// <param name="sourceType">The type of the source value.</param>
+        private static void FloatToInt(List<string> output, X64StorageLocation target, DataType targetType, X64StorageLocation source, DataType sourceType)
+        {
+            Assert.DataTypeGroup(sourceType.Group, DataTypeGroup.ScalarFloat, "Invalid source data type for float-to-int-conversion");
+            Assert.DataTypeGroup(targetType.Group, DataTypeGroup.ScalarInteger, "Invalid target data type for float-to-int-conversion");
+
+            X64Instruction convertInstruction = null;
+            switch (sourceType.Kind)
+            {
+                case DataTypeKind.F32:
+                    convertInstruction = X64Instruction.CVTSS2SI;
+                    break;
+
+                case DataTypeKind.F64:
+                    convertInstruction = X64Instruction.CVTSD2SI;
+                    break;
+
+                default:
+                    throw new Exception("Unknown scalar float type: " + sourceType);
+            }
+
+            var i64AccLocation = X64StorageLocation.AsRegister(X64DataTypeProperties.GetProperties(DataTypeKind.I64).Accumulator);
+
+            if (target.Kind == X64StorageLocationKind.Register)
+            {
+                if (targetType.ByteSize == 4 || targetType.ByteSize == 8)
+                {
+                    //No need to use operand size for memory locations as instruction only works for one data type, so size is known
+                    output.Add(X64CodeFormat.FormatOperation(convertInstruction, target, source));
+                }
+                else
+                {
+                    //CVTS* instruction can only convert to 32 or 64 bit signed int, so need to use accumulator for smaller types and cut off value
+                    output.Add(X64CodeFormat.FormatOperation(convertInstruction, i64AccLocation, source));
+                    CutOff(output, target, targetType, i64AccLocation, DataType.I64);
+                }
+            }
+            else
+            {
+                output.Add(X64CodeFormat.FormatOperation(convertInstruction, i64AccLocation, source));
+                CutOff(output, target, targetType, i64AccLocation, DataType.I64);
+            }
+        }
+
+        /// <summary>
+        /// Converts the given 32-bit scalar float value to a 64-bit scalar float value.
+        /// </summary>
+        /// <param name="output">The output to add ASM instructions to.</param>
+        /// <param name="target">The target where to put the converted value.</param>
+        /// <param name="targetType">The target data type.</param>
+        /// <param name="source">The location of the value that should be converted.</param>
+        /// <param name="sourceType">The type of the source value.</param>
+        private static void F32toF64(List<string> output, X64StorageLocation target, DataType targetType, X64StorageLocation source, DataType sourceType)
+        {
+            Assert.DataTypeKind(sourceType.Kind, DataTypeKind.F32, "Unexpected source data type kind");
+            Assert.DataTypeKind(targetType.Kind, DataTypeKind.F64, "Unexpected target data type kind");
+
+            if (target.Kind == X64StorageLocationKind.Register)
+            {
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.CVTSS2SD, target, source));
+            }
+            else
+            {
+                var x64TargetType = X64DataTypeProperties.GetProperties(targetType.Kind);
+                var accLocation = X64StorageLocation.AsRegister(x64TargetType.Accumulator);
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.CVTSS2SD, accLocation, source));
+                X64GeneratorUtils.Move(output, targetType, target, accLocation);
+            }
+        }
+
+        /// <summary>
+        /// Converts the given 64-bit scalar float value to a 32-bit scalar float value.
+        /// </summary>
+        /// <param name="output">The output to add ASM instructions to.</param>
+        /// <param name="target">The target where to put the converted value.</param>
+        /// <param name="targetType">The target data type.</param>
+        /// <param name="source">The location of the value that should be converted.</param>
+        /// <param name="sourceType">The type of the source value.</param>
+        private static void F64toF32(List<string> output, X64StorageLocation target, DataType targetType, X64StorageLocation source, DataType sourceType)
+        {
+            Assert.DataTypeKind(sourceType.Kind, DataTypeKind.F64, "Unexpected source data type kind");
+            Assert.DataTypeKind(targetType.Kind, DataTypeKind.F32, "Unexpected target data type kind");
+
+            if (target.Kind == X64StorageLocationKind.Register)
+            {
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.CVTSD2SS, target, source));
+            }
+            else
+            {
+                var x64TargetType = X64DataTypeProperties.GetProperties(targetType.Kind);
+                var accLocation = X64StorageLocation.AsRegister(x64TargetType.Accumulator);
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.CVTSD2SS, accLocation, source));
+                X64GeneratorUtils.Move(output, targetType, target, accLocation);
+            }
         }
 
         /// <summary>
