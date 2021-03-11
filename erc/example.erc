@@ -1,6 +1,6 @@
 
 fn main() {
-	loops();
+	type_casting();
 }
 
 enum TestType {
@@ -127,4 +127,27 @@ fn types()
 	let abc = vec(1.0, d * 2.0, (2.0 * d) + 3.0, d / 4.0);
 
 	let xyz = vec(d, e) + vec(e, d);
+}
+
+fn empty() {}
+
+fn type_casting()
+{
+	let x = 5 as i32;
+
+	let y1 = x as i64;
+	let y2 = x as i32;
+	let y3 = x as i16;
+	let y4 = x as i8;
+
+	let y5 = x as u64;
+	let y6 = x as u32;
+	let y7 = x as u16;
+	let y8 = x as u8;
+
+	let z1 = y3 as f32;
+	let z2 = y3 as f64;
+	let z3 = y6 as f32;
+	let z4 = y6 as f64;
+	let z5 = y5 as f32;
 }

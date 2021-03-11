@@ -15,6 +15,11 @@ namespace erc
             return instruction.Name + " " + operand.ToCode();
         }
 
+        public static string FormatOperation(X64Instruction instruction, string operand)
+        {
+            return instruction.Name + " " + operand;
+        }
+
         public static string FormatOperation(X64Instruction instruction, X64StorageLocation operand1, X64StorageLocation operand2)
         {
             return instruction.Name + " " + operand1.ToCode() + ", " + operand2.ToCode();

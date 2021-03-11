@@ -2,7 +2,7 @@ Programm
     FunctionDecl: "main" (void)
         ParameterList
         StatementList
-            FunctionCall: "loops"
+            FunctionCall: "type_casting"
     EnumDecl
         EnumElement
         EnumElement
@@ -328,6 +328,82 @@ Programm
                         Variable: "e" (f64)
                         Variable: "d" (f64)
                     BinaryOperator: +
+    FunctionDecl: "empty" (void)
+        ParameterList
+        StatementList
+    FunctionDecl: "type_casting" (void)
+        ParameterList
+        StatementList
+            VarDecl: "x" (i32)
+                Expression
+                    Immediate: 5 (i64)
+                    Type: (i32)
+                    BinaryOperator: as
+            VarDecl: "y1" (i64)
+                Expression
+                    Variable: "x" (i32)
+                    Type: (i64)
+                    BinaryOperator: as
+            VarDecl: "y2" (i32)
+                Expression
+                    Variable: "x" (i32)
+                    Type: (i32)
+                    BinaryOperator: as
+            VarDecl: "y3" (i16)
+                Expression
+                    Variable: "x" (i32)
+                    Type: (i16)
+                    BinaryOperator: as
+            VarDecl: "y4" (i8)
+                Expression
+                    Variable: "x" (i32)
+                    Type: (i8)
+                    BinaryOperator: as
+            VarDecl: "y5" (u64)
+                Expression
+                    Variable: "x" (i32)
+                    Type: (u64)
+                    BinaryOperator: as
+            VarDecl: "y6" (u32)
+                Expression
+                    Variable: "x" (i32)
+                    Type: (u32)
+                    BinaryOperator: as
+            VarDecl: "y7" (u16)
+                Expression
+                    Variable: "x" (i32)
+                    Type: (u16)
+                    BinaryOperator: as
+            VarDecl: "y8" (u8)
+                Expression
+                    Variable: "x" (i32)
+                    Type: (u8)
+                    BinaryOperator: as
+            VarDecl: "z1" (f32)
+                Expression
+                    Variable: "y3" (i16)
+                    Type: (f32)
+                    BinaryOperator: as
+            VarDecl: "z2" (f64)
+                Expression
+                    Variable: "y3" (i16)
+                    Type: (f64)
+                    BinaryOperator: as
+            VarDecl: "z3" (f32)
+                Expression
+                    Variable: "y6" (u32)
+                    Type: (f32)
+                    BinaryOperator: as
+            VarDecl: "z4" (f64)
+                Expression
+                    Variable: "y6" (u32)
+                    Type: (f64)
+                    BinaryOperator: as
+            VarDecl: "z5" (f32)
+                Expression
+                    Variable: "y5" (u64)
+                    Type: (f32)
+                    BinaryOperator: as
     ExternFunctionDecl: "erc_exit_process" (void) ["ExitProcess"; "Kernel32.dll"]
         ParameterList
             Parameter: "exit_code" (u32)
@@ -351,7 +427,7 @@ Programm
 ]
 fn main(): void
 {
-    CALL 'loops', 
+    CALL 'type_casting', 
     RET @void
 }
 
@@ -757,6 +833,65 @@ fn types(): void
     RET @void
 }
 
+[stack: 0, heap: 0]
+[
+]
+fn empty(): void
+{
+    RET @void
+}
+
+[stack: 0, heap: 0]
+[
+  %x	: register(EBX),
+  %y1	: register(RSI),
+  %y2	: register(ESI),
+  %y3	: register(SI),
+  %y4	: register(DIL),
+  %y5	: register(RDI),
+  %y6	: register(R12D),
+  %y7	: register(R13W),
+  %y8	: register(R13B),
+  %z1	: register(XMM7),
+  %z2	: register(XMM7),
+  %z3	: register(XMM7),
+  %z4	: register(XMM7),
+  %z5	: register(XMM7),
+  i64(5)	: data_section(imm_56),
+]
+fn type_casting(): void
+{
+    CAST %x, i64(5)
+    CAST %y1, %x
+    FREE %y1
+    MOV %y2, %x
+    FREE %y2
+    CAST %y3, %x
+    CAST %y4, %x
+    FREE %y4
+    CAST %y5, %x
+    CAST %y6, %x
+    CAST %y7, %x
+    FREE %y7
+    CAST %y8, %x
+    FREE %x
+    FREE %y8
+    CAST %z1, %y3
+    FREE %z1
+    CAST %z2, %y3
+    FREE %y3
+    FREE %z2
+    CAST %z3, %y6
+    FREE %z3
+    CAST %z4, %y6
+    FREE %y6
+    FREE %z4
+    CAST %z5, %y5
+    FREE %y5
+    FREE %z5
+    RET @void
+}
+
 ext fn['ExitProcess', 'Kernel32.dll'] erc_exit_process(u32): void
 
 ext fn['GetProcessHeap', 'Kernel32.dll'] erc_get_process_heap(): void*
@@ -783,8 +918,8 @@ imm_36 dq 5
 imm_37 dq 1.0
 imm_38 dq 2.0
 imm_39 dq 3.0
-imm_26 dq 2
 imm_40 dq 4.0
+imm_41 dq 5
 imm_42 dq 6
 imm_43 dq 7
 imm_44 dq 8
@@ -794,7 +929,8 @@ imm_48 dq 2.0
 imm_53 dq 1.0
 imm_54 dq 3.0
 imm_55 dq 4.0
-imm_41 dq 5
+imm_56 dq 5
+imm_26 dq 2
 imm_25 dq 1
 erc_u32_zero dd 0
 imm_23 dq 3
@@ -809,10 +945,10 @@ imm_15 dq 8
 imm_16 dq 5
 imm_11 dq 2
 imm_18 dq 8
-imm_22 dq 5
 imm_19 dq 0
-imm_21 dq 3
 imm_20 dq 7
+imm_22 dq 5
+imm_21 dq 3
 imm_17 dq 2
 imm_27 dd 1.0
 imm_52 dd 4.0
@@ -820,8 +956,8 @@ imm_51 dd 3.0
 imm_50 dd 2.0
 imm_49 dd 1.0
 imm_7 dd 1
-imm_45 dd 1.5
 imm_8 dd 7
+imm_45 dd 1.5
 imm_9 dd 0
 imm_30 dd 3.0
 imm_31 dd 4.0
@@ -845,7 +981,7 @@ call [ExitProcess]
 fn_main:
 SUB RSP, 0x20
 MOV RBP, RSP
-CALL fn_loops
+CALL fn_type_casting
 ADD RSP, 0x20
 RET
 
@@ -1268,6 +1404,47 @@ MOVUPD XMM10, [RSP]
 MOV RSP, RSI
 MOVAPD XMM7, XMM9
 ADDPD XMM7, XMM10
+RET
+
+fn_empty:
+RET
+
+fn_type_casting:
+MOV EBX, dword [imm_56]
+MOVSXD RSI, EBX
+MOV ESI, EBX
+MOV SI, BX
+MOV DIL, BL
+MOV EDI, EBX
+MOV R12D, EBX
+MOV R13W, BX
+MOV R13B, BL
+MOVSX EAX, SI
+MOVD XMM7, EAX
+CVTDQ2PS XMM7, XMM7
+MOVSX EAX, SI
+MOVD XMM7, EAX
+CVTDQ2PD XMM7, XMM7
+MOV EAX, R12D
+XORPS XMM7, XMM7
+CVTSI2SS XMM7, RAX
+MOV EAX, R12D
+XORPS XMM7, XMM7
+CVTSI2SD XMM7, RAX
+XORPS XMM7, XMM7
+MOV RAX, RDI
+TEST RAX, RAX
+JS u64tof_1
+CVTSI2SS XMM7, RAX
+JMP u64tof_2
+u64tof_1:
+MOV R10, RAX
+AND R10, 1
+SHR RAX, 1
+OR RAX, R10
+CVTSI2SS XMM7, RAX
+ADDSS XMM7, XMM7
+u64tof_2:
 RET
 
 section '.idata' import data readable writeable

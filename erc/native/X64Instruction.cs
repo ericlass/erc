@@ -26,6 +26,7 @@ namespace erc
         public static X64Instruction POP = new X64Instruction("POP", 1);
 
         public static X64Instruction MOV = new X64Instruction("MOV", 2);
+        public static X64Instruction MOVD = new X64Instruction("MOVD", 2);
         public static X64Instruction MOVZX = new X64Instruction("MOVZX", 2);
         public static X64Instruction MOVSX = new X64Instruction("MOVSX", 2);
         public static X64Instruction MOVSXD = new X64Instruction("MOVSXD", 2);
@@ -38,13 +39,9 @@ namespace erc
 
         public static X64Instruction MOVSS = new X64Instruction("MOVSS", 2);
         public static X64Instruction VMOVSS = new X64Instruction("VMOVSS", 2);
-        public static X64Instruction CVTSS2SI = new X64Instruction("CVTSS2SI", 2);
-        public static X64Instruction CVTSS2SD = new X64Instruction("CVTSS2SD", 2);
 
         public static X64Instruction MOVSD = new X64Instruction("MOVSD", 2);
         public static X64Instruction VMOVSD = new X64Instruction("VMOVSD", 2);
-        public static X64Instruction CVTSD2SI = new X64Instruction("CVTSD2SI", 2);
-        public static X64Instruction CVTSD2SS = new X64Instruction("CVTSD2SS", 2);
 
         public static X64Instruction MOVDQA = new X64Instruction("MOVDQA", 2, true);
         public static X64Instruction VMOVDQA = new X64Instruction("VMOVDQA", 2, true);
@@ -79,6 +76,8 @@ namespace erc
         public static X64Instruction IDIV = new X64Instruction("IDIV", 2);
         
         public static X64Instruction NEG = new X64Instruction("NEG", 1);
+        public static X64Instruction TEST = new X64Instruction("TEST", 2);
+        public static X64Instruction SHR = new X64Instruction("SHR", 2);
 
         //##### Comparison Instructions #####
 
@@ -131,8 +130,9 @@ namespace erc
         public static X64Instruction JGE = new X64Instruction("JGE", 1);
         public static X64Instruction JZ = new X64Instruction("JZ", 1);
         public static X64Instruction JNZ = new X64Instruction("JNZ", 1);
+        public static X64Instruction JS = new X64Instruction("JS", 1);
 
-        //##### Jump Instructions #####
+        //##### Set Instructions #####
         public static X64Instruction SETE = new X64Instruction("SETE", 1);
         public static X64Instruction SETNE = new X64Instruction("SETNE", 1);
         public static X64Instruction SETL = new X64Instruction("SETL", 1);
@@ -164,8 +164,16 @@ namespace erc
         public static X64Instruction MULPD = new X64Instruction("MULPD", 2);
         public static X64Instruction DIVPD = new X64Instruction("DIVPD", 2);
 
+        public static X64Instruction ANDPS = new X64Instruction("ANDPS", 2);
+        public static X64Instruction ORPS  = new X64Instruction("ORPS", 2);
+        public static X64Instruction XORPS = new X64Instruction("XORPS", 2);
+
+        public static X64Instruction ANDPD = new X64Instruction("ANDPD", 2);
+        public static X64Instruction ORPD = new X64Instruction("ORPD", 2);
+        public static X64Instruction XORPD = new X64Instruction("XORPD", 2);
+
         public static X64Instruction PAND = new X64Instruction("PAND", 2);
-        public static X64Instruction POR = new X64Instruction("POR", 2);
+        public static X64Instruction POR  = new X64Instruction("POR", 2);
         public static X64Instruction PXOR = new X64Instruction("PXOR", 2);
 
         public static X64Instruction MOVMSKPS = new X64Instruction("MOVMSKPS", 2);
@@ -193,6 +201,14 @@ namespace erc
         public static X64Instruction VMULPD = new X64Instruction("VMULPD", 3);
         public static X64Instruction VDIVPD = new X64Instruction("VDIVPD", 3);
 
+        public static X64Instruction VANDPS = new X64Instruction("VANDPS", 2);
+        public static X64Instruction VORPS = new X64Instruction("VORPS", 2);
+        public static X64Instruction VXORPS = new X64Instruction("VXORPS", 2);
+
+        public static X64Instruction VANDPD = new X64Instruction("VANDPD", 2);
+        public static X64Instruction VORPD = new X64Instruction("VORPD", 2);
+        public static X64Instruction VXORPD = new X64Instruction("VXORPD", 2);
+
         public static X64Instruction VPAND = new X64Instruction("VPAND", 3);
         public static X64Instruction VPOR = new X64Instruction("VPOR", 3);
         public static X64Instruction VPXOR = new X64Instruction("VPXOR", 3);
@@ -206,8 +222,14 @@ namespace erc
         public static X64Instruction CVTSI2SS = new X64Instruction("CVTSI2SS", 2);
         public static X64Instruction CVTSI2SD = new X64Instruction("CVTSI2SD", 2);
 
-        public static X64Instruction VCVTUSI2SS = new X64Instruction("VCVTUSI2SS", 3);
-        public static X64Instruction VCVTUSI2SD = new X64Instruction("VCVTUSI2SD", 3);
+        public static X64Instruction CVTSS2SI = new X64Instruction("CVTSS2SI", 2);
+        public static X64Instruction CVTSS2SD = new X64Instruction("CVTSS2SD", 2);
+
+        public static X64Instruction CVTSD2SI = new X64Instruction("CVTSD2SI", 2);
+        public static X64Instruction CVTSD2SS = new X64Instruction("CVTSD2SS", 2);
+
+        public static X64Instruction CVTDQ2PS = new X64Instruction("CVTDQ2PS", 2);
+        public static X64Instruction CVTDQ2PD = new X64Instruction("CVTDQ2PD", 2);
 
         //##### MISC #####
 

@@ -5,6 +5,8 @@ namespace erc
 {
     public class X64TypeCast
     {
+        private static long _labelCounter = 1;
+
         private delegate void GenerateTypeCastDelegate(List<string> output, X64StorageLocation target, DataType targetType, X64StorageLocation source, DataType sourceType);
 
         private Dictionary<DataTypeKind, Dictionary<DataTypeKind, GenerateTypeCastDelegate>> Generators = new Dictionary<DataTypeKind, Dictionary<DataTypeKind, GenerateTypeCastDelegate>>()
@@ -24,6 +26,7 @@ namespace erc
                 [DataTypeKind.F64] = IntToFloat,
                 [DataTypeKind.BOOL] = IntToBool,
             },
+            //Conversions from U16 to <other>
             [DataTypeKind.U16] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
             {
                 [DataTypeKind.U8] = CutOff,
@@ -38,6 +41,7 @@ namespace erc
                 [DataTypeKind.F64] = IntToFloat,
                 [DataTypeKind.BOOL] = IntToBool,
             },
+            //Conversions from U32 to <other>
             [DataTypeKind.U32] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
             {
                 [DataTypeKind.U8] = CutOff,
@@ -52,6 +56,7 @@ namespace erc
                 [DataTypeKind.F64] = IntToFloat,
                 [DataTypeKind.BOOL] = IntToBool,
             },
+            //Conversions from U64 to <other>
             [DataTypeKind.U64] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
             {
                 [DataTypeKind.U8] = CutOff,
@@ -66,6 +71,7 @@ namespace erc
                 [DataTypeKind.F64] = IntToFloat,
                 [DataTypeKind.BOOL] = IntToBool,
             },
+            //Conversions from I8 to <other>
             [DataTypeKind.I8] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
             {
                 [DataTypeKind.U8] = JustMove,
@@ -80,6 +86,7 @@ namespace erc
                 [DataTypeKind.F64] = IntToFloat,
                 [DataTypeKind.BOOL] = IntToBool,
             },
+            //Conversions from I16 to <other>
             [DataTypeKind.I16] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
             {
                 [DataTypeKind.U8] = CutOff,
@@ -94,6 +101,7 @@ namespace erc
                 [DataTypeKind.F64] = IntToFloat,
                 [DataTypeKind.BOOL] = IntToBool,
             },
+            //Conversions from I32 to <other>
             [DataTypeKind.I32] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
             {
                 [DataTypeKind.U8] = CutOff,
@@ -108,6 +116,7 @@ namespace erc
                 [DataTypeKind.F64] = IntToFloat,
                 [DataTypeKind.BOOL] = IntToBool,
             },
+            //Conversions from I64 to <other>
             [DataTypeKind.I64] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
             {
                 [DataTypeKind.U8] = CutOff,
@@ -122,6 +131,7 @@ namespace erc
                 [DataTypeKind.F64] = IntToFloat,
                 [DataTypeKind.BOOL] = IntToBool,
             },
+            //Conversions from F32 to <other>
             [DataTypeKind.F32] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
             {
                 [DataTypeKind.U8] = FloatToInt,
@@ -135,6 +145,7 @@ namespace erc
                 [DataTypeKind.F32] = JustMove,
                 [DataTypeKind.F64] = F32toF64
             },
+            //Conversions from F64 to <other>
             [DataTypeKind.F64] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
             {
                 [DataTypeKind.U8] = FloatToInt,
@@ -148,6 +159,7 @@ namespace erc
                 [DataTypeKind.F32] = F64toF32,
                 [DataTypeKind.F64] = JustMove
             },
+            //TODO: Rest of the types (vectors, bool, enum, pointer)
         };
 
         /// <summary>
@@ -179,7 +191,7 @@ namespace erc
         /// <param name="sourceType"></param>
         private static void JustMove(List<string> output, X64StorageLocation target, DataType targetType, X64StorageLocation source, DataType sourceType)
         {
-            Assert.DataTypeKind(targetType.Kind, sourceType.Kind, "Source and target must be exact same data type kind");
+            Assert.True(targetType.ByteSize == sourceType.ByteSize, "Source and target must be exact same byte size");
             X64GeneratorUtils.Move(output, targetType, target, source);
         }
 
@@ -377,60 +389,103 @@ namespace erc
             Assert.DataTypeGroup(targetType.Group, DataTypeGroup.ScalarFloat, "Invalid target data type for int-to-float-conversion");
 
             var x64SourceType = X64DataTypeProperties.GetProperties(sourceType.Kind);
-            var sourceLocation = source;
+            var x64TargetType = X64DataTypeProperties.GetProperties(targetType.Kind);
+            var x64I32Type = X64DataTypeProperties.GetProperties(DataTypeKind.I32);
+            var x64I64Type = X64DataTypeProperties.GetProperties(DataTypeKind.I64);
 
-            //x86 cvt instructions only works with 4 or 8 byte source, so must make sure this is fullfilled
-            if (sourceType.ByteSize < 4)
+            var i32AccLocation = X64StorageLocation.AsRegister(x64I32Type.Accumulator);
+            var i64AccLocation = X64StorageLocation.AsRegister(x64I64Type.Accumulator);
+            var sourceAccLocation = X64StorageLocation.AsRegister(x64SourceType.Accumulator);
+
+            var targetLocation = target;
+            var useTempLocation = false;
+            if (targetLocation.Kind != X64StorageLocationKind.Register)
             {
-                if (source.Kind == X64StorageLocationKind.Register)
-                {
-                    //When source is a register, just use correct sized version of that register
-                    sourceLocation = X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegisterBySize(source.Register.Group, 4));
-                }
-                else
-                {
-                    //When source is a memory location, need to use the accumulator to get the right size
-                    var accLocation = X64StorageLocation.AsRegister(x64SourceType.Accumulator);
-                    var sizedAccumulator = X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegisterBySize(accLocation.Register.Group, 4));
-                    output.Add(X64CodeFormat.FormatOperation(x64SourceType.MoveInstructionAligned, sizedAccumulator, source));
-                    sourceLocation = sizedAccumulator;
-                }
+                targetLocation = X64StorageLocation.AsRegister(x64TargetType.Accumulator);
+                useTempLocation = true;
             }
 
-            var x64TargetType = X64DataTypeProperties.GetProperties(targetType.Kind);
-            var targetLocation = target;
-
-            //x86 cvt instructions only work with registers as targets, so need to use accumulator of target is not a register
-            var useTempTarget = target.Kind != X64StorageLocationKind.Register;
-            if (useTempTarget)
-                targetLocation = X64StorageLocation.AsRegister(x64TargetType.Accumulator);
-
-            //Different instructions for signed and unsigned integers
-            if (sourceType.IsSigned)
+            X64Instruction cvtDqInstruction;
+            X64Instruction cvtSiInstruction;
+            if (targetType.Kind == DataTypeKind.F32)
             {
-                X64Instruction instruction;
-                if (targetType.Kind == DataTypeKind.F32)
-                    instruction = X64Instruction.CVTSI2SS;
-                else
-                    instruction = X64Instruction.CVTSI2SD;
-
-                output.Add(X64CodeFormat.FormatOperation(instruction, targetLocation, sourceLocation));
+                cvtDqInstruction = X64Instruction.CVTDQ2PS;
+                cvtSiInstruction = X64Instruction.CVTSI2SS;
+            }
+            else if (targetType.Kind == DataTypeKind.F64)
+            {
+                cvtDqInstruction = X64Instruction.CVTDQ2PD;
+                cvtSiInstruction = X64Instruction.CVTSI2SD;
             }
             else
-            {
-                X64Instruction instruction;
-                if (targetType.Kind == DataTypeKind.F32)
-                    instruction = X64Instruction.VCVTUSI2SS;
-                else
-                    instruction = X64Instruction.VCVTUSI2SD;
+                throw new Exception("Unknown scalar float type: " + targetType);
 
-                //VEX encoded instructions require 3 operands, so give targetLocation twice
-                output.Add(X64CodeFormat.FormatOperation(instruction, targetLocation, targetLocation, sourceLocation));
+            //These conversions where taken from the output of MSVC as shown on godbolt.org
+            switch (sourceType.Kind)
+            {
+                case DataTypeKind.I8:
+                case DataTypeKind.I16:
+                    SignExtend(output, i32AccLocation, DataType.I32, source, sourceType);
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOVD, targetLocation, i32AccLocation));
+                    output.Add(X64CodeFormat.FormatOperation(cvtDqInstruction, targetLocation, targetLocation));
+                    break;
+
+                case DataTypeKind.I32:
+                    X64GeneratorUtils.Move(output, sourceType, targetLocation, source);
+                    output.Add(X64CodeFormat.FormatOperation(cvtDqInstruction, targetLocation, targetLocation));
+                    break;
+
+                case DataTypeKind.I64:
+                    X64GeneratorUtils.Move(output, sourceType, sourceAccLocation, source);
+                    output.Add(X64CodeFormat.FormatOperation(x64TargetType.XorInstruction, targetLocation, targetLocation));
+                    output.Add(X64CodeFormat.FormatOperation(cvtSiInstruction, targetLocation, sourceAccLocation));
+                    break;
+
+                case DataTypeKind.U8:
+                case DataTypeKind.U16:
+                    ZeroExtend(output, i32AccLocation, DataType.I32, source, sourceType);
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOVD, targetLocation, i32AccLocation));
+                    output.Add(X64CodeFormat.FormatOperation(cvtDqInstruction, targetLocation, targetLocation));
+                    break;
+
+                case DataTypeKind.U32:
+                    X64GeneratorUtils.Move(output, sourceType, i32AccLocation, source);
+                    output.Add(X64CodeFormat.FormatOperation(x64TargetType.XorInstruction, targetLocation, targetLocation));
+                    output.Add(X64CodeFormat.FormatOperation(cvtSiInstruction, targetLocation, i64AccLocation));
+                    break;
+
+                case DataTypeKind.U64:
+                    var signedLabel = "u64tof_" + _labelCounter;
+                    _labelCounter += 1;
+                    var endLabel = "u64tof_" + _labelCounter;
+                    _labelCounter += 1;
+
+                    output.Add(X64CodeFormat.FormatOperation(x64TargetType.XorInstruction, targetLocation, targetLocation));
+                    X64GeneratorUtils.Move(output, sourceType, i64AccLocation, source);
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.TEST, i64AccLocation, i64AccLocation));
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.JS, X64StorageLocation.Immediate(signedLabel)));
+                    output.Add(X64CodeFormat.FormatOperation(cvtSiInstruction, targetLocation, i64AccLocation));
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.JMP, X64StorageLocation.Immediate(endLabel)));
+                    
+                    output.Add(signedLabel + ":");
+
+                    var tempLocation = X64StorageLocation.AsRegister(x64SourceType.TempRegister1);
+                    X64GeneratorUtils.Move(output, sourceType, tempLocation, i64AccLocation);
+                    output.Add(X64CodeFormat.FormatOperation(x64SourceType.AndInstruction, tempLocation, X64StorageLocation.Immediate("1")));
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.SHR, i64AccLocation, X64StorageLocation.Immediate("1")));
+                    output.Add(X64CodeFormat.FormatOperation(x64SourceType.OrInstruction, i64AccLocation, tempLocation));
+                    output.Add(X64CodeFormat.FormatOperation(cvtSiInstruction, targetLocation, i64AccLocation));
+                    output.Add(X64CodeFormat.FormatOperation(x64TargetType.AddInstruction, targetLocation, targetLocation));
+
+                    output.Add(endLabel + ":");
+                    break;
+
+                default:
+                    throw new Exception("Unsupported data type: " + sourceType);
             }
 
-            //If temp location was used for conversion, move to actual target location now
-            if (useTempTarget)
-                output.Add(X64CodeFormat.FormatOperation(x64TargetType.MoveInstructionAligned, target, targetLocation));
+            if (useTempLocation)
+                X64GeneratorUtils.Move(output, targetType, target, targetLocation);
         }
 
         /// <summary>

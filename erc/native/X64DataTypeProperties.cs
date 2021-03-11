@@ -248,9 +248,9 @@ namespace erc
             SubInstruction = X64Instruction.SUBSS,
             DivInstruction = X64Instruction.DIVSS,
             MulInstruction = X64Instruction.MULSS,
-            AndInstruction = X64Instruction.PAND,
-            OrInstruction = X64Instruction.POR,
-            XorInstruction = X64Instruction.PXOR,
+            AndInstruction = X64Instruction.ANDPS,
+            OrInstruction = X64Instruction.ORPS,
+            XorInstruction = X64Instruction.XORPS,
             ImmediateValueToAsmCode = (o) => ((float)o.ImmediateValue).ToCode()
         };
 
@@ -268,9 +268,9 @@ namespace erc
             SubInstruction = X64Instruction.SUBSD,
             DivInstruction = X64Instruction.DIVSD,
             MulInstruction = X64Instruction.MULSD,
-            AndInstruction = X64Instruction.PAND,
-            OrInstruction = X64Instruction.POR,
-            XorInstruction = X64Instruction.PXOR,
+            AndInstruction = X64Instruction.ANDPS, //*PS is correct, uses one byte less than *PD
+            OrInstruction = X64Instruction.ORPS, //*PS is correct, uses one byte less than *PD
+            XorInstruction = X64Instruction.XORPS, //*PS is correct, uses one byte less than *PD
             ImmediateValueToAsmCode = (o) => ((double)o.ImmediateValue).ToCode()
         };
 
@@ -289,9 +289,9 @@ namespace erc
             SubInstruction = X64Instruction.SUBPS,
             DivInstruction = X64Instruction.DIVPS,
             MulInstruction = X64Instruction.MULPS,
-            AndInstruction = X64Instruction.PAND,
-            OrInstruction = X64Instruction.POR,
-            XorInstruction = X64Instruction.PXOR,
+            AndInstruction = X64Instruction.ANDPS,
+            OrInstruction = X64Instruction.ORPS,
+            XorInstruction = X64Instruction.XORPS,
             CmpEqualInstruction = X64Instruction.CMPEQPS,
             CmpNotEqualInstruction = X64Instruction.CMPNEQPS,
             CmpLessThanInstruction = X64Instruction.CMPLTPS,
@@ -316,9 +316,9 @@ namespace erc
             SubInstruction = X64Instruction.VSUBPS,
             DivInstruction = X64Instruction.VDIVPS,
             MulInstruction = X64Instruction.VMULPS,
-            AndInstruction = X64Instruction.VPAND,
-            OrInstruction = X64Instruction.VPOR,
-            XorInstruction = X64Instruction.VPXOR,
+            AndInstruction = X64Instruction.VANDPS,
+            OrInstruction = X64Instruction.VORPS,
+            XorInstruction = X64Instruction.VXORPS,
             CmpEqualInstruction = X64Instruction.VCMPEQPS,
             CmpNotEqualInstruction = X64Instruction.VCMPNEQPS,
             CmpLessThanInstruction = X64Instruction.VCMPLTPS,
@@ -343,9 +343,9 @@ namespace erc
             SubInstruction = X64Instruction.SUBPD,
             DivInstruction = X64Instruction.DIVPD,
             MulInstruction = X64Instruction.MULPD,
-            AndInstruction = X64Instruction.PAND,
-            OrInstruction = X64Instruction.POR,
-            XorInstruction = X64Instruction.PXOR,
+            AndInstruction = X64Instruction.ANDPS, //*PS is correct, uses one byte less than *PD
+            OrInstruction = X64Instruction.ORPS, //*PS is correct, uses one byte less than *PD
+            XorInstruction = X64Instruction.XORPS, //*PS is correct, uses one byte less than *PD
             CmpEqualInstruction = X64Instruction.CMPEQPD,
             CmpNotEqualInstruction = X64Instruction.CMPNEQPD,
             CmpLessThanInstruction = X64Instruction.CMPLTPD,
@@ -370,9 +370,9 @@ namespace erc
             SubInstruction = X64Instruction.VSUBPD,
             DivInstruction = X64Instruction.VDIVPD,
             MulInstruction = X64Instruction.VMULPD,
-            AndInstruction = X64Instruction.VPAND,
-            OrInstruction = X64Instruction.VPOR,
-            XorInstruction = X64Instruction.VPXOR,
+            AndInstruction = X64Instruction.VANDPS, //*PS is correct, uses one byte less than *PD
+            OrInstruction = X64Instruction.VORPS, //*PS is correct, uses one byte less than *PD
+            XorInstruction = X64Instruction.VXORPS, //*PS is correct, uses one byte less than *PD
             CmpEqualInstruction = X64Instruction.VCMPEQPD,
             CmpNotEqualInstruction = X64Instruction.VCMPNEQPD,
             CmpLessThanInstruction = X64Instruction.VCMPLTPD,

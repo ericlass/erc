@@ -20,12 +20,15 @@ namespace erc
 
         public DataType GetReturnType(AstItem operand1, AstItem operand2)
         {
-            return operand1.DataType;
+            return operand2.DataType;
         }
 
         public List<IMOperation> Generate(IMOperand target, IMOperand operand1, IMOperand operand2)
         {
-            return new List<IMOperation>() { IMOperation.Cast(operand1, operand2) };
+            if (target.DataType.Kind == operand1.DataType.Kind)
+                return new List<IMOperation>() { IMOperation.Mov(target, operand1) };
+            else
+                return new List<IMOperation>() { IMOperation.Cast(target, operand1) };
         }
     }
 }

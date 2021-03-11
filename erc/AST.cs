@@ -134,7 +134,7 @@ namespace erc
                     return Kind + ": " + this.Operator.Figure;
 
                 case AstItemKind.Type:
-                    return Kind + ": (" + DataType.ElementType.Name + ")";
+                    return Kind + ": (" + DataType.Name + ")";
 
                 case AstItemKind.Identifier:
                     return Kind + ": " + Identifier;
