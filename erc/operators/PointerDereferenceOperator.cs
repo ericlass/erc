@@ -10,7 +10,7 @@ namespace erc
 
         public List<IMOperation> Generate(IMOperand target, IMOperand operand)
         {
-            var reference = IMOperand.Reference(operand.DataType, operand);
+            var reference = IMOperand.Reference(operand.DataType.ElementType, operand);
             return IMOperation.Mov(target, reference).AsList;
         }
 

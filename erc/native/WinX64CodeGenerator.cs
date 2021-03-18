@@ -39,6 +39,7 @@ namespace erc
         private X64MemoryManager _memoryManager = new X64MemoryManager();
         private List<Tuple<DataType, string>> _dataEntries = new List<Tuple<DataType, string>>();
         private X64TypeCast _typeCastGenerator = new X64TypeCast();
+        private long _vectorImmCounter = 0;
 
         public void Generate(CompilerContext context)
         {
@@ -315,7 +316,9 @@ namespace erc
             var targetLocation = RequireOperandLocation(target);
             var sourceLocation = RequireOperandLocation(source);
 
-            X64GeneratorUtils.Move(output, source.DataType, targetLocation, sourceLocation);
+            var dataType = source.DataType;
+
+            X64GeneratorUtils.Move(output, dataType, targetLocation, sourceLocation);
         }
 
         private X64StorageLocation GetOperandLocation(IMOperand operand)
@@ -934,31 +937,53 @@ namespace erc
             var target = allOperands[0];
             var values = allOperands.GetRange(1, allOperands.Count - 1);
 
+            //TODO: This does not work with pointers as target!!!
             var targetDataType = target.DataType;
             Assert.True(targetDataType.IsVector, "Expected vector type, given: " + targetDataType);
             Assert.True(values.Count == targetDataType.NumElements, "Vector type " + targetDataType + " required " + targetDataType.NumElements + ", but " + values.Count + " given!");
 
-            //Save current stack pointer
-            //TODO: Fix: RSI might be used by an operand!
-            output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RSI), X64StorageLocation.AsRegister(X64Register.RSP)));
-
-            //Align stack correctly
-            var invertedByteSize = targetDataType.ByteSize * -1;
-            output.Add(X64CodeFormat.FormatOperation(X64Instruction.AND, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(invertedByteSize.ToString())));
-
-            //Generate vector on stack
-            foreach (var value in values)
-            {
-                var valueLocation = RequireOperandLocation(value);
-                GeneratePushInternal(output, value.DataType, valueLocation);
-            }
-
-            //Move final vector value to target location
             var targetLocation = RequireOperandLocation(target);
-            X64GeneratorUtils.Move(output, targetDataType, targetLocation, X64StorageLocation.StackFromTop(0));
 
-            //Restore stack pointer
-            output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.AsRegister(X64Register.RSI)));
+            if (values.TrueForAll((v) => v.Kind == IMOperandKind.Immediate)) {
+                //If all values in the vector constructor are immediates, create a data entry and use a simple MOV instead of constructing the vector on the stack
+                var x64TargetType = X64DataTypeProperties.GetProperties(targetDataType.Kind);
+                var x64ElementType = X64DataTypeProperties.GetProperties(targetDataType.ElementType.Kind);
+
+                var immValues = values.ConvertAll((v) => x64ElementType.ImmediateValueToAsmCode(v));
+                var valStr = String.Join(",", immValues);
+
+                _vectorImmCounter += 1;
+                var immediateName = "immv_" + _vectorImmCounter;
+
+                var entry = immediateName + " " + x64TargetType.ImmediateSize + " " + valStr;
+                _dataEntries.Add(new Tuple<DataType, string>(targetDataType, entry));
+
+                X64GeneratorUtils.Move(output, targetDataType, targetLocation, X64StorageLocation.DataSection(immediateName), true);
+            }
+            else
+            {
+                //Save current stack pointer
+                //TODO: Fix: RSI might be used by an operand!
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RSI), X64StorageLocation.AsRegister(X64Register.RSP)));
+
+                //Align stack correctly
+                var invertedByteSize = targetDataType.ByteSize * -1;
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.AND, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(invertedByteSize.ToString())));
+
+                //Generate vector on stack. Reverse order so first value is in lowest byte. Makes extending cheap.
+                for (var i = values.Count - 1; i >= 0; i--)
+                {
+                    var value = values[i];
+                    var valueLocation = RequireOperandLocation(value);
+                    GeneratePushInternal(output, value.DataType, valueLocation);
+                }
+
+                //Move final vector value to target location
+                X64GeneratorUtils.Move(output, targetDataType, targetLocation, X64StorageLocation.StackFromTop(0));
+
+                //Restore stack pointer
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.AsRegister(X64Register.RSI)));
+            }
         }
 
         private void GenerateCast(List<string> output, IMOperation operation)

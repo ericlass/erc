@@ -2,7 +2,7 @@ Programm
     FunctionDecl: "main" (void)
         ParameterList
         StatementList
-            FunctionCall: "type_casting"
+            FunctionCall: "type_casting_float"
     EnumDecl
         EnumElement
         EnumElement
@@ -331,7 +331,7 @@ Programm
     FunctionDecl: "empty" (void)
         ParameterList
         StatementList
-    FunctionDecl: "type_casting" (void)
+    FunctionDecl: "type_casting_int" (void)
         ParameterList
         StatementList
             VarDecl: "x" (i32)
@@ -404,6 +404,123 @@ Programm
                     Variable: "y5" (u64)
                     Type: (f32)
                     BinaryOperator: as
+    FunctionDecl: "type_casting_float" (void)
+        ParameterList
+        StatementList
+            VarDecl: "v4f" (vec4f)
+                Vector
+                    Immediate: 1.0 (f32)
+                    Immediate: 2.0 (f32)
+                    Immediate: 3.0 (f32)
+                    Immediate: 4.0 (f32)
+            VarDecl: "v1" (vec4f)
+                Expression
+                    Variable: "v4f" (vec4f)
+                    Type: (vec4f)
+                    BinaryOperator: as
+            VarDecl: "v2" (vec8f)
+                Expression
+                    Variable: "v4f" (vec4f)
+                    Type: (vec8f)
+                    BinaryOperator: as
+            VarDecl: "v3" (vec2d)
+                Expression
+                    Variable: "v4f" (vec4f)
+                    Type: (vec2d)
+                    BinaryOperator: as
+            VarDecl: "v4" (vec4d)
+                Expression
+                    Variable: "v4f" (vec4f)
+                    Type: (vec4d)
+                    BinaryOperator: as
+            VarDecl: "v8f" (vec8f)
+                Vector
+                    Immediate: 1.0 (f32)
+                    Immediate: 2.0 (f32)
+                    Immediate: 3.0 (f32)
+                    Immediate: 4.0 (f32)
+                    Immediate: 5.0 (f32)
+                    Immediate: 6.0 (f32)
+                    Immediate: 7.0 (f32)
+                    Immediate: 8.0 (f32)
+            VarDecl: "v5" (vec4f)
+                Expression
+                    Variable: "v8f" (vec8f)
+                    Type: (vec4f)
+                    BinaryOperator: as
+            VarDecl: "v6" (vec8f)
+                Expression
+                    Variable: "v8f" (vec8f)
+                    Type: (vec8f)
+                    BinaryOperator: as
+            VarDecl: "v7" (vec2d)
+                Expression
+                    Variable: "v8f" (vec8f)
+                    Type: (vec2d)
+                    BinaryOperator: as
+            VarDecl: "v8" (vec4d)
+                Expression
+                    Variable: "v8f" (vec8f)
+                    Type: (vec4d)
+                    BinaryOperator: as
+            VarDecl: "v2d" (vec2d)
+                Vector
+                    Immediate: 1.0 (f64)
+                    Immediate: 2.0 (f64)
+            VarDecl: "vd1" (vec4f)
+                Expression
+                    Variable: "v2d" (vec2d)
+                    Type: (vec4f)
+                    BinaryOperator: as
+            VarDecl: "vd2" (vec8f)
+                Expression
+                    Variable: "v2d" (vec2d)
+                    Type: (vec8f)
+                    BinaryOperator: as
+            VarDecl: "vd3" (vec2d)
+                Expression
+                    Variable: "v2d" (vec2d)
+                    Type: (vec2d)
+                    BinaryOperator: as
+            VarDecl: "vd4" (vec4d)
+                Expression
+                    Variable: "v2d" (vec2d)
+                    Type: (vec4d)
+                    BinaryOperator: as
+            VarDecl: "v4d" (vec4d)
+                Vector
+                    Immediate: 1.0 (f64)
+                    Immediate: 2.0 (f64)
+                    Immediate: 3.0 (f64)
+                    Immediate: 4.0 (f64)
+            VarDecl: "vd5" (vec4f)
+                Expression
+                    Variable: "v4d" (vec4d)
+                    Type: (vec4f)
+                    BinaryOperator: as
+            VarDecl: "vd6" (vec8f)
+                Expression
+                    Variable: "v4d" (vec4d)
+                    Type: (vec8f)
+                    BinaryOperator: as
+            VarDecl: "vd7" (vec2d)
+                Expression
+                    Variable: "v4d" (vec4d)
+                    Type: (vec2d)
+                    BinaryOperator: as
+            VarDecl: "vd8" (vec4d)
+                Expression
+                    Variable: "v4d" (vec4d)
+                    Type: (vec4d)
+                    BinaryOperator: as
+            VarDecl: "pv" (vec4f*)
+                NewPointer
+            VarDecl: "pv1" (vec4d)
+                Expression
+                    Variable: "pv" (vec4f*)
+                    UnaryOperator: *
+                    Type: (vec4d)
+                    BinaryOperator: as
     ExternFunctionDecl: "erc_exit_process" (void) ["ExitProcess"; "Kernel32.dll"]
         ParameterList
             Parameter: "exit_code" (u32)
@@ -427,7 +544,7 @@ Programm
 ]
 fn main(): void
 {
-    CALL 'type_casting', 
+    CALL 'type_casting_float', 
     RET @void
 }
 
@@ -594,9 +711,6 @@ fn pointers(): void
   i64(2)	: data_section(imm_26),
   f32(1)	: data_section(imm_27),
   i64(7)	: data_section(imm_28),
-  f32(2)	: data_section(imm_29),
-  f32(3)	: data_section(imm_30),
-  f32(4)	: data_section(imm_31),
 ]
 fn boolean(bool): void
 {
@@ -650,15 +764,11 @@ ext fn['GetLastError', 'Kernel32.dll'] last_error(): i64
   %8	: register(YMM9),
   %6	: register(YMM7),
   %k2	: register(YMM8),
-  i64(0)	: data_section(imm_32),
-  bool(1)	: data_section(imm_33),
-  i64(7)	: data_section(imm_34),
-  i64(3)	: data_section(imm_35),
-  i64(5)	: data_section(imm_36),
-  f64(1)	: data_section(imm_37),
-  f64(2)	: data_section(imm_38),
-  f64(3)	: data_section(imm_39),
-  f64(4)	: data_section(imm_40),
+  i64(0)	: data_section(imm_29),
+  bool(1)	: data_section(imm_30),
+  i64(7)	: data_section(imm_31),
+  i64(3)	: data_section(imm_32),
+  i64(5)	: data_section(imm_33),
 ]
 fn fn_calls(): void
 {
@@ -769,21 +879,17 @@ fn add3(u16, u16): u16
   %7	: register(XMM9),
   %8	: register(XMM10),
   %xyz	: register(XMM7),
-  i64(5)	: data_section(imm_41),
-  i64(6)	: data_section(imm_42),
-  i64(7)	: data_section(imm_43),
-  i64(8)	: data_section(imm_44),
-  f32(1,5)	: data_section(imm_45),
-  f64(1,2)	: data_section(imm_46),
-  f64(0,5)	: data_section(imm_47),
-  f64(2)	: data_section(imm_48),
-  f32(1)	: data_section(imm_49),
-  f32(2)	: data_section(imm_50),
-  f32(3)	: data_section(imm_51),
-  f32(4)	: data_section(imm_52),
-  f64(1)	: data_section(imm_53),
-  f64(3)	: data_section(imm_54),
-  f64(4)	: data_section(imm_55),
+  i64(5)	: data_section(imm_34),
+  i64(6)	: data_section(imm_35),
+  i64(7)	: data_section(imm_36),
+  i64(8)	: data_section(imm_37),
+  f32(1,5)	: data_section(imm_38),
+  f64(1,2)	: data_section(imm_39),
+  f64(0,5)	: data_section(imm_40),
+  f64(2)	: data_section(imm_41),
+  f64(3)	: data_section(imm_42),
+  f64(4)	: data_section(imm_43),
+  f64(1)	: data_section(imm_44),
 ]
 fn types(): void
 {
@@ -857,9 +963,9 @@ fn empty(): void
   %z3	: register(XMM7),
   %z4	: register(XMM7),
   %z5	: register(XMM7),
-  i64(5)	: data_section(imm_56),
+  i64(5)	: data_section(imm_45),
 ]
-fn type_casting(): void
+fn type_casting_int(): void
 {
     CAST %x, i64(5)
     CAST %y1, %x
@@ -892,6 +998,90 @@ fn type_casting(): void
     RET @void
 }
 
+[stack: 0, heap: 0]
+[
+  %v4f	: register(XMM7),
+  %v1	: register(XMM8),
+  %v2	: register(YMM8),
+  %v3	: register(XMM8),
+  %v4	: register(YMM8),
+  %v8f	: register(YMM7),
+  %v5	: register(XMM8),
+  %v6	: register(YMM8),
+  %v7	: register(XMM8),
+  %v8	: register(YMM8),
+  %v2d	: register(XMM7),
+  %vd1	: register(XMM8),
+  %vd2	: register(YMM8),
+  %vd3	: register(XMM8),
+  %vd4	: register(YMM8),
+  %v4d	: register(YMM7),
+  %vd5	: register(XMM8),
+  %vd6	: register(YMM8),
+  %vd7	: register(XMM8),
+  %vd8	: register(YMM8),
+  %1	: register(RBX),
+  %pv	: register(RSI),
+  %2	: register(XMM7),
+  [%pv]	: heap_register(RSI+0),
+  %pv1	: register(YMM8),
+  u64(1)	: data_section(imm_46),
+  u64(16)	: data_section(imm_47),
+]
+fn type_casting_float(): void
+{
+    GVEC %v4f, f32(1), f32(2), f32(3), f32(4)
+    MOV %v1, %v4f
+    FREE %v1
+    CAST %v2, %v4f
+    FREE %v2
+    CAST %v3, %v4f
+    FREE %v3
+    CAST %v4, %v4f
+    FREE %v4f
+    FREE %v4
+    GVEC %v8f, f32(1), f32(2), f32(3), f32(4), f32(5), f32(6), f32(7), f32(8)
+    CAST %v5, %v8f
+    FREE %v5
+    MOV %v6, %v8f
+    FREE %v6
+    CAST %v7, %v8f
+    FREE %v7
+    CAST %v8, %v8f
+    FREE %v8f
+    FREE %v8
+    GVEC %v2d, f64(1), f64(2)
+    CAST %vd1, %v2d
+    FREE %vd1
+    CAST %vd2, %v2d
+    FREE %vd2
+    MOV %vd3, %v2d
+    FREE %vd3
+    CAST %vd4, %v2d
+    FREE %v2d
+    FREE %vd4
+    GVEC %v4d, f64(1), f64(2), f64(3), f64(4)
+    CAST %vd5, %v4d
+    FREE %vd5
+    CAST %vd6, %v4d
+    FREE %vd6
+    CAST %vd7, %v4d
+    FREE %vd7
+    MOV %vd8, %v4d
+    FREE %v4d
+    FREE %vd8
+    MOV %1, u64(1)
+    MUL %1, %1, u64(16)
+    ALOC %pv, %1
+    FREE %1
+    MOV %2, [%pv]
+    FREE %pv
+    CAST %pv1, %2
+    FREE %2
+    FREE %pv1
+    RET @void
+}
+
 ext fn['ExitProcess', 'Kernel32.dll'] erc_exit_process(u32): void
 
 ext fn['GetProcessHeap', 'Kernel32.dll'] erc_get_process_heap(): void*
@@ -908,64 +1098,66 @@ include 'win64a.inc'
 
 section '.data' data readable writeable
 
-imm_1 dq 0
-imm_28 dq 7
+immv_11 dq 1.0,2.0,3.0,4.0
+immv_3 dq 1.0,2.0,3.0,4.0
+immv_9 dd 1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0
+immv_5 dd 1.0,2.0,3.0,4.0,1.0,2.0,3.0,4.0
+immv_7 dq 1.0,2.0,3.0,4.0
+immv_2 dd 1.0,2.0,3.0,4.0
+immv_4 dd 1.0,2.0,3.0,4.0
+immv_6 dq 1.0,2.0
+immv_1 dd 1.0,2.0,3.0,4.0
+immv_8 dd 1.0,2.0,3.0,4.0
+immv_10 dq 1.0,2.0
+imm_46 dq 1
+imm_29 dq 0
+imm_31 dq 7
+imm_32 dq 3
+imm_33 dq 5
+imm_34 dq 5
+imm_35 dq 6
+imm_36 dq 7
+imm_37 dq 8
+imm_39 dq 1.2
+imm_40 dq 0.5
+imm_41 dq 2.0
 erc_process_heap dq 0
-imm_32 dq 0
-imm_34 dq 7
-imm_35 dq 3
-imm_36 dq 5
-imm_37 dq 1.0
-imm_38 dq 2.0
-imm_39 dq 3.0
-imm_40 dq 4.0
-imm_41 dq 5
-imm_42 dq 6
-imm_43 dq 7
-imm_44 dq 8
-imm_46 dq 1.2
-imm_47 dq 0.5
-imm_48 dq 2.0
-imm_53 dq 1.0
-imm_54 dq 3.0
-imm_55 dq 4.0
-imm_56 dq 5
-imm_26 dq 2
-imm_25 dq 1
-erc_u32_zero dd 0
-imm_23 dq 3
+imm_43 dq 4.0
+imm_44 dq 1.0
+imm_47 dq 16
+imm_45 dq 5
+imm_42 dq 3.0
+imm_1 dq 0
+imm_15 dq 8
 imm_2 dq 1
 imm_3 dq 5
 imm_4 dq 2
 imm_10 dq 1
+imm_11 dq 2
 imm_12 dq 3
 imm_13 dq 6
 imm_14 dq 5
-imm_15 dq 8
+imm_28 dq 7
 imm_16 dq 5
-imm_11 dq 2
-imm_18 dq 8
+imm_17 dq 2
+erc_u32_zero dd 0
 imm_19 dq 0
 imm_20 dq 7
-imm_22 dq 5
 imm_21 dq 3
-imm_17 dq 2
-imm_27 dd 1.0
-imm_52 dd 4.0
-imm_51 dd 3.0
-imm_50 dd 2.0
-imm_49 dd 1.0
-imm_7 dd 1
+imm_22 dq 5
+imm_23 dq 3
+imm_26 dq 2
+imm_25 dq 1
+imm_18 dq 8
+imm_38 dd 1.5
 imm_8 dd 7
-imm_45 dd 1.5
 imm_9 dd 0
-imm_30 dd 3.0
-imm_31 dd 4.0
-imm_29 dd 2.0
+imm_7 dd 1
+imm_27 dd 1.0
+imm_6 db 0
 imm_5 db 1
 imm_24 db 1
-imm_33 db 1
-imm_6 db 0
+imm_30 db 1
 
 section '.text' code readable executable
 start:
@@ -981,7 +1173,7 @@ call [ExitProcess]
 fn_main:
 SUB RSP, 0x20
 MOV RBP, RSP
-CALL fn_type_casting
+CALL fn_type_casting_float
 ADD RSP, 0x20
 RET
 
@@ -1112,38 +1304,8 @@ MOV RBX, [imm_23]
 ADD RBX, [imm_26]
 CMP [imm_22], RBX
 SETG SIL
-MOV RSI, RSP
-AND RSP, -16
-MOVSS XMM4, [imm_27]
-SUB RSP, 4
-MOVSS [RSP], XMM4
-MOVSS XMM4, [imm_29]
-SUB RSP, 4
-MOVSS [RSP], XMM4
-MOVSS XMM4, [imm_30]
-SUB RSP, 4
-MOVSS [RSP], XMM4
-MOVSS XMM4, [imm_31]
-SUB RSP, 4
-MOVSS [RSP], XMM4
-MOVUPS XMM7, [RSP]
-MOV RSP, RSI
-MOV RSI, RSP
-AND RSP, -16
-MOVSS XMM4, [imm_27]
-SUB RSP, 4
-MOVSS [RSP], XMM4
-MOVSS XMM4, [imm_29]
-SUB RSP, 4
-MOVSS [RSP], XMM4
-MOVSS XMM4, [imm_30]
-SUB RSP, 4
-MOVSS [RSP], XMM4
-MOVSS XMM4, [imm_31]
-SUB RSP, 4
-MOVSS [RSP], XMM4
-MOVUPS XMM8, [RSP]
-MOV RSP, RSI
+MOVUPS XMM7, dqword [immv_1]
+MOVUPS XMM8, dqword [immv_2]
 MOVAPS XMM4, XMM7
 CMPEQPS XMM4, XMM8
 MOVMSKPS EAX, XMM4
@@ -1161,33 +1323,18 @@ MOV RBP, RSP
 CALL [GetLastError]
 ADD RSP, 0x20
 MOV RBX, RAX
-CMP RBX, [imm_32]
+CMP RBX, [imm_29]
 SETE SIL
-CMP SIL, [imm_33]
+CMP SIL, [imm_30]
 JNE label_9
 RET
 label_9:
-MOV RBX, [imm_34]
-ADD RBX, [imm_35]
-MOV RAX, [imm_36]
+MOV RBX, [imm_31]
+ADD RBX, [imm_32]
+MOV RAX, [imm_33]
 IMUL RBX
 MOV RSI, RAX
-MOV RSI, RSP
-AND RSP, -32
-MOVSD XMM4, [imm_37]
-SUB RSP, 8
-MOVSD [RSP], XMM4
-MOVSD XMM4, [imm_38]
-SUB RSP, 8
-MOVSD [RSP], XMM4
-MOVSD XMM4, [imm_39]
-SUB RSP, 8
-MOVSD [RSP], XMM4
-MOVSD XMM4, [imm_40]
-SUB RSP, 8
-MOVSD [RSP], XMM4
-VMOVUPD YMM7, [RSP]
-MOV RSP, RSI
+VMOVUPD YMM7, qqword [immv_3]
 VMOVAPD YMM8, YMM7
 VMOVAPD YMM9, YMM7
 SUB RSP, 1
@@ -1278,128 +1425,62 @@ MOV AX, SI
 RET
 
 fn_types:
-MOV RAX, [imm_41]
-IMUL [imm_42]
+MOV RAX, [imm_34]
+IMUL [imm_35]
 MOV RBX, RAX
-MOV RAX, [imm_43]
-IMUL [imm_44]
+MOV RAX, [imm_36]
+IMUL [imm_37]
 MOV RSI, RAX
 MOV RDI, RBX
 ADD RDI, RSI
-MOVSS XMM7, [imm_45]
+MOVSS XMM7, [imm_38]
 MOVSS XMM8, XMM7
-MOVSD XMM7, [imm_46]
-MOVSD XMM8, [imm_47]
+MOVSD XMM7, [imm_39]
+MOVSD XMM8, [imm_40]
 MOVSD XMM9, XMM8
 MULSD XMM9, XMM7
-ADDSD XMM9, [imm_48]
-MOV RSI, RSP
-AND RSP, -16
-MOVSS XMM4, [imm_49]
-SUB RSP, 4
-MOVSS [RSP], XMM4
-MOVSS XMM4, [imm_50]
-SUB RSP, 4
-MOVSS [RSP], XMM4
-MOVSS XMM4, [imm_51]
-SUB RSP, 4
-MOVSS [RSP], XMM4
-MOVSS XMM4, [imm_52]
-SUB RSP, 4
-MOVSS [RSP], XMM4
-MOVUPS XMM9, [RSP]
-MOV RSP, RSI
-MOV RSI, RSP
-AND RSP, -32
-MOVSS XMM4, [imm_49]
-SUB RSP, 4
-MOVSS [RSP], XMM4
-MOVSS XMM4, [imm_50]
-SUB RSP, 4
-MOVSS [RSP], XMM4
-MOVSS XMM4, [imm_51]
-SUB RSP, 4
-MOVSS [RSP], XMM4
-MOVSS XMM4, [imm_52]
-SUB RSP, 4
-MOVSS [RSP], XMM4
-MOVSS XMM4, [imm_49]
-SUB RSP, 4
-MOVSS [RSP], XMM4
-MOVSS XMM4, [imm_50]
-SUB RSP, 4
-MOVSS [RSP], XMM4
-MOVSS XMM4, [imm_51]
-SUB RSP, 4
-MOVSS [RSP], XMM4
-MOVSS XMM4, [imm_52]
-SUB RSP, 4
-MOVSS [RSP], XMM4
-VMOVUPS YMM9, [RSP]
-MOV RSP, RSI
-MOV RSI, RSP
-AND RSP, -16
-MOVSD XMM4, [imm_53]
-SUB RSP, 8
-MOVSD [RSP], XMM4
-MOVSD XMM4, [imm_48]
-SUB RSP, 8
-MOVSD [RSP], XMM4
-MOVUPD XMM9, [RSP]
-MOV RSP, RSI
-MOV RSI, RSP
-AND RSP, -32
-MOVSD XMM4, [imm_53]
-SUB RSP, 8
-MOVSD [RSP], XMM4
-MOVSD XMM4, [imm_48]
-SUB RSP, 8
-MOVSD [RSP], XMM4
-MOVSD XMM4, [imm_54]
-SUB RSP, 8
-MOVSD [RSP], XMM4
-MOVSD XMM4, [imm_55]
-SUB RSP, 8
-MOVSD [RSP], XMM4
-VMOVUPD YMM10, [RSP]
-MOV RSP, RSI
+ADDSD XMM9, [imm_41]
+MOVUPS XMM9, dqword [immv_4]
+VMOVUPS YMM9, qqword [immv_5]
+MOVUPD XMM9, dqword [immv_6]
+VMOVUPD YMM10, qqword [immv_7]
 MOVAPD XMM10, XMM9
 ADDPD XMM10, XMM9
 MOVSD XMM9, XMM7
-MULSD XMM9, [imm_48]
-MOVSD XMM10, [imm_48]
+MULSD XMM9, [imm_41]
+MOVSD XMM10, [imm_41]
 MULSD XMM10, XMM7
 MOVSD XMM11, XMM10
-ADDSD XMM11, [imm_54]
+ADDSD XMM11, [imm_42]
 MOVSD XMM10, XMM7
-DIVSD XMM10, [imm_55]
+DIVSD XMM10, [imm_43]
 MOV RSI, RSP
 AND RSP, -32
-MOVSD XMM4, [imm_53]
 SUB RSP, 8
-MOVSD [RSP], XMM4
-SUB RSP, 8
-MOVSD [RSP], XMM9
+MOVSD [RSP], XMM10
 SUB RSP, 8
 MOVSD [RSP], XMM11
 SUB RSP, 8
-MOVSD [RSP], XMM10
+MOVSD [RSP], XMM9
+MOVSD XMM4, [imm_44]
+SUB RSP, 8
+MOVSD [RSP], XMM4
 VMOVUPD YMM12, [RSP]
 MOV RSP, RSI
 MOV RSI, RSP
 AND RSP, -16
 SUB RSP, 8
-MOVSD [RSP], XMM7
-SUB RSP, 8
 MOVSD [RSP], XMM8
+SUB RSP, 8
+MOVSD [RSP], XMM7
 MOVUPD XMM9, [RSP]
 MOV RSP, RSI
 MOV RSI, RSP
 AND RSP, -16
 SUB RSP, 8
-MOVSD [RSP], XMM8
-SUB RSP, 8
 MOVSD [RSP], XMM7
+SUB RSP, 8
+MOVSD [RSP], XMM8
 MOVUPD XMM10, [RSP]
 MOV RSP, RSI
 MOVAPD XMM7, XMM9
@@ -1409,8 +1490,8 @@ RET
 fn_empty:
 RET
 
-fn_type_casting:
-MOV EBX, dword [imm_56]
+fn_type_casting_int:
+MOV EBX, dword [imm_45]
 MOVSXD RSI, EBX
 MOV ESI, EBX
 MOV SI, BX
@@ -1445,6 +1526,70 @@ OR RAX, R10
 CVTSI2SS XMM7, RAX
 ADDSS XMM7, XMM7
 u64tof_2:
+RET
+
+fn_type_casting_float:
+MOVUPS XMM7, dqword [immv_8]
+MOVAPS XMM8, XMM7
+MOVAPS XMM8, XMM7
+VXORPS XMM8, XMM8, XMM8
+CVTPS2PD XMM8, XMM7
+VXORPS YMM8, YMM8, YMM8
+VCVTPS2PD YMM8, XMM7
+VMOVUPS YMM7, qqword [immv_9]
+MOVAPS XMM8, XMM7
+VMOVAPS YMM8, YMM7
+VXORPS XMM8, XMM8, XMM8
+CVTPS2PD XMM8, XMM7
+VXORPS YMM8, YMM8, YMM8
+VCVTPS2PD YMM8, XMM7
+MOVUPD XMM7, dqword [immv_10]
+VXORPS XMM8, XMM8, XMM8
+CVTPD2PS XMM8, XMM7
+VXORPS YMM8, YMM8, YMM8
+CVTPD2PS XMM8, XMM7
+MOVAPD XMM8, XMM7
+MOVAPD XMM8, XMM7
+VMOVUPD YMM7, qqword [immv_11]
+VXORPS XMM8, XMM8, XMM8
+VCVTPD2PS XMM8, YMM7
+VXORPS YMM8, YMM8, YMM8
+VCVTPD2PS XMM8, YMM7
+VMOVAPD XMM8, XMM7
+VMOVAPD YMM8, YMM7
+MOV RBX, [imm_46]
+MOV RAX, RBX
+MUL [imm_47]
+MOV RBX, RAX
+SUB RSP, 16
+MOVUPD [RSP], XMM7
+SUB RSP, 16
+MOVUPD [RSP], XMM8
+SUB RSP, 32
+VMOVUPD [RSP], YMM7
+SUB RSP, 32
+VMOVUPD [RSP], YMM8
+PUSH RBX
+MOV RCX, [erc_process_heap]
+MOV EDX, [erc_u32_zero]
+MOV R8, RBX
+SUB RSP, 0x20
+MOV RBP, RSP
+CALL [HeapAlloc]
+ADD RSP, 0x20
+MOV RSI, RAX
+POP RBX
+VMOVUPD YMM8, [RSP]
+ADD RSP, 32
+VMOVUPD YMM7, [RSP]
+ADD RSP, 32
+MOVUPD XMM8, [RSP]
+ADD RSP, 16
+MOVUPD XMM7, [RSP]
+ADD RSP, 16
+MOVUPS XMM7, [RSI]
+VXORPS YMM8, YMM8, YMM8
+VCVTPS2PD YMM8, XMM7
 RET
 
 section '.idata' import data readable writeable

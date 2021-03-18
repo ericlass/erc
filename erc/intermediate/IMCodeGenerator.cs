@@ -185,7 +185,7 @@ namespace erc
             //No need to check if variable was already declared or declared. That is already check by syntax analysis!
             var target = statement.Children[0];
             IMOperand targetLocation;
-            var symbol = _context.RequireSymbol(statement.Children[0].Identifier);
+            var symbol = _context.RequireSymbol(target.Identifier);
 
             switch (target.Kind)
             {
@@ -194,7 +194,7 @@ namespace erc
                     break;
 
                 case AstItemKind.IndexAccess:
-                    var tmpLocation = NewTempLocal(DataType.U64);
+                    var tmpLocation = NewTempLocal(symbol.DataType);
                     GenerateIndexAddressCalculation(output, target.Children[0], symbol, tmpLocation);
                     targetLocation = IMOperand.Reference(symbol.DataType, tmpLocation);
                     break;
@@ -432,7 +432,7 @@ namespace erc
         private void GenerateIndexAccess(List<IMOperation> output, AstItem item, IMOperand targetLocation)
         {
             var symbol = _context.RequireSymbol(item.Identifier);
-            var tmpLocation = NewTempLocal(DataType.U64);
+            var tmpLocation = NewTempLocal(symbol.DataType);
 
             GenerateIndexAddressCalculation(output, item.Children[0], symbol, tmpLocation);
 

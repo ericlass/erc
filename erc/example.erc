@@ -1,6 +1,6 @@
 
 fn main() {
-	type_casting();
+	type_casting_float();
 }
 
 enum TestType {
@@ -131,7 +131,7 @@ fn types()
 
 fn empty() {}
 
-fn type_casting()
+fn type_casting_int()
 {
 	let x = 5 as i32;
 
@@ -150,4 +150,39 @@ fn type_casting()
 	let z3 = y6 as f32;
 	let z4 = y6 as f64;
 	let z5 = y5 as f32;
+}
+
+fn type_casting_float()
+{
+	//VEC4F to X
+	let v4f = vec(1.0f, 2.0f, 3.0f, 4.0f);
+	let v1 = v4f as vec4f;
+	let v2 = v4f as vec8f;
+	let v3 = v4f as vec2d;
+	let v4 = v4f as vec4d;
+
+	//VEC8F to X
+	let v8f = vec(1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f, 7.0f, 8.0f);
+	let v5 = v8f as vec4f;
+	let v6 = v8f as vec8f;
+	let v7 = v8f as vec2d;
+	let v8 = v8f as vec4d;
+
+	//VEC2D to X
+	let v2d = vec(1.0d, 2.0d);
+	let vd1 = v2d as vec4f;
+	let vd2 = v2d as vec8f;
+	let vd3 = v2d as vec2d;
+	let vd4 = v2d as vec4d;
+
+	//VEC4D to X
+	let v4d = vec(1.0d, 2.0d, 3.0d, 4.0d);
+	let vd5 = v4d as vec4f;
+	let vd6 = v4d as vec8f;
+	let vd7 = v4d as vec2d;
+	let vd8 = v4d as vec4d;
+
+	let pv = new vec4f(1);
+	//TODO: This does not work: *pv = vec(1.0f, 2.0f, 3.0f, 4.0f);
+	let pv1 = *pv as vec4d;
 }

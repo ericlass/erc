@@ -159,6 +159,38 @@ namespace erc
                 [DataTypeKind.F32] = F64toF32,
                 [DataTypeKind.F64] = JustMove
             },
+            //Conversions from VEC4F to <other>
+            [DataTypeKind.VEC4F] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
+            {
+                [DataTypeKind.VEC4F] = JustMove,
+                [DataTypeKind.VEC8F] = Vec4fToX,
+                [DataTypeKind.VEC2D] = Vec4fToX,
+                [DataTypeKind.VEC4D] = Vec4fToX
+            },
+            //Conversions from VEC8F to <other>
+            [DataTypeKind.VEC8F] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
+            {
+                [DataTypeKind.VEC4F] = Vec8fToX,
+                [DataTypeKind.VEC8F] = JustMove,
+                [DataTypeKind.VEC2D] = Vec8fToX,
+                [DataTypeKind.VEC4D] = Vec8fToX
+            },
+            //Conversions from VEC2D to <other>
+            [DataTypeKind.VEC2D] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
+            {
+                [DataTypeKind.VEC4F] = Vec2dToX,
+                [DataTypeKind.VEC8F] = Vec2dToX,
+                [DataTypeKind.VEC2D] = JustMove,
+                [DataTypeKind.VEC4D] = Vec2dToX
+            },
+            //Conversions from VEC4D to <other>
+            [DataTypeKind.VEC4D] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
+            {
+                [DataTypeKind.VEC4F] = Vec4dToX,
+                [DataTypeKind.VEC8F] = Vec4dToX,
+                [DataTypeKind.VEC2D] = Vec4dToX,
+                [DataTypeKind.VEC4D] = JustMove
+            },
             //TODO: Rest of the types (vectors, bool, enum, pointer)
         };
 
@@ -647,6 +679,231 @@ namespace erc
             //Immediates are directly evaluated, not compared, no need for SETcc
             if (source.Kind != X64StorageLocationKind.Immediate)
                 output.Add(X64CodeFormat.FormatOperation(X64Instruction.SETNE, target));
+        }
+
+        private static void Vec4fToX(List<string> output, X64StorageLocation target, DataType targetType, X64StorageLocation source, DataType sourceType)
+        {
+            Assert.DataTypeKind(sourceType.Kind, DataTypeKind.VEC4F, "Unsupported source data type");
+            Assert.DataTypeGroup(targetType.Group, DataTypeGroup.VectorFloat, "Unsupported target data type group");
+
+            var x64SourceType = X64DataTypeProperties.GetProperties(sourceType.Kind);
+            var x64TargetType = X64DataTypeProperties.GetProperties(targetType.Kind);
+
+            var targetLocation = target;
+            var useTempLocation = false;
+            if (target.Kind != X64StorageLocationKind.Register)
+            {
+                targetLocation = X64StorageLocation.AsRegister(x64TargetType.Accumulator);
+                useTempLocation = true;
+            }
+
+            switch (targetType.Kind)
+            {
+                case DataTypeKind.VEC8F:
+                    //Find matching XMM register
+                    var xmmRegister = X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegisterBySize(targetLocation.Register.Group, 16));
+                    //Move VEC4F to XMM register, which will now have the four values + four zero values when used as YMM register
+                    X64GeneratorUtils.Move(output, sourceType, xmmRegister, source);
+                    break;
+
+                case DataTypeKind.VEC2D:
+                    //Zero target register, supposed to improve performance according to MSVC
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.VXORPS, targetLocation, targetLocation, targetLocation));
+
+                    if (source.Kind == X64StorageLocationKind.Register)
+                        //Works as target and source register will be XMMi, which makes the instruction convert only 2 floats to doubles
+                        output.Add(X64CodeFormat.FormatOperation(X64Instruction.CVTPS2PD, targetLocation, source));
+                    else
+                        //Works the same, but need to specify "qword" (64-bit) so correct encoding is used (only 2 floats)
+                        output.Add(X64CodeFormat.FormatOperation(X64Instruction.CVTPS2PD, targetLocation.ToCode(), "qword" + source.ToCode()));
+                    break;
+
+                case DataTypeKind.VEC4D:
+                    //Zero target register, supposed to improve performance according to MSVC
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.VXORPS, targetLocation, targetLocation, targetLocation));
+
+                    //Straight forward conversion of 4-to-4 values. Memory requires operand size
+                    if (source.Kind == X64StorageLocationKind.Register)
+                        output.Add(X64CodeFormat.FormatOperation(X64Instruction.VCVTPS2PD, targetLocation, source));
+                    else
+                        output.Add(X64CodeFormat.FormatOperation(X64Instruction.VCVTPS2PD, targetLocation.ToCode(), x64SourceType.OperandSize + source.ToCode()));
+                    break;
+
+                default:
+                    throw new Exception("Unsupported source data type: " + sourceType);
+            }
+
+            if (useTempLocation)
+                X64GeneratorUtils.Move(output, targetType, target, targetLocation);
+        }
+
+        private static void Vec8fToX(List<string> output, X64StorageLocation target, DataType targetType, X64StorageLocation source, DataType sourceType)
+        {
+            Assert.DataTypeKind(sourceType.Kind, DataTypeKind.VEC8F, "Unsupported source data type");
+            Assert.DataTypeGroup(targetType.Group, DataTypeGroup.VectorFloat, "Unsupported target data type group");
+
+            var x64SourceType = X64DataTypeProperties.GetProperties(sourceType.Kind);
+            var x64TargetType = X64DataTypeProperties.GetProperties(targetType.Kind);
+
+            //Target must be a register, use accumulator if it is not
+            var targetLocation = target;
+            var useTempLocation = false;
+            if (target.Kind != X64StorageLocationKind.Register)
+            {
+                targetLocation = X64StorageLocation.AsRegister(x64TargetType.Accumulator);
+                useTempLocation = true;
+            }
+
+            //Putting source value in register makes it much easier to convert the values
+            var sourceRegister = source;
+            if (source.Kind != X64StorageLocationKind.Register)
+            {
+                sourceRegister = X64StorageLocation.AsRegister(x64SourceType.Accumulator);
+                X64GeneratorUtils.Move(output, sourceType, sourceRegister, source);
+            }
+
+            //VEC8F source register is alway YMM, get  matching XMM register for conversion
+            var xmmSourceLocation = X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegisterBySize(sourceRegister.Register.Group, 16));
+
+            switch (targetType.Kind)
+            {
+                case DataTypeKind.VEC4F:
+                    //Source value is in YMM register now, so just use the corresponding XMM register as source to only get the 4 first values
+                    X64GeneratorUtils.Move(output, targetType, targetLocation, xmmSourceLocation);
+                    break;
+
+                case DataTypeKind.VEC2D:
+                    //Zero target register, supposed to improve performance according to MSVC
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.VXORPS, targetLocation, targetLocation, targetLocation));
+                    //CVTPS2PD converts the two lower floats to two doubles when using XMM register as source and target.
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.CVTPS2PD, targetLocation, xmmSourceLocation));
+                    break;
+
+                case DataTypeKind.VEC4D:
+                    //Zero target register, supposed to improve performance according to MSVC
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.VXORPS, targetLocation, targetLocation, targetLocation));
+                    //VCVTPS2PD converts the four lower floats to four doubles when using XMM register as source and YMM as target.
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.VCVTPS2PD, targetLocation, xmmSourceLocation));
+                    break;
+
+                default:
+                    throw new Exception("Unsupported source data type: " + sourceType);
+            }
+
+            if (useTempLocation)
+                X64GeneratorUtils.Move(output, targetType, target, targetLocation);
+        }
+
+        private static void Vec2dToX(List<string> output, X64StorageLocation target, DataType targetType, X64StorageLocation source, DataType sourceType)
+        {
+            Assert.DataTypeKind(sourceType.Kind, DataTypeKind.VEC2D, "Unsupported source data type");
+            Assert.DataTypeGroup(targetType.Group, DataTypeGroup.VectorFloat, "Unsupported target data type group");
+
+            var x64SourceType = X64DataTypeProperties.GetProperties(sourceType.Kind);
+            var x64TargetType = X64DataTypeProperties.GetProperties(targetType.Kind);
+
+            //Target must be a register, use accumulator if it is not
+            var targetLocation = target;
+            var useTempLocation = false;
+            if (target.Kind != X64StorageLocationKind.Register)
+            {
+                targetLocation = X64StorageLocation.AsRegister(x64TargetType.Accumulator);
+                useTempLocation = true;
+            }
+
+            //Putting source value in register makes it much easier to convert the values
+            var sourceRegister = source;
+            if (source.Kind != X64StorageLocationKind.Register)
+            {
+                sourceRegister = X64StorageLocation.AsRegister(x64SourceType.Accumulator);
+                X64GeneratorUtils.Move(output, sourceType, sourceRegister, source);
+            }
+
+            var xmmTargetLocation = X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegisterBySize(targetLocation.Register.Group, 16));
+
+            switch (targetType.Kind)
+            {
+                case DataTypeKind.VEC4F:
+                    //Zero target register, supposed to improve performance according to MSVC
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.VXORPS, targetLocation, targetLocation, targetLocation));
+                    //Use CVTPD2PS with XMM source and target
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.CVTPD2PS, targetLocation, sourceRegister));
+                    break;
+
+                case DataTypeKind.VEC8F:
+                    //Zero target register, supposed to improve performance according to MSVC
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.VXORPS, targetLocation, targetLocation, targetLocation));
+                    //Use CVTPD2PS with XMM source and target
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.CVTPD2PS, xmmTargetLocation, sourceRegister));
+                    break;
+
+                case DataTypeKind.VEC4D:
+                    //Just move source XMM to target XMM
+                    X64GeneratorUtils.Move(output, sourceType, xmmTargetLocation, sourceRegister);
+                    break;
+
+                default:
+                    throw new Exception("Unsupported source data type: " + sourceType);
+            }
+
+            if (useTempLocation)
+                X64GeneratorUtils.Move(output, targetType, target, targetLocation);
+        }
+
+        private static void Vec4dToX(List<string> output, X64StorageLocation target, DataType targetType, X64StorageLocation source, DataType sourceType)
+        {
+            Assert.DataTypeKind(sourceType.Kind, DataTypeKind.VEC4D, "Unsupported source data type");
+            Assert.DataTypeGroup(targetType.Group, DataTypeGroup.VectorFloat, "Unsupported target data type group");
+
+            var x64SourceType = X64DataTypeProperties.GetProperties(sourceType.Kind);
+            var x64TargetType = X64DataTypeProperties.GetProperties(targetType.Kind);
+
+            //Target must be a register, use accumulator if it is not
+            var targetLocation = target;
+            var useTempLocation = false;
+            if (target.Kind != X64StorageLocationKind.Register)
+            {
+                targetLocation = X64StorageLocation.AsRegister(x64TargetType.Accumulator);
+                useTempLocation = true;
+            }
+
+            //Putting source value in register makes it much easier to convert the values
+            var sourceRegister = source;
+            if (source.Kind != X64StorageLocationKind.Register)
+            {
+                sourceRegister = X64StorageLocation.AsRegister(x64SourceType.Accumulator);
+                X64GeneratorUtils.Move(output, sourceType, sourceRegister, source);
+            }
+
+            switch (targetType.Kind)
+            {
+                case DataTypeKind.VEC4F:
+                    //Zero target register, supposed to improve performance according to MSVC
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.VXORPS, targetLocation, targetLocation, targetLocation));
+                    //Use VCVTPD2PS with YMM source and XMM target
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.VCVTPD2PS, targetLocation, sourceRegister));
+                    break;
+
+                case DataTypeKind.VEC8F:
+                    //Zero target register, supposed to improve performance according to MSVC
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.VXORPS, targetLocation, targetLocation, targetLocation));
+                    //Use VCVTPD2PS with YMM source and XMM target
+                    var xmmTargetLocation = X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegisterBySize(targetLocation.Register.Group, 16));
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.VCVTPD2PS, xmmTargetLocation, sourceRegister));
+                    break;
+
+                case DataTypeKind.VEC2D:
+                    //Just move source XMM to target XMM
+                    var xmmSourceLocation = X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegisterBySize(sourceRegister.Register.Group, 16));
+                    X64GeneratorUtils.Move(output, sourceType, targetLocation, xmmSourceLocation);
+                    break;
+
+                default:
+                    throw new Exception("Unsupported source data type: " + sourceType);
+            }
+
+            if (useTempLocation)
+                X64GeneratorUtils.Move(output, targetType, target, targetLocation);
         }
 
     }

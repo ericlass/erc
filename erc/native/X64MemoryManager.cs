@@ -96,8 +96,16 @@ namespace erc
             var dataEntries = new List<Tuple<DataType, string>>();
             foreach (var operation in function.Body)
             {
-                foreach (var operand in operation.Operands)
+                //Vector constructor with all immediate values are handled specifically by native code generator, so skip them here
+                if (operation.Instruction.Kind == IMInstructionKind.GVEC)
                 {
+                    var values = operation.Operands.GetRange(1, operation.Operands.Count - 1);
+                    if (values.TrueForAll((v) => v.Kind == IMOperandKind.Immediate))
+                        continue;
+                }
+
+                foreach (var operand in operation.Operands)
+                { 
                     if (operand != null && operand.Kind == IMOperandKind.Immediate && !locationMap.ContainsKey(operand.FullName))
                     {
                         var elementType = operand.DataType;
