@@ -113,6 +113,8 @@ fn types()
 	let d = 1.2;
 	let e = 0.5d;
 
+	printf(a as u64, b, c, d, e);
+
 	let k = e * d;
 	k = k + 2.0;
 

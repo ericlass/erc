@@ -457,7 +457,7 @@ namespace erc
             var typeName = tokens.PopExpected(TokenKind.Word);
 
             var name = typeName.Value;
-            var result = DataType.GetAllValues().Find((t) => t.Name == name);
+            var result = DataType.FindByName(name);
 
             if (result == null)
                 throw new Exception("Unknown type: " + name + " at " + typeName);
@@ -478,7 +478,7 @@ namespace erc
             if (isPointer)
             {
                 name = name +  "*";
-                var pointerType = DataType.GetAllValues().Find((t) => t.Name == name);
+                var pointerType = DataType.FindByName(name);
 
                 if (pointerType == null)
                     pointerType = DataType.Pointer(result);

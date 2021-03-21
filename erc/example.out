@@ -260,6 +260,15 @@ Programm
                 Immediate: 1.2 (f64)
             VarDecl: "e" (f64)
                 Immediate: 0.5 (f64)
+            FunctionCall: "printf"
+                Expression
+                    Variable: "a" (i64)
+                    Type: (u64)
+                    BinaryOperator: as
+                Variable: "b" (f32)
+                Variable: "c" (f32)
+                Variable: "d" (f64)
+                Variable: "e" (f64)
             VarDecl: "k" (f64)
                 Expression
                     Variable: "e" (f64)
@@ -536,6 +545,10 @@ Programm
             Parameter: "heap" (void*)
             Parameter: "flags" (u32)
             Parameter: "mem" (void*)
+    ExternFunctionDecl: "printf" (i32) ["printf"; "MSVCRT.DLL"]
+        ParameterList
+            Parameter: "format" (u64)
+            Parameter: "arguments" (vars)
 
 
 
@@ -863,22 +876,27 @@ fn add3(u16, u16): u16
   %a	: register(RDI),
   %b	: register(XMM7),
   %c	: register(XMM8),
-  %d	: register(XMM7),
-  %e	: register(XMM8),
-  %k	: register(XMM9),
-  %x3	: register(XMM9),
-  %x4	: register(YMM9),
-  %x5	: register(XMM9),
-  %x6	: register(YMM10),
-  %y	: register(XMM10),
-  %3	: register(XMM9),
-  %5	: register(XMM10),
+  %d	: register(XMM9),
+  %e	: register(XMM10),
+  %3	: register(RBX),
   %4	: register(XMM11),
-  %6	: register(XMM10),
+  %5	: register(XMM7),
+  %6	: register(XMM8),
+  %7	: register(XMM12),
+  %k	: register(XMM7),
+  %x3	: register(XMM7),
+  %x4	: register(YMM7),
+  %x5	: register(XMM7),
+  %x6	: register(YMM8),
+  %y	: register(XMM8),
+  %8	: register(XMM7),
+  %10	: register(XMM8),
+  %9	: register(XMM11),
+  %11	: register(XMM8),
   %abc	: register(YMM12),
-  %7	: register(XMM9),
-  %8	: register(XMM10),
-  %xyz	: register(XMM7),
+  %12	: register(XMM7),
+  %13	: register(XMM8),
+  %xyz	: register(XMM9),
   i64(5)	: data_section(imm_34),
   i64(6)	: data_section(imm_35),
   i64(7)	: data_section(imm_36),
@@ -898,13 +916,24 @@ fn types(): void
     ADD %a, %1, %2
     FREE %2
     FREE %1
-    FREE %a
     MOV %b, f32(1,5)
     MOV %c, %b
-    FREE %b
-    FREE %c
     MOV %d, f64(1,2)
     MOV %e, f64(0,5)
+    CAST %3, %a
+    FREE %a
+    MOV %4, %b
+    FREE %b
+    MOV %5, %c
+    FREE %c
+    MOV %6, %d
+    MOV %7, %e
+    CALL 'printf', , %3, %4, %5, %6, %7
+    FREE %7
+    FREE %6
+    FREE %5
+    FREE %4
+    FREE %3
     MUL %k, %e, %d
     ADD %k, %k, f64(2)
     FREE %k
@@ -918,23 +947,23 @@ fn types(): void
     ADD %y, %x5, %x5
     FREE %x5
     FREE %y
-    MUL %3, %d, f64(2)
-    MUL %5, f64(2), %d
-    ADD %4, %5, f64(3)
-    FREE %5
-    DIV %6, %d, f64(4)
-    GVEC %abc, f64(1), %3, %4, %6
-    FREE %6
-    FREE %4
-    FREE %3
+    MUL %8, %d, f64(2)
+    MUL %10, f64(2), %d
+    ADD %9, %10, f64(3)
+    FREE %10
+    DIV %11, %d, f64(4)
+    GVEC %abc, f64(1), %8, %9, %11
+    FREE %11
+    FREE %9
+    FREE %8
     FREE %abc
-    GVEC %7, %d, %e
-    GVEC %8, %e, %d
+    GVEC %12, %d, %e
+    GVEC %13, %e, %d
     FREE %d
     FREE %e
-    ADD %xyz, %7, %8
-    FREE %8
-    FREE %7
+    ADD %xyz, %12, %13
+    FREE %13
+    FREE %12
     FREE %xyz
     RET @void
 }
@@ -1089,6 +1118,8 @@ ext fn['GetProcessHeap', 'Kernel32.dll'] erc_get_process_heap(): void*
 ext fn['HeapAlloc', 'Kernel32.dll'] erc_heap_alloc(void*, u32, u64): void*
 
 ext fn['HeapFree', 'Kernel32.dll'] erc_heap_free(void*, u32, void*): bool
+
+ext fn['printf', 'MSVCRT.DLL'] printf(u64): i32
 
 
 
@@ -1435,33 +1466,77 @@ MOV RDI, RBX
 ADD RDI, RSI
 MOVSS XMM7, [imm_38]
 MOVSS XMM8, XMM7
-MOVSD XMM7, [imm_39]
-MOVSD XMM8, [imm_40]
-MOVSD XMM9, XMM8
-MULSD XMM9, XMM7
-ADDSD XMM9, [imm_41]
-MOVUPS XMM9, dqword [immv_4]
-VMOVUPS YMM9, qqword [immv_5]
-MOVUPD XMM9, dqword [immv_6]
-VMOVUPD YMM10, qqword [immv_7]
-MOVAPD XMM10, XMM9
-ADDPD XMM10, XMM9
-MOVSD XMM9, XMM7
-MULSD XMM9, [imm_41]
-MOVSD XMM10, [imm_41]
-MULSD XMM10, XMM7
-MOVSD XMM11, XMM10
+MOVSD XMM9, [imm_39]
+MOVSD XMM10, [imm_40]
+MOV RBX, RDI
+MOVSS XMM11, XMM7
+MOVSS XMM7, XMM8
+MOVSD XMM8, XMM9
+MOVSD XMM12, XMM10
+PUSH RSI
+PUSH RBX
+SUB RSP, 16
+MOVUPD [RSP], XMM9
+SUB RSP, 16
+MOVUPD [RSP], XMM10
+PUSH RDI
+SUB RSP, 16
+MOVUPD [RSP], XMM11
+SUB RSP, 16
+MOVUPD [RSP], XMM7
+SUB RSP, 16
+MOVUPD [RSP], XMM8
+SUB RSP, 16
+MOVUPD [RSP], XMM12
+MOV RCX, RBX
+MOVSS XMM1, XMM11
+MOVSS XMM2, XMM7
+MOVSD XMM3, XMM8
+MOVSD [RBP], XMM12
+SUB RSP, 0x20
+MOV RBP, RSP
+CALL [printf]
+ADD RSP, 0x20
+MOVUPD XMM12, [RSP]
+ADD RSP, 16
+MOVUPD XMM8, [RSP]
+ADD RSP, 16
+MOVUPD XMM7, [RSP]
+ADD RSP, 16
+MOVUPD XMM11, [RSP]
+ADD RSP, 16
+POP RDI
+MOVUPD XMM10, [RSP]
+ADD RSP, 16
+MOVUPD XMM9, [RSP]
+ADD RSP, 16
+POP RBX
+POP RSI
+MOVSD XMM7, XMM10
+MULSD XMM7, XMM9
+ADDSD XMM7, [imm_41]
+MOVUPS XMM7, dqword [immv_4]
+VMOVUPS YMM7, qqword [immv_5]
+MOVUPD XMM7, dqword [immv_6]
+VMOVUPD YMM8, qqword [immv_7]
+MOVAPD XMM8, XMM7
+ADDPD XMM8, XMM7
+MOVSD XMM7, XMM9
+MULSD XMM7, [imm_41]
+MOVSD XMM8, [imm_41]
+MULSD XMM8, XMM9
+MOVSD XMM11, XMM8
 ADDSD XMM11, [imm_42]
-MOVSD XMM10, XMM7
-DIVSD XMM10, [imm_43]
+MOVSD XMM8, XMM9
+DIVSD XMM8, [imm_43]
 MOV RSI, RSP
 AND RSP, -32
 SUB RSP, 8
-MOVSD [RSP], XMM10
+MOVSD [RSP], XMM8
 SUB RSP, 8
 MOVSD [RSP], XMM11
 SUB RSP, 8
-MOVSD [RSP], XMM9
+MOVSD [RSP], XMM7
 MOVSD XMM4, [imm_44]
 SUB RSP, 8
 MOVSD [RSP], XMM4
@@ -1470,21 +1545,21 @@ MOV RSP, RSI
 MOV RSI, RSP
 AND RSP, -16
 SUB RSP, 8
-MOVSD [RSP], XMM8
+MOVSD [RSP], XMM10
 SUB RSP, 8
-MOVSD [RSP], XMM7
-MOVUPD XMM9, [RSP]
+MOVSD [RSP], XMM9
+MOVUPD XMM7, [RSP]
 MOV RSP, RSI
 MOV RSI, RSP
 AND RSP, -16
 SUB RSP, 8
-MOVSD [RSP], XMM7
+MOVSD [RSP], XMM9
 SUB RSP, 8
-MOVSD [RSP], XMM8
-MOVUPD XMM10, [RSP]
+MOVSD [RSP], XMM10
+MOVUPD XMM8, [RSP]
 MOV RSP, RSI
-MOVAPD XMM7, XMM9
-ADDPD XMM7, XMM10
+MOVAPD XMM9, XMM7
+ADDPD XMM9, XMM8
 RET
 
 fn_empty:
@@ -1594,10 +1669,13 @@ RET
 
 section '.idata' import data readable writeable
 
-library Kernel32,'Kernel32.dll'
+library Kernel32,'Kernel32.dll',\
+MSVCRT,'MSVCRT.DLL'
 import Kernel32,\
   GetLastError,'GetLastError',\
   ExitProcess,'ExitProcess',\
   GetProcessHeap,'GetProcessHeap',\
   HeapAlloc,'HeapAlloc',\
   HeapFree,'HeapFree'
+import MSVCRT,\
+  printf,'printf'

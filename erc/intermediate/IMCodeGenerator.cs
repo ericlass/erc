@@ -212,10 +212,21 @@ namespace erc
 
         private void GenerateFunctionCall(List<IMOperation> output, AstItem funcCall, IMOperand targetLocation)
         {
-            var function = _context.GetFunction(funcCall.Identifier);
+            //Generate parameter values in desired locations
+            var paramLocations = new List<IMOperand>(funcCall.Children.Count);
+            for (int i = 0; i < funcCall.Children.Count; i++)
+            {
+                //Assuming that AST item has as many children as function has parameters, as this is checked before
+                var expression = funcCall.Children[i];
+                var location = NewTempLocal(expression.DataType);
+                paramLocations.Add(location);
+                GenerateExpression(output, expression, location);
+            }
+
+            //var function = _context.GetFunction(funcCall.Identifier);
 
             //Generate parameter values in desired locations
-            var paramLocations = new List<IMOperand>(function.Parameters.Count);
+            /*var paramLocations = new List<IMOperand>(function.Parameters.Count);
             for (int i = 0; i < function.Parameters.Count; i++)
             {
                 //Assuming that AST item has as many children as function has parameters, as this is checked before
@@ -224,9 +235,9 @@ namespace erc
                 var location = NewTempLocal(parameter.DataType);
                 paramLocations.Add(location);
                 GenerateExpression(output, expression, location);
-            }
+            }*/
 
-            output.Add(IMOperation.Call(function.Name, targetLocation, paramLocations));
+            output.Add(IMOperation.Call(funcCall.Identifier, targetLocation, paramLocations));
         }
 
         private void GenerateReturn(List<IMOperation> output, AstItem statement)

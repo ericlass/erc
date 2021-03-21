@@ -21,6 +21,7 @@ namespace erc
         VEC4D,
         BOOL,
         POINTER,
-        ENUM
+        ENUM,
+        VARS
     }
 }

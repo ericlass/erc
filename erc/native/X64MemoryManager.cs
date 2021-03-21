@@ -151,7 +151,7 @@ namespace erc
         /// </summary>
         /// <param name="function">The function.</param>
         /// <returns>List of locations in the order of the parameters.</returns>
-        private List<X64StorageLocation> GetParameterLocations(List<DataType> parameterTypes)
+        public List<X64StorageLocation> GetParameterLocations(List<DataType> parameterTypes)
         {
             _freeParameterRRegisters.Clear();
             _freeParameterRRegisters.Push(X64RegisterGroup.R9);

@@ -8,6 +8,7 @@ namespace erc
         public string Name { get; set; }
         public List<Symbol> Parameters { get; set; }
         public DataType ReturnType { get; set; }
+        public bool IsVariadic { get; set; }
         public bool IsExtern { get; set; }
         public string ExternalName { get; set; }
 

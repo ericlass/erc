@@ -775,8 +775,10 @@ namespace erc
             }
 
             //Generate parameter values in desired locations
-            var parameterLocations = _memoryManager.GetParameterLocations(function);
+            var parameterDataTypes = parameterValues.ConvertAll(p => p.DataType);
+            var parameterLocations = _memoryManager.GetParameterLocations(parameterDataTypes);
             Assert.True(parameterLocations.Count == parameterValues.Count, "Inconsitent number of parameters and locations: " + parameterLocations.Count + " != " + parameterValues.Count);
+
             for (int i = 0; i < parameterValues.Count; i++)
             {
                 var value = parameterValues[i];

@@ -29,6 +29,12 @@ namespace erc
                 throw new Exception(FormatMessage(actual, expected, message));
         }
 
+        public static void Count(int actual, int expected, string message)
+        {
+            if (actual != expected)
+                throw new Exception(FormatMessage(actual, expected, message));
+        }
+
         private static string FormatMessage(object actual, object expected, string message)
         {
             return message.Trim() + " [expected: '" + expected + "'; actual: '" + actual + "'";

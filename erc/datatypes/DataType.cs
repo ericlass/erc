@@ -255,6 +255,18 @@ namespace erc
             Group = DataTypeGroup.Other,
         };
 
+        /// <summary>
+        /// Placeholder data type that is only used to make the syntax nice. It does not survive the sematic analysis.
+        /// </summary>
+        public static DataType VARS = new DataType
+        {
+            Kind = DataTypeKind.VARS,
+            ByteSize = 1,
+            IsVector = false,
+            NumElements = 1,
+            Group = DataTypeGroup.Other,
+        };
+
         public static DataType Pointer(DataType subType)
         {
             var newType = new DataType

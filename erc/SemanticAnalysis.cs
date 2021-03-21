@@ -36,8 +36,27 @@ namespace erc
 
                     var parameters = topItem.Children[0].Children;
                     var funcParams = parameters.ConvertAll((p) => new Symbol(p.Identifier, SymbolKind.Parameter, p.DataType));
+
+                    var functionIsVariadic = false;
+
+                    var variadicParams = funcParams.FindAll((p) => p.DataType.Kind == DataTypeKind.VARS);
+                    if (variadicParams.Count > 1)
+                        throw new Exception("A function can only have one variadic parameter defined, '" + topItem.Identifier + "' has multiple: " + String.Join(", ", funcParams));
+
+                    if (variadicParams.Count == 1)
+                    {
+                        var lastParam = funcParams[funcParams.Count - 1];
+                        if (lastParam.DataType.Kind != DataTypeKind.VARS)
+                            throw new Exception("Function '" + topItem.Identifier + "' has variadic parameter, but it is not the last one!");
+
+                        functionIsVariadic = true;
+                        //Remove the variadic parameters, the whole function will be marked as variadic
+                        funcParams.RemoveAt(funcParams.Count - 1);
+                    }
+
                     var function = new Function(topItem.Identifier, topItem.DataType, funcParams, externalName);
                     function.IsExtern = topItem.Kind == AstItemKind.ExternFunctionDecl;
+                    function.IsVariadic = functionIsVariadic;
                     //This fails if function with same name was already declared
                     _context.AddFunction(function);
                 }
@@ -531,17 +550,20 @@ namespace erc
             if (function == null)
                 throw new Exception("Undeclared function: " + expression.Identifier);
 
-            if (expression.Children.Count != function.Parameters.Count)
-                throw new Exception("Invalid number of arguments to function '" + function.Name + "'! Expected: " + function.Parameters.Count + ", given: " + expression.Children.Count);
+            if (!function.IsVariadic)
+                Assert.Count(expression.Children.Count, function.Parameters.Count, "Invalid number of arguments to function non-variadic '" + function.Name + "'!");
 
             for (int i = 0; i < expression.Children.Count; i++)
             {
                 var paramExpression = expression.Children[i];
-                var parameter = function.Parameters[i];
-
                 var dataType = CheckExpression(paramExpression);
-                if (dataType != parameter.DataType)
-                    throw new Exception("Invalid data type for parameter " + parameter + "! Expected: " + parameter.DataType + ", found: " + dataType);
+
+                if (!function.IsVariadic || (function.IsVariadic && i < function.Parameters.Count))
+                {
+                    var parameter = function.Parameters[i];
+                    if (dataType != parameter.DataType)
+                        throw new Exception("Invalid data type for parameter " + parameter + "! Expected: " + parameter.DataType + ", found: " + dataType);
+                }
 
                 paramExpression.DataType = dataType;
             }
