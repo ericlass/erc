@@ -1,6 +1,6 @@
 
 fn main() {
-	type_casting_float();
+	pointers();
 }
 
 enum TestType {
@@ -55,6 +55,12 @@ fn pointers() {
 
 	let x = p[0] + 7;
 	let y = *p + 3;
+	let z = &x;
+	z = &p[1];
+	*z = 3;
+	z[1] = 9;
+
+	let k = &(y as i32);
 
 	del p;
 }

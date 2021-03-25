@@ -321,17 +321,17 @@ namespace erc
             switch (target.Kind)
             {
                 case AstItemKind.Variable:
-                    Assert.True(variable.DataType == item.DataType, "Cannot assign value of type " + item.DataType + " to variable " + variable);
+                    Assert.True(variable.DataType.Equals(item.DataType), "Cannot assign value of type " + item.DataType + " to variable " + variable);
                     break;
 
                 case AstItemKind.PointerDeref:
                     Assert.DataTypeKind(variable.DataType.Kind, DataTypeKind.POINTER, "Invalid data type for pointer dereference");
-                    Assert.True(variable.DataType.ElementType == item.DataType, "Cannot assign value of type " + item.DataType + " to dereferenced pointer type " + variable.DataType);
+                    Assert.True(variable.DataType.ElementType.Equals(item.DataType), "Cannot assign value of type " + item.DataType + " to dereferenced pointer type " + variable.DataType);
                     break;
 
                 case AstItemKind.IndexAccess:
                     target.DataType = CheckIndexAccess(target);
-                    Assert.True(variable.DataType.ElementType == item.DataType, "Cannot assign value of type " + item.DataType + " to index access of type " + variable.DataType);
+                    Assert.True(variable.DataType.ElementType.Equals(item.DataType), "Cannot assign value of type " + item.DataType + " to index access of type " + variable.DataType);
                     break;
 
                 default:

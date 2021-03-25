@@ -265,5 +265,10 @@ namespace erc
             return new IMOperation(IMInstruction.CAST, target, source);
         }
 
+        public static IMOperation Lea(IMOperand target, IMOperand source)
+        {
+            return new IMOperation(IMInstruction.LEA, target, source);
+        }
+
     }
 }

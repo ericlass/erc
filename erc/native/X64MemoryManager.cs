@@ -36,6 +36,17 @@ namespace erc
                     registerPool.Use(returnLocation.Register);
             }
 
+            //Gather list of operands that are referenced with LEA instruction. Those cannot be in registers.
+            var referencedOperands = new HashSet<string>();
+            foreach (var operation in function.Body)
+            {
+                if (operation.Instruction.Kind == IMInstructionKind.LEA)
+                {
+                    var source = operation.Operands[1];
+                    referencedOperands.Add(source.FullName);
+                }
+            }
+
             //Now the local variables. Intentionally do no look into sub-values. These must be "defined" before already.
             var stackOffset = 0;
             var heapOffset = 0;
@@ -56,8 +67,11 @@ namespace erc
                         {
                             if (operand.Kind == IMOperandKind.Local)
                             {
-                                //"Take" returns null if no register available or data type cannot be stored in register (structures)
-                                var register = registerPool.Take(operand.DataType);
+                                X64Register register = null;
+                                if (!referencedOperands.Contains(operand.FullName))
+                                    //"Take" returns null if no register available or data type cannot be stored in register (structures)
+                                    register = registerPool.Take(operand.DataType);
+                                
                                 X64StorageLocation location = null;
 
                                 if (register != null)

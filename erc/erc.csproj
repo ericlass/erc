@@ -70,6 +70,7 @@
     <Compile Include="native\X64StorageLocationKind.cs" />
     <Compile Include="native\X64TypeCast.cs" />
     <Compile Include="operators\AdditionOperator.cs" />
+    <Compile Include="operators\AddressOperator.cs" />
     <Compile Include="operators\ArithmeticNegationOperator.cs" />
     <Compile Include="operators\ArithmeticOperator.cs" />
     <Compile Include="AST.cs" />

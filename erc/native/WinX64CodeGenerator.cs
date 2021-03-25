@@ -277,6 +277,10 @@ namespace erc
                     GenerateCast(output, operation);
                     break;
 
+                case IMInstructionKind.LEA:
+                    GenerateLea(output, operation);
+                    break;
+
                 case IMInstructionKind.FREE:
                     var location = RequireOperandLocation(operation.Operands[0]);
                     if (location.Kind == X64StorageLocationKind.Register)
@@ -319,6 +323,33 @@ namespace erc
             var dataType = source.DataType;
 
             X64GeneratorUtils.Move(output, dataType, targetLocation, sourceLocation);
+        }
+
+        private void GenerateLea(List<string> output, IMOperation operation)
+        {
+            var target = operation.Operands[0];
+            var source = operation.Operands[1];
+
+            if (target.FullName == source.FullName)
+                return;
+
+            var targetLocation = RequireOperandLocation(target);
+            var sourceLocation = RequireOperandLocation(source);
+            Assert.True(sourceLocation.IsMemory, "Source location for LEA must be memory, given: " + sourceLocation);
+
+            var realTarget = targetLocation;
+            var useTempLocation = false;
+            if (realTarget.Kind != X64StorageLocationKind.Register)
+            {
+                var x64TargetType = X64DataTypeProperties.GetProperties(target.DataType.Kind);
+                realTarget = X64StorageLocation.AsRegister(x64TargetType.Accumulator);
+                useTempLocation = true;
+            }
+
+            output.Add(X64CodeFormat.FormatOperation(X64Instruction.LEA, realTarget, sourceLocation));
+
+            if (useTempLocation)
+                X64GeneratorUtils.Move(output, target.DataType, targetLocation, realTarget);
         }
 
         private X64StorageLocation GetOperandLocation(IMOperand operand)
@@ -466,23 +497,41 @@ namespace erc
 
         private void GenerateBinaryInstruction(List<string> output, X64Instruction instruction, DataType dataType, X64StorageLocation targetLocation, X64StorageLocation op1Location, X64StorageLocation op2Location)
         {
+            var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
+            var accLocation = X64StorageLocation.AsRegister(x64DataType.Accumulator);
+
             switch (instruction.NumOperands)
             {
                 case 1:
-                    var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
-                    var accLocation = X64StorageLocation.AsRegister(x64DataType.Accumulator);
                     X64GeneratorUtils.Move(output, dataType, accLocation, op1Location);
                     output.Add(X64CodeFormat.FormatOperation(instruction, op2Location));
                     X64GeneratorUtils.Move(output, dataType, targetLocation, accLocation);
                     break;
 
                 case 2:
-                    X64GeneratorUtils.Move(output, dataType, targetLocation, op1Location);
-                    output.Add(X64CodeFormat.FormatOperation(instruction, targetLocation, op2Location));
+                    if (targetLocation.Kind != X64StorageLocationKind.Register)
+                    {
+                        X64GeneratorUtils.Move(output, dataType, accLocation, op1Location);
+                        output.Add(X64CodeFormat.FormatOperation(instruction, accLocation, op2Location));
+                        X64GeneratorUtils.Move(output, dataType, targetLocation, accLocation);
+                    }
+                    else
+                    {
+                        output.Add(X64CodeFormat.FormatOperation(instruction, targetLocation, op2Location));
+                    }
                     break;
 
                 case 3:
-                    output.Add(X64CodeFormat.FormatOperation(instruction, targetLocation, op1Location, op2Location));
+                    if (targetLocation.Kind != X64StorageLocationKind.Register)
+                    {
+                        X64GeneratorUtils.Move(output, dataType, accLocation, op1Location);
+                        output.Add(X64CodeFormat.FormatOperation(instruction, accLocation, op1Location, op2Location));
+                        X64GeneratorUtils.Move(output, dataType, targetLocation, accLocation);
+                    }
+                    else
+                    {
+                        output.Add(X64CodeFormat.FormatOperation(instruction, targetLocation, op1Location, op2Location));
+                    }
                     break;
 
                 default:

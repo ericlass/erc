@@ -35,5 +35,6 @@ namespace erc
         public static IUnaryOperator NEGATION = new ArithmeticNegationOperator();
         public static IUnaryOperator BOOLEAN_INVERT = new BooleanInversionOperator();
         public static IUnaryOperator POINTER_DEREFERENCE = new PointerDereferenceOperator();
+        public static IUnaryOperator ADDRESS_OF = new AddressOperator();
     }
 }

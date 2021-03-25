@@ -35,6 +35,28 @@ namespace erc
         {
         }
 
+        public override string ToString()
+        {
+            return Name;
+        }
+
+        public bool Equals(DataType other)
+        {
+            if (other == null)
+                return false;
+
+            switch (Kind)
+            {
+                case DataTypeKind.POINTER:
+                    return Kind == other.Kind && ElementType.Kind == other.ElementType.Kind;
+
+                case DataTypeKind.ENUM:
+                    return Kind == other.Kind && CustomTypeName == other.CustomTypeName;
+            }
+
+            return Kind == other.Kind;
+        }
+
         public static bool IsValidVectorSize(DataType dataType, long size)
         {
             if (!dataType.IsVector)
@@ -61,11 +83,6 @@ namespace erc
             }
 
             return VOID;
-        }
-
-        public override string ToString()
-        {
-            return Name;
         }
 
         public static List<DataType> GetAllValues()

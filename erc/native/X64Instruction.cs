@@ -78,6 +78,7 @@ namespace erc
         public static X64Instruction NEG = new X64Instruction("NEG", 1);
         public static X64Instruction TEST = new X64Instruction("TEST", 2);
         public static X64Instruction SHR = new X64Instruction("SHR", 2);
+        public static X64Instruction LEA = new X64Instruction("LEA", 2);
 
         //##### Comparison Instructions #####
 

@@ -42,6 +42,7 @@ namespace erc
         CMNT,
         FREE,
         GVEC,
-        CAST
+        CAST,
+        LEA
     }
 }
