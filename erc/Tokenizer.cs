@@ -105,6 +105,11 @@ namespace erc
                 value = ReadString(iterator);
                 type = TokenKind.String;
             }
+            else if (c == '\'')
+            {
+                value = ReadChar(iterator);
+                type = TokenKind.Char;
+            }
             else if (c == '=' && iterator.Next() != '=')
             {
                 value = c.ToString();
@@ -210,6 +215,25 @@ namespace erc
             iterator.Step();
             c = iterator.Current();
             while (c > 0 && c != '"')
+            {
+                result += c;
+                iterator.Step();
+                c = iterator.Current();
+            }
+            iterator.Step();
+            return result;
+        }
+
+        private string ReadChar(StringIterator iterator)
+        {
+            var c = iterator.Current();
+            if (c != '\'')
+                throw new Exception("Expected \', got: " + c);
+
+            var result = "";
+            iterator.Step();
+            c = iterator.Current();
+            while (c > 0 && c != '\'')
             {
                 result += c;
                 iterator.Step();

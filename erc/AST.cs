@@ -34,7 +34,8 @@ namespace erc
         EnumDecl,
         EnumElement,
         Identifier,
-        Type
+        Type,
+        CharLiteral
     }
 
     public class AstItem
@@ -225,6 +226,13 @@ namespace erc
         public static AstItem Immediate(object value)
         {
             var result = new AstItem(AstItemKind.Immediate);
+            result.Value = value;
+            return result;
+        }
+
+        public static AstItem CharLiteral(string value)
+        {
+            var result = new AstItem(AstItemKind.CharLiteral);
             result.Value = value;
             return result;
         }

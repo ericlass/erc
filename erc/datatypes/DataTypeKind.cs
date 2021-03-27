@@ -22,6 +22,7 @@ namespace erc
         BOOL,
         POINTER,
         ENUM,
-        VARS
+        VARS,
+        CHAR8
     }
 }

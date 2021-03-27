@@ -386,6 +386,10 @@ namespace erc
             {
                 CheckIdentifier(expression);
             }
+            else if (expression.Kind == AstItemKind.CharLiteral)
+            {
+                CheckChar(expression);
+            }
             else
                 throw new Exception("Unsupported expression item: " + expression);
 
@@ -393,6 +397,14 @@ namespace erc
                 throw new Exception("Could not determine data type for expression: " + expression);
 
             return expression.DataType;
+        }
+
+        private void CheckChar(AstItem expression)
+        {
+            var valueStr = (string)expression.Value;
+            Assert.Count(valueStr.Length, 1, "Invalid length for char literal");
+
+            expression.DataType = DataType.CHAR8;
         }
 
         private void CheckIdentifier(AstItem expression)

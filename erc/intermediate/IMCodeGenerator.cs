@@ -400,6 +400,7 @@ namespace erc
             switch (expression.Kind)
             {
                 case AstItemKind.Immediate:
+                case AstItemKind.CharLiteral:
                     IMOperand source;
                     if (expression.DataType.Kind == DataTypeKind.BOOL)
                         source = ((bool)expression.Value) ? IMOperand.BOOL_TRUE : IMOperand.BOOL_FALSE;
@@ -580,7 +581,7 @@ namespace erc
         {
             var result = IMOperand.VOID;
 
-            if (operand.Kind == AstItemKind.Immediate)
+            if (operand.Kind == AstItemKind.Immediate || operand.Kind == AstItemKind.CharLiteral)
             {
                 if (operand.DataType.Kind == DataTypeKind.BOOL)
                     return ((bool)operand.Value) ? IMOperand.BOOL_TRUE : IMOperand.BOOL_FALSE;

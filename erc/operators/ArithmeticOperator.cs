@@ -19,7 +19,8 @@ namespace erc
                  DataTypeKind.VEC4F,
                  DataTypeKind.VEC8F,
                  DataTypeKind.VEC2D,
-                 DataTypeKind.VEC4D
+                 DataTypeKind.VEC4D,
+                 DataTypeKind.CHAR8
             };
 
         public abstract string Figure { get; }

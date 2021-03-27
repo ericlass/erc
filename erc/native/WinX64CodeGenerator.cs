@@ -517,6 +517,7 @@ namespace erc
                     }
                     else
                     {
+                        X64GeneratorUtils.Move(output, dataType, targetLocation, op1Location);
                         output.Add(X64CodeFormat.FormatOperation(instruction, targetLocation, op2Location));
                     }
                     break;

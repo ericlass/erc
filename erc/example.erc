@@ -1,6 +1,6 @@
 
 fn main() {
-	pointers();
+	strings();
 }
 
 enum TestType {
@@ -13,6 +13,11 @@ enum TestType {
 enum TestType2 {
 	Some,
 	Ding
+}
+
+fn strings() {
+	let c = 'e';
+	let s = c - 'a';
 }
 
 fn loops() {

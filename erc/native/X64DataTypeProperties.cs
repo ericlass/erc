@@ -63,7 +63,8 @@ namespace erc
                 [DataTypeKind.VEC2D] = VEC2D,
                 [DataTypeKind.VEC4D] = VEC4D,
                 [DataTypeKind.BOOL] = BOOL,
-                [DataTypeKind.POINTER] = POINTER
+                [DataTypeKind.POINTER] = POINTER,
+                [DataTypeKind.CHAR8] = CHAR8
             };
         }
 
@@ -415,6 +416,26 @@ namespace erc
             OrInstruction = X64Instruction.OR,
             XorInstruction = X64Instruction.XOR,
             NotInstruction = X64Instruction.NOT,
+        };
+
+        private static readonly X64DataTypeProperties CHAR8 = new X64DataTypeProperties()
+        {
+            OperandSize = "byte",
+            ImmediateSize = "db",
+            Accumulator = X64Register.AL,
+            TempRegister1 = X64Register.R10B,
+            TempRegister2 = X64Register.R11B,
+            MoveInstructionAligned = X64Instruction.MOV,
+            MoveInstructionUnaligned = X64Instruction.MOV,
+            AddInstruction = X64Instruction.ADD,
+            SubInstruction = X64Instruction.SUB,
+            DivInstruction = X64Instruction.DIV,
+            MulInstruction = X64Instruction.MUL,
+            AndInstruction = X64Instruction.AND,
+            OrInstruction = X64Instruction.OR,
+            XorInstruction = X64Instruction.XOR,
+            NotInstruction = X64Instruction.NOT,
+            ImmediateValueToAsmCode = (o) => "'" + o.ImmediateValue.ToString() + "'"
         };
 
         /*private static readonly X64DataTypeProperties STRING = new X64DataTypeProperties()

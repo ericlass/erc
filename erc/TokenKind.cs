@@ -37,6 +37,7 @@ namespace erc
         Del,
         Comment,
         Enum,
-        DeferredIdentifier
+        DeferredIdentifier,
+        Char
     }
 }

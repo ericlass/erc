@@ -12,6 +12,7 @@ namespace erc
         ScalarInteger,
         ScalarFloat,
         VectorFloat,
-        Custom
+        Custom,
+        Character
     }
 }

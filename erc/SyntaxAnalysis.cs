@@ -546,6 +546,7 @@ namespace erc
                             case TokenKind.True:
                             case TokenKind.False:
                             case TokenKind.VectorConstructor:
+                            case TokenKind.Char:
                                 var operandItem = ReadSingleAstItem(tokenIter);
                                 expItemsInfix.Add(operandItem);
                                 expectOperand = false; //Next we want an operator
@@ -675,6 +676,10 @@ namespace erc
             {
                 result = AstItem.Immediate(token.Value);
             }
+            else if (token.Kind == TokenKind.Char)
+            {
+                result = AstItem.CharLiteral(token.Value);
+            }
             else
                 throw new Exception("Unexpected token type in expression: " + token);
 
@@ -769,7 +774,14 @@ namespace erc
             //Convert infix to postfix
             foreach (var item in infix)
             {
-                if (item.Kind == AstItemKind.Immediate || item.Kind == AstItemKind.Variable || item.Kind == AstItemKind.Vector || item.Kind == AstItemKind.FunctionCall || item.Kind == AstItemKind.Type || item.Kind == AstItemKind.Identifier || item.Kind == AstItemKind.IndexAccess)
+                if (item.Kind == AstItemKind.Immediate ||
+                    item.Kind == AstItemKind.Variable ||
+                    item.Kind == AstItemKind.Vector ||
+                    item.Kind == AstItemKind.FunctionCall ||
+                    item.Kind == AstItemKind.Type ||
+                    item.Kind == AstItemKind.Identifier ||
+                    item.Kind == AstItemKind.IndexAccess ||
+                    item.Kind == AstItemKind.CharLiteral)
                 {
                     output.Add(item);
                 }
