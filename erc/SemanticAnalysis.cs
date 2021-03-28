@@ -7,6 +7,7 @@ namespace erc
     public class SemanticAnalysis
     {
         private const string FakeEndLabelName = "scope-end-label";
+        private HashSet<char> _numberSuffixChars = new HashSet<char> { 'b', 'w', 'd', 'q', 'u', 'f' }; //d is used for both 32 bit integer and float
 
         private CompilerContext _context;
         private AstOptimizer _optimizer = new AstOptimizer();
@@ -667,11 +668,48 @@ namespace erc
 
         private DataType FindNumberDataType(string value)
         {
-            if (!value.Contains("."))
-                return DataType.I64;
-
             var last = value[value.Length - 1];
 
+            if (!value.Contains("."))
+            {
+                var secondLast = '\0';
+                if (value.Length >= 2)
+                    secondLast = value[value.Length - 2];
+
+                if (secondLast == 'u')
+                {
+                    switch (last)
+                    {
+                        case 'b':
+                            return DataType.U8;
+                        case 'w':
+                            return DataType.U16;
+                        case 'd':
+                            return DataType.U32;
+                        case 'q':
+                            return DataType.U64;
+                    }
+                }
+                else
+                {
+                    switch (last)
+                    {
+                        case 'b':
+                            return DataType.I8;
+                        case 'w':
+                            return DataType.I16;
+                        case 'd':
+                            return DataType.I32;
+                        case 'q':
+                            return DataType.I64;
+                        case 'u':
+                            return DataType.U64;
+                    }
+                }
+
+                return DataType.I64;
+            }
+            
             if (last == 'f')
                 return DataType.F32;
 
@@ -695,45 +733,41 @@ namespace erc
 
         private object ParseNumber(string str, DataType dataType)
         {
-            var last = str[str.Length - 1];
+            var cleanNumberStr = str;
+            while (_numberSuffixChars.Contains(cleanNumberStr[cleanNumberStr.Length - 1]))
+                cleanNumberStr = cleanNumberStr.Substring(0, cleanNumberStr.Length - 1);
 
             switch (dataType.Kind)
             {
                 case DataTypeKind.I8:
-                    return sbyte.Parse(str);
+                    return sbyte.Parse(cleanNumberStr);
 
                 case DataTypeKind.I16:
-                    return short.Parse(str);
+                    return short.Parse(cleanNumberStr);
 
                 case DataTypeKind.I32:
-                    return int.Parse(str);
+                    return int.Parse(cleanNumberStr);
 
                 case DataTypeKind.I64:
-                    return long.Parse(str);
+                    return long.Parse(cleanNumberStr);
 
                 case DataTypeKind.U8:
-                    return byte.Parse(str);
+                    return byte.Parse(cleanNumberStr);
 
                 case DataTypeKind.U16:
-                    return ushort.Parse(str);
+                    return ushort.Parse(cleanNumberStr);
 
                 case DataTypeKind.U32:
-                    return uint.Parse(str);
+                    return uint.Parse(cleanNumberStr);
 
                 case DataTypeKind.U64:
-                    return ulong.Parse(str);
+                    return ulong.Parse(cleanNumberStr);
 
                 case DataTypeKind.F32:
-                    if (last == 'f')
-                        return float.Parse(str.Substring(0, str.Length - 1), CultureInfo.InvariantCulture);
-                    else
-                        return float.Parse(str, CultureInfo.InvariantCulture);
+                     return float.Parse(cleanNumberStr, CultureInfo.InvariantCulture);
 
                 case DataTypeKind.F64:
-                    if (last == 'd')
-                        return double.Parse(str.Substring(0, str.Length - 1), CultureInfo.InvariantCulture);
-                    else
-                        return double.Parse(str, CultureInfo.InvariantCulture);
+                     return double.Parse(cleanNumberStr, CultureInfo.InvariantCulture);
 
                 default:
                     throw new Exception("Unsupported number type: " + dataType + " for value " + str);

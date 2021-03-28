@@ -3,23 +3,23 @@ Programm
         ParameterList
         StatementList
             FunctionCall: "strings"
-    EnumDecl
-        EnumElement
-        EnumElement
-        EnumElement
-        EnumElement
-    EnumDecl
-        EnumElement
-        EnumElement
+    EnumDecl: "TestType"
+        EnumElement: "None" (0)
+        EnumElement: "Some" (1)
+        EnumElement: "Never" (7)
+        EnumElement: "Ultimate" (8)
+    EnumDecl: "TestType2"
+        EnumElement: "Some" (0)
+        EnumElement: "Ding" (1)
     FunctionDecl: "strings" (void)
         ParameterList
         StatementList
             VarDecl: "c" (char8)
-                CharLiteral
+                CharLiteral: 'e' (char8)
             VarDecl: "s" (char8)
                 Expression
                     Variable: "c" (char8)
-                    CharLiteral
+                    CharLiteral: 'a' (char8)
                     BinaryOperator: -
     FunctionDecl: "loops" (void)
         ParameterList
@@ -370,6 +370,26 @@ Programm
                         Variable: "e" (f64)
                         Variable: "d" (f64)
                     BinaryOperator: +
+            VarDecl: "ta" (i8)
+                Immediate: 5 (i8)
+            VarDecl: "tb" (i16)
+                Immediate: 5 (i16)
+            VarDecl: "tc" (i32)
+                Immediate: 5 (i32)
+            VarDecl: "ts" (i64)
+                Immediate: 5 (i64)
+            VarDecl: "te" (i64)
+                Immediate: 5 (i64)
+            VarDecl: "ua" (u8)
+                Immediate: 5 (u8)
+            VarDecl: "ub" (u16)
+                Immediate: 5 (u16)
+            VarDecl: "uc" (u32)
+                Immediate: 5 (u32)
+            VarDecl: "us" (u64)
+                Immediate: 5 (u64)
+            VarDecl: "ue" (u64)
+                Immediate: 5 (u64)
     FunctionDecl: "empty" (void)
         ParameterList
         StatementList
@@ -976,6 +996,16 @@ fn add3(u16, u16): u16
   %12	: register(XMM7),
   %13	: register(XMM8),
   %xyz	: register(XMM9),
+  %ta	: register(BL),
+  %tb	: register(BX),
+  %tc	: register(EBX),
+  %ts	: register(RBX),
+  %te	: register(RBX),
+  %ua	: register(BL),
+  %ub	: register(BX),
+  %uc	: register(EBX),
+  %us	: register(RBX),
+  %ue	: register(RBX),
   i64(5)	: data_section(imm_38),
   i64(6)	: data_section(imm_39),
   i64(7)	: data_section(imm_40),
@@ -987,6 +1017,13 @@ fn add3(u16, u16): u16
   f64(3)	: data_section(imm_46),
   f64(4)	: data_section(imm_47),
   f64(1)	: data_section(imm_48),
+  i8(5)	: data_section(imm_49),
+  i16(5)	: data_section(imm_50),
+  i32(5)	: data_section(imm_51),
+  u8(5)	: data_section(imm_52),
+  u16(5)	: data_section(imm_53),
+  u32(5)	: data_section(imm_54),
+  u64(5)	: data_section(imm_55),
 ]
 fn types(): void
 {
@@ -1044,6 +1081,26 @@ fn types(): void
     FREE %13
     FREE %12
     FREE %xyz
+    MOV %ta, i8(5)
+    FREE %ta
+    MOV %tb, i16(5)
+    FREE %tb
+    MOV %tc, i32(5)
+    FREE %tc
+    MOV %ts, i64(5)
+    FREE %ts
+    MOV %te, i64(5)
+    FREE %te
+    MOV %ua, u8(5)
+    FREE %ua
+    MOV %ub, u16(5)
+    FREE %ub
+    MOV %uc, u32(5)
+    FREE %uc
+    MOV %us, u64(5)
+    FREE %us
+    MOV %ue, u64(5)
+    FREE %ue
     RET @void
 }
 
@@ -1071,7 +1128,7 @@ fn empty(): void
   %z3	: register(XMM7),
   %z4	: register(XMM7),
   %z5	: register(XMM7),
-  i64(5)	: data_section(imm_49),
+  i64(5)	: data_section(imm_56),
 ]
 fn type_casting_int(): void
 {
@@ -1133,8 +1190,8 @@ fn type_casting_int(): void
   %2	: register(XMM7),
   [%pv]	: heap_register(RSI+0),
   %pv1	: register(YMM8),
-  u64(1)	: data_section(imm_50),
-  u64(16)	: data_section(imm_51),
+  u64(1)	: data_section(imm_57),
+  u64(16)	: data_section(imm_58),
 ]
 fn type_casting_float(): void
 {
@@ -1208,37 +1265,37 @@ include 'win64a.inc'
 
 section '.data' data readable writeable
 
-immv_11 dq 1.0,2.0,3.0,4.0
-immv_9 dd 1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0
-immv_3 dq 1.0,2.0,3.0,4.0
 immv_7 dq 1.0,2.0,3.0,4.0
+immv_11 dq 1.0,2.0,3.0,4.0
+immv_3 dq 1.0,2.0,3.0,4.0
 immv_5 dd 1.0,2.0,3.0,4.0,1.0,2.0,3.0,4.0
+immv_9 dd 1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0
+immv_1 dd 1.0,2.0,3.0,4.0
+immv_2 dd 1.0,2.0,3.0,4.0
+immv_8 dd 1.0,2.0,3.0,4.0
+immv_4 dd 1.0,2.0,3.0,4.0
 immv_6 dq 1.0,2.0
 immv_10 dq 1.0,2.0
-immv_8 dd 1.0,2.0,3.0,4.0
-immv_2 dd 1.0,2.0,3.0,4.0
-immv_1 dd 1.0,2.0,3.0,4.0
-immv_4 dd 1.0,2.0,3.0,4.0
 imm_38 dq 5
-imm_37 dq 5
-imm_32 dq 7
-imm_39 dq 6
-imm_35 dq 7
 imm_33 dq 0
+erc_process_heap dq 0
+imm_35 dq 7
 imm_36 dq 3
-imm_40 dq 7
-imm_46 dq 3.0
-imm_43 dq 1.2
+imm_37 dq 5
+imm_39 dq 6
 imm_44 dq 0.5
+imm_41 dq 8
+imm_43 dq 1.2
 imm_45 dq 2.0
+imm_46 dq 3.0
 imm_47 dq 4.0
 imm_48 dq 1.0
-imm_49 dq 5
-imm_50 dq 1
-imm_51 dq 16
-imm_41 dq 8
-erc_process_heap dq 0
+imm_58 dq 16
+imm_57 dq 1
+imm_55 dq 5
+imm_40 dq 7
 erc_u32_zero dd 0
+imm_32 dq 7
 imm_30 dq 2
 imm_3 dq 0
 imm_4 dq 1
@@ -1247,30 +1304,37 @@ imm_6 dq 2
 imm_12 dq 1
 imm_13 dq 2
 imm_14 dq 3
-imm_15 dq 6
+imm_16 dq 5
 imm_17 dq 8
 imm_18 dq 5
-imm_19 dq 2
-imm_16 dq 5
-imm_21 dq 0
-imm_22 dq 7
-imm_29 dq 1
-imm_23 dq 3
-imm_24 dq 1
-imm_25 dq 9
-imm_26 dq 5
-imm_27 dq 3
+imm_15 dq 6
 imm_20 dq 8
-imm_42 dd 1.5
-imm_10 dd 7
+imm_29 dq 1
+imm_27 dq 3
+imm_26 dq 5
+imm_25 dq 9
+imm_19 dq 2
+imm_56 dq 5
+imm_23 dq 3
+imm_22 dq 7
+imm_21 dq 0
+imm_24 dq 1
 imm_11 dd 0
-imm_31 dd 1.0
+imm_10 dd 7
+imm_51 dd 5
 imm_9 dd 1
+imm_54 dd 5
+imm_31 dd 1.0
+imm_42 dd 1.5
+imm_53 dw 5
+imm_50 dw 5
+imm_34 db 1
+imm_49 db 5
+imm_28 db 1
 imm_8 db 0
 imm_7 db 1
-imm_34 db 1
-imm_28 db 1
 imm_2 db 'a'
+imm_52 db 5
 imm_1 db 'e'
 
 section '.text' code readable executable
@@ -1672,13 +1736,23 @@ MOVUPD XMM8, [RSP]
 MOV RSP, RSI
 MOVAPD XMM9, XMM7
 ADDPD XMM9, XMM8
+MOV BL, [imm_49]
+MOV BX, [imm_50]
+MOV EBX, [imm_51]
+MOV RBX, [imm_38]
+MOV RBX, [imm_38]
+MOV BL, [imm_52]
+MOV BX, [imm_53]
+MOV EBX, [imm_54]
+MOV RBX, [imm_55]
+MOV RBX, [imm_55]
 RET
 
 fn_empty:
 RET
 
 fn_type_casting_int:
-MOV EBX, dword [imm_49]
+MOV EBX, dword [imm_56]
 MOVSXD RSI, EBX
 MOV ESI, EBX
 MOV SI, BX
@@ -1744,9 +1818,9 @@ VXORPS YMM8, YMM8, YMM8
 VCVTPD2PS XMM8, YMM7
 VMOVAPD XMM8, XMM7
 VMOVAPD YMM8, YMM7
-MOV RBX, [imm_50]
+MOV RBX, [imm_57]
 MOV RAX, RBX
-MUL [imm_51]
+MUL [imm_58]
 MOV RBX, RAX
 SUB RSP, 16
 MOVUPD [RSP], XMM7

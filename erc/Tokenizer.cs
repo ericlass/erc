@@ -6,6 +6,7 @@ namespace erc
     public class Tokenizer
     {
         private HashSet<char> _digits = new HashSet<char> { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+        private HashSet<char> _numberSuffixChars = new HashSet<char> { 'b', 'w', 'd', 'q', 'u', 'f' }; //d is used for both 32 bit integer and float
         private HashSet<char> _letter = new HashSet<char>
         {
             'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
@@ -259,12 +260,6 @@ namespace erc
                 return null;
             }
 
-            if (c == 'f' || c == 'd')
-            {
-                result += c;
-                iterator.Step();
-            }
-
             return result;
         }
 
@@ -337,7 +332,7 @@ namespace erc
 
         private bool IsNumberChar(char c)
         {
-            return c == '.' || _digits.Contains(c);
+            return c == '.' || _digits.Contains(c) || _numberSuffixChars.Contains(c);
         }
 
         private bool IsDigit(char c)

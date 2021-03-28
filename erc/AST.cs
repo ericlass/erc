@@ -70,6 +70,7 @@ namespace erc
                     return Kind + ": " + DataType + "(" + Children[0] + ")";
 
                 case AstItemKind.Immediate:
+                case AstItemKind.CharLiteral:
                     return Kind + ": " + DataType + "(" + Value + ")";
 
                 case AstItemKind.Vector:
@@ -119,7 +120,11 @@ namespace erc
                     return Kind + ": \"" + Identifier + "\" (" + DataType + ")";
 
                 case AstItemKind.FunctionCall:
+                case AstItemKind.EnumDecl:
                     return Kind + ": \"" + Identifier + "\"";
+
+                case AstItemKind.EnumElement:
+                    return Kind + ": \"" + Identifier + "\" (" + Value + ")";
 
                 case AstItemKind.FunctionDecl:
                     return Kind + ": \"" + Identifier + "\" (" + DataType + ")";
@@ -129,6 +134,9 @@ namespace erc
 
                 case AstItemKind.Immediate:
                     return Kind + ": " + ImmediateValueToString() + " (" + DataType + ")";
+
+                case AstItemKind.CharLiteral:
+                    return Kind + ": '" + Value + "' (" + DataType + ")";
 
                 case AstItemKind.BinaryOperator:
                 case AstItemKind.UnaryOperator:
