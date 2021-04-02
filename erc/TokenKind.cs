@@ -9,7 +9,7 @@ namespace erc
         ExpressionOperator,
         Number,
         VectorConstructor,
-        StatementTerminator,
+        SemiColon,
         TypeOperator, //Colon
         Comma,
         RoundBracketOpen,

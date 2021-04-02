@@ -355,49 +355,71 @@ namespace erc
 
         private DataType CheckExpression(AstItem expression)
         {
-            if (expression.Kind == AstItemKind.Immediate)
+            switch (expression.Kind)
             {
-                CheckImmediate(expression);
+                case AstItemKind.Immediate:
+                    CheckImmediate(expression);
+                    break;
+                case AstItemKind.Vector:
+                    CheckVector(expression);
+                    break;
+                case AstItemKind.Variable:
+                    CheckVariable(expression);
+                    break;
+                case AstItemKind.FunctionCall:
+                    CheckFunctionCall(expression);
+                    break;
+                case AstItemKind.Expression:
+                    CheckExpressionItem(expression);
+                    break;
+                case AstItemKind.NewPointer:
+                    CheckNewPointer(expression);
+                    break;
+                case AstItemKind.IndexAccess:
+                    CheckIndexAccess(expression);
+                    break;
+                case AstItemKind.Identifier:
+                    CheckIdentifier(expression);
+                    break;
+                case AstItemKind.CharLiteral:
+                    CheckChar(expression);
+                    break;
+                case AstItemKind.ValueArrayDefinition:
+                    CheckValueArray(expression);
+                    break;
+                case AstItemKind.SizedArrayDefinition:
+                    CheckSizedArray(expression);
+                    break;
+                default:
+                    throw new Exception("Unsupported expression item: " + expression);
             }
-            else if (expression.Kind == AstItemKind.Vector)
-            {
-                CheckVector(expression);
-            }
-            else if (expression.Kind == AstItemKind.Variable)
-            {
-                CheckVariable(expression);
-            }
-            else if (expression.Kind == AstItemKind.FunctionCall)
-            {
-                CheckFunctionCall(expression);
-            }
-            else if (expression.Kind == AstItemKind.Expression)
-            {
-                CheckExpressionItem(expression);
-            }
-            else if (expression.Kind == AstItemKind.NewPointer)
-            {
-                CheckNewPointer(expression);
-            }
-            else if (expression.Kind == AstItemKind.IndexAccess)
-            {
-                CheckIndexAccess(expression);
-            }
-            else if (expression.Kind == AstItemKind.Identifier)
-            {
-                CheckIdentifier(expression);
-            }
-            else if (expression.Kind == AstItemKind.CharLiteral)
-            {
-                CheckChar(expression);
-            }
-            else
-                throw new Exception("Unsupported expression item: " + expression);
 
             if (expression.DataType == null)
                 throw new Exception("Could not determine data type for expression: " + expression);
 
             return expression.DataType;
+        }
+
+        private void CheckValueArray(AstItem expression)
+        {
+            DataType valueType = null;
+            foreach (var valueExpression in expression.Children)
+            {
+                var currentType = CheckExpression(valueExpression);
+                if (valueType == null)
+                    valueType = currentType;
+                else
+                    Assert.True(valueType.Equals(currentType), "Mixed types are not allowed in array definitions! First type: " + valueType + ", current Type: " + currentType);
+
+                valueExpression.DataType = currentType;
+            }
+
+            expression.DataType = DataType.Array(valueType);
+        }
+
+        private void CheckSizedArray(AstItem expression)
+        {
+            throw new NotImplementedException();
         }
 
         private void CheckChar(AstItem expression)

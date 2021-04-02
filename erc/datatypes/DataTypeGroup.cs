@@ -13,6 +13,7 @@ namespace erc
         ScalarFloat,
         VectorFloat,
         Custom,
-        Character
+        Character,
+        Array
     }
 }

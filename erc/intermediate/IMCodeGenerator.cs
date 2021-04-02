@@ -432,6 +432,14 @@ namespace erc
                     GenerateIndexAccess(output, expression, targetLocation);
                     break;
 
+                case AstItemKind.ValueArrayDefinition:
+                    GenerateValueArray(output, expression, targetLocation);
+                    break;
+
+                case AstItemKind.SizedArrayDefinition:
+                    GenerateSizedArray(output, expression, targetLocation);
+                    break;
+
                 case AstItemKind.Expression:
                     if (expression.Children.Count == 1)
                         GenerateExpression(output, expression.Children[0], targetLocation);
@@ -444,6 +452,7 @@ namespace erc
         private void GenerateIndexAccess(List<IMOperation> output, AstItem item, IMOperand targetLocation)
         {
             var symbol = _context.RequireSymbol(item.Identifier);
+            //TODO: Handle if "symbol" is array 
             var tmpLocation = NewTempLocal(symbol.DataType);
 
             GenerateIndexAddressCalculation(output, item.Children[0], symbol, tmpLocation);
@@ -483,6 +492,46 @@ namespace erc
             output.Add(IMOperation.Mul(bytesLocation, bytesLocation, IMOperand.Immediate(DataType.U64, expression.DataType.ElementType.ByteSize)));
 
             output.Add(IMOperation.Aloc(targetLocation, bytesLocation));
+        }
+
+        private void GenerateValueArray(List<IMOperation> output, AstItem expression, IMOperand targetLocation)
+        {
+            var itemType = expression.DataType.ElementType;
+
+            //Allocate memory for array
+            var bytesToAllocate = 8 + (expression.Children.Count * itemType.ByteSize);
+            var bytesLocation = NewTempLocal(DataType.U64);
+            output.Add(IMOperation.Mov(bytesLocation, IMOperand.Immediate(DataType.U64, bytesToAllocate)));
+            output.Add(IMOperation.Aloc(targetLocation, bytesLocation));
+
+            //Create location for pointer arithmetic
+            var pointerLocation = NewTempLocal(expression.DataType);
+            output.Add(IMOperation.Mov(pointerLocation, targetLocation));
+            var refLocation = IMOperand.Reference(itemType, pointerLocation);
+
+            //Write length of array
+            output.Add(IMOperation.Mov(refLocation, IMOperand.Immediate(DataType.U64, expression.Children.Count)));
+            output.Add(IMOperation.Add(pointerLocation, pointerLocation, IMOperand.Immediate(DataType.U64, DataType.U64.ByteSize)));
+
+            //Write all array values
+            var valueLocation = NewTempLocal(itemType);
+            var first = true;
+            foreach (var valueExpression in expression.Children)
+            {
+                if (first)
+                    first = false;
+                else
+                    output.Add(IMOperation.Add(pointerLocation, pointerLocation, IMOperand.Immediate(DataType.U64, itemType.ByteSize)));
+
+                GenerateExpression(output, valueExpression, refLocation);
+                //GenerateExpression(output, valueExpression, valueLocation);
+                //output.Add(IMOperation.Mov(refLocation, valueLocation));
+            }
+        }
+
+        private void GenerateSizedArray(List<IMOperation> output, AstItem expression, IMOperand targetLocation)
+        {
+            throw new NotImplementedException();
         }
 
         private class AstItemWithLocation

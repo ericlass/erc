@@ -1,6 +1,6 @@
 
 fn main() {
-	strings();
+	arrays();
 }
 
 enum TestType {
@@ -13,6 +13,10 @@ enum TestType {
 enum TestType2 {
 	Some,
 	Ding
+}
+
+fn arrays() {
+	let a = [1,2,3];
 }
 
 fn strings() {

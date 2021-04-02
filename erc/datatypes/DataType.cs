@@ -26,6 +26,8 @@ namespace erc
                     return ElementType.Name + "*";
                 else if (Kind == DataTypeKind.ENUM)
                     return CustomTypeName;
+                else if (Kind == DataTypeKind.ARRAY)
+                    return "[" + ElementType.Name + "]";
 
                 return Kind.ToString().ToLower();
             }
@@ -52,6 +54,9 @@ namespace erc
 
                 case DataTypeKind.ENUM:
                     return Kind == other.Kind && CustomTypeName == other.CustomTypeName;
+
+                case DataTypeKind.ARRAY:
+                    return Kind == other.Kind && ElementType.Equals(other.ElementType);
             }
 
             return Kind == other.Kind;
@@ -305,6 +310,23 @@ namespace erc
                 ElementType = subType,
                 NumElements = 1,
                 Group = DataTypeGroup.ScalarInteger
+            };
+
+            DataType.GetAllValues().Add(newType);
+            return newType;
+        }
+
+        public static DataType Array(DataType subType)
+        {
+            var newType = new DataType
+            {
+                Kind = DataTypeKind.ARRAY,
+                ByteSize = 8,
+                IsVector = false,
+                IsSigned = false,
+                ElementType = subType,
+                NumElements = 0, //Number of elements may not be known at compile time
+                Group = DataTypeGroup.Array
             };
 
             DataType.GetAllValues().Add(newType);

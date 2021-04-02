@@ -35,7 +35,9 @@ namespace erc
         EnumElement,
         Identifier,
         Type,
-        CharLiteral
+        CharLiteral,
+        ValueArrayDefinition,
+        SizedArrayDefinition
     }
 
     public class AstItem
@@ -61,6 +63,20 @@ namespace erc
             Kind = kind;
         }
 
+        public AstItem Copy()
+        {
+            var result = new AstItem();
+            result.Kind = Kind;
+            result.DataType = DataType;
+            result.Identifier = Identifier;
+            result.Value = Value;
+            result.Value2 = Value2;
+            result.Operator = Operator;
+            result.SourceLine = SourceLine;
+            result.Children = new List<AstItem>(Children);
+            return result;
+        }
+
         public override string ToString()
         {
             switch (Kind)
@@ -72,6 +88,12 @@ namespace erc
                 case AstItemKind.Immediate:
                 case AstItemKind.CharLiteral:
                     return Kind + ": " + DataType + "(" + Value + ")";
+
+                case AstItemKind.SizedArrayDefinition:
+                    return Kind + ": " + DataType.ElementType + " * " + Children[1];
+
+                case AstItemKind.ValueArrayDefinition:
+                    return Kind + ": [" + String.Join(",", Children) + "]";
 
                 case AstItemKind.Vector:
                     return "<" + String.Join(",", Children) + ">";
@@ -143,10 +165,13 @@ namespace erc
                     return Kind + ": " + this.Operator.Figure;
 
                 case AstItemKind.Type:
+                case AstItemKind.SizedArrayDefinition:
+                case AstItemKind.ValueArrayDefinition:
                     return Kind + ": (" + DataType.Name + ")";
 
                 case AstItemKind.Identifier:
                     return Kind + ": " + Identifier;
+
 
                 default:
                     return Kind.ToString();
@@ -394,5 +419,16 @@ namespace erc
             return new AstItem { Kind = AstItemKind.Type, DataType = dataType };
         }
 
+        public static AstItem ValueArrayDefinition(List<AstItem> valueExpressions)
+        {
+            return new AstItem { Kind = AstItemKind.ValueArrayDefinition, Children = valueExpressions };
+        }
+
+        public static AstItem SizedArrayDefinition(AstItem initialValue, AstItem numItemsExpression)
+        {
+            return new AstItem { Kind = AstItemKind.ValueArrayDefinition, Children = new List<AstItem>() { initialValue, numItemsExpression } };
+        }
+
     }
 }
+

@@ -143,7 +143,7 @@ namespace erc
             if (next.Kind == TokenKind.TypeOperator)
             {
                 returnType = ReadDataType(tokens);
-                tokens.PopExpected(TokenKind.StatementTerminator);
+                tokens.PopExpected(TokenKind.SemiColon);
             }
 
             return AstItem.ExternFunctionDecl(name.Value, returnType, parameters, libFnName.Value, libName.Value);
@@ -208,13 +208,13 @@ namespace erc
                     var current = tokens.Current();
                     DataType valueType = DataType.VOID;
                     AstItem valueExpression = null;
-                    if (current.Kind != TokenKind.StatementTerminator)
+                    if (current.Kind != TokenKind.SemiColon)
                     {
-                        valueExpression = ReadExpression(tokens, TokenKind.StatementTerminator);
+                        valueExpression = ReadExpression(tokens, TokenKind.SemiColon);
                         valueType = valueExpression.DataType;
                     }
                     result = AstItem.Return(valueType, valueExpression);
-                    tokens.PopExpected(TokenKind.StatementTerminator);
+                    tokens.PopExpected(TokenKind.SemiColon);
                     break;
 
                 case TokenKind.Word:
@@ -222,7 +222,7 @@ namespace erc
                     if (next.Kind == TokenKind.RoundBracketOpen)
                     {
                         result = ReadFuncCall(tokens);
-                        tokens.PopExpected(TokenKind.StatementTerminator);
+                        tokens.PopExpected(TokenKind.SemiColon);
                     }
                     else if (next.Kind == TokenKind.AssigmnentOperator)
                         result = ReadVariableAssignment(tokens);
@@ -238,7 +238,7 @@ namespace erc
 
                 case TokenKind.Del:
                     result = ReadDelStatement(tokens);
-                    tokens.PopExpected(TokenKind.StatementTerminator);
+                    tokens.PopExpected(TokenKind.SemiColon);
                     break;
 
                 case TokenKind.ExpressionOperator:
@@ -281,7 +281,7 @@ namespace erc
         private static AstItem ReadBreak(TokenIterator tokens)
         {
             tokens.PopExpected(TokenKind.Break);
-            tokens.PopExpected(TokenKind.StatementTerminator);
+            tokens.PopExpected(TokenKind.SemiColon);
             return AstItem.Break();
         }
 
@@ -403,9 +403,9 @@ namespace erc
             var name = tokens.PopExpected(TokenKind.Word);
             tokens.PopExpected(TokenKind.AssigmnentOperator);
 
-            var expression = ReadExpression(tokens, TokenKind.StatementTerminator);
+            var expression = ReadExpression(tokens, TokenKind.SemiColon);
 
-            tokens.PopExpected(TokenKind.StatementTerminator);
+            tokens.PopExpected(TokenKind.SemiColon);
 
             return AstItem.VarDecl(name.Value, expression);
         }
@@ -415,9 +415,9 @@ namespace erc
             var name = tokens.PopExpected(TokenKind.Word);
             tokens.PopExpected(TokenKind.AssigmnentOperator);
 
-            var expression = ReadExpression(tokens, TokenKind.StatementTerminator);
+            var expression = ReadExpression(tokens, TokenKind.SemiColon);
 
-            tokens.PopExpected(TokenKind.StatementTerminator);
+            tokens.PopExpected(TokenKind.SemiColon);
 
             return AstItem.VariableAssignment(name.Value, expression);
         }
@@ -428,9 +428,9 @@ namespace erc
             var name = tokens.PopExpected(TokenKind.Word);
             tokens.PopExpected(TokenKind.AssigmnentOperator);
 
-            var expression = ReadExpression(tokens, TokenKind.StatementTerminator);
+            var expression = ReadExpression(tokens, TokenKind.SemiColon);
 
-            tokens.PopExpected(TokenKind.StatementTerminator);
+            tokens.PopExpected(TokenKind.SemiColon);
 
             return AstItem.PointerAssignment(name.Value, expression);
         }
@@ -445,9 +445,9 @@ namespace erc
 
             tokens.PopExpected(TokenKind.AssigmnentOperator);
 
-            var valueExpression = ReadExpression(tokens, TokenKind.StatementTerminator);
+            var valueExpression = ReadExpression(tokens, TokenKind.SemiColon);
 
-            tokens.PopExpected(TokenKind.StatementTerminator);
+            tokens.PopExpected(TokenKind.SemiColon);
 
             return AstItem.PointerIndexAssignment(name.Value, indexExpression, valueExpression);
         }
@@ -547,6 +547,7 @@ namespace erc
                             case TokenKind.False:
                             case TokenKind.VectorConstructor:
                             case TokenKind.Char:
+                            case TokenKind.SquareBracketOpen:
                                 var operandItem = ReadSingleAstItem(tokenIter);
                                 expItemsInfix.Add(operandItem);
                                 expectOperand = false; //Next we want an operator
@@ -680,10 +681,52 @@ namespace erc
             {
                 result = AstItem.CharLiteral(token.Value);
             }
+            else if (token.Kind == TokenKind.SquareBracketOpen)
+            {
+                result = ReadArray(tokens);
+            }
             else
                 throw new Exception("Unexpected token type in expression: " + token);
 
             return result;
+        }
+
+        private AstItem ReadArray(TokenIterator tokens)
+        {
+            tokens.PopExpected(TokenKind.SquareBracketOpen);
+            var firstValue = ReadExpression(tokens, new List<TokenKind> { TokenKind.SemiColon, TokenKind.Comma });
+
+            var token = tokens.Pop();
+
+            if (token.Kind == TokenKind.SquareBracketClose)
+            {
+                //Array with only single value
+                return AstItem.ValueArrayDefinition(new List<AstItem>() { firstValue });
+            }
+            if (token.Kind == TokenKind.Comma)
+            {
+                //Array definition with n values
+                var valueTokens = ReadTokenList(tokens, TokenKind.Comma, TokenKind.SquareBracketClose);
+
+                var valueExpressions = new List<AstItem>(valueTokens.Count + 1);
+                valueExpressions.Add(firstValue);
+                foreach (var tokenList in valueTokens)
+                {
+                    var iterator = new TokenIterator(tokenList);
+                    var valueItem = ReadExpression(iterator, null);
+                    valueExpressions.Add(valueItem);
+                }
+
+                return AstItem.ValueArrayDefinition(valueExpressions);
+            }
+            else if (token.Kind == TokenKind.SemiColon)
+            {
+                //Array definition with one value and number of items
+                var numItemsExpression = ReadExpression(tokens, TokenKind.SquareBracketClose);
+                return AstItem.SizedArrayDefinition(firstValue, numItemsExpression);
+            }
+            
+            throw new Exception("Unexpected token in array definition: " + token);
         }
 
         private AstItem ReadVector(TokenIterator tokens)

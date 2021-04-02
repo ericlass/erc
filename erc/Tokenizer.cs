@@ -41,7 +41,7 @@ namespace erc
 
         private Dictionary<char, TokenKind> _specialCharacterTypes = new Dictionary<char, TokenKind>()
         {
-            [';'] = TokenKind.StatementTerminator,
+            [';'] = TokenKind.SemiColon,
             ['('] = TokenKind.RoundBracketOpen,
             [')'] = TokenKind.RoundBracketClose,
             ['{'] = TokenKind.CurlyBracketOpen,

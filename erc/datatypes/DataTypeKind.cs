@@ -23,6 +23,7 @@ namespace erc
         POINTER,
         ENUM,
         VARS,
+        ARRAY,
         CHAR8
     }
 }
