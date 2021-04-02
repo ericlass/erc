@@ -452,13 +452,23 @@ namespace erc
         private void GenerateIndexAccess(List<IMOperation> output, AstItem item, IMOperand targetLocation)
         {
             var symbol = _context.RequireSymbol(item.Identifier);
-            //TODO: Handle if "symbol" is array 
             var tmpLocation = NewTempLocal(symbol.DataType);
 
             GenerateIndexAddressCalculation(output, item.Children[0], symbol, tmpLocation);
 
+            var resultType = symbol.DataType.ElementType;
+
+            if (symbol.DataType.Kind == DataTypeKind.ARRAY)
+            {
+                //TODO: Generate code that check if the index is in bounds and throws exception if not!
+
+                //Need to offset pointer by 8 bytes, which is the size of the array
+                output.Add(IMOperation.Add(tmpLocation, tmpLocation, IMOperand.Immediate(DataType.U64, DataType.U64.ByteSize)));
+                resultType = symbol.DataType.ElementType;
+            }
+
             //Move value to target
-            output.Add(IMOperation.Mov(targetLocation, IMOperand.Reference(symbol.DataType, tmpLocation)));
+            output.Add(IMOperation.Mov(targetLocation, IMOperand.Reference(resultType, tmpLocation)));
         }
 
         private void GenerateIndexAddressCalculation(List<IMOperation> output, AstItem indexExpression, Symbol symbol, IMOperand target)

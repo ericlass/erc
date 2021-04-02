@@ -17,6 +17,10 @@ enum TestType2 {
 
 fn arrays() {
 	let a = [1,2,3];
+	let b = ['H','e','l','l','o'];
+
+	let x = a[0];
+	let y = b[2];
 }
 
 fn strings() {

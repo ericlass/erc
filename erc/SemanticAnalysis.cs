@@ -460,7 +460,7 @@ namespace erc
         private DataType CheckIndexAccess(AstItem expression)
         {
             var symbol = _context.RequireSymbol(expression.Identifier);
-            Assert.DataTypeKind(symbol.DataType.Kind, DataTypeKind.POINTER, "Invalid data type for index access");
+            Assert.True(symbol.DataType.Kind == DataTypeKind.POINTER || symbol.DataType.Kind == DataTypeKind.ARRAY, "Invalid data type for index access! Can be pointer or array, given: " + symbol.DataType);
 
             var indexExpression = expression.Children[0];
             var indexExpType = CheckExpression(indexExpression);
