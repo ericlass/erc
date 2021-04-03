@@ -40,6 +40,12 @@ namespace erc
         private List<Tuple<DataType, string>> _dataEntries = new List<Tuple<DataType, string>>();
         private X64TypeCast _typeCastGenerator = new X64TypeCast();
         private long _vectorImmCounter = 0;
+        private bool _debugOutput = false;
+
+        public WinX64CodeGenerator(bool debugOutput)
+        {
+            _debugOutput = debugOutput;
+        }
 
         public void Generate(CompilerContext context)
         {
@@ -129,6 +135,9 @@ namespace erc
 
             foreach (var operation in function.Body)
             {
+                if (_debugOutput && operation.Instruction.Kind != IMInstructionKind.FREE)
+                    output.Add(";" + operation.ToString());
+
                 GenerateOperation(output, operation);
             }
 

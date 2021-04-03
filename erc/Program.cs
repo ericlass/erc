@@ -44,7 +44,7 @@ namespace erc
             var imGenerator = new IMCodeGenerator();
             imGenerator.Generate(context);
 
-            var x64Generator = new WinX64CodeGenerator();
+            var x64Generator = new WinX64CodeGenerator(true);
             x64Generator.Generate(context);
 
             stopWatch.Stop();

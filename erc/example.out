@@ -1524,15 +1524,20 @@ xor ecx,ecx
 call [ExitProcess]
 
 fn_main:
+;CALL 'arrays', 
 SUB RSP, 0x20
 MOV RBP, RSP
 CALL fn_arrays
 ADD RSP, 0x20
+;RET @void
 RET
 
 fn_arrays:
+;MOV %k, i64(5)
 MOV RBX, [imm_1]
+;MOV %1, u64(40)
 MOV RSI, [imm_2]
+;ALOC %a, %1
 PUSH RBX
 PUSH RSI
 MOV RCX, [erc_process_heap]
@@ -1545,23 +1550,35 @@ ADD RSP, 0x20
 MOV RDI, RAX
 POP RSI
 POP RBX
+;MOV %2, %a
 MOV RSI, RDI
+;MOV [%2], u64(4)
 MOV RAX, [imm_3]
 MOV [RSI], RAX
+;ADD %2, %2, u64(8)
 ADD RSI, [imm_4]
+;MOV [%2], i64(1)
 MOV RAX, [imm_5]
 MOV [RSI], RAX
+;ADD %2, %2, u64(8)
 ADD RSI, [imm_4]
+;MOV [%2], i64(2)
 MOV RAX, [imm_6]
 MOV [RSI], RAX
+;ADD %2, %2, u64(8)
 ADD RSI, [imm_4]
+;MOV [%2], i64(3)
 MOV RAX, [imm_7]
 MOV [RSI], RAX
+;ADD %2, %2, u64(8)
 ADD RSI, [imm_4]
+;ADD [%2], %k, i64(1)
 MOV RAX, RBX
 ADD RAX, [imm_5]
 MOV [RSI], RAX
+;MOV %3, u64(13)
 MOV RBX, [imm_8]
+;ALOC %b, %3
 PUSH RDI
 PUSH RBX
 PUSH RSI
@@ -1576,109 +1593,176 @@ MOV RSI, RAX
 POP RSI
 POP RBX
 POP RDI
+;MOV %4, %b
 MOV RBX, RSI
+;MOV [%4], u64(5)
 MOV RAX, [imm_9]
 MOV [RBX], RAX
+;ADD %4, %4, u64(8)
 ADD RBX, [imm_4]
+;MOV [%4], char8(H)
 MOV AL, [imm_10]
 MOV [RBX], AL
+;ADD %4, %4, u64(1)
 ADD RBX, [imm_11]
+;MOV [%4], char8(e)
 MOV AL, [imm_12]
 MOV [RBX], AL
+;ADD %4, %4, u64(1)
 ADD RBX, [imm_11]
+;MOV [%4], char8(l)
 MOV AL, [imm_13]
 MOV [RBX], AL
+;ADD %4, %4, u64(1)
 ADD RBX, [imm_11]
+;MOV [%4], char8(l)
 MOV AL, [imm_13]
 MOV [RBX], AL
+;ADD %4, %4, u64(1)
 ADD RBX, [imm_11]
+;MOV [%4], char8(o)
 MOV AL, [imm_14]
 MOV [RBX], AL
+;MOV %5, i64(0)
 MOV RBX, [imm_15]
+;MUL %5, %5, u64(8)
 MOV RAX, RBX
 MUL [imm_4]
 MOV RBX, RAX
+;ADD %5, %5, %a
 ADD RBX, RDI
+;ADD %5, %5, u64(8)
 ADD RBX, [imm_4]
+;MOV %x, [%5]
 MOV RDI, [RBX]
+;MOV %6, i64(2)
 MOV RBX, [imm_6]
+;MUL %6, %6, u64(1)
 MOV RAX, RBX
 MUL [imm_11]
 MOV RBX, RAX
+;ADD %6, %6, %b
 ADD RBX, RSI
+;ADD %6, %6, u64(8)
 ADD RBX, [imm_4]
+;MOV %y, [%6]
 MOV SIL, [RBX]
+;RET @void
 RET
 
 fn_strings:
+;MOV %c, char8(e)
 MOV BL, [imm_16]
+;SUB %s, %c, char8(a)
 MOV SIL, BL
 SUB SIL, [imm_17]
+;MOV %a, u8(65)
 MOV SIL, [imm_18]
+;CAST %x, %a
 MOV DIL, SIL
+;CAST %y1, %c
 MOV SIL, BL
+;CAST %y2, %c
 MOV SIL, BL
+;CAST %y3, %c
 MOV SIL, BL
+;CAST %y4, %c
 MOV SIL, BL
+;RET @void
 RET
 
 fn_loops:
+;MOV %i, i64(0)
 MOV RBX, [imm_19]
+;MOV %1, i64(1)
 MOV RSI, [imm_20]
+;LABL 'label_1'
 label_1:
+;MOV %2, i64(5)
 MOV RDI, [imm_21]
+;JMPG %i, %2, 'label_2'
 CMP RBX, RDI
 JG label_2
+;ADD %x, %i, i64(1)
 MOV RDI, RBX
 ADD RDI, [imm_20]
+;SETG %3, %x, i64(2)
 CMP RDI, [imm_22]
 SETG R12B
+;JMPNE %3, bool(1), 'label_3'
 CMP R12B, [imm_23]
 JNE label_3
+;JMP 'label_2'
 JMP label_2
+;LABL 'label_3'
 label_3:
+;ADD %i, %i, %1
 ADD RBX, RSI
+;JMP 'label_1'
 JMP label_1
+;LABL 'label_2'
 label_2:
+;MOV %a, i64(5)
 MOV RBX, [imm_21]
+;LABL 'label_4'
 label_4:
+;SETG %4, %a, i64(0)
 CMP RBX, [imm_19]
 SETG SIL
+;JMPE %4, bool(0), 'label_5'
 CMP SIL, [imm_24]
 JE label_5
+;SUB %a, %a, i64(1)
 SUB RBX, [imm_20]
+;JMP 'label_5'
 JMP label_5
+;JMP 'label_4'
 JMP label_4
+;LABL 'label_5'
 label_5:
+;RET @void
 RET
 
 fn_enums:
+;MOV %test, u32(1)
 MOV EBX, [imm_25]
+;MOV %test, u32(7)
 MOV EBX, [imm_26]
+;SETE %same, u32(0), u32(1)
 MOV EAX, [imm_27]
 CMP EAX, [imm_25]
 SETE BL
+;RET @void
 RET
 
 fn_expressions:
+;ADD %a, i64(1), i64(2)
 MOV RBX, [imm_28]
 ADD RBX, [imm_29]
+;NEG %1, i64(3)
 XOR RSI, RSI
 SUB RSI, [imm_30]
+;NEG %2, i64(6)
 XOR RDI, RDI
 SUB RDI, [imm_31]
+;MUL %3, %1, %2
 MOV RAX, RSI
 IMUL RDI
 MOV R12, RAX
+;NEG %a, %3
 XOR RBX, RBX
 SUB RBX, R12
+;RET @void
 RET
 
 fn_pointers:
+;MOV %1, u64(5)
 MOV RBX, [imm_32]
+;MUL %1, %1, u64(8)
 MOV RAX, RBX
 MUL [imm_33]
 MOV RBX, RAX
+;ALOC %p, %1
 PUSH RBX
 MOV RCX, [erc_process_heap]
 MOV EDX, [erc_u32_zero]
@@ -1689,47 +1773,73 @@ CALL [HeapAlloc]
 ADD RSP, 0x20
 MOV RSI, RAX
 POP RBX
+;MOV [%p], i64(5)
 MOV RAX, [imm_34]
 MOV [RSI], RAX
+;MOV %2, i64(2)
 MOV RBX, [imm_35]
+;MUL %2, %2, u64(8)
 MOV RAX, RBX
 MUL [imm_33]
 MOV RBX, RAX
+;ADD %2, %2, %p
 ADD RBX, RSI
+;MOV [%2], i64(8)
 MOV RAX, [imm_36]
 MOV [RBX], RAX
+;MOV %4, i64(0)
 MOV RBX, [imm_37]
+;MUL %4, %4, u64(8)
 MOV RAX, RBX
 MUL [imm_33]
 MOV RBX, RAX
+;ADD %4, %4, %p
 ADD RBX, RSI
+;MOV %3, [%4]
 MOV RDI, [RBX]
+;ADD %x, %3, i64(7)
 MOV RAX, RDI
 ADD RAX, [imm_38]
 MOV [RBP], RAX
+;MOV %5, [%p]
 MOV RBX, [RSI]
+;ADD %y, %5, i64(3)
 MOV RDI, RBX
 ADD RDI, [imm_39]
+;LEA %z, %x
 LEA RBX, [RBP]
+;MOV %7, i64(1)
 MOV R12, [imm_40]
+;MUL %7, %7, u64(8)
 MOV RAX, R12
 MUL [imm_33]
 MOV R12, RAX
+;ADD %7, %7, %p
 ADD R12, RSI
+;MOV %6, [%7]
 MOV RAX, [R12]
 MOV [RBP+8], RAX
+;LEA %z, %6
 LEA RBX, [RBP+8]
+;MOV [%z], i64(3)
 MOV RAX, [imm_39]
 MOV [RBX], RAX
+;MOV %8, i64(1)
 MOV R12, [imm_40]
+;MUL %8, %8, u64(8)
 MOV RAX, R12
 MUL [imm_33]
 MOV R12, RAX
+;ADD %8, %8, %z
 ADD R12, RBX
+;MOV [%8], i64(9)
 MOV RAX, [imm_41]
 MOV [R12], RAX
+;CAST %9, %y
 MOV [RBP+16], EDI
+;LEA %k, %9
 LEA RBX, [RBP+16]
+;DEL %p
 PUSH RSI
 PUSH R12
 PUSH RDI
@@ -1745,66 +1855,100 @@ POP RBX
 POP RDI
 POP R12
 POP RSI
+;RET @void
 RET
 
 fn_boolean:
+;SETGE %test, i64(5), i64(3)
 MOV RAX, [imm_42]
 CMP RAX, [imm_43]
 SETGE BL
+;AND %1, %test, bool(1)
 MOV SIL, BL
 AND SIL, [imm_44]
+;OR %test, %1, %test
 MOV BL, SIL
 OR BL, BL
+;NOT %test, %test
 NOT BL
+;MOV %g, i64(5)
 MOV RBX, [imm_42]
+;SETLE %2, i64(1), i64(2)
 MOV RAX, [imm_45]
 CMP RAX, [imm_46]
 SETLE SIL
+;JMPNE %2, bool(1), 'label_7'
 CMP SIL, [imm_44]
 JNE label_7
+;MOV %g, i64(2)
 MOV RBX, [imm_46]
+;MOV %j, f32(1)
 MOVSS XMM7, [imm_47]
+;JMP 'label_6'
 JMP label_6
+;LABL 'label_7'
 label_7:
+;MOV %g, i64(7)
 MOV RBX, [imm_48]
+;LABL 'label_6'
 label_6:
+;ADD %3, i64(3), i64(2)
 MOV RBX, [imm_43]
 ADD RBX, [imm_46]
+;SETG %x, i64(5), %3
 CMP [imm_42], RBX
 SETG SIL
+;GVEC %v1, f32(1), f32(2), f32(3), f32(4)
 MOVUPS XMM7, dqword [immv_1]
+;GVEC %v2, f32(1), f32(2), f32(3), f32(4)
 MOVUPS XMM8, dqword [immv_2]
+;SETNE %4, %v1, %v2
 MOVAPS XMM4, XMM7
 CMPEQPS XMM4, XMM8
 MOVMSKPS EAX, XMM4
 CMP EAX, 0xF
 SETE BL
+;JMPNE %4, bool(1), 'label_8'
 CMP BL, [imm_44]
 JNE label_8
+;RET @void
 RET
+;LABL 'label_8'
 label_8:
+;RET @void
 RET
 
 fn_fn_calls:
+;CALL 'last_error', %err_code
 SUB RSP, 0x20
 MOV RBP, RSP
 CALL [GetLastError]
 ADD RSP, 0x20
 MOV RBX, RAX
+;SETE %1, %err_code, i64(0)
 CMP RBX, [imm_49]
 SETE SIL
+;JMPNE %1, bool(1), 'label_9'
 CMP SIL, [imm_50]
 JNE label_9
+;RET @void
 RET
+;LABL 'label_9'
 label_9:
+;ADD %2, i64(7), i64(3)
 MOV RBX, [imm_51]
 ADD RBX, [imm_52]
+;MUL %kx, i64(5), %2
 MOV RAX, [imm_53]
 IMUL RBX
 MOV RSI, RAX
+;GVEC %x6, f64(1), f64(2), f64(3), f64(4)
 VMOVUPD YMM7, qqword [immv_3]
+;MOV %4, %x6
 VMOVAPD YMM8, YMM7
+;MOV %5, %x6
 VMOVAPD YMM9, YMM7
+;CALL 'add', %3, %4, %5
 SUB RSP, 1
 MOV [RSP], SIL
 PUSH RBX
@@ -1832,8 +1976,11 @@ POP RSI
 POP RBX
 MOV SIL, [RSP]
 ADD RSP, 1
+;MOV %7, %x6
 VMOVAPD YMM8, YMM7
+;MOV %8, %x6
 VMOVAPD YMM9, YMM7
+;CALL 'add', %6, %7, %8
 SUB RSP, 1
 MOV [RSP], SIL
 PUSH RBX
@@ -1865,51 +2012,75 @@ POP RSI
 POP RBX
 MOV SIL, [RSP]
 ADD RSP, 1
+;ADD %k2, %3, %6
 VADDPD YMM8, YMM10, YMM7
+;RET @void
 RET
 
 fn_add:
+;MUL %2, $2, $1
 VMULPD YMM7, YMM1, YMM0
+;ADD %1, $1, %2
 VADDPD YMM8, YMM0, YMM7
+;RET %1
 VMOVAPD YMM0, YMM8
 RET
 
 fn_add2:
+;MUL %2, $2, $1
 MOV AL, DL
 IMUL CL
 MOV BL, AL
+;ADD %1, $1, %2
 MOV SIL, CL
 ADD SIL, BL
+;RET %1
 MOV AL, SIL
 RET
 
 fn_add3:
+;MUL %2, $2, $1
 MOV AX, DX
 MUL CX
 MOV BX, AX
+;ADD %1, $1, %2
 MOV SI, CX
 ADD SI, BX
+;RET %1
 MOV AX, SI
 RET
 
 fn_types:
+;MUL %1, i64(5), i64(6)
 MOV RAX, [imm_54]
 IMUL [imm_55]
 MOV RBX, RAX
+;MUL %2, i64(7), i64(8)
 MOV RAX, [imm_56]
 IMUL [imm_57]
 MOV RSI, RAX
+;ADD %a, %1, %2
 MOV RDI, RBX
 ADD RDI, RSI
+;MOV %b, f32(1,5)
 MOVSS XMM7, [imm_58]
+;MOV %c, %b
 MOVSS XMM8, XMM7
+;MOV %d, f64(1,2)
 MOVSD XMM9, [imm_59]
+;MOV %e, f64(0,5)
 MOVSD XMM10, [imm_60]
+;CAST %3, %a
 MOV RBX, RDI
+;MOV %4, %b
 MOVSS XMM11, XMM7
+;MOV %5, %c
 MOVSS XMM7, XMM8
+;MOV %6, %d
 MOVSD XMM8, XMM9
+;MOV %7, %e
 MOVSD XMM12, XMM10
+;CALL 'printf', , %3, %4, %5, %6, %7
 PUSH RSI
 PUSH RBX
 SUB RSP, 16
@@ -1949,23 +2120,35 @@ MOVUPD XMM9, [RSP]
 ADD RSP, 16
 POP RBX
 POP RSI
+;MUL %k, %e, %d
 MOVSD XMM7, XMM10
 MULSD XMM7, XMM9
+;ADD %k, %k, f64(2)
 ADDSD XMM7, [imm_61]
+;GVEC %x3, f32(1), f32(2), f32(3), f32(4)
 MOVUPS XMM7, dqword [immv_4]
+;GVEC %x4, f32(1), f32(2), f32(3), f32(4), f32(1), f32(2), f32(3), f32(4)
 VMOVUPS YMM7, qqword [immv_5]
+;GVEC %x5, f64(1), f64(2)
 MOVUPD XMM7, dqword [immv_6]
+;GVEC %x6, f64(1), f64(2), f64(3), f64(4)
 VMOVUPD YMM8, qqword [immv_7]
+;ADD %y, %x5, %x5
 MOVAPD XMM8, XMM7
 ADDPD XMM8, XMM7
+;MUL %8, %d, f64(2)
 MOVSD XMM7, XMM9
 MULSD XMM7, [imm_61]
+;MUL %10, f64(2), %d
 MOVSD XMM8, [imm_61]
 MULSD XMM8, XMM9
+;ADD %9, %10, f64(3)
 MOVSD XMM11, XMM8
 ADDSD XMM11, [imm_62]
+;DIV %11, %d, f64(4)
 MOVSD XMM8, XMM9
 DIVSD XMM8, [imm_63]
+;GVEC %abc, f64(1), %8, %9, %11
 MOV RSI, RSP
 AND RSP, -32
 SUB RSP, 8
@@ -1979,6 +2162,7 @@ SUB RSP, 8
 MOVSD [RSP], XMM4
 VMOVUPD YMM12, [RSP]
 MOV RSP, RSI
+;GVEC %12, %d, %e
 MOV RSI, RSP
 AND RSP, -16
 SUB RSP, 8
@@ -1987,6 +2171,7 @@ SUB RSP, 8
 MOVSD [RSP], XMM9
 MOVUPD XMM7, [RSP]
 MOV RSP, RSI
+;GVEC %13, %e, %d
 MOV RSI, RSP
 AND RSP, -16
 SUB RSP, 8
@@ -1995,45 +2180,72 @@ SUB RSP, 8
 MOVSD [RSP], XMM10
 MOVUPD XMM8, [RSP]
 MOV RSP, RSI
+;ADD %xyz, %12, %13
 MOVAPD XMM9, XMM7
 ADDPD XMM9, XMM8
+;MOV %ta, i8(5)
 MOV BL, [imm_65]
+;MOV %tb, i16(5)
 MOV BX, [imm_66]
+;MOV %tc, i32(5)
 MOV EBX, [imm_67]
+;MOV %ts, i64(5)
 MOV RBX, [imm_54]
+;MOV %te, i64(5)
 MOV RBX, [imm_54]
+;MOV %ua, u8(5)
 MOV BL, [imm_68]
+;MOV %ub, u16(5)
 MOV BX, [imm_69]
+;MOV %uc, u32(5)
 MOV EBX, [imm_70]
+;MOV %us, u64(5)
 MOV RBX, [imm_71]
+;MOV %ue, u64(5)
 MOV RBX, [imm_71]
+;RET @void
 RET
 
 fn_empty:
+;RET @void
 RET
 
 fn_type_casting_int:
+;CAST %x, i64(5)
 MOV EBX, dword [imm_72]
+;CAST %y1, %x
 MOVSXD RSI, EBX
+;MOV %y2, %x
 MOV ESI, EBX
+;CAST %y3, %x
 MOV SI, BX
+;CAST %y4, %x
 MOV DIL, BL
+;CAST %y5, %x
 MOV EDI, EBX
+;CAST %y6, %x
 MOV R12D, EBX
+;CAST %y7, %x
 MOV R13W, BX
+;CAST %y8, %x
 MOV R13B, BL
+;CAST %z1, %y3
 MOVSX EAX, SI
 MOVD XMM7, EAX
 CVTDQ2PS XMM7, XMM7
+;CAST %z2, %y3
 MOVSX EAX, SI
 MOVD XMM7, EAX
 CVTDQ2PD XMM7, XMM7
+;CAST %z3, %y6
 MOV EAX, R12D
 XORPS XMM7, XMM7
 CVTSI2SS XMM7, RAX
+;CAST %z4, %y6
 MOV EAX, R12D
 XORPS XMM7, XMM7
 CVTSI2SD XMM7, RAX
+;CAST %z5, %y5
 XORPS XMM7, XMM7
 MOV RAX, RDI
 TEST RAX, RAX
@@ -2048,41 +2260,65 @@ OR RAX, R10
 CVTSI2SS XMM7, RAX
 ADDSS XMM7, XMM7
 u64tof_2:
+;RET @void
 RET
 
 fn_type_casting_float:
+;GVEC %v4f, f32(1), f32(2), f32(3), f32(4)
 MOVUPS XMM7, dqword [immv_8]
+;MOV %v1, %v4f
 MOVAPS XMM8, XMM7
+;CAST %v2, %v4f
 MOVAPS XMM8, XMM7
+;CAST %v3, %v4f
 VXORPS XMM8, XMM8, XMM8
 CVTPS2PD XMM8, XMM7
+;CAST %v4, %v4f
 VXORPS YMM8, YMM8, YMM8
 VCVTPS2PD YMM8, XMM7
+;GVEC %v8f, f32(1), f32(2), f32(3), f32(4), f32(5), f32(6), f32(7), f32(8)
 VMOVUPS YMM7, qqword [immv_9]
+;CAST %v5, %v8f
 MOVAPS XMM8, XMM7
+;MOV %v6, %v8f
 VMOVAPS YMM8, YMM7
+;CAST %v7, %v8f
 VXORPS XMM8, XMM8, XMM8
 CVTPS2PD XMM8, XMM7
+;CAST %v8, %v8f
 VXORPS YMM8, YMM8, YMM8
 VCVTPS2PD YMM8, XMM7
+;GVEC %v2d, f64(1), f64(2)
 MOVUPD XMM7, dqword [immv_10]
+;CAST %vd1, %v2d
 VXORPS XMM8, XMM8, XMM8
 CVTPD2PS XMM8, XMM7
+;CAST %vd2, %v2d
 VXORPS YMM8, YMM8, YMM8
 CVTPD2PS XMM8, XMM7
+;MOV %vd3, %v2d
 MOVAPD XMM8, XMM7
+;CAST %vd4, %v2d
 MOVAPD XMM8, XMM7
+;GVEC %v4d, f64(1), f64(2), f64(3), f64(4)
 VMOVUPD YMM7, qqword [immv_11]
+;CAST %vd5, %v4d
 VXORPS XMM8, XMM8, XMM8
 VCVTPD2PS XMM8, YMM7
+;CAST %vd6, %v4d
 VXORPS YMM8, YMM8, YMM8
 VCVTPD2PS XMM8, YMM7
+;CAST %vd7, %v4d
 VMOVAPD XMM8, XMM7
+;MOV %vd8, %v4d
 VMOVAPD YMM8, YMM7
+;MOV %1, u64(1)
 MOV RBX, [imm_73]
+;MUL %1, %1, u64(16)
 MOV RAX, RBX
 MUL [imm_74]
 MOV RBX, RAX
+;ALOC %pv, %1
 SUB RSP, 16
 MOVUPD [RSP], XMM7
 SUB RSP, 16
@@ -2109,9 +2345,12 @@ MOVUPD XMM8, [RSP]
 ADD RSP, 16
 MOVUPD XMM7, [RSP]
 ADD RSP, 16
+;MOV %2, [%pv]
 MOVUPS XMM7, [RSI]
+;CAST %pv1, %2
 VXORPS YMM8, YMM8, YMM8
 VCVTPS2PD YMM8, XMM7
+;RET @void
 RET
 
 section '.idata' import data readable writeable
