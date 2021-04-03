@@ -5,23 +5,24 @@ namespace erc
 {
     public abstract class ArithmeticOperator : IBinaryOperator
     {
-        private HashSet<DataTypeKind> _supportedDataTypes = new HashSet<DataTypeKind>() {
-                 DataTypeKind.I8,
-                 DataTypeKind.I16,
-                 DataTypeKind.I32,
-                 DataTypeKind.I64,
-                 DataTypeKind.U8,
-                 DataTypeKind.U16,
-                 DataTypeKind.U32,
-                 DataTypeKind.U64,
-                 DataTypeKind.F32,
-                 DataTypeKind.F64,
-                 DataTypeKind.VEC4F,
-                 DataTypeKind.VEC8F,
-                 DataTypeKind.VEC2D,
-                 DataTypeKind.VEC4D,
-                 DataTypeKind.CHAR8
-            };
+        private HashSet<DataTypeKind> _supportedDataTypes = new HashSet<DataTypeKind>()
+        {
+            DataTypeKind.I8,
+            DataTypeKind.I16,
+            DataTypeKind.I32,
+            DataTypeKind.I64,
+            DataTypeKind.U8,
+            DataTypeKind.U16,
+            DataTypeKind.U32,
+            DataTypeKind.U64,
+            DataTypeKind.F32,
+            DataTypeKind.F64,
+            DataTypeKind.VEC4F,
+            DataTypeKind.VEC8F,
+            DataTypeKind.VEC2D,
+            DataTypeKind.VEC4D,
+            DataTypeKind.CHAR8
+        };
 
         public abstract string Figure { get; }
         public abstract int Precedence { get; }

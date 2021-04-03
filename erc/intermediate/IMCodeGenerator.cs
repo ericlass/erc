@@ -504,6 +504,8 @@ namespace erc
             output.Add(IMOperation.Aloc(targetLocation, bytesLocation));
         }
 
+        //TODO: This version works, but the native code gen does not know it is an array now and cannot put a full-immediate array in the data section
+        //That is not that important currently as in real applications full-immediate arrays will we less common.
         private void GenerateValueArray(List<IMOperation> output, AstItem expression, IMOperand targetLocation)
         {
             var itemType = expression.DataType.ElementType;
@@ -524,7 +526,6 @@ namespace erc
             output.Add(IMOperation.Add(pointerLocation, pointerLocation, IMOperand.Immediate(DataType.U64, DataType.U64.ByteSize)));
 
             //Write all array values
-            var valueLocation = NewTempLocal(itemType);
             var first = true;
             foreach (var valueExpression in expression.Children)
             {

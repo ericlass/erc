@@ -402,6 +402,10 @@ namespace erc
 
         private void CheckValueArray(AstItem expression)
         {
+            //Check array is not empty
+            Assert.True(expression.Children.Count > 0, "Empty arrays are not allowed: " + expression);
+
+            //Check value expressions
             DataType valueType = null;
             foreach (var valueExpression in expression.Children)
             {

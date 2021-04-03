@@ -13,9 +13,9 @@ namespace erc
             //Do not check kind of operand1, just trust it is okay. It can be all kinds of expression items
             Assert.AstItemKind(operand2.Kind, AstItemKind.Type, "Invalid second operand for 'as' operator");
 
-            var typeCast = TypeCast.GetFrom(operand2.DataType.Kind);
-            Assert.True(typeCast != null, "Invalid type cast from " + operand2.DataType + " to " + operand1.DataType);
-            Assert.True(typeCast.CanCastTo(operand1.DataType.Kind), "Invalid type cast from " + operand2.DataType + " to " + operand1.DataType);
+            var typeCast = TypeCast.GetFrom(operand1.DataType.Kind);
+            Assert.True(typeCast != null, "Invalid type cast from " + operand1.DataType + " to " + operand2.DataType);
+            Assert.True(typeCast.CanCastTo(operand2.DataType.Kind), "Invalid type cast from " + operand1.DataType + " to " + operand2.DataType);
         }
 
         public DataType GetReturnType(AstItem operand1, AstItem operand2)

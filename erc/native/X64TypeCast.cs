@@ -25,6 +25,7 @@ namespace erc
                 [DataTypeKind.F32] = IntToFloat,
                 [DataTypeKind.F64] = IntToFloat,
                 [DataTypeKind.BOOL] = IntToBool,
+                [DataTypeKind.CHAR8] = JustMove,
             },
             //Conversions from U16 to <other>
             [DataTypeKind.U16] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
@@ -40,6 +41,7 @@ namespace erc
                 [DataTypeKind.F32] = IntToFloat,
                 [DataTypeKind.F64] = IntToFloat,
                 [DataTypeKind.BOOL] = IntToBool,
+                [DataTypeKind.CHAR8] = CutOff,
             },
             //Conversions from U32 to <other>
             [DataTypeKind.U32] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
@@ -55,6 +57,7 @@ namespace erc
                 [DataTypeKind.F32] = IntToFloat,
                 [DataTypeKind.F64] = IntToFloat,
                 [DataTypeKind.BOOL] = IntToBool,
+                [DataTypeKind.CHAR8] = CutOff,
             },
             //Conversions from U64 to <other>
             [DataTypeKind.U64] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
@@ -70,6 +73,7 @@ namespace erc
                 [DataTypeKind.F32] = IntToFloat,
                 [DataTypeKind.F64] = IntToFloat,
                 [DataTypeKind.BOOL] = IntToBool,
+                [DataTypeKind.CHAR8] = CutOff,
             },
             //Conversions from I8 to <other>
             [DataTypeKind.I8] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
@@ -85,6 +89,7 @@ namespace erc
                 [DataTypeKind.F32] = IntToFloat,
                 [DataTypeKind.F64] = IntToFloat,
                 [DataTypeKind.BOOL] = IntToBool,
+                [DataTypeKind.CHAR8] = JustMove,
             },
             //Conversions from I16 to <other>
             [DataTypeKind.I16] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
@@ -100,6 +105,7 @@ namespace erc
                 [DataTypeKind.F32] = IntToFloat,
                 [DataTypeKind.F64] = IntToFloat,
                 [DataTypeKind.BOOL] = IntToBool,
+                [DataTypeKind.CHAR8] = JustMove,
             },
             //Conversions from I32 to <other>
             [DataTypeKind.I32] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
@@ -115,6 +121,7 @@ namespace erc
                 [DataTypeKind.F32] = IntToFloat,
                 [DataTypeKind.F64] = IntToFloat,
                 [DataTypeKind.BOOL] = IntToBool,
+                [DataTypeKind.CHAR8] = CutOff,
             },
             //Conversions from I64 to <other>
             [DataTypeKind.I64] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
@@ -130,6 +137,7 @@ namespace erc
                 [DataTypeKind.F32] = IntToFloat,
                 [DataTypeKind.F64] = IntToFloat,
                 [DataTypeKind.BOOL] = IntToBool,
+                [DataTypeKind.CHAR8] = CutOff,
             },
             //Conversions from F32 to <other>
             [DataTypeKind.F32] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
@@ -191,6 +199,18 @@ namespace erc
                 [DataTypeKind.VEC2D] = Vec4dToX,
                 [DataTypeKind.VEC4D] = JustMove
             },
+            [DataTypeKind.CHAR8] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()
+            {
+                [DataTypeKind.U8] = JustMove,
+                [DataTypeKind.U16] = ZeroExtend,
+                [DataTypeKind.U32] = ZeroExtend,
+                [DataTypeKind.U64] = ZeroExtend,
+                [DataTypeKind.I8] = JustMove,
+                [DataTypeKind.I16] = ZeroExtend,
+                [DataTypeKind.I32] = ZeroExtend,
+                [DataTypeKind.I64] = ZeroExtend,
+                [DataTypeKind.CHAR8] = JustMove,
+            },
             //TODO: Rest of the types (vectors, bool, enum, pointer)
         };
 
@@ -237,7 +257,7 @@ namespace erc
         /// <param name="sourceType">The type of the source value.</param>
         private static void ZeroExtend(List<string> output, X64StorageLocation target, DataType targetType, X64StorageLocation source, DataType sourceType)
         {
-            Assert.DataTypeGroup(sourceType.Group, DataTypeGroup.ScalarInteger, "Invalid target data type for zero extend");
+            Assert.True(sourceType.Group == DataTypeGroup.ScalarInteger || sourceType.Group == DataTypeGroup.Character, "Invalid target data type for zero extend");
             Assert.DataTypeGroup(targetType.Group, DataTypeGroup.ScalarInteger, "Invalid source data type for zero extend");
             Assert.True(targetType.ByteSize >= sourceType.ByteSize, "Target type must have same or bigger byte size than source type! targetType: " + targetType + "; sourceType: " + sourceType);
             Assert.True(target.Kind != X64StorageLocationKind.DataSection && target.Kind != X64StorageLocationKind.Immediate, "Cannot zero extend to target location: " + target);

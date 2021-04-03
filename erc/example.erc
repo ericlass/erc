@@ -16,7 +16,8 @@ enum TestType2 {
 }
 
 fn arrays() {
-	let a = [1,2,3];
+	let k = 5;
+	let a = [1,2,3,k+1];
 	let b = ['H','e','l','l','o'];
 
 	let x = a[0];
@@ -26,6 +27,14 @@ fn arrays() {
 fn strings() {
 	let c = 'e';
 	let s = c - 'a';
+
+	let a = 65ub;
+	let x = a as char8;
+	
+	let y1 = c as u8;
+	let y2 = c as u16;
+	let y3 = c as u32;
+	let y4 = c as u64;
 }
 
 fn loops() {

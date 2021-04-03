@@ -14,11 +14,17 @@ Programm
     FunctionDecl: "arrays" (void)
         ParameterList
         StatementList
+            VarDecl: "k" (i64)
+                Immediate: 5 (i64)
             VarDecl: "a" ([i64])
                 ValueArrayDefinition: ([i64])
                     Immediate: 1 (i64)
                     Immediate: 2 (i64)
                     Immediate: 3 (i64)
+                    Expression
+                        Variable: "k" (i64)
+                        Immediate: 1 (i64)
+                        BinaryOperator: +
             VarDecl: "b" ([char8])
                 ValueArrayDefinition: ([char8])
                     CharLiteral: 'H' (char8)
@@ -42,6 +48,33 @@ Programm
                     Variable: "c" (char8)
                     CharLiteral: 'a' (char8)
                     BinaryOperator: -
+            VarDecl: "a" (u8)
+                Immediate: 65 (u8)
+            VarDecl: "x" (char8)
+                Expression
+                    Variable: "a" (u8)
+                    Type: (char8)
+                    BinaryOperator: as
+            VarDecl: "y1" (u8)
+                Expression
+                    Variable: "c" (char8)
+                    Type: (u8)
+                    BinaryOperator: as
+            VarDecl: "y2" (u16)
+                Expression
+                    Variable: "c" (char8)
+                    Type: (u16)
+                    BinaryOperator: as
+            VarDecl: "y3" (u32)
+                Expression
+                    Variable: "c" (char8)
+                    Type: (u32)
+                    BinaryOperator: as
+            VarDecl: "y4" (u64)
+                Expression
+                    Variable: "c" (char8)
+                    Type: (u64)
+                    BinaryOperator: as
     FunctionDecl: "loops" (void)
         ParameterList
         StatementList
@@ -637,80 +670,86 @@ fn main(): void
 
 [stack: 0, heap: 0]
 [
-  %1	: register(RBX),
-  %a	: register(RSI),
-  %2	: register(RBX),
-  [%2]	: heap_register(RBX+0),
+  %k	: register(RBX),
+  %1	: register(RSI),
+  %a	: register(RDI),
+  %2	: register(RSI),
+  [%2]	: heap_register(RSI+0),
+  %3	: register(RBX),
+  %b	: register(RSI),
   %4	: register(RBX),
-  %b	: register(RDI),
+  [%4]	: heap_register(RBX+0),
   %5	: register(RBX),
+  %x	: register(RDI),
   [%5]	: heap_register(RBX+0),
-  %7	: register(RBX),
-  %x	: register(RSI),
-  [%7]	: heap_register(RBX+0),
-  %8	: register(RBX),
+  %6	: register(RBX),
   %y	: register(SIL),
-  [%8]	: heap_register(RBX+0),
-  u64(32)	: data_section(imm_1),
-  u64(3)	: data_section(imm_2),
-  u64(8)	: data_section(imm_3),
-  i64(1)	: data_section(imm_4),
-  i64(2)	: data_section(imm_5),
-  i64(3)	: data_section(imm_6),
-  u64(13)	: data_section(imm_7),
-  u64(5)	: data_section(imm_8),
-  char8(H)	: data_section(imm_9),
-  u64(1)	: data_section(imm_10),
-  char8(e)	: data_section(imm_11),
-  char8(l)	: data_section(imm_12),
-  char8(o)	: data_section(imm_13),
-  i64(0)	: data_section(imm_14),
+  [%6]	: heap_register(RBX+0),
+  i64(5)	: data_section(imm_1),
+  u64(40)	: data_section(imm_2),
+  u64(4)	: data_section(imm_3),
+  u64(8)	: data_section(imm_4),
+  i64(1)	: data_section(imm_5),
+  i64(2)	: data_section(imm_6),
+  i64(3)	: data_section(imm_7),
+  u64(13)	: data_section(imm_8),
+  u64(5)	: data_section(imm_9),
+  char8(H)	: data_section(imm_10),
+  u64(1)	: data_section(imm_11),
+  char8(e)	: data_section(imm_12),
+  char8(l)	: data_section(imm_13),
+  char8(o)	: data_section(imm_14),
+  i64(0)	: data_section(imm_15),
 ]
 fn arrays(): void
 {
-    MOV %1, u64(32)
+    MOV %k, i64(5)
+    MOV %1, u64(40)
     ALOC %a, %1
     FREE %1
     MOV %2, %a
-    MOV [%2], u64(3)
+    MOV [%2], u64(4)
     ADD %2, %2, u64(8)
     MOV [%2], i64(1)
     ADD %2, %2, u64(8)
     MOV [%2], i64(2)
     ADD %2, %2, u64(8)
     MOV [%2], i64(3)
+    ADD %2, %2, u64(8)
+    ADD [%2], %k, i64(1)
+    FREE %k
     FREE %2
-    MOV %4, u64(13)
-    ALOC %b, %4
+    MOV %3, u64(13)
+    ALOC %b, %3
+    FREE %3
+    MOV %4, %b
+    MOV [%4], u64(5)
+    ADD %4, %4, u64(8)
+    MOV [%4], char8(H)
+    ADD %4, %4, u64(1)
+    MOV [%4], char8(e)
+    ADD %4, %4, u64(1)
+    MOV [%4], char8(l)
+    ADD %4, %4, u64(1)
+    MOV [%4], char8(l)
+    ADD %4, %4, u64(1)
+    MOV [%4], char8(o)
     FREE %4
-    MOV %5, %b
-    MOV [%5], u64(5)
-    ADD %5, %5, u64(8)
-    MOV [%5], char8(H)
-    ADD %5, %5, u64(1)
-    MOV [%5], char8(e)
-    ADD %5, %5, u64(1)
-    MOV [%5], char8(l)
-    ADD %5, %5, u64(1)
-    MOV [%5], char8(l)
-    ADD %5, %5, u64(1)
-    MOV [%5], char8(o)
-    FREE %5
-    MOV %7, i64(0)
-    MUL %7, %7, u64(8)
-    ADD %7, %7, %a
+    MOV %5, i64(0)
+    MUL %5, %5, u64(8)
+    ADD %5, %5, %a
     FREE %a
-    ADD %7, %7, u64(8)
-    MOV %x, [%7]
-    FREE %7
+    ADD %5, %5, u64(8)
+    MOV %x, [%5]
+    FREE %5
     FREE %x
-    MOV %8, i64(2)
-    MUL %8, %8, u64(1)
-    ADD %8, %8, %b
+    MOV %6, i64(2)
+    MUL %6, %6, u64(1)
+    ADD %6, %6, %b
     FREE %b
-    ADD %8, %8, u64(8)
-    MOV %y, [%8]
-    FREE %8
+    ADD %6, %6, u64(8)
+    MOV %y, [%6]
+    FREE %6
     FREE %y
     RET @void
 }
@@ -719,15 +758,34 @@ fn arrays(): void
 [
   %c	: register(BL),
   %s	: register(SIL),
-  char8(e)	: data_section(imm_15),
-  char8(a)	: data_section(imm_16),
+  %a	: register(SIL),
+  %x	: register(DIL),
+  %y1	: register(SIL),
+  %y2	: register(SI),
+  %y3	: register(ESI),
+  %y4	: register(RSI),
+  char8(e)	: data_section(imm_16),
+  char8(a)	: data_section(imm_17),
+  u8(65)	: data_section(imm_18),
 ]
 fn strings(): void
 {
     MOV %c, char8(e)
     SUB %s, %c, char8(a)
-    FREE %c
     FREE %s
+    MOV %a, u8(65)
+    CAST %x, %a
+    FREE %a
+    FREE %x
+    CAST %y1, %c
+    FREE %y1
+    CAST %y2, %c
+    FREE %y2
+    CAST %y3, %c
+    FREE %y3
+    CAST %y4, %c
+    FREE %c
+    FREE %y4
     RET @void
 }
 
@@ -740,12 +798,12 @@ fn strings(): void
   %3	: register(R12B),
   %a	: register(RBX),
   %4	: register(SIL),
-  i64(0)	: data_section(imm_17),
-  i64(1)	: data_section(imm_18),
-  i64(5)	: data_section(imm_19),
-  i64(2)	: data_section(imm_20),
-  bool(1)	: data_section(imm_21),
-  bool(0)	: data_section(imm_22),
+  i64(0)	: data_section(imm_19),
+  i64(1)	: data_section(imm_20),
+  i64(5)	: data_section(imm_21),
+  i64(2)	: data_section(imm_22),
+  bool(1)	: data_section(imm_23),
+  bool(0)	: data_section(imm_24),
 ]
 fn loops(): void
 {
@@ -784,9 +842,9 @@ fn loops(): void
 [
   %test	: register(EBX),
   %same	: register(BL),
-  u32(1)	: data_section(imm_23),
-  u32(7)	: data_section(imm_24),
-  u32(0)	: data_section(imm_25),
+  u32(1)	: data_section(imm_25),
+  u32(7)	: data_section(imm_26),
+  u32(0)	: data_section(imm_27),
 ]
 fn enums(): void
 {
@@ -804,10 +862,10 @@ fn enums(): void
   %1	: register(RSI),
   %2	: register(RDI),
   %3	: register(R12),
-  i64(1)	: data_section(imm_26),
-  i64(2)	: data_section(imm_27),
-  i64(3)	: data_section(imm_28),
-  i64(6)	: data_section(imm_29),
+  i64(1)	: data_section(imm_28),
+  i64(2)	: data_section(imm_29),
+  i64(3)	: data_section(imm_30),
+  i64(6)	: data_section(imm_31),
 ]
 fn expressions(): void
 {
@@ -845,16 +903,16 @@ fn expressions(): void
   [%8]	: heap_register(R12+0),
   %9	: stack_base(-16),
   %k	: register(RBX),
-  u64(5)	: data_section(imm_30),
-  u64(8)	: data_section(imm_31),
-  i64(5)	: data_section(imm_32),
-  i64(2)	: data_section(imm_33),
-  i64(8)	: data_section(imm_34),
-  i64(0)	: data_section(imm_35),
-  i64(7)	: data_section(imm_36),
-  i64(3)	: data_section(imm_37),
-  i64(1)	: data_section(imm_38),
-  i64(9)	: data_section(imm_39),
+  u64(5)	: data_section(imm_32),
+  u64(8)	: data_section(imm_33),
+  i64(5)	: data_section(imm_34),
+  i64(2)	: data_section(imm_35),
+  i64(8)	: data_section(imm_36),
+  i64(0)	: data_section(imm_37),
+  i64(7)	: data_section(imm_38),
+  i64(3)	: data_section(imm_39),
+  i64(1)	: data_section(imm_40),
+  i64(9)	: data_section(imm_41),
 ]
 fn pointers(): void
 {
@@ -917,13 +975,13 @@ fn pointers(): void
   %v1	: register(XMM7),
   %v2	: register(XMM8),
   %4	: register(BL),
-  i64(5)	: data_section(imm_40),
-  i64(3)	: data_section(imm_41),
-  bool(1)	: data_section(imm_42),
-  i64(1)	: data_section(imm_43),
-  i64(2)	: data_section(imm_44),
-  f32(1)	: data_section(imm_45),
-  i64(7)	: data_section(imm_46),
+  i64(5)	: data_section(imm_42),
+  i64(3)	: data_section(imm_43),
+  bool(1)	: data_section(imm_44),
+  i64(1)	: data_section(imm_45),
+  i64(2)	: data_section(imm_46),
+  f32(1)	: data_section(imm_47),
+  i64(7)	: data_section(imm_48),
 ]
 fn boolean(bool): void
 {
@@ -977,11 +1035,11 @@ ext fn['GetLastError', 'Kernel32.dll'] last_error(): i64
   %8	: register(YMM9),
   %6	: register(YMM7),
   %k2	: register(YMM8),
-  i64(0)	: data_section(imm_47),
-  bool(1)	: data_section(imm_48),
-  i64(7)	: data_section(imm_49),
-  i64(3)	: data_section(imm_50),
-  i64(5)	: data_section(imm_51),
+  i64(0)	: data_section(imm_49),
+  bool(1)	: data_section(imm_50),
+  i64(7)	: data_section(imm_51),
+  i64(3)	: data_section(imm_52),
+  i64(5)	: data_section(imm_53),
 ]
 fn fn_calls(): void
 {
@@ -1107,24 +1165,24 @@ fn add3(u16, u16): u16
   %uc	: register(EBX),
   %us	: register(RBX),
   %ue	: register(RBX),
-  i64(5)	: data_section(imm_52),
-  i64(6)	: data_section(imm_53),
-  i64(7)	: data_section(imm_54),
-  i64(8)	: data_section(imm_55),
-  f32(1,5)	: data_section(imm_56),
-  f64(1,2)	: data_section(imm_57),
-  f64(0,5)	: data_section(imm_58),
-  f64(2)	: data_section(imm_59),
-  f64(3)	: data_section(imm_60),
-  f64(4)	: data_section(imm_61),
-  f64(1)	: data_section(imm_62),
-  i8(5)	: data_section(imm_63),
-  i16(5)	: data_section(imm_64),
-  i32(5)	: data_section(imm_65),
-  u8(5)	: data_section(imm_66),
-  u16(5)	: data_section(imm_67),
-  u32(5)	: data_section(imm_68),
-  u64(5)	: data_section(imm_69),
+  i64(5)	: data_section(imm_54),
+  i64(6)	: data_section(imm_55),
+  i64(7)	: data_section(imm_56),
+  i64(8)	: data_section(imm_57),
+  f32(1,5)	: data_section(imm_58),
+  f64(1,2)	: data_section(imm_59),
+  f64(0,5)	: data_section(imm_60),
+  f64(2)	: data_section(imm_61),
+  f64(3)	: data_section(imm_62),
+  f64(4)	: data_section(imm_63),
+  f64(1)	: data_section(imm_64),
+  i8(5)	: data_section(imm_65),
+  i16(5)	: data_section(imm_66),
+  i32(5)	: data_section(imm_67),
+  u8(5)	: data_section(imm_68),
+  u16(5)	: data_section(imm_69),
+  u32(5)	: data_section(imm_70),
+  u64(5)	: data_section(imm_71),
 ]
 fn types(): void
 {
@@ -1229,7 +1287,7 @@ fn empty(): void
   %z3	: register(XMM7),
   %z4	: register(XMM7),
   %z5	: register(XMM7),
-  i64(5)	: data_section(imm_70),
+  i64(5)	: data_section(imm_72),
 ]
 fn type_casting_int(): void
 {
@@ -1291,8 +1349,8 @@ fn type_casting_int(): void
   %2	: register(XMM7),
   [%pv]	: heap_register(RSI+0),
   %pv1	: register(YMM8),
-  u64(1)	: data_section(imm_71),
-  u64(16)	: data_section(imm_72),
+  u64(1)	: data_section(imm_73),
+  u64(16)	: data_section(imm_74),
 ]
 fn type_casting_float(): void
 {
@@ -1367,90 +1425,92 @@ include 'win64a.inc'
 section '.data' data readable writeable
 
 immv_5 dd 1.0,2.0,3.0,4.0,1.0,2.0,3.0,4.0
-immv_11 dq 1.0,2.0,3.0,4.0
-immv_9 dd 1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0
 immv_7 dq 1.0,2.0,3.0,4.0
+immv_9 dd 1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0
 immv_3 dq 1.0,2.0,3.0,4.0
-immv_10 dq 1.0,2.0
+immv_11 dq 1.0,2.0,3.0,4.0
 immv_8 dd 1.0,2.0,3.0,4.0
 immv_6 dq 1.0,2.0
-immv_4 dd 1.0,2.0,3.0,4.0
 immv_2 dd 1.0,2.0,3.0,4.0
+immv_4 dd 1.0,2.0,3.0,4.0
+immv_10 dq 1.0,2.0
 immv_1 dd 1.0,2.0,3.0,4.0
-imm_51 dq 5
-imm_50 dq 3
-imm_49 dq 7
-imm_47 dq 0
-imm_1 dq 32
-imm_44 dq 2
+imm_52 dq 3
+imm_51 dq 7
+imm_49 dq 0
+imm_45 dq 1
+imm_46 dq 2
+imm_53 dq 5
 erc_process_heap dq 0
-imm_41 dq 3
-imm_40 dq 5
-imm_46 dq 7
-imm_52 dq 5
-imm_57 dq 1.2
-imm_54 dq 7
-imm_55 dq 8
-imm_39 dq 9
-imm_58 dq 0.5
-imm_59 dq 2.0
-imm_60 dq 3.0
-imm_61 dq 4.0
-imm_62 dq 1.0
-imm_69 dq 5
-imm_70 dq 5
-imm_71 dq 1
-imm_72 dq 16
-imm_53 dq 6
-imm_38 dq 1
-imm_43 dq 1
-imm_36 dq 7
-imm_2 dq 3
-imm_3 dq 8
-imm_4 dq 1
-imm_5 dq 2
-imm_6 dq 3
-imm_7 dq 13
-imm_8 dq 5
-imm_10 dq 1
-imm_14 dq 0
-imm_37 dq 3
-imm_18 dq 1
-imm_19 dq 5
-imm_20 dq 2
-imm_17 dq 0
+imm_43 dq 3
+imm_42 dq 5
+imm_48 dq 7
+imm_1 dq 5
+imm_59 dq 1.2
+imm_55 dq 6
+imm_56 dq 7
+imm_57 dq 8
+imm_41 dq 9
+imm_60 dq 0.5
+imm_61 dq 2.0
+imm_62 dq 3.0
+imm_63 dq 4.0
+imm_64 dq 1.0
+imm_71 dq 5
+imm_72 dq 5
+imm_73 dq 1
+imm_74 dq 16
+imm_54 dq 5
+imm_40 dq 1
 erc_u32_zero dd 0
-imm_35 dq 0
-imm_34 dq 8
-imm_33 dq 2
-imm_26 dq 1
+imm_38 dq 7
+imm_9 dq 5
+imm_8 dq 13
+imm_7 dq 3
+imm_15 dq 0
+imm_6 dq 2
+imm_5 dq 1
+imm_39 dq 3
+imm_19 dq 0
+imm_20 dq 1
+imm_21 dq 5
+imm_22 dq 2
+imm_3 dq 4
+imm_4 dq 8
 imm_32 dq 5
-imm_27 dq 2
-imm_28 dq 3
-imm_31 dq 8
-imm_30 dq 5
-imm_29 dq 6
-imm_45 dd 1.0
-imm_68 dd 5
-imm_25 dd 0
-imm_24 dd 7
-imm_23 dd 1
-imm_56 dd 1.5
-imm_65 dd 5
-imm_64 dw 5
-imm_67 dw 5
-imm_22 db 0
-imm_42 db 1
-imm_21 db 1
-imm_48 db 1
-imm_16 db 'a'
-imm_15 db 'e'
-imm_11 db 'e'
-imm_12 db 'l'
-imm_13 db 'o'
-imm_63 db 5
-imm_9 db 'H'
-imm_66 db 5
+imm_37 dq 0
+imm_36 dq 8
+imm_35 dq 2
+imm_34 dq 5
+imm_33 dq 8
+imm_31 dq 6
+imm_11 dq 1
+imm_30 dq 3
+imm_29 dq 2
+imm_28 dq 1
+imm_2 dq 40
+imm_47 dd 1.0
+imm_27 dd 0
+imm_67 dd 5
+imm_25 dd 1
+imm_70 dd 5
+imm_58 dd 1.5
+imm_26 dd 7
+imm_66 dw 5
+imm_69 dw 5
+imm_10 db 'H'
+imm_18 db 65
+imm_13 db 'l'
+imm_68 db 5
+imm_65 db 5
+imm_14 db 'o'
+imm_16 db 'e'
+imm_17 db 'a'
+imm_23 db 1
+imm_24 db 0
+imm_50 db 1
+imm_12 db 'e'
+imm_44 db 1
 
 section '.text' code readable executable
 start:
@@ -1472,7 +1532,39 @@ RET
 
 fn_arrays:
 MOV RBX, [imm_1]
+MOV RSI, [imm_2]
 PUSH RBX
+PUSH RSI
+MOV RCX, [erc_process_heap]
+MOV EDX, [erc_u32_zero]
+MOV R8, RSI
+SUB RSP, 0x20
+MOV RBP, RSP
+CALL [HeapAlloc]
+ADD RSP, 0x20
+MOV RDI, RAX
+POP RSI
+POP RBX
+MOV RSI, RDI
+MOV RAX, [imm_3]
+MOV [RSI], RAX
+ADD RSI, [imm_4]
+MOV RAX, [imm_5]
+MOV [RSI], RAX
+ADD RSI, [imm_4]
+MOV RAX, [imm_6]
+MOV [RSI], RAX
+ADD RSI, [imm_4]
+MOV RAX, [imm_7]
+MOV [RSI], RAX
+ADD RSI, [imm_4]
+MOV RAX, RBX
+ADD RAX, [imm_5]
+MOV [RSI], RAX
+MOV RBX, [imm_8]
+PUSH RDI
+PUSH RBX
+PUSH RSI
 MOV RCX, [erc_process_heap]
 MOV EDX, [erc_u32_zero]
 MOV R8, RBX
@@ -1481,117 +1573,100 @@ MOV RBP, RSP
 CALL [HeapAlloc]
 ADD RSP, 0x20
 MOV RSI, RAX
-POP RBX
-MOV RBX, RSI
-MOV RAX, [imm_2]
-MOV [RBX], RAX
-ADD RBX, [imm_3]
-MOV RAX, [imm_4]
-MOV [RBX], RAX
-ADD RBX, [imm_3]
-MOV RAX, [imm_5]
-MOV [RBX], RAX
-ADD RBX, [imm_3]
-MOV RAX, [imm_6]
-MOV [RBX], RAX
-MOV RBX, [imm_7]
-PUSH RSI
-PUSH RBX
-MOV RCX, [erc_process_heap]
-MOV EDX, [erc_u32_zero]
-MOV R8, RBX
-SUB RSP, 0x20
-MOV RBP, RSP
-CALL [HeapAlloc]
-ADD RSP, 0x20
-MOV RDI, RAX
-POP RBX
 POP RSI
-MOV RBX, RDI
-MOV RAX, [imm_8]
+POP RBX
+POP RDI
+MOV RBX, RSI
+MOV RAX, [imm_9]
 MOV [RBX], RAX
-ADD RBX, [imm_3]
-MOV AL, [imm_9]
+ADD RBX, [imm_4]
+MOV AL, [imm_10]
 MOV [RBX], AL
-ADD RBX, [imm_10]
-MOV AL, [imm_11]
-MOV [RBX], AL
-ADD RBX, [imm_10]
+ADD RBX, [imm_11]
 MOV AL, [imm_12]
 MOV [RBX], AL
-ADD RBX, [imm_10]
-MOV AL, [imm_12]
-MOV [RBX], AL
-ADD RBX, [imm_10]
+ADD RBX, [imm_11]
 MOV AL, [imm_13]
 MOV [RBX], AL
-MOV RBX, [imm_14]
+ADD RBX, [imm_11]
+MOV AL, [imm_13]
+MOV [RBX], AL
+ADD RBX, [imm_11]
+MOV AL, [imm_14]
+MOV [RBX], AL
+MOV RBX, [imm_15]
 MOV RAX, RBX
-MUL [imm_3]
-MOV RBX, RAX
-ADD RBX, RSI
-ADD RBX, [imm_3]
-MOV RSI, [RBX]
-MOV RBX, [imm_5]
-MOV RAX, RBX
-MUL [imm_10]
+MUL [imm_4]
 MOV RBX, RAX
 ADD RBX, RDI
-ADD RBX, [imm_3]
+ADD RBX, [imm_4]
+MOV RDI, [RBX]
+MOV RBX, [imm_6]
+MOV RAX, RBX
+MUL [imm_11]
+MOV RBX, RAX
+ADD RBX, RSI
+ADD RBX, [imm_4]
 MOV SIL, [RBX]
 RET
 
 fn_strings:
-MOV BL, [imm_15]
+MOV BL, [imm_16]
 MOV SIL, BL
-SUB SIL, [imm_16]
+SUB SIL, [imm_17]
+MOV SIL, [imm_18]
+MOV DIL, SIL
+MOV SIL, BL
+MOV SIL, BL
+MOV SIL, BL
+MOV SIL, BL
 RET
 
 fn_loops:
-MOV RBX, [imm_17]
-MOV RSI, [imm_18]
+MOV RBX, [imm_19]
+MOV RSI, [imm_20]
 label_1:
-MOV RDI, [imm_19]
+MOV RDI, [imm_21]
 CMP RBX, RDI
 JG label_2
 MOV RDI, RBX
-ADD RDI, [imm_18]
-CMP RDI, [imm_20]
+ADD RDI, [imm_20]
+CMP RDI, [imm_22]
 SETG R12B
-CMP R12B, [imm_21]
+CMP R12B, [imm_23]
 JNE label_3
 JMP label_2
 label_3:
 ADD RBX, RSI
 JMP label_1
 label_2:
-MOV RBX, [imm_19]
+MOV RBX, [imm_21]
 label_4:
-CMP RBX, [imm_17]
+CMP RBX, [imm_19]
 SETG SIL
-CMP SIL, [imm_22]
+CMP SIL, [imm_24]
 JE label_5
-SUB RBX, [imm_18]
+SUB RBX, [imm_20]
 JMP label_5
 JMP label_4
 label_5:
 RET
 
 fn_enums:
-MOV EBX, [imm_23]
-MOV EBX, [imm_24]
-MOV EAX, [imm_25]
-CMP EAX, [imm_23]
+MOV EBX, [imm_25]
+MOV EBX, [imm_26]
+MOV EAX, [imm_27]
+CMP EAX, [imm_25]
 SETE BL
 RET
 
 fn_expressions:
-MOV RBX, [imm_26]
-ADD RBX, [imm_27]
+MOV RBX, [imm_28]
+ADD RBX, [imm_29]
 XOR RSI, RSI
-SUB RSI, [imm_28]
+SUB RSI, [imm_30]
 XOR RDI, RDI
-SUB RDI, [imm_29]
+SUB RDI, [imm_31]
 MOV RAX, RSI
 IMUL RDI
 MOV R12, RAX
@@ -1600,9 +1675,9 @@ SUB RBX, R12
 RET
 
 fn_pointers:
-MOV RBX, [imm_30]
+MOV RBX, [imm_32]
 MOV RAX, RBX
-MUL [imm_31]
+MUL [imm_33]
 MOV RBX, RAX
 PUSH RBX
 MOV RCX, [erc_process_heap]
@@ -1614,44 +1689,44 @@ CALL [HeapAlloc]
 ADD RSP, 0x20
 MOV RSI, RAX
 POP RBX
-MOV RAX, [imm_32]
-MOV [RSI], RAX
-MOV RBX, [imm_33]
-MOV RAX, RBX
-MUL [imm_31]
-MOV RBX, RAX
-ADD RBX, RSI
 MOV RAX, [imm_34]
-MOV [RBX], RAX
+MOV [RSI], RAX
 MOV RBX, [imm_35]
 MOV RAX, RBX
-MUL [imm_31]
+MUL [imm_33]
+MOV RBX, RAX
+ADD RBX, RSI
+MOV RAX, [imm_36]
+MOV [RBX], RAX
+MOV RBX, [imm_37]
+MOV RAX, RBX
+MUL [imm_33]
 MOV RBX, RAX
 ADD RBX, RSI
 MOV RDI, [RBX]
 MOV RAX, RDI
-ADD RAX, [imm_36]
+ADD RAX, [imm_38]
 MOV [RBP], RAX
 MOV RBX, [RSI]
 MOV RDI, RBX
-ADD RDI, [imm_37]
+ADD RDI, [imm_39]
 LEA RBX, [RBP]
-MOV R12, [imm_38]
+MOV R12, [imm_40]
 MOV RAX, R12
-MUL [imm_31]
+MUL [imm_33]
 MOV R12, RAX
 ADD R12, RSI
 MOV RAX, [R12]
 MOV [RBP+8], RAX
 LEA RBX, [RBP+8]
-MOV RAX, [imm_37]
+MOV RAX, [imm_39]
 MOV [RBX], RAX
-MOV R12, [imm_38]
+MOV R12, [imm_40]
 MOV RAX, R12
-MUL [imm_31]
+MUL [imm_33]
 MOV R12, RAX
 ADD R12, RBX
-MOV RAX, [imm_39]
+MOV RAX, [imm_41]
 MOV [R12], RAX
 MOV [RBP+16], EDI
 LEA RBX, [RBP+16]
@@ -1673,29 +1748,29 @@ POP RSI
 RET
 
 fn_boolean:
-MOV RAX, [imm_40]
-CMP RAX, [imm_41]
+MOV RAX, [imm_42]
+CMP RAX, [imm_43]
 SETGE BL
 MOV SIL, BL
-AND SIL, [imm_42]
+AND SIL, [imm_44]
 MOV BL, SIL
 OR BL, BL
 NOT BL
-MOV RBX, [imm_40]
-MOV RAX, [imm_43]
-CMP RAX, [imm_44]
+MOV RBX, [imm_42]
+MOV RAX, [imm_45]
+CMP RAX, [imm_46]
 SETLE SIL
-CMP SIL, [imm_42]
+CMP SIL, [imm_44]
 JNE label_7
-MOV RBX, [imm_44]
-MOVSS XMM7, [imm_45]
+MOV RBX, [imm_46]
+MOVSS XMM7, [imm_47]
 JMP label_6
 label_7:
-MOV RBX, [imm_46]
+MOV RBX, [imm_48]
 label_6:
-MOV RBX, [imm_41]
-ADD RBX, [imm_44]
-CMP [imm_40], RBX
+MOV RBX, [imm_43]
+ADD RBX, [imm_46]
+CMP [imm_42], RBX
 SETG SIL
 MOVUPS XMM7, dqword [immv_1]
 MOVUPS XMM8, dqword [immv_2]
@@ -1704,7 +1779,7 @@ CMPEQPS XMM4, XMM8
 MOVMSKPS EAX, XMM4
 CMP EAX, 0xF
 SETE BL
-CMP BL, [imm_42]
+CMP BL, [imm_44]
 JNE label_8
 RET
 label_8:
@@ -1716,15 +1791,15 @@ MOV RBP, RSP
 CALL [GetLastError]
 ADD RSP, 0x20
 MOV RBX, RAX
-CMP RBX, [imm_47]
+CMP RBX, [imm_49]
 SETE SIL
-CMP SIL, [imm_48]
+CMP SIL, [imm_50]
 JNE label_9
 RET
 label_9:
-MOV RBX, [imm_49]
-ADD RBX, [imm_50]
-MOV RAX, [imm_51]
+MOV RBX, [imm_51]
+ADD RBX, [imm_52]
+MOV RAX, [imm_53]
 IMUL RBX
 MOV RSI, RAX
 VMOVUPD YMM7, qqword [immv_3]
@@ -1818,18 +1893,18 @@ MOV AX, SI
 RET
 
 fn_types:
-MOV RAX, [imm_52]
-IMUL [imm_53]
-MOV RBX, RAX
 MOV RAX, [imm_54]
 IMUL [imm_55]
+MOV RBX, RAX
+MOV RAX, [imm_56]
+IMUL [imm_57]
 MOV RSI, RAX
 MOV RDI, RBX
 ADD RDI, RSI
-MOVSS XMM7, [imm_56]
+MOVSS XMM7, [imm_58]
 MOVSS XMM8, XMM7
-MOVSD XMM9, [imm_57]
-MOVSD XMM10, [imm_58]
+MOVSD XMM9, [imm_59]
+MOVSD XMM10, [imm_60]
 MOV RBX, RDI
 MOVSS XMM11, XMM7
 MOVSS XMM7, XMM8
@@ -1876,7 +1951,7 @@ POP RBX
 POP RSI
 MOVSD XMM7, XMM10
 MULSD XMM7, XMM9
-ADDSD XMM7, [imm_59]
+ADDSD XMM7, [imm_61]
 MOVUPS XMM7, dqword [immv_4]
 VMOVUPS YMM7, qqword [immv_5]
 MOVUPD XMM7, dqword [immv_6]
@@ -1884,13 +1959,13 @@ VMOVUPD YMM8, qqword [immv_7]
 MOVAPD XMM8, XMM7
 ADDPD XMM8, XMM7
 MOVSD XMM7, XMM9
-MULSD XMM7, [imm_59]
-MOVSD XMM8, [imm_59]
+MULSD XMM7, [imm_61]
+MOVSD XMM8, [imm_61]
 MULSD XMM8, XMM9
 MOVSD XMM11, XMM8
-ADDSD XMM11, [imm_60]
+ADDSD XMM11, [imm_62]
 MOVSD XMM8, XMM9
-DIVSD XMM8, [imm_61]
+DIVSD XMM8, [imm_63]
 MOV RSI, RSP
 AND RSP, -32
 SUB RSP, 8
@@ -1899,7 +1974,7 @@ SUB RSP, 8
 MOVSD [RSP], XMM11
 SUB RSP, 8
 MOVSD [RSP], XMM7
-MOVSD XMM4, [imm_62]
+MOVSD XMM4, [imm_64]
 SUB RSP, 8
 MOVSD [RSP], XMM4
 VMOVUPD YMM12, [RSP]
@@ -1922,23 +1997,23 @@ MOVUPD XMM8, [RSP]
 MOV RSP, RSI
 MOVAPD XMM9, XMM7
 ADDPD XMM9, XMM8
-MOV BL, [imm_63]
-MOV BX, [imm_64]
-MOV EBX, [imm_65]
-MOV RBX, [imm_52]
-MOV RBX, [imm_52]
-MOV BL, [imm_66]
-MOV BX, [imm_67]
-MOV EBX, [imm_68]
-MOV RBX, [imm_69]
-MOV RBX, [imm_69]
+MOV BL, [imm_65]
+MOV BX, [imm_66]
+MOV EBX, [imm_67]
+MOV RBX, [imm_54]
+MOV RBX, [imm_54]
+MOV BL, [imm_68]
+MOV BX, [imm_69]
+MOV EBX, [imm_70]
+MOV RBX, [imm_71]
+MOV RBX, [imm_71]
 RET
 
 fn_empty:
 RET
 
 fn_type_casting_int:
-MOV EBX, dword [imm_70]
+MOV EBX, dword [imm_72]
 MOVSXD RSI, EBX
 MOV ESI, EBX
 MOV SI, BX
@@ -2004,9 +2079,9 @@ VXORPS YMM8, YMM8, YMM8
 VCVTPD2PS XMM8, YMM7
 VMOVAPD XMM8, XMM7
 VMOVAPD YMM8, YMM7
-MOV RBX, [imm_71]
+MOV RBX, [imm_73]
 MOV RAX, RBX
-MUL [imm_72]
+MUL [imm_74]
 MOV RBX, RAX
 SUB RSP, 16
 MOVUPD [RSP], XMM7
