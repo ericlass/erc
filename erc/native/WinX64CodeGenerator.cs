@@ -133,6 +133,16 @@ namespace erc
             _currentFunction = function.Definition;
             _usedRegisters.Clear();
 
+            output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RBP), X64StorageLocation.AsRegister(X64Register.RSP)));
+
+            if (_functionScope.LocalsStackFrameSize > 0)
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.SUB, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(_functionScope.LocalsStackFrameSize.ToString())));
+
+            if (_functionScope.LocalsHeapChunkSize > 0)
+            {
+                //TODO: Allocate locals heap chunk
+            }
+
             foreach (var operation in function.Body)
             {
                 if (_debugOutput && operation.Instruction.Kind != IMInstructionKind.FREE)
@@ -290,6 +300,14 @@ namespace erc
                     GenerateLea(output, operation);
                     break;
 
+                case IMInstructionKind.GVAS:
+                    GenerateGvas(output, operation);
+                    break;
+
+                case IMInstructionKind.GSAS:
+                    GenerateGsas(output, operation);
+                    break;
+
                 case IMInstructionKind.FREE:
                     var location = RequireOperandLocation(operation.Operands[0]);
                     if (location.Kind == X64StorageLocationKind.Register)
@@ -383,6 +401,15 @@ namespace erc
                 throw new Exception("Operand has no location in function scope! This should not happen. Given: " + operand);
 
             return result;
+        }
+
+        private X64StorageLocation RequireArrayDataLocation(IMOperand target)
+        {
+            var arrayDataName = IMOperand.GetArrayLocationName(target);
+            if (_functionScope.LocalsLocations.ContainsKey(arrayDataName))
+                return _functionScope.LocalsLocations[arrayDataName];
+
+            throw new Exception("No location for array data found for array: " + target);
         }
 
         private void GenerateComment(List<string> output, IMOperation operation)
@@ -584,6 +611,15 @@ namespace erc
 
         private void GenerateRet(List<string> output, IMOperation operation)
         {
+            if (_functionScope.LocalsHeapChunkSize > 0)
+            {
+                //TODO: Free locals heap chunk
+            }
+
+            //Free stack portion for locals so stack pointer now points to return address
+            if (_functionScope.LocalsStackFrameSize > 0)
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.ADD, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(_functionScope.LocalsStackFrameSize.ToString())));
+
             var returnValue = operation.Operands[0];
             if (returnValue.DataType.Kind != DataTypeKind.VOID)
             {
@@ -848,7 +884,6 @@ namespace erc
 
             //Add 32 bytes shadow space
             output.Add(X64CodeFormat.FormatOperation(X64Instruction.SUB, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate("0x20")));
-            output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RBP), X64StorageLocation.AsRegister(X64Register.RSP)));
 
             //Finally, call function
             if (function.IsExtern)
@@ -1045,6 +1080,53 @@ namespace erc
                 //Restore stack pointer
                 output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.AsRegister(X64Register.RSI)));
             }
+        }
+
+        private void GenerateGvas(List<string> output, IMOperation operation)
+        {
+            var target = operation.Operands[0];
+            var values = operation.Operands.GetRange(1, operation.Operands.Count - 1);
+
+            var arrayStartLocation = RequireArrayDataLocation(target);
+            var arrayDataLocation = arrayStartLocation.Copy(); //Need a copy where the offset can be changed without changing the original offset
+            Assert.True(arrayDataLocation.Kind == X64StorageLocationKind.StackFromBase, "Array data for GVAS must be on stack from base, given: " + arrayDataLocation);
+
+            //Put array size first. Need to use accumulator because cannot move qword immediate to memory directly
+            var u64Type = X64DataTypeProperties.GetProperties(DataTypeKind.U64);
+            var accLocation = X64StorageLocation.AsRegister(u64Type.Accumulator);
+            X64GeneratorUtils.Move(output, DataType.U64, accLocation, X64StorageLocation.Immediate(DataType.U64.ByteSize.ToString()));
+            X64GeneratorUtils.Move(output, DataType.U64, arrayDataLocation, accLocation);
+
+            arrayDataLocation.Offset -= DataType.U64.ByteSize;
+
+            foreach (var value in values)
+            {
+                var valueLocation = RequireOperandLocation(value);
+                X64GeneratorUtils.Move(output, value.DataType, arrayDataLocation, valueLocation);
+                arrayDataLocation.Offset -= value.DataType.ByteSize;
+            }
+
+            var targetLocation = RequireOperandLocation(target);
+
+            var leaLocation = targetLocation;
+            var useTempLocation = false;
+            if (leaLocation.Kind != X64StorageLocationKind.Register)
+            {
+                var x64PointerType = X64DataTypeProperties.GetProperties(DataTypeKind.POINTER);
+                leaLocation = X64StorageLocation.AsRegister(x64PointerType.Accumulator);
+                useTempLocation = true;
+            }
+
+            //Put address of stack top in target
+            output.Add(X64CodeFormat.FormatOperation(X64Instruction.LEA, leaLocation, arrayStartLocation));
+
+            if (useTempLocation)
+                X64GeneratorUtils.Move(output, target.DataType, targetLocation, leaLocation);
+        }
+
+        private void GenerateGsas(List<string> output, IMOperation operation)
+        {
+            //throw new NotImplementedException();
         }
 
         private void GenerateCast(List<string> output, IMOperation operation)

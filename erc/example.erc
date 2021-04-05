@@ -126,7 +126,8 @@ fn add (pa: vec4d, pb: vec4d): vec4d {
 }
 
 fn add2 (pa: i8, pb: i8): i8 {
-	ret pa + pb * pa;
+	let r = pa + pb * pa;
+	ret r;
 }
 
 fn add3 (pa: u16, pb: u16): u16 {

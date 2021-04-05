@@ -29,7 +29,7 @@ namespace erc
         public static IMInstruction XOR  = new IMInstruction(IMInstructionKind.XOR, 3);   //X <target>, <op1>, <op2>
         public static IMInstruction NOT  = new IMInstruction(IMInstructionKind.NOT, 2);   //X <target>, <op1>
         public static IMInstruction NEG  = new IMInstruction(IMInstructionKind.NEG, 2);   //X <target>, <op1>
-        public static IMInstruction CALL = new IMInstruction(IMInstructionKind.CALL, 3);  //X <identifier>, [<target>], [<parameter_values>]
+        public static IMInstruction CALL = new IMInstruction(IMInstructionKind.CALL, 3);  //X <identifier>, [<target>], [<parameter_values...>]
         public static IMInstruction RET  = new IMInstruction(IMInstructionKind.RET, 1);   //X <op>
         public static IMInstruction MOV  = new IMInstruction(IMInstructionKind.MOV, 2);   //X <target>, <source>
         
@@ -61,6 +61,11 @@ namespace erc
         public static IMInstruction GVEC = new IMInstruction(IMInstructionKind.GVEC, 4);   //X <value_list>
         public static IMInstruction CAST = new IMInstruction(IMInstructionKind.CAST, 2);   //X <target>, <source>
         public static IMInstruction LEA = new IMInstruction(IMInstructionKind.LEA, 2);     //X <target>, <source>
+
+        public static IMInstruction GVAS = new IMInstruction(IMInstructionKind.GVAS, 2);     //X <pointer_target>, <parameter_values...>
+        public static IMInstruction GVAH = new IMInstruction(IMInstructionKind.GVAH, 2);     //X <pointer_target>, <parameter_values...>
+        public static IMInstruction GSAS = new IMInstruction(IMInstructionKind.GSAS, 3);     //X <pointer_target>, <array_size>, <inital_value>
+        public static IMInstruction GSAH = new IMInstruction(IMInstructionKind.GSAH, 3);     //X <pointer_target>, <array_size>, <inital_value>
 
     }
 }

@@ -418,6 +418,9 @@ namespace erc
                 valueExpression.DataType = currentType;
             }
 
+            var arraySize = 8 + ((expression.Children.Count - 1) * valueType.ByteSize);
+            Assert.True(arraySize <= 1024, "Arrays larger than 1KB should not go on the stack, put it on the heap instead! In: " + expression);
+
             expression.DataType = DataType.Array(valueType);
         }
 

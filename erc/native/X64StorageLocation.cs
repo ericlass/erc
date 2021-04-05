@@ -11,6 +11,17 @@ namespace erc
         public string DataName { get; set; }
         public string ImmediateValue { get; set; }
 
+        public X64StorageLocation Copy()
+        {
+            var result = new X64StorageLocation();
+            result.Kind = this.Kind;
+            result.Register = this.Register;
+            result.Offset = this.Offset;
+            result.DataName = this.DataName;
+            result.ImmediateValue = this.ImmediateValue;
+            return result;
+        }
+
         public override string ToString()
         {
             switch (Kind)
@@ -50,13 +61,13 @@ namespace erc
 
                 case X64StorageLocationKind.StackFromBase:
                     if (Offset != 0)
-                        return "[RBP+" + Offset + "]";
+                        return "[RBP-" + Offset + "]";
                     else
                         return "[RBP]";
 
                 case X64StorageLocationKind.StackFromTop:
                     if (Offset != 0)
-                        return "[RSP-" + Offset + "]";
+                        return "[RSP+" + Offset + "]";
                     else
                         return "[RSP]";
 

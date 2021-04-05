@@ -53,6 +53,11 @@ namespace erc
         public static readonly IMOperand BOOL_TRUE = IMOperand.Immediate(DataType.BOOL, 1);
         public static readonly IMOperand BOOL_FALSE = IMOperand.Immediate(DataType.BOOL, 0);
 
+        public static string GetArrayLocationName(IMOperand target)
+        {
+            return "array(" + target.FullName + ")";
+        }
+
         public bool IsVoid
         {
             get { return DataType.Kind == DataTypeKind.VOID && Name == "void"; }

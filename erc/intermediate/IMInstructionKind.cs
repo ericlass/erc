@@ -43,6 +43,10 @@ namespace erc
         FREE,
         GVEC,
         CAST,
-        LEA
+        LEA,
+        GVAS,
+        GVAH,
+        GSAS,
+        GSAH
     }
 }

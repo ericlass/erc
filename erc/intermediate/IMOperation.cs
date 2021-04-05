@@ -270,5 +270,29 @@ namespace erc
             return new IMOperation(IMInstruction.LEA, target, source);
         }
 
+        public static IMOperation Gvas(IMOperand target, List<IMOperand> arrayValues)
+        {
+            var allOperands = new List<IMOperand>() { target };
+            allOperands.AddRange(arrayValues);
+            return new IMOperation() { Instruction = IMInstruction.GVAS, Operands = allOperands };
+        }
+
+        public static IMOperation Gvah(IMOperand target, List<IMOperand> arrayValues)
+        {
+            var allOperands = new List<IMOperand>() { target };
+            allOperands.AddRange(arrayValues);
+            return new IMOperation() { Instruction = IMInstruction.GVAH, Operands = allOperands };
+        }
+
+        public static IMOperation Gsas(IMOperand target, IMOperand arraySize, IMOperand initialValue)
+        {
+            return new IMOperation(IMInstruction.GSAS, target, arraySize, initialValue);
+        }
+
+        public static IMOperation Gsah(IMOperand target, IMOperand arraySize, IMOperand initialValue)
+        {
+            return new IMOperation(IMInstruction.GSAH, target, arraySize, initialValue);
+        }
+
     }
 }

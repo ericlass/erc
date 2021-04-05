@@ -218,24 +218,9 @@ namespace erc
             {
                 //Assuming that AST item has as many children as function has parameters, as this is checked before
                 var expression = funcCall.Children[i];
-                var location = NewTempLocal(expression.DataType);
+                var location = GetOperandLocationOrGenerateExpression(output, expression);
                 paramLocations.Add(location);
-                GenerateExpression(output, expression, location);
             }
-
-            //var function = _context.GetFunction(funcCall.Identifier);
-
-            //Generate parameter values in desired locations
-            /*var paramLocations = new List<IMOperand>(function.Parameters.Count);
-            for (int i = 0; i < function.Parameters.Count; i++)
-            {
-                //Assuming that AST item has as many children as function has parameters, as this is checked before
-                var parameter = function.Parameters[i];
-                var expression = funcCall.Children[i];
-                var location = NewTempLocal(parameter.DataType);
-                paramLocations.Add(location);
-                GenerateExpression(output, expression, location);
-            }*/
 
             output.Add(IMOperation.Call(funcCall.Identifier, targetLocation, paramLocations));
         }
@@ -249,10 +234,7 @@ namespace erc
 
             var returnLocation = IMOperand.VOID;
             if (function.ReturnType != DataType.VOID)
-            {
-                returnLocation = NewTempLocal(function.ReturnType);
-                GenerateExpression(output, statement.Children[0], returnLocation);
-            }
+                returnLocation = GetOperandLocationOrGenerateExpression(output, statement.Children[0]);
 
             output.Add(IMOperation.Ret(returnLocation));
         }
@@ -320,10 +302,10 @@ namespace erc
             var incExpression = statement.Children[2];
             var statements = statement.Children[3];
 
-            var varLocation = IMOperand.Local(DataType.I64, varName);
-            var incLocation = NewTempLocal(DataType.I64);
             var startLabelName = NewLabelName();
             var endLabelName = NewLabelName();
+
+            var varLocation = IMOperand.Local(DataType.I64, varName);
 
             var counterVariable = new Symbol(varName, SymbolKind.Variable, DataType.I64);
             _context.AddVariable(counterVariable);
@@ -332,13 +314,12 @@ namespace erc
             //Evaluate start value expression before loop
             GenerateExpression(output, startExpression, varLocation);
             //Evaluate increment value expression before loop
-            GenerateExpression(output, incExpression, incLocation);
+            var incLocation = GetOperandLocationOrGenerateExpression(output, incExpression);
             //Start label
             output.Add(IMOperation.Labl(startLabelName));
 
             //Evaluate end value expression inside loop
-            var endLocation = NewTempLocal(DataType.I64);
-            GenerateExpression(output, endExpression, endLocation);
+            var endLocation = GetOperandLocationOrGenerateExpression(output, endExpression);
             //Go to end once end value has been reached
             output.Add(IMOperation.JmpG(varLocation, endLocation, endLabelName));
 
@@ -504,45 +485,27 @@ namespace erc
             output.Add(IMOperation.Aloc(targetLocation, bytesLocation));
         }
 
-        //TODO: This version works, but the native code gen does not know it is an array now and cannot put a full-immediate array in the data section
-        //That is not that important currently as in real applications full-immediate arrays will we less common.
         private void GenerateValueArray(List<IMOperation> output, AstItem expression, IMOperand targetLocation)
         {
-            var itemType = expression.DataType.ElementType;
-
-            //Allocate memory for array
-            var bytesToAllocate = 8 + (expression.Children.Count * itemType.ByteSize);
-            var bytesLocation = NewTempLocal(DataType.U64);
-            output.Add(IMOperation.Mov(bytesLocation, IMOperand.Immediate(DataType.U64, bytesToAllocate)));
-            output.Add(IMOperation.Aloc(targetLocation, bytesLocation));
-
-            //Create location for pointer arithmetic
-            var pointerLocation = NewTempLocal(expression.DataType);
-            output.Add(IMOperation.Mov(pointerLocation, targetLocation));
-            var refLocation = IMOperand.Reference(itemType, pointerLocation);
-
-            //Write length of array
-            output.Add(IMOperation.Mov(refLocation, IMOperand.Immediate(DataType.U64, expression.Children.Count)));
-            output.Add(IMOperation.Add(pointerLocation, pointerLocation, IMOperand.Immediate(DataType.U64, DataType.U64.ByteSize)));
-
-            //Write all array values
-            var first = true;
-            foreach (var valueExpression in expression.Children)
+            var valueLocations = new List<IMOperand>(expression.Children.Count);
+            foreach (var value in expression.Children)
             {
-                if (first)
-                    first = false;
-                else
-                    output.Add(IMOperation.Add(pointerLocation, pointerLocation, IMOperand.Immediate(DataType.U64, itemType.ByteSize)));
-
-                GenerateExpression(output, valueExpression, refLocation);
-                //GenerateExpression(output, valueExpression, valueLocation);
-                //output.Add(IMOperation.Mov(refLocation, valueLocation));
+                var valueLocation = GetOperandLocationOrGenerateExpression(output, value);
+                valueLocations.Add(valueLocation);
             }
+
+            output.Add(IMOperation.Gvas(targetLocation, valueLocations));
         }
 
         private void GenerateSizedArray(List<IMOperation> output, AstItem expression, IMOperand targetLocation)
         {
-            throw new NotImplementedException();
+            var initialValue = expression.Children[0];
+            var numItems = expression.Children[1];
+
+            var initialValueLocation = GetOperandLocationOrGenerateExpression(output, initialValue);
+            var numItemsLocation = GetOperandLocationOrGenerateExpression(output, numItems);
+
+            output.Add(IMOperation.Gsas(targetLocation, numItemsLocation, initialValueLocation));
         }
 
         private class AstItemWithLocation
@@ -679,6 +642,17 @@ namespace erc
                 GenerateIndexAccess(output, operand, result);
             }
 
+            return result;
+        }
+
+        private IMOperand GetOperandLocationOrGenerateExpression(List<IMOperation> output, AstItem operand)
+        {
+            var result = GetOperandLocation(output, operand);
+            if (result.IsVoid)
+            {
+                result = NewTempLocal(operand.DataType);
+                GenerateExpression(output, operand, result);
+            }
             return result;
         }
 
