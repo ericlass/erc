@@ -426,7 +426,7 @@ namespace erc
 
         public static AstItem SizedArrayDefinition(AstItem initialValue, AstItem numItemsExpression)
         {
-            return new AstItem { Kind = AstItemKind.ValueArrayDefinition, Children = new List<AstItem>() { initialValue, numItemsExpression } };
+            return new AstItem { Kind = AstItemKind.SizedArrayDefinition, Children = new List<AstItem>() { initialValue, numItemsExpression } };
         }
 
     }

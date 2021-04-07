@@ -32,6 +32,10 @@ Programm
                     CharLiteral: 'l' (char8)
                     CharLiteral: 'l' (char8)
                     CharLiteral: 'o' (char8)
+            VarDecl: "c" ([i64])
+                SizedArrayDefinition: ([i64])
+                    Immediate: 0 (i64)
+                    Immediate: 8 (u64)
             VarDecl: "x" (i64)
                 IndexAccess: "a" (i64)
                     Immediate: 0 (i64)
@@ -670,7 +674,7 @@ fn main(): void
     RET @void
 }
 
-[stack: 56, heap: 0]
+[stack: 128, heap: 0]
 [
   %k	: register(RBX),
   %1	: register(RSI),
@@ -678,6 +682,8 @@ fn main(): void
   array(%a)	: stack_base(-40),
   %b	: register(RSI),
   array(%b)	: stack_base(-53),
+  %c	: register(RDI),
+  array(%c)	: stack_base(-125),
   %2	: register(RDI),
   %x	: register(RBX),
   [%2]	: heap_register(RDI+0),
@@ -704,6 +710,8 @@ fn arrays(): void
     GVAS %a, i64(1), i64(2), i64(3), %1
     FREE %1
     GVAS %b, char8(H), char8(e), char8(l), char8(l), char8(o)
+    GSAS %c, i64(0), u64(8)
+    FREE %c
     MOV %2, i64(0)
     MUL %2, %2, u64(8)
     ADD %2, %2, %a
@@ -1469,7 +1477,7 @@ RET
 
 fn_arrays:
 MOV RBP, RSP
-SUB RSP, 56
+SUB RSP, 128
 ;MOV %k, i64(5)
 MOV RBX, [imm_1]
 ;ADD %1, %k, i64(1)
@@ -1500,6 +1508,19 @@ MOV [RBP-42], AL
 MOV AL, [imm_8]
 MOV [RBP-41], AL
 LEA RSI, [RBP-53]
+;GSAS %c, i64(0), u64(8)
+MOV RAX, 8
+MOV [RBP-125], RAX
+LEA R10, [RBP-117]
+MOV RAX, [imm_10]
+array_loop_0:
+MOV RAX, [imm_9]
+MOV [R10], RAX
+ADD R10, 8
+DEC RAX
+TEST RAX, RAX
+JNZ array_loop_0
+LEA RDI, [RBP-125]
 ;MOV %2, i64(0)
 MOV RDI, [imm_9]
 ;MUL %2, %2, u64(8)
@@ -1525,7 +1546,7 @@ ADD RBX, [imm_10]
 ;MOV %y, [%3]
 MOV SIL, [RBX]
 ;RET @void
-ADD RSP, 56
+ADD RSP, 128
 RET
 
 fn_strings:

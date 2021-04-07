@@ -494,7 +494,7 @@ namespace erc
                 valueLocations.Add(valueLocation);
             }
 
-            output.Add(IMOperation.Gvas(targetLocation, valueLocations));
+            //TODO: Generate IM code to create array
         }
 
         private void GenerateSizedArray(List<IMOperation> output, AstItem expression, IMOperand targetLocation)
@@ -505,7 +505,7 @@ namespace erc
             var initialValueLocation = GetOperandLocationOrGenerateExpression(output, initialValue);
             var numItemsLocation = GetOperandLocationOrGenerateExpression(output, numItems);
 
-            output.Add(IMOperation.Gsas(targetLocation, numItemsLocation, initialValueLocation));
+            //TODO: Generate IM code to create array
         }
 
         private class AstItemWithLocation

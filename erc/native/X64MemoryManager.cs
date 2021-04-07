@@ -48,8 +48,8 @@ namespace erc
             }
 
             //Now the local variables. Intentionally do no look into sub-values. These must be "defined" before already.
-            var stackOffset = 0;
-            var heapOffset = 0;
+            var stackOffset = 0L;
+            var heapOffset = 0L;
             foreach (var operation in function.Body)
             {
                 if (operation.Instruction.Kind == IMInstructionKind.FREE)
@@ -104,22 +104,6 @@ namespace erc
                         }
                     }
                 }
-
-                //Allocate space for array data, pointer to array data is done above in locals
-                if (operation.Instruction.Kind == IMInstructionKind.GVAS)
-                {
-                    var target = operation.Operands[0];
-                    var firstOperand = operation.Operands[1];
-                    var byteSize = 8 + ((operation.Operands.Count - 1) * firstOperand.DataType.ByteSize);
-
-                    //Increment stack offset first. Array is reversed on stack so index access can work the same way.
-                    stackOffset += byteSize;
-                    var arrayLocation = X64StorageLocation.StackFromBase(stackOffset);
-
-                    var arrayLocationName = IMOperand.GetArrayLocationName(target);
-                    locationMap.Add(arrayLocationName, arrayLocation);
-                }
-                //TODO: Handle other array generators
             }
 
             //Data Section (immediates)

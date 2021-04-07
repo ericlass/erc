@@ -80,6 +80,9 @@ namespace erc
         public static X64Instruction SHR = new X64Instruction("SHR", 2);
         public static X64Instruction LEA = new X64Instruction("LEA", 2);
 
+        public static X64Instruction INC = new X64Instruction("INC", 1);
+        public static X64Instruction DEC = new X64Instruction("DEC", 1);
+
         //##### Comparison Instructions #####
 
         //Int

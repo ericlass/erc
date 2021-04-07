@@ -62,10 +62,5 @@ namespace erc
         public static IMInstruction CAST = new IMInstruction(IMInstructionKind.CAST, 2);   //X <target>, <source>
         public static IMInstruction LEA = new IMInstruction(IMInstructionKind.LEA, 2);     //X <target>, <source>
 
-        public static IMInstruction GVAS = new IMInstruction(IMInstructionKind.GVAS, 2);     //X <pointer_target>, <parameter_values...>
-        public static IMInstruction GVAH = new IMInstruction(IMInstructionKind.GVAH, 2);     //X <pointer_target>, <parameter_values...>
-        public static IMInstruction GSAS = new IMInstruction(IMInstructionKind.GSAS, 3);     //X <pointer_target>, <array_size>, <inital_value>
-        public static IMInstruction GSAH = new IMInstruction(IMInstructionKind.GSAH, 3);     //X <pointer_target>, <array_size>, <inital_value>
-
     }
 }

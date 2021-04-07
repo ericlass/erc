@@ -504,9 +504,19 @@ namespace erc
             }
             else
             {
+                var inArray = false;
                 var tok = tokens.Current();
-                while (tok != null && !terminators.Contains(tok.Kind))
+                while (tok != null)
                 {
+                    if (!inArray && terminators.Contains(tok.Kind))
+                        break;
+
+                    if (tok.Kind == TokenKind.SquareBracketOpen)
+                        inArray = true;
+
+                    if (tok.Kind == TokenKind.SquareBracketClose)
+                        inArray = false;
+
                     expTokens.Add(tok);
                     tokens.Step();
                     tok = tokens.Current();

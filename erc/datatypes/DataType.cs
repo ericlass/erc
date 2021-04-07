@@ -90,6 +90,11 @@ namespace erc
             return VOID;
         }
 
+        public static long GetArrayByteSize(DataType elementType, long numItems)
+        {
+            return 8 + (numItems * elementType.ByteSize);
+        }
+
         public static List<DataType> GetAllValues()
         {
             if (_allValues == null)

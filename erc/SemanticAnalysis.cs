@@ -418,7 +418,7 @@ namespace erc
                 valueExpression.DataType = currentType;
             }
 
-            var arraySize = 8 + ((expression.Children.Count - 1) * valueType.ByteSize);
+            var arraySize = DataType.GetArrayByteSize(valueType, expression.Children.Count - 1);
             Assert.True(arraySize <= 1024, "Arrays larger than 1KB should not go on the stack, put it on the heap instead! In: " + expression);
 
             expression.DataType = DataType.Array(valueType);
@@ -426,7 +426,21 @@ namespace erc
 
         private void CheckSizedArray(AstItem expression)
         {
-            throw new NotImplementedException();
+            var value = expression.Children[0];
+            var numItems = expression.Children[1];
+            //TODO: Possibility to use defined constant as size, which is not "immediate"
+            Assert.AstItemKind(numItems.Kind, AstItemKind.Immediate, "Stack located arrays must have a constant size known at compile time! Use heap arrays if size is only known at runtime.");
+
+            var valueType = CheckExpression(value);
+            //No checks on value type, can be everything atm
+
+            var numItemsType = CheckExpression(numItems);
+            Assert.DataTypeKind(numItemsType.Kind, DataTypeKind.U64, "Size for sized arrays must be U64! Use 'u' suffix for literals.");
+
+            expression.DataType = DataType.Array(valueType);
+
+            var arraySize = DataType.GetArrayByteSize(valueType, (long)numItems.Value);
+            Assert.True(arraySize <= 1024, "Arrays larger than 1KB should not go on the stack, put it on the heap instead! In: " + expression);
         }
 
         private void CheckChar(AstItem expression)
@@ -790,7 +804,8 @@ namespace erc
                     return uint.Parse(cleanNumberStr);
 
                 case DataTypeKind.U64:
-                    return ulong.Parse(cleanNumberStr);
+                    //"long" is not correct, but using "ulong" causes all kinds of issues with array size calculations, where a lot of signed values are used.
+                    return long.Parse(cleanNumberStr);
 
                 case DataTypeKind.F32:
                      return float.Parse(cleanNumberStr, CultureInfo.InvariantCulture);
