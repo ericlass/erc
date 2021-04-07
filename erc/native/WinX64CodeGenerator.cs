@@ -280,8 +280,12 @@ namespace erc
                     GenerateCall(output, operation);
                     break;
 
-                case IMInstructionKind.ALOC:
-                    GenerateAloc(output, operation);
+                case IMInstructionKind.HALOC:
+                    GenerateHaloc(output, operation);
+                    break;
+
+                case IMInstructionKind.SALOC:
+                    GenerateSaloc(output, operation);
                     break;
 
                 case IMInstructionKind.DEL:
@@ -309,9 +313,8 @@ namespace erc
                     }
                     break;
 
-
-                    //default:
-                    //throw new Exception("");
+                default:
+                    throw new Exception("");
             }
 
             //Track list of used registers for saving them on function call
@@ -395,14 +398,15 @@ namespace erc
             return result;
         }
 
-        private X64StorageLocation RequireArrayDataLocation(IMOperand target)
+        private X64StorageLocation RequireMemLocation(IMOperand target)
         {
-            var arrayDataName = IMOperand.GetArrayLocationName(target);
-            if (_functionScope.LocalsLocations.ContainsKey(arrayDataName))
-                return _functionScope.LocalsLocations[arrayDataName];
+            var locationName = IMOperand.GetMemLocationName(target);
+            if (!_functionScope.LocalsLocations.ContainsKey(locationName))
+                throw new Exception("Operand has no memory location in function scope! This should not happen. Given: " + target);
 
-            throw new Exception("No location for array data found for array: " + target);
+            return _functionScope.LocalsLocations[locationName];
         }
+
 
         private void GenerateComment(List<string> output, IMOperation operation)
         {
@@ -814,7 +818,7 @@ namespace erc
             }
         }
 
-        private void GenerateAloc(List<string> output, IMOperation operation)
+        private void GenerateHaloc(List<string> output, IMOperation operation)
         {
             var target = operation.Operands[0];
             var numBytes = operation.Operands[1];
@@ -828,6 +832,29 @@ namespace erc
             var target = operation.Operands[0];
             var functionCall = IMOperation.Call("erc_heap_free", null, new List<IMOperand>() { IMOperand.Global(DataType.U64, ProcessHeapImmName), IMOperand.Global(DataType.U32, U32ZeroImmName), target });
             GenerateCall(output, functionCall);
+        }
+
+        private void GenerateSaloc(List<string> output, IMOperation operation)
+        {
+            var target = operation.Operands[0];
+            var memLocation = RequireMemLocation(target);
+            Assert.True(memLocation.IsMemory, "Memory location for SALOC must be memory, given: " + memLocation);
+
+            var targetLocation = RequireOperandLocation(target);
+
+            var realTarget = targetLocation;
+            var useTempLocation = false;
+            if (realTarget.Kind != X64StorageLocationKind.Register)
+            {
+                var x64TargetType = X64DataTypeProperties.GetProperties(target.DataType.Kind);
+                realTarget = X64StorageLocation.AsRegister(x64TargetType.Accumulator);
+                useTempLocation = true;
+            }
+
+            output.Add(X64CodeFormat.FormatOperation(X64Instruction.LEA, realTarget, memLocation));
+
+            if (useTempLocation)
+                X64GeneratorUtils.Move(output, target.DataType, targetLocation, realTarget);
         }
 
         private void GenerateCall(List<string> output, IMOperation operation)

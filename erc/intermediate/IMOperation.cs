@@ -225,7 +225,7 @@ namespace erc
             return new IMOperation(IMInstruction.SETZ, target, operand1, operand2);
         }
 
-        public static IMOperation SetNnZ(IMOperand target, IMOperand operand1, IMOperand operand2)
+        public static IMOperation SetNZ(IMOperand target, IMOperand operand1, IMOperand operand2)
         {
             return new IMOperation(IMInstruction.SETNZ, target, operand1, operand2);
         }
@@ -235,9 +235,14 @@ namespace erc
             return new IMOperation(IMInstruction.NOP);
         }
 
-        public static IMOperation Aloc(IMOperand target, IMOperand numBytes)
+        public static IMOperation HAloc(IMOperand target, IMOperand numBytes)
         {
-            return new IMOperation(IMInstruction.ALOC, target, numBytes);
+            return new IMOperation(IMInstruction.HALOC, target, numBytes);
+        }
+
+        public static IMOperation SAloc(IMOperand target, long numBytes)
+        {
+            return new IMOperation(IMInstruction.SALOC, target, IMOperand.Immediate(DataType.U64, numBytes));
         }
 
         public static IMOperation Del(IMOperand target)

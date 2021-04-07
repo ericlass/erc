@@ -482,19 +482,37 @@ namespace erc
             output.Add(IMOperation.Mov(bytesLocation, IMOperand.Immediate(DataType.U64, (long)expression.Value)));
             output.Add(IMOperation.Mul(bytesLocation, bytesLocation, IMOperand.Immediate(DataType.U64, expression.DataType.ElementType.ByteSize)));
 
-            output.Add(IMOperation.Aloc(targetLocation, bytesLocation));
+            output.Add(IMOperation.HAloc(targetLocation, bytesLocation));
         }
 
         private void GenerateValueArray(List<IMOperation> output, AstItem expression, IMOperand targetLocation)
         {
-            var valueLocations = new List<IMOperand>(expression.Children.Count);
+            var firstValue = expression.Children[0];
+            var arrayByteSize = DataType.GetArrayByteSize(firstValue.DataType, expression.Children.Count);
+
+            output.Add(IMOperation.SAloc(targetLocation, arrayByteSize));
+
+            var pointer = NewTempLocal(expression.DataType);
+            output.Add(IMOperation.Mov(pointer, targetLocation));
+
+            var arrayLength = IMOperand.Immediate(DataType.U64, (long)expression.Children.Count);
+            var refLocation = IMOperand.Reference(firstValue.DataType, pointer);
+
+            output.Add(IMOperation.Mov(refLocation, arrayLength));
+            output.Add(IMOperation.Add(pointer, pointer, IMOperand.Immediate(DataType.U64, 8L)));
+
+            var itemSize = IMOperand.Immediate(DataType.U64, (long)firstValue.DataType.ByteSize);
+            var first = true;
             foreach (var value in expression.Children)
             {
-                var valueLocation = GetOperandLocationOrGenerateExpression(output, value);
-                valueLocations.Add(valueLocation);
-            }
+                if (first)
+                    first = false;
+                else
+                    output.Add(IMOperation.Add(pointer, pointer, itemSize));
 
-            //TODO: Generate IM code to create array
+                var valueLocation = GetOperandLocationOrGenerateExpression(output, value);
+                output.Add(IMOperation.Mov(refLocation, valueLocation));
+            }
         }
 
         private void GenerateSizedArray(List<IMOperation> output, AstItem expression, IMOperand targetLocation)

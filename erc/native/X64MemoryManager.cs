@@ -104,6 +104,20 @@ namespace erc
                         }
                     }
                 }
+
+                if (operation.Instruction.Kind == IMInstructionKind.SALOC)
+                {
+                    var target = operation.Operands[0];
+                    var sizeOperand = operation.Operands[1];
+                    Assert.IMOperandKind(sizeOperand.Kind, IMOperandKind.Immediate, "Invalid kind of operand for SALOC byte size!");
+                    var numBytes = (long)sizeOperand.ImmediateValue;
+
+                    //Increment stack offset first so target points to bottom of reserved memory.
+                    stackOffset += numBytes;
+                    var arrayLocation = X64StorageLocation.StackFromBase(stackOffset);
+
+                    locationMap.Add(IMOperand.GetMemLocationName(target), arrayLocation);
+                }
             }
 
             //Data Section (immediates)
