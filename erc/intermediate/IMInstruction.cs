@@ -40,8 +40,8 @@ namespace erc
         public static IMInstruction JMPGE = new IMInstruction(IMInstructionKind.JMPGE, 3);  //X <op1>, <op2>, <identifier>
         public static IMInstruction JMPL  = new IMInstruction(IMInstructionKind.JMPL, 3);   //X <op1>, <op2>, <identifier>
         public static IMInstruction JMPLE = new IMInstruction(IMInstructionKind.JMPLE, 3);  //X <op1>, <op2>, <identifier>
-        public static IMInstruction JMPNZ = new IMInstruction(IMInstructionKind.JMPNZ, 3);  // <op>, <identifier>
-        public static IMInstruction JMPZ  = new IMInstruction(IMInstructionKind.JMPZ, 3);   // <op>, <identifier>
+        public static IMInstruction JMPNZ = new IMInstruction(IMInstructionKind.JMPNZ, 2);  // <op>, <identifier>
+        public static IMInstruction JMPZ  = new IMInstruction(IMInstructionKind.JMPZ, 2);   // <op>, <identifier>
 
         public static IMInstruction SETE  = new IMInstruction(IMInstructionKind.SETE, 3);   //X <target>, <op1>, <op2>
         public static IMInstruction SETG  = new IMInstruction(IMInstructionKind.SETG, 3);   //X <target>, <op1>, <op2>

@@ -6,7 +6,7 @@ namespace erc
     public class IMCodeGenerator
     {
         private CompilerContext _context = null;
-        private long _ifLabelCounter = 0;
+        private long _labelCounter = 0;
         private long _tempLocalCounter = 0;
 
         public void Generate(CompilerContext context)
@@ -485,22 +485,33 @@ namespace erc
             output.Add(IMOperation.HAloc(targetLocation, bytesLocation));
         }
 
+        /// <summary>
+        /// Generate value array on stack. For the heap version see "GenerateNewPointer".
+        /// </summary>
+        /// <param name="output"></param>
+        /// <param name="expression"></param>
+        /// <param name="targetLocation"></param>
         private void GenerateValueArray(List<IMOperation> output, AstItem expression, IMOperand targetLocation)
         {
             var firstValue = expression.Children[0];
             var arrayByteSize = DataType.GetArrayByteSize(firstValue.DataType, expression.Children.Count);
 
+            //Reserve memory on stack
             output.Add(IMOperation.SAloc(targetLocation, arrayByteSize));
 
             var pointer = NewTempLocal(expression.DataType);
+            //Create copy of pointer
             output.Add(IMOperation.Mov(pointer, targetLocation));
 
             var arrayLength = IMOperand.Immediate(DataType.U64, (long)expression.Children.Count);
             var refLocation = IMOperand.Reference(firstValue.DataType, pointer);
 
+            //Write array length first
             output.Add(IMOperation.Mov(refLocation, arrayLength));
+            //Increment pointer to point to first item
             output.Add(IMOperation.Add(pointer, pointer, IMOperand.Immediate(DataType.U64, 8L)));
 
+            //Write values on by one
             var itemSize = IMOperand.Immediate(DataType.U64, (long)firstValue.DataType.ByteSize);
             var first = true;
             foreach (var value in expression.Children)
@@ -515,15 +526,56 @@ namespace erc
             }
         }
 
+        /// <summary>
+        /// Generate sized array on stack. For the heap version see "GenerateNewPointer".
+        /// </summary>
+        /// <param name="output"></param>
+        /// <param name="expression"></param>
+        /// <param name="targetLocation"></param>
         private void GenerateSizedArray(List<IMOperation> output, AstItem expression, IMOperand targetLocation)
         {
             var initialValue = expression.Children[0];
             var numItems = expression.Children[1];
+            Assert.AstItemKind(numItems.Kind, AstItemKind.Immediate, "Invalid AST item for sized array length!");
 
             var initialValueLocation = GetOperandLocationOrGenerateExpression(output, initialValue);
-            var numItemsLocation = GetOperandLocationOrGenerateExpression(output, numItems);
+            var arrayNumItems = (long)numItems.Value;
 
-            //TODO: Generate IM code to create array
+            var arrayByteSize = DataType.GetArrayByteSize(initialValue.DataType, arrayNumItems);
+
+            //Reserve memory on stack
+            output.Add(IMOperation.SAloc(targetLocation, arrayByteSize));
+
+            var pointer = NewTempLocal(expression.DataType);
+            //Create copy of pointer
+            output.Add(IMOperation.Mov(pointer, targetLocation));
+
+            var arrayLength = IMOperand.Immediate(DataType.U64, arrayNumItems);
+            var refLocation = IMOperand.Reference(initialValue.DataType, pointer);
+
+            //Write array length first
+            output.Add(IMOperation.Mov(refLocation, arrayLength));
+            //Increment pointer to point to first item
+            output.Add(IMOperation.Add(pointer, pointer, IMOperand.Immediate(DataType.U64, (long)DataType.U64.ByteSize)));
+
+            var itemSize = IMOperand.Immediate(DataType.U64, (long)initialValue.DataType.ByteSize);
+            var counter = NewTempLocal(DataType.U64);
+            //Initialize counter variable
+            output.Add(IMOperation.Mov(counter, arrayLength));
+
+            //Create label for loop
+            var labelName = NewLabelName();
+            output.Add(IMOperation.Labl(labelName));
+
+            //Write actual value
+            output.Add(IMOperation.Mov(refLocation, initialValueLocation));
+            //Increment pointer
+            output.Add(IMOperation.Add(pointer, pointer, itemSize));
+
+            //Decrement counter
+            output.Add(IMOperation.Sub(counter, counter, IMOperand.Immediate(DataType.U64, 1L)));
+            //Jump if counter is still > 0
+            output.Add(IMOperation.JmpG(counter, IMOperand.Immediate(DataType.U64, 0L), labelName));
         }
 
         private class AstItemWithLocation
@@ -697,8 +749,8 @@ namespace erc
 
         private string NewLabelName()
         {
-            _ifLabelCounter += 1;
-            return "label_" + _ifLabelCounter;
+            _labelCounter += 1;
+            return "label_" + _labelCounter;
         }
 
         private IMOperand NewTempLocal(DataType dataType)

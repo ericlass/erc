@@ -180,14 +180,14 @@ namespace erc
             return new IMOperation(IMInstruction.JMPLE, operand1, operand2, IMOperand.Identifier(labelName));
         }
 
-        public static IMOperation JmpZ(IMOperand operand1, IMOperand operand2, string labelName)
+        public static IMOperation JmpZ(IMOperand operand, string labelName)
         {
-            return new IMOperation(IMInstruction.JMPZ, operand1, operand2, IMOperand.Identifier(labelName));
+            return new IMOperation(IMInstruction.JMPZ, operand, IMOperand.Identifier(labelName));
         }
 
-        public static IMOperation JmpNZ(IMOperand operand1, IMOperand operand2, string labelName)
+        public static IMOperation JmpNZ(IMOperand operand, string labelName)
         {
-            return new IMOperation(IMInstruction.JMPNZ, operand1, operand2, IMOperand.Identifier(labelName));
+            return new IMOperation(IMInstruction.JMPNZ, operand, IMOperand.Identifier(labelName));
         }
 
         public static IMOperation SetE(IMOperand target, IMOperand operand1, IMOperand operand2)
