@@ -45,6 +45,10 @@ Programm
             VarDecl: "z" (i64)
                 IndexAccess: "c" (i64)
                     Immediate: 6 (i64)
+            VarDecl: "l" (u64)
+                Expression
+                    Variable: "c" ([i64])
+                    UnaryOperator: #
     FunctionDecl: "strings" (void)
         ParameterList
         StatementList
@@ -703,6 +707,8 @@ fn main(): void
   %8	: register(RBX),
   %z	: register(RSI),
   [%8]	: heap_register(RBX+0),
+  %l	: register(RBX),
+  [%c]	: heap_register(RDI+0),
   i64(5)	: data_section(imm_1),
   u64(40)	: data_section(imm_2),
   u64(4)	: data_section(imm_3),
@@ -786,11 +792,13 @@ fn arrays(): void
     MOV %8, i64(6)
     MUL %8, %8, u64(8)
     ADD %8, %8, %c
-    FREE %c
     ADD %8, %8, u64(8)
     MOV %z, [%8]
     FREE %8
     FREE %z
+    MOV %l, [%c]
+    FREE %c
+    FREE %l
     RET @void
 }
 
@@ -1671,6 +1679,8 @@ ADD RBX, RDI
 ADD RBX, [imm_4]
 ;MOV %z, [%8]
 MOV RSI, [RBX]
+;MOV %l, [%c]
+MOV RBX, [RDI]
 ;RET @void
 ADD RSP, 128
 RET
