@@ -618,17 +618,16 @@ namespace erc
 
             var dataType = DataType.Pointer(subType);
 
-            var amountStr = "1";
+            var amountExpression = AstItem.Immediate("1");
             var current = tokens.Current();
             if (current != null && current.Kind == TokenKind.RoundBracketOpen)
             {
                 tokens.Pop();
-                var amountToken = tokens.PopExpected(TokenKind.Number);
-                amountStr = amountToken.Value;
+                amountExpression = ReadExpression(tokens, TokenKind.RoundBracketClose);
                 tokens.PopExpected(TokenKind.RoundBracketClose);
             }
 
-            return AstItem.NewPointer(dataType, amountStr);
+            return AstItem.NewPointer(dataType, amountExpression);
         }
 
         private AstItem ReadSingleAstItem(TokenIterator tokens)

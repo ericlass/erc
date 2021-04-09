@@ -434,8 +434,18 @@ namespace erc
             var valueType = CheckExpression(value);
             //No checks on value type, can be everything atm
 
-            var numItemsType = CheckExpression(numItems);
-            Assert.DataTypeKind(numItemsType.Kind, DataTypeKind.U64, "Size for sized arrays must be U64! Use 'u' suffix for literals.");
+            DataType numItemsType;
+            if (numItems.Kind == AstItemKind.Immediate)
+            {
+                //Handle immediate values specifically so they always are U64
+                numItemsType = DataType.U64;
+                numItems.DataType = numItemsType;
+                numItems.Value = ParseNumber((string)numItems.Value, numItemsType);
+            }
+            else
+                numItemsType = CheckExpression(numItems);
+
+            Assert.DataTypeKind(numItemsType.Kind, DataTypeKind.U64, "Size for sized arrays must be U64!");
 
             expression.DataType = DataType.Array(valueType);
 
@@ -514,20 +524,22 @@ namespace erc
             if (elementType.Kind == DataTypeKind.POINTER)
                 throw new Exception("Cannot have pointer to pointer! Found in: " + expression);
 
-            var amountValue = expression.Value;
-            if (amountValue == null)
-                throw new Exception("No amount given for new operator! Must be non-null.");
+            var amountExpression = expression.Children[0];
+            DataType amountDataType;
+            if (amountExpression.Kind == AstItemKind.Immediate)
+            {
+                //Handle immediate values specifically so they always are U64
+                amountDataType = DataType.U64;
+                amountExpression.DataType = amountDataType;
+                amountExpression.Value = ParseNumber((string)amountExpression.Value, amountDataType);
+            }
+            else
+            {
+                amountDataType = CheckExpression(amountExpression);
+            }
 
-            if (!(amountValue is string))
-                throw new Exception("Amount for new operator is expected to be string! Got: " + amountValue.GetType().Name);
-
-            var amountStr = amountValue as string;
-            var amountDataType = FindImmediateType(amountStr);
             if (amountDataType.Group != DataTypeGroup.ScalarInteger)
                 throw new Exception("Amount value for new pointer must be integer type! Given: " + amountDataType);
-
-            var amount = ParseNumber(amountStr, amountDataType);
-            expression.Value = amount;
         }
 
         private void CheckExpressionItem(AstItem expression)

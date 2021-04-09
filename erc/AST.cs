@@ -167,6 +167,7 @@ namespace erc
                 case AstItemKind.Type:
                 case AstItemKind.SizedArrayDefinition:
                 case AstItemKind.ValueArrayDefinition:
+                case AstItemKind.NewPointer:
                     return Kind + ": (" + DataType.Name + ")";
 
                 case AstItemKind.Identifier:
@@ -375,9 +376,9 @@ namespace erc
             return new AstItem { Kind = AstItemKind.If, Children = new List<AstItem>() { expression, statementList, elseStatementList } };
         }
 
-        public static AstItem NewPointer(DataType dataType, object amount)
+        public static AstItem NewPointer(DataType dataType, AstItem amountExpression)
         {
-            return new AstItem { Kind = AstItemKind.NewPointer, DataType = dataType, Value = amount };
+            return new AstItem { Kind = AstItemKind.NewPointer, DataType = dataType, Children = new List<AstItem>() { amountExpression } };
         }
 
         public static AstItem DelPointer(string varName)

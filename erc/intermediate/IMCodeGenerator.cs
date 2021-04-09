@@ -473,16 +473,13 @@ namespace erc
 
         private void GenerateNewPointer(List<IMOperation> output, AstItem expression, IMOperand targetLocation)
         {
-            var bytesLocation = NewTempLocal(DataType.U64);
+            var amountExpression = expression.Children[0];
+            var amountLocation = NewTempLocal(amountExpression.DataType);
+            GenerateExpression(output, amountExpression, amountLocation);
 
-            //TODO: Why is this commented?
-            //var bytesExpression = expression.Children[0];
-            //GenerateExpression(output, bytesExpression, bytesLocation);
+            output.Add(IMOperation.Mul(amountLocation, amountLocation, IMOperand.Immediate(DataType.U64, expression.DataType.ElementType.ByteSize)));
 
-            output.Add(IMOperation.Mov(bytesLocation, IMOperand.Immediate(DataType.U64, (long)expression.Value)));
-            output.Add(IMOperation.Mul(bytesLocation, bytesLocation, IMOperand.Immediate(DataType.U64, expression.DataType.ElementType.ByteSize)));
-
-            output.Add(IMOperation.HAloc(targetLocation, bytesLocation));
+            output.Add(IMOperation.HAloc(targetLocation, amountLocation));
         }
 
         /// <summary>
