@@ -405,7 +405,7 @@ namespace erc
                     GenerateFunctionCall(output, expression, targetLocation);
                     break;
 
-                case AstItemKind.NewPointer:
+                case AstItemKind.NewRawPointer:
                     GenerateNewPointer(output, expression, targetLocation);
                     break;
 
@@ -413,12 +413,12 @@ namespace erc
                     GenerateIndexAccess(output, expression, targetLocation);
                     break;
 
-                case AstItemKind.ValueArrayDefinition:
-                    GenerateValueArray(output, expression, targetLocation);
+                case AstItemKind.NewStackArray:
+                    GenerateNewStackArray(output, expression, targetLocation);
                     break;
 
-                case AstItemKind.SizedArrayDefinition:
-                    GenerateSizedArray(output, expression, targetLocation);
+                case AstItemKind.NewHeapArray:
+                    GenerateNewHeapArray(output, expression, targetLocation);
                     break;
 
                 case AstItemKind.Expression:
@@ -482,36 +482,114 @@ namespace erc
             output.Add(IMOperation.HAloc(targetLocation, amountLocation));
         }
 
-        /// <summary>
-        /// Generate value array on stack. For the heap version see "GenerateNewPointer".
-        /// </summary>
-        /// <param name="output"></param>
-        /// <param name="expression"></param>
-        /// <param name="targetLocation"></param>
-        private void GenerateValueArray(List<IMOperation> output, AstItem expression, IMOperand targetLocation)
+        private void GenerateNewStackArray(List<IMOperation> output, AstItem expression, IMOperand targetLocation)
         {
-            var firstValue = expression.Children[0];
-            var arrayByteSize = DataType.GetArrayByteSize(firstValue.DataType, expression.Children.Count);
+            var arrayDefinition = expression.Children[0];
+            switch (arrayDefinition.Kind)
+            {
+                case AstItemKind.ValueArrayDefinition:
+                    {
+                        var firstValue = arrayDefinition.Children[0];
+                        var arrayByteSize = DataType.GetArrayByteSize(firstValue.DataType, arrayDefinition.Children.Count);
 
-            //Reserve memory on stack
-            output.Add(IMOperation.SAloc(targetLocation, arrayByteSize));
+                        //Reserve memory on stack
+                        output.Add(IMOperation.SAloc(targetLocation, arrayByteSize));
 
-            var pointer = NewTempLocal(expression.DataType);
+                        GenerateValueArray(output, arrayDefinition, targetLocation);
+                    }
+                    break;
+
+                case AstItemKind.SizedArrayDefinition:
+                    {
+                        var initialValue = arrayDefinition.Children[0];
+                        var numItems = arrayDefinition.Children[1];
+
+                        //For stack, size must be constant
+                        Assert.AstItemKind(numItems.Kind, AstItemKind.Immediate, "Invalid AST item for sized array length!");
+                        var arrayNumItems = (long)numItems.Value;
+                        var arrayByteSize = DataType.GetArrayByteSize(initialValue.DataType, arrayNumItems);
+
+                        //Reserve memory on stack
+                        output.Add(IMOperation.SAloc(targetLocation, arrayByteSize));
+
+                        GenerateSizedArray(output, arrayDefinition, targetLocation);
+                    }
+                    break;
+
+                default:
+                    throw new Exception("Invalid kind of AST item given! Expected: ValueArrayDefinition or SizedArrayDefinition, given: " + expression);
+            }
+        }
+
+        private void GenerateNewHeapArray(List<IMOperation> output, AstItem expression, IMOperand targetLocation)
+        {
+            var arrayDefinition = expression.Children[0];
+            switch (arrayDefinition.Kind)
+            {
+                case AstItemKind.ValueArrayDefinition:
+                    {
+                        var firstValue = arrayDefinition.Children[0];
+                        var arrayByteSize = DataType.GetArrayByteSize(firstValue.DataType, arrayDefinition.Children.Count);
+
+                        //Reserve memory on heap
+                        output.Add(IMOperation.HAloc(targetLocation, IMOperand.Immediate(DataType.U64, arrayByteSize)));
+
+                        GenerateValueArray(output, arrayDefinition, targetLocation);
+                    }
+                    break;
+
+                case AstItemKind.SizedArrayDefinition:
+                    {
+                        var initialValue = arrayDefinition.Children[0];
+                        var numItems = arrayDefinition.Children[1];
+
+                        var itemSize = IMOperand.Immediate(DataType.U64, (long)initialValue.DataType.ByteSize);
+                        var arrayLength = GetOperandLocationOrGenerateExpression(output, numItems);
+
+                        //Calculate array byte size at runtime
+                        var arrayByteSize = NewTempLocal(DataType.U64);
+                        output.Add(IMOperation.Mov(arrayByteSize, arrayLength));
+                        output.Add(IMOperation.Mul(arrayByteSize, arrayByteSize, itemSize));
+                        output.Add(IMOperation.Add(arrayByteSize, arrayByteSize, IMOperand.Immediate(DataType.U64, (long)DataType.U64.ByteSize)));
+
+                        //Reserve memory on heap
+                        output.Add(IMOperation.HAloc(targetLocation, arrayByteSize));
+
+                        GenerateSizedArray(output, arrayDefinition, targetLocation);
+                    }
+                    break;
+
+                default:
+                    throw new Exception("Invalid kind of AST item given! Expected: ValueArrayDefinition or SizedArrayDefinition, given: " + expression);
+            }
+        }
+
+        /// <summary>
+        /// Generate value array at given location.
+        /// </summary>
+        /// <param name="output">The IM output.</param>
+        /// <param name="arrayDefinition">The value array definition.</param>
+        /// <param name="arrayDataLocation">A location holding a pointer to the memory where the array data will be written to.</param>
+        private void GenerateValueArray(List<IMOperation> output, AstItem arrayDefinition, IMOperand arrayDataLocation)
+        {
+            var firstValue = arrayDefinition.Children[0];
+
             //Create copy of pointer
-            output.Add(IMOperation.Mov(pointer, targetLocation));
+            var pointer = NewTempLocal(arrayDefinition.DataType);
+            output.Add(IMOperation.Mov(pointer, arrayDataLocation));
 
-            var arrayLength = IMOperand.Immediate(DataType.U64, (long)expression.Children.Count);
+            var arrayLength = IMOperand.Immediate(DataType.U64, (long)arrayDefinition.Children.Count);
             var refLocation = IMOperand.Reference(firstValue.DataType, pointer);
 
             //Write array length first
             output.Add(IMOperation.Mov(refLocation, arrayLength));
             //Increment pointer to point to first item
-            output.Add(IMOperation.Add(pointer, pointer, IMOperand.Immediate(DataType.U64, 8L)));
+            output.Add(IMOperation.Add(pointer, pointer, IMOperand.Immediate(DataType.U64, (long)DataType.U64.ByteSize)));
 
             //Write values on by one
             var itemSize = IMOperand.Immediate(DataType.U64, (long)firstValue.DataType.ByteSize);
             var first = true;
-            foreach (var value in expression.Children)
+            foreach (var value in arrayDefinition.Children)
             {
                 if (first)
                     first = false;
@@ -524,30 +602,23 @@ namespace erc
         }
 
         /// <summary>
-        /// Generate sized array on stack. For the heap version see "GenerateNewPointer".
+        /// Generate sized array at given location.
         /// </summary>
-        /// <param name="output"></param>
-        /// <param name="expression"></param>
-        /// <param name="targetLocation"></param>
-        private void GenerateSizedArray(List<IMOperation> output, AstItem expression, IMOperand targetLocation)
+        /// <param name="output">The IM output.</param>
+        /// <param name="arrayDefinition">The sized array definition.</param>
+        /// <param name="arrayDataLocation">A location holding a pointer to the memory where the array data will be written to.</param>
+        private void GenerateSizedArray(List<IMOperation> output, AstItem arrayDefinition, IMOperand arrayDataLocation)
         {
-            var initialValue = expression.Children[0];
-            var numItems = expression.Children[1];
-            Assert.AstItemKind(numItems.Kind, AstItemKind.Immediate, "Invalid AST item for sized array length!");
+            var initialValue = arrayDefinition.Children[0];
+            var numItems = arrayDefinition.Children[1];
 
+            var arrayLength = GetOperandLocationOrGenerateExpression(output, numItems);
             var initialValueLocation = GetOperandLocationOrGenerateExpression(output, initialValue);
-            var arrayNumItems = (long)numItems.Value;
 
-            var arrayByteSize = DataType.GetArrayByteSize(initialValue.DataType, arrayNumItems);
-
-            //Reserve memory on stack
-            output.Add(IMOperation.SAloc(targetLocation, arrayByteSize));
-
-            var pointer = NewTempLocal(expression.DataType);
             //Create copy of pointer
-            output.Add(IMOperation.Mov(pointer, targetLocation));
+            var pointer = NewTempLocal(arrayDefinition.DataType);
+            output.Add(IMOperation.Mov(pointer, arrayDataLocation));
 
-            var arrayLength = IMOperand.Immediate(DataType.U64, arrayNumItems);
             var refLocation = IMOperand.Reference(initialValue.DataType, pointer);
 
             //Write array length first
@@ -555,7 +626,6 @@ namespace erc
             //Increment pointer to point to first item
             output.Add(IMOperation.Add(pointer, pointer, IMOperand.Immediate(DataType.U64, (long)DataType.U64.ByteSize)));
 
-            var itemSize = IMOperand.Immediate(DataType.U64, (long)initialValue.DataType.ByteSize);
             var counter = NewTempLocal(DataType.U64);
             //Initialize counter variable
             output.Add(IMOperation.Mov(counter, arrayLength));
@@ -566,7 +636,9 @@ namespace erc
 
             //Write actual value
             output.Add(IMOperation.Mov(refLocation, initialValueLocation));
+
             //Increment pointer
+            var itemSize = IMOperand.Immediate(DataType.U64, (long)initialValue.DataType.ByteSize);
             output.Add(IMOperation.Add(pointer, pointer, itemSize));
 
             //Decrement counter

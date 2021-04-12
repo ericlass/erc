@@ -614,20 +614,29 @@ namespace erc
         private AstItem ReadNewPointer(TokenIterator tokens)
         {
             tokens.PopExpected(TokenKind.New);
-            var subType = ReadDataType(tokens);
 
-            var dataType = DataType.Pointer(subType);
-
-            var amountExpression = AstItem.Immediate("1");
-            var current = tokens.Current();
-            if (current != null && current.Kind == TokenKind.RoundBracketOpen)
+            var token = tokens.Current();
+            if (token.Kind == TokenKind.SquareBracketOpen)
             {
-                tokens.Pop();
-                amountExpression = ReadExpression(tokens, TokenKind.RoundBracketClose);
-                tokens.PopExpected(TokenKind.RoundBracketClose);
+                return AstItem.NewHeapArray(ReadArray(tokens));
             }
+            else
+            {
+                var subType = ReadDataType(tokens);
 
-            return AstItem.NewPointer(dataType, amountExpression);
+                var dataType = DataType.Pointer(subType);
+
+                var amountExpression = AstItem.Immediate("1");
+                var current = tokens.Current();
+                if (current != null && current.Kind == TokenKind.RoundBracketOpen)
+                {
+                    tokens.Pop();
+                    amountExpression = ReadExpression(tokens, TokenKind.RoundBracketClose);
+                    tokens.PopExpected(TokenKind.RoundBracketClose);
+                }
+
+                return AstItem.NewRawPointer(dataType, amountExpression);
+            }
         }
 
         private AstItem ReadSingleAstItem(TokenIterator tokens)
@@ -692,7 +701,7 @@ namespace erc
             }
             else if (token.Kind == TokenKind.SquareBracketOpen)
             {
-                result = ReadArray(tokens);
+                result = AstItem.NewStackArray(ReadArray(tokens));
             }
             else
                 throw new Exception("Unexpected token type in expression: " + token);

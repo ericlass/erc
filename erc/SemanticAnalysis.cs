@@ -372,7 +372,7 @@ namespace erc
                 case AstItemKind.Expression:
                     CheckExpressionItem(expression);
                     break;
-                case AstItemKind.NewPointer:
+                case AstItemKind.NewRawPointer:
                     CheckNewPointer(expression);
                     break;
                 case AstItemKind.IndexAccess:
@@ -384,11 +384,11 @@ namespace erc
                 case AstItemKind.CharLiteral:
                     CheckChar(expression);
                     break;
-                case AstItemKind.ValueArrayDefinition:
-                    CheckValueArray(expression);
+                case AstItemKind.NewStackArray:
+                    CheckNewStackArray(expression);
                     break;
-                case AstItemKind.SizedArrayDefinition:
-                    CheckSizedArray(expression);
+                case AstItemKind.NewHeapArray:
+                    CheckNewHeapArray(expression);
                     break;
                 default:
                     throw new Exception("Unsupported expression item: " + expression);
@@ -400,7 +400,7 @@ namespace erc
             return expression.DataType;
         }
 
-        private void CheckValueArray(AstItem expression)
+        private long? CheckValueArray(AstItem expression)
         {
             //Check array is not empty
             Assert.True(expression.Children.Count > 0, "Empty arrays are not allowed: " + expression);
@@ -418,29 +418,33 @@ namespace erc
                 valueExpression.DataType = currentType;
             }
 
-            var arraySize = DataType.GetArrayByteSize(valueType, expression.Children.Count - 1);
+            var length = (long)expression.Children.Count;
+            var arraySize = DataType.GetArrayByteSize(valueType, expression.Children.Count);
             Assert.True(arraySize <= 1024, "Arrays larger than 1KB should not go on the stack, put it on the heap instead! In: " + expression);
 
             expression.DataType = DataType.Array(valueType);
+
+            return length;
         }
 
-        private void CheckSizedArray(AstItem expression)
+        private long? CheckSizedArray(AstItem expression)
         {
             var value = expression.Children[0];
             var numItems = expression.Children[1];
-            //TODO: Possibility to use defined constant as size, which is not "immediate"
-            Assert.AstItemKind(numItems.Kind, AstItemKind.Immediate, "Stack located arrays must have a constant size known at compile time! Use heap arrays if size is only known at runtime.");
-
+            
             var valueType = CheckExpression(value);
             //No checks on value type, can be everything atm
 
+            long? length = null;
             DataType numItemsType;
             if (numItems.Kind == AstItemKind.Immediate)
             {
+                //TODO: Possibility to use defined constant as size, which is not "immediate"
                 //Handle immediate values specifically so they always are U64
                 numItemsType = DataType.U64;
                 numItems.DataType = numItemsType;
                 numItems.Value = ParseNumber((string)numItems.Value, numItemsType);
+                length = (long)numItems.Value;
             }
             else
                 numItemsType = CheckExpression(numItems);
@@ -449,8 +453,43 @@ namespace erc
 
             expression.DataType = DataType.Array(valueType);
 
-            var arraySize = DataType.GetArrayByteSize(valueType, (long)numItems.Value);
+            return length;
+        }
+
+        private void CheckNewStackArray(AstItem expression)
+        {
+            var arrayDefinition = expression.Children[0];
+            var constArrayLength = CheckArrayDefinition(arrayDefinition);
+
+            Assert.True(constArrayLength != null, "Stack located arrays must have a constant size known at compile time! Use heap arrays if size is only known at runtime.");
+
+            var arraySize = DataType.GetArrayByteSize(arrayDefinition.DataType.ElementType, (long)constArrayLength);
             Assert.True(arraySize <= 1024, "Arrays larger than 1KB should not go on the stack, put it on the heap instead! In: " + expression);
+
+            expression.DataType = arrayDefinition.DataType;
+        }
+
+        private void CheckNewHeapArray(AstItem expression)
+        {
+            var arrayDefinition = expression.Children[0];
+            CheckArrayDefinition(arrayDefinition);
+
+            expression.DataType = arrayDefinition.DataType;
+        }
+
+        private long? CheckArrayDefinition(AstItem expression)
+        {
+            switch (expression.Kind)
+            {
+                case AstItemKind.ValueArrayDefinition:
+                    return CheckValueArray(expression);
+
+                case AstItemKind.SizedArrayDefinition:
+                    return CheckSizedArray(expression);
+
+                default:
+                    throw new Exception("Invalid kind of AST item given! Expected: ValueArrayDefinition or SizedArrayDefinition, given: " + expression);
+            }
         }
 
         private void CheckChar(AstItem expression)
@@ -534,9 +573,7 @@ namespace erc
                 amountExpression.Value = ParseNumber((string)amountExpression.Value, amountDataType);
             }
             else
-            {
                 amountDataType = CheckExpression(amountExpression);
-            }
 
             if (amountDataType.Group != DataTypeGroup.ScalarInteger)
                 throw new Exception("Amount value for new pointer must be integer type! Given: " + amountDataType);

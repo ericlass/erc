@@ -26,6 +26,9 @@ fn arrays() {
 	let z = c[6];
 
 	let l = #c;
+
+	let r = new [1,2,3,4];
+	let s = new [7; 10];
 }
 
 fn strings() {

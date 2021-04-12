@@ -25,7 +25,7 @@ namespace erc
         For,
         While,
         Break,
-        NewPointer,
+        NewRawPointer,
         DelPointer,
         IndexAccess,
         UnaryOperator,
@@ -37,7 +37,9 @@ namespace erc
         Type,
         CharLiteral,
         ValueArrayDefinition,
-        SizedArrayDefinition
+        SizedArrayDefinition,
+        NewStackArray,
+        NewHeapArray,
     }
 
     public class AstItem
@@ -167,7 +169,7 @@ namespace erc
                 case AstItemKind.Type:
                 case AstItemKind.SizedArrayDefinition:
                 case AstItemKind.ValueArrayDefinition:
-                case AstItemKind.NewPointer:
+                case AstItemKind.NewRawPointer:
                     return Kind + ": (" + DataType.Name + ")";
 
                 case AstItemKind.Identifier:
@@ -376,9 +378,9 @@ namespace erc
             return new AstItem { Kind = AstItemKind.If, Children = new List<AstItem>() { expression, statementList, elseStatementList } };
         }
 
-        public static AstItem NewPointer(DataType dataType, AstItem amountExpression)
+        public static AstItem NewRawPointer(DataType dataType, AstItem amountExpression)
         {
-            return new AstItem { Kind = AstItemKind.NewPointer, DataType = dataType, Children = new List<AstItem>() { amountExpression } };
+            return new AstItem { Kind = AstItemKind.NewRawPointer, DataType = dataType, Children = new List<AstItem>() { amountExpression } };
         }
 
         public static AstItem DelPointer(string varName)
@@ -428,6 +430,16 @@ namespace erc
         public static AstItem SizedArrayDefinition(AstItem initialValue, AstItem numItemsExpression)
         {
             return new AstItem { Kind = AstItemKind.SizedArrayDefinition, Children = new List<AstItem>() { initialValue, numItemsExpression } };
+        }
+
+        public static AstItem NewStackArray(AstItem arrayDefinition)
+        {
+            return new AstItem { Kind = AstItemKind.NewStackArray, Children = new List<AstItem>() { arrayDefinition } };
+        }
+
+        public static AstItem NewHeapArray(AstItem arrayDefinition)
+        {
+            return new AstItem { Kind = AstItemKind.NewHeapArray, Children = new List<AstItem>() { arrayDefinition } };
         }
 
     }
