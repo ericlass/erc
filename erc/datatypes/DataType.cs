@@ -17,6 +17,7 @@ namespace erc
         public DataTypeGroup Group { get; private set; }
         public string CustomTypeName { get; private set; }
         public List<EnumElement> EnumElements { get; private set; }
+        public MemoryRegion MemoryRegion { get; private set; }
 
         public string Name 
         { 
@@ -321,7 +322,7 @@ namespace erc
             return newType;
         }
 
-        public static DataType Array(DataType subType)
+        public static DataType Array(DataType subType, MemoryRegion region)
         {
             var newType = new DataType
             {
@@ -331,7 +332,8 @@ namespace erc
                 IsSigned = false,
                 ElementType = subType,
                 NumElements = 0, //Number of elements may not be known at compile time
-                Group = DataTypeGroup.Array
+                Group = DataTypeGroup.Array,
+                MemoryRegion = region
             };
 
             DataType.GetAllValues().Add(newType);

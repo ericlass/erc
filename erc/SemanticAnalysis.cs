@@ -207,20 +207,21 @@ namespace erc
             }
             else if (item.Kind == AstItemKind.DelPointer)
             {
-                CheckPointerDeletion(item);
+                CheckDelPointer(item);
             }
             else
                 throw new Exception("Unknown statement: " + item);
         }
 
-        private void CheckPointerDeletion(AstItem item)
+        private void CheckDelPointer(AstItem item)
         {
             var variable = _context.GetSymbol(item.Identifier);
             if (variable == null)
                 throw new Exception("Undeclared variable: '" + item.Identifier + "' at: " + item);
 
-            if (variable.DataType.Kind != DataTypeKind.POINTER)
-                throw new Exception("Cannot del non-pointer data type: " + variable.DataType + " at: " + item);
+            var isHeapArray = variable.DataType.Kind == DataTypeKind.ARRAY && variable.DataType.MemoryRegion == MemoryRegion.Heap;
+            if (variable.DataType.Kind != DataTypeKind.POINTER && !isHeapArray)
+                throw new Exception("Can only delete pointer or heap-array data type: " + variable.DataType + " at: " + item);
 
             //TODO: Check that the pointer is one that was created with "new" and not some other self-created one
         }
@@ -400,7 +401,7 @@ namespace erc
             return expression.DataType;
         }
 
-        private long? CheckValueArray(AstItem expression)
+        private long? CheckValueArray(AstItem expression, MemoryRegion region)
         {
             //Check array is not empty
             Assert.True(expression.Children.Count > 0, "Empty arrays are not allowed: " + expression);
@@ -422,12 +423,12 @@ namespace erc
             var arraySize = DataType.GetArrayByteSize(valueType, expression.Children.Count);
             Assert.True(arraySize <= 1024, "Arrays larger than 1KB should not go on the stack, put it on the heap instead! In: " + expression);
 
-            expression.DataType = DataType.Array(valueType);
+            expression.DataType = DataType.Array(valueType, region);
 
             return length;
         }
 
-        private long? CheckSizedArray(AstItem expression)
+        private long? CheckSizedArray(AstItem expression, MemoryRegion region)
         {
             var value = expression.Children[0];
             var numItems = expression.Children[1];
@@ -451,7 +452,7 @@ namespace erc
 
             Assert.DataTypeKind(numItemsType.Kind, DataTypeKind.U64, "Size for sized arrays must be U64!");
 
-            expression.DataType = DataType.Array(valueType);
+            expression.DataType = DataType.Array(valueType, region);
 
             return length;
         }
@@ -459,7 +460,7 @@ namespace erc
         private void CheckNewStackArray(AstItem expression)
         {
             var arrayDefinition = expression.Children[0];
-            var constArrayLength = CheckArrayDefinition(arrayDefinition);
+            var constArrayLength = CheckArrayDefinition(arrayDefinition, MemoryRegion.Stack);
 
             Assert.True(constArrayLength != null, "Stack located arrays must have a constant size known at compile time! Use heap arrays if size is only known at runtime.");
 
@@ -472,20 +473,20 @@ namespace erc
         private void CheckNewHeapArray(AstItem expression)
         {
             var arrayDefinition = expression.Children[0];
-            CheckArrayDefinition(arrayDefinition);
+            CheckArrayDefinition(arrayDefinition, MemoryRegion.Heap);
 
             expression.DataType = arrayDefinition.DataType;
         }
 
-        private long? CheckArrayDefinition(AstItem expression)
+        private long? CheckArrayDefinition(AstItem expression, MemoryRegion region)
         {
             switch (expression.Kind)
             {
                 case AstItemKind.ValueArrayDefinition:
-                    return CheckValueArray(expression);
+                    return CheckValueArray(expression, region);
 
                 case AstItemKind.SizedArrayDefinition:
-                    return CheckSizedArray(expression);
+                    return CheckSizedArray(expression, region);
 
                 default:
                     throw new Exception("Invalid kind of AST item given! Expected: ValueArrayDefinition or SizedArrayDefinition, given: " + expression);

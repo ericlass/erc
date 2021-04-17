@@ -202,7 +202,7 @@ namespace erc
             var paramOffset = 0;
             foreach (var paramType in parameterTypes)
             {
-                if (paramType.Group == DataTypeGroup.ScalarInteger || paramType.Kind == DataTypeKind.BOOL || paramType.Kind == DataTypeKind.POINTER)
+                if (paramType.Group == DataTypeGroup.ScalarInteger || paramType.Kind == DataTypeKind.BOOL || paramType.Kind == DataTypeKind.POINTER || paramType.Kind == DataTypeKind.ARRAY)
                 {
                     if (_freeParameterRRegisters.Count > 0)
                     {

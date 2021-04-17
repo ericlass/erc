@@ -49,6 +49,7 @@
     <Compile Include="datatypes\DataTypeGroup.cs" />
     <Compile Include="datatypes\DataTypeKind.cs" />
     <Compile Include="datatypes\EnumElement.cs" />
+    <Compile Include="datatypes\MemoryRegion.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="intermediate\IIMObject.cs" />
     <Compile Include="intermediate\IMCodeGenerator.cs" />

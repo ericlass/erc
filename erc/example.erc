@@ -29,6 +29,8 @@ fn arrays() {
 
 	let r = new [1,2,3,4];
 	let s = new [7; 10];
+
+	del r;
 }
 
 fn strings() {

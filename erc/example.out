@@ -64,6 +64,7 @@ Programm
                     SizedArrayDefinition: ([i64])
                         Immediate: 7 (i64)
                         Immediate: 10 (u64)
+            DelPointer
     FunctionDecl: "strings" (void)
         ParameterList
         StatementList
@@ -729,11 +730,11 @@ fn main(): void
   %r	: register(RBX),
   %9	: register(RSI),
   [%9]	: heap_register(RSI+0),
-  %10	: register(RBX),
-  %s	: register(RSI),
-  %11	: register(RBX),
-  [%11]	: heap_register(RBX+0),
-  %12	: register(RSI),
+  %10	: register(RSI),
+  %s	: register(RDI),
+  %11	: register(RSI),
+  [%11]	: heap_register(RSI+0),
+  %12	: register(RDI),
   i64(5)	: data_section(imm_1),
   u64(40)	: data_section(imm_2),
   u64(4)	: data_section(imm_3),
@@ -829,7 +830,6 @@ fn arrays(): void
     FREE %l
     HALOC %r, u64(40)
     MOV %9, %r
-    FREE %r
     MOV [%9], u64(4)
     ADD %9, %9, u64(8)
     MOV [%9], i64(1)
@@ -857,6 +857,8 @@ fn arrays(): void
     SUB %12, %12, u64(1)
     JMPG %12, u64(0), 'label_2'
     FREE %12
+    DEL %r
+    FREE %r
     RET @void
 }
 
@@ -1790,13 +1792,13 @@ ADD RSI, [imm_4]
 MOV RAX, [imm_20]
 MOV [RSI], RAX
 ;MOV %10, u64(10)
-MOV RBX, [imm_21]
+MOV RSI, [imm_21]
 ;MUL %10, %10, u64(8)
-MOV RAX, RBX
+MOV RAX, RSI
 MUL [imm_4]
-MOV RBX, RAX
+MOV RSI, RAX
 ;ADD %10, %10, u64(8)
-ADD RBX, [imm_4]
+ADD RSI, [imm_4]
 ;HALOC %s, %10
 PUSH R13
 PUSH R12
@@ -1807,11 +1809,11 @@ PUSH RBX
 PUSH RSI
 MOV RCX, [erc_process_heap]
 MOV EDX, [erc_u32_zero]
-MOV R8, RBX
+MOV R8, RSI
 SUB RSP, 0x20
 CALL [HeapAlloc]
 ADD RSP, 0x20
-MOV RSI, RAX
+MOV RDI, RAX
 POP RSI
 POP RBX
 POP RDI
@@ -1820,26 +1822,47 @@ ADD RSP, 1
 POP R12
 POP R13
 ;MOV %11, %s
-MOV RBX, RSI
+MOV RSI, RDI
 ;MOV [%11], u64(10)
 MOV RAX, [imm_21]
-MOV [RBX], RAX
+MOV [RSI], RAX
 ;ADD %11, %11, u64(8)
-ADD RBX, [imm_4]
+ADD RSI, [imm_4]
 ;MOV %12, u64(10)
-MOV RSI, [imm_21]
+MOV RDI, [imm_21]
 ;LABL 'label_2'
 label_2:
 ;MOV [%11], i64(7)
 MOV RAX, [imm_22]
-MOV [RBX], RAX
+MOV [RSI], RAX
 ;ADD %11, %11, u64(8)
-ADD RBX, [imm_4]
+ADD RSI, [imm_4]
 ;SUB %12, %12, u64(1)
-SUB RSI, [imm_11]
+SUB RDI, [imm_11]
 ;JMPG %12, u64(0), 'label_2'
-CMP RSI, [imm_17]
+CMP RDI, [imm_17]
 JG label_2
+;DEL %r
+PUSH R13
+PUSH R12
+SUB RSP, 1
+MOV [RSP], BL
+PUSH RBX
+PUSH RSI
+PUSH RDI
+MOV RCX, [erc_process_heap]
+MOV EDX, [erc_u32_zero]
+MOV R8, RBX
+SUB RSP, 0x20
+CALL [HeapFree]
+ADD RSP, 0x20
+POP RDI
+POP RSI
+POP RBX
+MOV BL, [RSP]
+ADD RSP, 1
+POP R12
+POP R13
 ;RET @void
 ADD RSP, 128
 RET
