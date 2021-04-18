@@ -28,7 +28,7 @@ namespace erc
                 else if (Kind == DataTypeKind.ENUM)
                     return CustomTypeName;
                 else if (Kind == DataTypeKind.ARRAY)
-                    return "[" + ElementType.Name + "]";
+                    return "array[" + ElementType.Name + "]";
 
                 return Kind.ToString().ToLower();
             }

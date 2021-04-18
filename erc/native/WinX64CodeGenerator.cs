@@ -866,14 +866,27 @@ namespace erc
 
             var function = _context.RequireFunction(functionName);
 
+            X64StorageLocation targetLocation = null;
+            var isTargetLocationRegister = false;
+            if (resultTarget != null && !resultTarget.IsVoid)
+            {
+                targetLocation = RequireOperandLocation(resultTarget);
+                isTargetLocationRegister = targetLocation.Kind == X64StorageLocationKind.Register;
+            }
+
             //List of registers that need to be restored
             var savedRegisters = new List<X64Register>();
 
             //Push used registers
             foreach (var register in _usedRegisters)
             {
-                GeneratePushInternal(output, X64Register.GetDefaultDataType(register), X64StorageLocation.AsRegister(register));
-                savedRegisters.Add(register);
+                //Do not save register if it is the target location for the return value. It is overwritten anyways.
+                var isTargetRegister = isTargetLocationRegister && targetLocation.Register.Group == register.Group;
+                if (!isTargetRegister)
+                {
+                    GeneratePushInternal(output, X64Register.GetDefaultDataType(register), X64StorageLocation.AsRegister(register));
+                    savedRegisters.Add(register);
+                }
             }
 
             //Push parameter registers of current function
@@ -883,8 +896,13 @@ namespace erc
                 var paramLocation = RequireOperandLocation(IMOperand.Parameter(parameter.DataType, p + 1));
                 if (paramLocation.Kind == X64StorageLocationKind.Register && savedRegisters.Contains(paramLocation.Register))
                 {
-                    GeneratePushInternal(output, parameter.DataType, paramLocation);
-                    savedRegisters.Add(paramLocation.Register);
+                    //Do not save register if it is the target location for the return value. It is overwritten anyways.
+                    var isTargetRegister = isTargetLocationRegister && targetLocation.Register.Group == paramLocation.Register.Group;
+                    if (!isTargetRegister)
+                    {
+                        GeneratePushInternal(output, parameter.DataType, paramLocation);
+                        savedRegisters.Add(paramLocation.Register);
+                    }
                 }
             }
 
@@ -914,10 +932,6 @@ namespace erc
             output.Add(X64CodeFormat.FormatOperation(X64Instruction.ADD, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate("0x20")));
 
             //Move result value (if exists) to target location (if required)
-            X64StorageLocation targetLocation = null;
-            if (resultTarget != null && !resultTarget.IsVoid)
-                targetLocation = RequireOperandLocation(resultTarget);
-
             if (function.ReturnType != DataType.VOID && targetLocation != null)
             {
                 X64GeneratorUtils.Move(output, function.ReturnType, targetLocation, _memoryManager.GetFunctionReturnLocation(function));
@@ -1078,8 +1092,9 @@ namespace erc
             else
             {
                 //Save current stack pointer
-                //TODO: Fix: RSI might be used by an operand!
-                output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RSI), X64StorageLocation.AsRegister(X64Register.RSP)));
+                var x64PointerType = X64DataTypeProperties.GetProperties(DataTypeKind.POINTER);
+                var rspSaveLocation = X64StorageLocation.AsRegister(x64PointerType.TempRegister1);
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, rspSaveLocation, X64StorageLocation.AsRegister(X64Register.RSP)));
 
                 //Align stack correctly
                 var invertedByteSize = targetDataType.ByteSize * -1;
@@ -1097,7 +1112,7 @@ namespace erc
                 X64GeneratorUtils.Move(output, targetDataType, targetLocation, X64StorageLocation.StackFromTop(0));
 
                 //Restore stack pointer
-                output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.AsRegister(X64Register.RSI)));
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RSP), rspSaveLocation));
             }
         }
 

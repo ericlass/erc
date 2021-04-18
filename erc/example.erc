@@ -24,6 +24,7 @@ fn arrays() {
 	let x = a[0];
 	let y = b[2];
 	let z = c[6];
+	c[6] = k;
 
 	let l = #c;
 

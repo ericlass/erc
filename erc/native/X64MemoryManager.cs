@@ -265,19 +265,21 @@ namespace erc
 
         private X64StorageLocation GetFunctionReturnLocation(DataType returnType)
         {
+            //ENUM is missing here because it is converted to int in previous step
+
             if (returnType.Group == DataTypeGroup.ScalarInteger)
                 return X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegister(X64RegisterGroup.A, returnType));
-            else if (returnType.Kind == DataTypeKind.POINTER)
+            else if (returnType.Kind == DataTypeKind.POINTER || returnType.Kind == DataTypeKind.ARRAY)
                 return X64StorageLocation.AsRegister(X64Register.RAX);
-            else if (returnType == DataType.BOOL)
+            else if (returnType.Kind == DataTypeKind.BOOL)
                 return X64StorageLocation.AsRegister(X64DataTypeProperties.GetProperties(returnType.Kind).Accumulator);
             else if (returnType.Group == DataTypeGroup.ScalarFloat)
                 return X64StorageLocation.AsRegister(X64Register.XMM0);
-            else if (returnType == DataType.VEC4F || returnType == DataType.VEC2D)
+            else if (returnType.Kind == DataTypeKind.VEC4F || returnType.Kind == DataTypeKind.VEC2D)
                 return X64StorageLocation.AsRegister(X64Register.XMM0);
-            else if (returnType == DataType.VEC8F || returnType == DataType.VEC4D)
+            else if (returnType.Kind == DataTypeKind.VEC8F || returnType.Kind == DataTypeKind.VEC4D)
                 return X64StorageLocation.AsRegister(X64Register.YMM0);
-            else if (returnType != DataType.VOID)
+            else if (returnType.Kind != DataTypeKind.VOID)
                 throw new Exception("Unknown function return type: " + returnType);
 
             return null;

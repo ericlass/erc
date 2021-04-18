@@ -302,6 +302,9 @@ namespace erc
             {
                 valueType = CheckExpression(valueExpression);
 
+                if (valueType.Kind == DataTypeKind.ARRAY && valueType.MemoryRegion == MemoryRegion.Stack)
+                    throw new Exception("Cannot return references to stack memory! The stack is deleted when the function returns! In:  " + item);
+
                 if (valueType != _context.CurrentFunction.ReturnType)
                     throw new Exception("Invalid return data type! Expected " + _context.CurrentFunction.ReturnType + ", found " + valueType);
             }

@@ -17,27 +17,28 @@ namespace erc
             _excluded.Add(X64Register.R10.Group);
             _excluded.Add(X64Register.R11.Group);
 
+            //Accumulator and operand registers
+            _excluded.Add(X64Register.XMM4.Group);
+            _excluded.Add(X64Register.XMM5.Group);
+            _excluded.Add(X64Register.XMM6.Group);
+
             //Stack pointers
             _excluded.Add(X64Register.RSP.Group);
             _excluded.Add(X64Register.RBP.Group);
 
-            //Parameter registers. TODO: Find a way not to have to exclude them.
+            //Parameter registers.
+            //TODO: Find a way not to have to exclude them.
             _excluded.Add(X64Register.RCX.Group);
             _excluded.Add(X64Register.RDX.Group);
             _excluded.Add(X64Register.R8.Group);
             _excluded.Add(X64Register.R9.Group);
 
-            //Parameter registers. TODO: Find a way not to have to exclude them.
+            //Parameter registers.
+            //TODO: Find a way not to have to exclude them.
             _excluded.Add(X64Register.XMM0.Group);
             _excluded.Add(X64Register.XMM1.Group);
             _excluded.Add(X64Register.XMM2.Group);
-
-            _excluded.Add(X64Register.XMM3.Group);
-
-            //Accumulator and operand registers
-            _excluded.Add(X64Register.XMM4.Group);
-            _excluded.Add(X64Register.XMM5.Group);
-            _excluded.Add(X64Register.XMM6.Group);
+            _excluded.Add(X64Register.XMM3.Group);            
         }
 
         public void Reset()

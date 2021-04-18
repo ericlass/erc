@@ -25,8 +25,12 @@ namespace erc
         public void ValidateOperand(AstItem operand)
         {
             var dataType = operand.DataType;
+
             if (dataType.Kind == DataTypeKind.VOID || dataType.Kind == DataTypeKind.ENUM || dataType.Kind == DataTypeKind.VARS)
                 throw new Exception("Cannot create a reference with '&' to: " + dataType);
+
+            if (dataType.MemoryRegion == MemoryRegion.Stack)
+                throw new Exception("Cannot create reference with '&' to data on stack: " + operand);
         }
     }
 }

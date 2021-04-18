@@ -48,7 +48,7 @@ namespace erc
 
         public override string ToString()
         {
-            return Instruction.Name + " " + String.Join(", ", Operands);
+            return Instruction.Name + " " + String.Join(", ", Operands); // + "; " + String.Join(", ", Operands.ConvertAll((o) => o != null ? o.DataType.ToString() : "null"));
         }
 
         public static IMOperation Create(IMInstruction instruction, List<IMOperand> operands)

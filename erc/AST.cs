@@ -313,7 +313,6 @@ namespace erc
 
         public static AstItem StatementList(List<AstItem> statements)
         {
-            //TODO: Check that all items in given list are statements
             return new AstItem { Kind = AstItemKind.StatementList, Children = statements };
         }
 

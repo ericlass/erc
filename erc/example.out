@@ -16,9 +16,9 @@ Programm
         StatementList
             VarDecl: "k" (i64)
                 Immediate: 5 (i64)
-            VarDecl: "a" ([i64])
+            VarDecl: "a" (array[i64])
                 NewStackArray
-                    ValueArrayDefinition: ([i64])
+                    ValueArrayDefinition: (array[i64])
                         Immediate: 1 (i64)
                         Immediate: 2 (i64)
                         Immediate: 3 (i64)
@@ -26,17 +26,17 @@ Programm
                             Variable: "k" (i64)
                             Immediate: 1 (i64)
                             BinaryOperator: +
-            VarDecl: "b" ([char8])
+            VarDecl: "b" (array[char8])
                 NewStackArray
-                    ValueArrayDefinition: ([char8])
+                    ValueArrayDefinition: (array[char8])
                         CharLiteral: 'H' (char8)
                         CharLiteral: 'e' (char8)
                         CharLiteral: 'l' (char8)
                         CharLiteral: 'l' (char8)
                         CharLiteral: 'o' (char8)
-            VarDecl: "c" ([i64])
+            VarDecl: "c" (array[i64])
                 NewStackArray
-                    SizedArrayDefinition: ([i64])
+                    SizedArrayDefinition: (array[i64])
                         Immediate: 66 (i64)
                         Immediate: 8 (u64)
             VarDecl: "x" (i64)
@@ -48,20 +48,24 @@ Programm
             VarDecl: "z" (i64)
                 IndexAccess: "c" (i64)
                     Immediate: 6 (i64)
+            Assignment
+                IndexAccess: "c" (i64)
+                    Immediate: 6 (i64)
+                Variable: "k" (i64)
             VarDecl: "l" (u64)
                 Expression
-                    Variable: "c" ([i64])
+                    Variable: "c" (array[i64])
                     UnaryOperator: #
-            VarDecl: "r" ([i64])
+            VarDecl: "r" (array[i64])
                 NewHeapArray
-                    ValueArrayDefinition: ([i64])
+                    ValueArrayDefinition: (array[i64])
                         Immediate: 1 (i64)
                         Immediate: 2 (i64)
                         Immediate: 3 (i64)
                         Immediate: 4 (i64)
-            VarDecl: "s" ([i64])
+            VarDecl: "s" (array[i64])
                 NewHeapArray
-                    SizedArrayDefinition: ([i64])
+                    SizedArrayDefinition: (array[i64])
                         Immediate: 7 (i64)
                         Immediate: 10 (u64)
             DelPointer
@@ -707,34 +711,36 @@ fn main(): void
   %1	: register(RDI),
   [%1]	: heap_register(RDI+0),
   %2	: register(R12),
-  %b	: register(RBX),
+  %b	: register(RDI),
   mem(%b)	: stack_base(-53),
-  %3	: register(RDI),
-  [%3]	: heap_register(RDI+0),
-  %c	: register(RDI),
+  %3	: register(R12),
+  [%3]	: heap_register(R12+0),
+  %c	: register(R12),
   mem(%c)	: stack_base(-125),
-  %4	: register(R12),
-  [%4]	: heap_register(R12+0),
-  %5	: register(R13),
-  %6	: register(R12),
+  %4	: register(R13),
+  [%4]	: heap_register(R13+0),
+  %5	: register(R14),
+  %6	: register(R13),
   %x	: register(RSI),
-  [%6]	: heap_register(R12+0),
+  [%6]	: heap_register(R13+0),
   %7	: register(RSI),
-  %y	: register(BL),
+  %y	: register(DIL),
   [%7]	: heap_register(RSI+0),
-  %8	: register(RBX),
-  %z	: register(RSI),
-  [%8]	: heap_register(RBX+0),
-  %l	: register(RBX),
-  [%c]	: heap_register(RDI+0),
-  %r	: register(RBX),
+  %8	: register(RSI),
+  %z	: register(RDI),
+  [%8]	: heap_register(RSI+0),
   %9	: register(RSI),
   [%9]	: heap_register(RSI+0),
+  %l	: register(RBX),
+  [%c]	: heap_register(R12+0),
+  %r	: register(RBX),
   %10	: register(RSI),
-  %s	: register(RDI),
+  [%10]	: heap_register(RSI+0),
   %11	: register(RSI),
-  [%11]	: heap_register(RSI+0),
-  %12	: register(RDI),
+  %s	: register(RDI),
+  %12	: register(RSI),
+  [%12]	: heap_register(RSI+0),
+  %13	: register(RDI),
   i64(5)	: data_section(imm_1),
   u64(40)	: data_section(imm_2),
   u64(4)	: data_section(imm_3),
@@ -772,7 +778,6 @@ fn arrays(): void
     MOV [%1], i64(3)
     ADD %1, %1, u64(8)
     ADD %2, %k, i64(1)
-    FREE %k
     MOV [%1], %2
     FREE %2
     FREE %1
@@ -825,38 +830,44 @@ fn arrays(): void
     MOV %z, [%8]
     FREE %8
     FREE %z
+    MOV %9, i64(6)
+    MUL %9, %9, u64(8)
+    ADD %9, %9, %c
+    MOV [%9], %k
+    FREE %k
+    FREE %9
     MOV %l, [%c]
     FREE %c
     FREE %l
     HALOC %r, u64(40)
-    MOV %9, %r
-    MOV [%9], u64(4)
-    ADD %9, %9, u64(8)
-    MOV [%9], i64(1)
-    ADD %9, %9, u64(8)
-    MOV [%9], i64(2)
-    ADD %9, %9, u64(8)
-    MOV [%9], i64(3)
-    ADD %9, %9, u64(8)
-    MOV [%9], i64(4)
-    FREE %9
-    MOV %10, u64(10)
-    MUL %10, %10, u64(8)
+    MOV %10, %r
+    MOV [%10], u64(4)
     ADD %10, %10, u64(8)
-    HALOC %s, %10
+    MOV [%10], i64(1)
+    ADD %10, %10, u64(8)
+    MOV [%10], i64(2)
+    ADD %10, %10, u64(8)
+    MOV [%10], i64(3)
+    ADD %10, %10, u64(8)
+    MOV [%10], i64(4)
     FREE %10
-    MOV %11, %s
-    FREE %s
-    MOV [%11], u64(10)
+    MOV %11, u64(10)
+    MUL %11, %11, u64(8)
     ADD %11, %11, u64(8)
-    MOV %12, u64(10)
-    LABL 'label_2'
-    MOV [%11], i64(7)
-    ADD %11, %11, u64(8)
+    HALOC %s, %11
     FREE %11
-    SUB %12, %12, u64(1)
-    JMPG %12, u64(0), 'label_2'
+    MOV %12, %s
+    FREE %s
+    MOV [%12], u64(10)
+    ADD %12, %12, u64(8)
+    MOV %13, u64(10)
+    LABL 'label_2'
+    MOV [%12], i64(7)
+    ADD %12, %12, u64(8)
     FREE %12
+    SUB %13, %13, u64(1)
+    JMPG %13, u64(0), 'label_2'
+    FREE %13
     DEL %r
     FREE %r
     RET @void
@@ -1652,72 +1663,72 @@ ADD R12, [imm_5]
 ;MOV [%1], %2
 MOV [RDI], R12
 ;SALOC %b, u64(13)
-LEA RBX, [RBP-53]
+LEA RDI, [RBP-53]
 ;MOV %3, %b
-MOV RDI, RBX
+MOV R12, RDI
 ;MOV [%3], u64(5)
 MOV RAX, [imm_9]
-MOV [RDI], RAX
+MOV [R12], RAX
 ;ADD %3, %3, u64(8)
-ADD RDI, [imm_4]
+ADD R12, [imm_4]
 ;MOV [%3], char8(H)
 MOV AL, [imm_10]
-MOV [RDI], AL
+MOV [R12], AL
 ;ADD %3, %3, u64(1)
-ADD RDI, [imm_11]
+ADD R12, [imm_11]
 ;MOV [%3], char8(e)
 MOV AL, [imm_12]
-MOV [RDI], AL
+MOV [R12], AL
 ;ADD %3, %3, u64(1)
-ADD RDI, [imm_11]
+ADD R12, [imm_11]
 ;MOV [%3], char8(l)
 MOV AL, [imm_13]
-MOV [RDI], AL
+MOV [R12], AL
 ;ADD %3, %3, u64(1)
-ADD RDI, [imm_11]
+ADD R12, [imm_11]
 ;MOV [%3], char8(l)
 MOV AL, [imm_13]
-MOV [RDI], AL
+MOV [R12], AL
 ;ADD %3, %3, u64(1)
-ADD RDI, [imm_11]
+ADD R12, [imm_11]
 ;MOV [%3], char8(o)
 MOV AL, [imm_14]
-MOV [RDI], AL
+MOV [R12], AL
 ;SALOC %c, u64(72)
-LEA RDI, [RBP-125]
+LEA R12, [RBP-125]
 ;MOV %4, %c
-MOV R12, RDI
+MOV R13, R12
 ;MOV [%4], u64(8)
 MOV RAX, [imm_4]
-MOV [R12], RAX
+MOV [R13], RAX
 ;ADD %4, %4, u64(8)
-ADD R12, [imm_4]
+ADD R13, [imm_4]
 ;MOV %5, u64(8)
-MOV R13, [imm_4]
+MOV R14, [imm_4]
 ;LABL 'label_1'
 label_1:
 ;MOV [%4], i64(66)
 MOV RAX, [imm_16]
-MOV [R12], RAX
+MOV [R13], RAX
 ;ADD %4, %4, u64(8)
-ADD R12, [imm_4]
+ADD R13, [imm_4]
 ;SUB %5, %5, u64(1)
-SUB R13, [imm_11]
+SUB R14, [imm_11]
 ;JMPG %5, u64(0), 'label_1'
-CMP R13, [imm_17]
+CMP R14, [imm_17]
 JG label_1
 ;MOV %6, i64(0)
-MOV R12, [imm_18]
+MOV R13, [imm_18]
 ;MUL %6, %6, u64(8)
-MOV RAX, R12
+MOV RAX, R13
 MUL [imm_4]
-MOV R12, RAX
+MOV R13, RAX
 ;ADD %6, %6, %a
-ADD R12, RSI
+ADD R13, RSI
 ;ADD %6, %6, u64(8)
-ADD R12, [imm_4]
+ADD R13, [imm_4]
 ;MOV %x, [%6]
-MOV RSI, [R12]
+MOV RSI, [R13]
 ;MOV %7, i64(2)
 MOV RSI, [imm_6]
 ;MUL %7, %7, u64(1)
@@ -1725,33 +1736,43 @@ MOV RAX, RSI
 MUL [imm_11]
 MOV RSI, RAX
 ;ADD %7, %7, %b
-ADD RSI, RBX
+ADD RSI, RDI
 ;ADD %7, %7, u64(8)
 ADD RSI, [imm_4]
 ;MOV %y, [%7]
-MOV BL, [RSI]
+MOV DIL, [RSI]
 ;MOV %8, i64(6)
-MOV RBX, [imm_19]
+MOV RSI, [imm_19]
 ;MUL %8, %8, u64(8)
-MOV RAX, RBX
+MOV RAX, RSI
 MUL [imm_4]
-MOV RBX, RAX
+MOV RSI, RAX
 ;ADD %8, %8, %c
-ADD RBX, RDI
+ADD RSI, R12
 ;ADD %8, %8, u64(8)
-ADD RBX, [imm_4]
+ADD RSI, [imm_4]
 ;MOV %z, [%8]
-MOV RSI, [RBX]
+MOV RDI, [RSI]
+;MOV %9, i64(6)
+MOV RSI, [imm_19]
+;MUL %9, %9, u64(8)
+MOV RAX, RSI
+MUL [imm_4]
+MOV RSI, RAX
+;ADD %9, %9, %c
+ADD RSI, R12
+;MOV [%9], %k
+MOV [RSI], RBX
 ;MOV %l, [%c]
-MOV RBX, [RDI]
+MOV RBX, [R12]
 ;HALOC %r, u64(40)
+PUSH R14
 PUSH R13
-PUSH R12
 SUB RSP, 1
-MOV [RSP], BL
-PUSH RSI
+MOV [RSP], DIL
 PUSH RDI
-PUSH RBX
+PUSH RSI
+PUSH R12
 MOV RCX, [erc_process_heap]
 MOV EDX, [erc_u32_zero]
 MOV R8, [imm_2]
@@ -1759,52 +1780,50 @@ SUB RSP, 0x20
 CALL [HeapAlloc]
 ADD RSP, 0x20
 MOV RBX, RAX
-POP RBX
-POP RDI
-POP RSI
-MOV BL, [RSP]
-ADD RSP, 1
 POP R12
+POP RSI
+POP RDI
+MOV DIL, [RSP]
+ADD RSP, 1
 POP R13
-;MOV %9, %r
+POP R14
+;MOV %10, %r
 MOV RSI, RBX
-;MOV [%9], u64(4)
+;MOV [%10], u64(4)
 MOV RAX, [imm_3]
 MOV [RSI], RAX
-;ADD %9, %9, u64(8)
+;ADD %10, %10, u64(8)
 ADD RSI, [imm_4]
-;MOV [%9], i64(1)
+;MOV [%10], i64(1)
 MOV RAX, [imm_5]
 MOV [RSI], RAX
-;ADD %9, %9, u64(8)
+;ADD %10, %10, u64(8)
 ADD RSI, [imm_4]
-;MOV [%9], i64(2)
+;MOV [%10], i64(2)
 MOV RAX, [imm_6]
 MOV [RSI], RAX
-;ADD %9, %9, u64(8)
+;ADD %10, %10, u64(8)
 ADD RSI, [imm_4]
-;MOV [%9], i64(3)
+;MOV [%10], i64(3)
 MOV RAX, [imm_7]
 MOV [RSI], RAX
-;ADD %9, %9, u64(8)
+;ADD %10, %10, u64(8)
 ADD RSI, [imm_4]
-;MOV [%9], i64(4)
+;MOV [%10], i64(4)
 MOV RAX, [imm_20]
 MOV [RSI], RAX
-;MOV %10, u64(10)
+;MOV %11, u64(10)
 MOV RSI, [imm_21]
-;MUL %10, %10, u64(8)
+;MUL %11, %11, u64(8)
 MOV RAX, RSI
 MUL [imm_4]
 MOV RSI, RAX
-;ADD %10, %10, u64(8)
+;ADD %11, %11, u64(8)
 ADD RSI, [imm_4]
-;HALOC %s, %10
+;HALOC %s, %11
+PUSH R14
 PUSH R13
 PUSH R12
-SUB RSP, 1
-MOV [RSP], BL
-PUSH RDI
 PUSH RBX
 PUSH RSI
 MOV RCX, [erc_process_heap]
@@ -1816,37 +1835,36 @@ ADD RSP, 0x20
 MOV RDI, RAX
 POP RSI
 POP RBX
-POP RDI
-MOV BL, [RSP]
-ADD RSP, 1
 POP R12
 POP R13
-;MOV %11, %s
+POP R14
+;MOV %12, %s
 MOV RSI, RDI
-;MOV [%11], u64(10)
+;MOV [%12], u64(10)
 MOV RAX, [imm_21]
 MOV [RSI], RAX
-;ADD %11, %11, u64(8)
+;ADD %12, %12, u64(8)
 ADD RSI, [imm_4]
-;MOV %12, u64(10)
+;MOV %13, u64(10)
 MOV RDI, [imm_21]
 ;LABL 'label_2'
 label_2:
-;MOV [%11], i64(7)
+;MOV [%12], i64(7)
 MOV RAX, [imm_22]
 MOV [RSI], RAX
-;ADD %11, %11, u64(8)
+;ADD %12, %12, u64(8)
 ADD RSI, [imm_4]
-;SUB %12, %12, u64(1)
+;SUB %13, %13, u64(1)
 SUB RDI, [imm_11]
-;JMPG %12, u64(0), 'label_2'
+;JMPG %13, u64(0), 'label_2'
 CMP RDI, [imm_17]
 JG label_2
 ;DEL %r
+PUSH R14
 PUSH R13
-PUSH R12
 SUB RSP, 1
-MOV [RSP], BL
+MOV [RSP], DIL
+PUSH R12
 PUSH RBX
 PUSH RSI
 PUSH RDI
@@ -1859,10 +1877,11 @@ ADD RSP, 0x20
 POP RDI
 POP RSI
 POP RBX
-MOV BL, [RSP]
-ADD RSP, 1
 POP R12
+MOV DIL, [RSP]
+ADD RSP, 1
 POP R13
+POP R14
 ;RET @void
 ADD RSP, 128
 RET
