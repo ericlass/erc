@@ -702,8 +702,11 @@ namespace erc
             }
             else if (token.Kind == TokenKind.String)
             {
-                result = AstItem.Immediate(token.Value);
-                result.DataType = DataType.STRING8;
+                //Currently, string literals are treated as char arrays with trailing null allocated on stack
+                var chars = new List<char>(token.Value.ToCharArray());
+                var literals = chars.ConvertAll(c => AstItem.CharLiteral(c.ToString()));
+                literals.Add(AstItem.CharLiteral("\0"));
+                result = AstItem.NewStackArray(AstItem.ValueArrayDefinition(literals));
             }
             else if (token.Kind == TokenKind.SquareBracketOpen)
             {

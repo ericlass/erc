@@ -112,6 +112,7 @@
     <Compile Include="SimpleIterator.cs" />
     <Compile Include="SimpleLogger.cs" />
     <Compile Include="StringIterator.cs" />
+    <Compile Include="StringUtils.cs" />
     <Compile Include="SymbolKind.cs" />
     <Compile Include="SyntaxAnalysis.cs" />
     <Compile Include="Token.cs" />

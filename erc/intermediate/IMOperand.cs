@@ -35,6 +35,11 @@ namespace erc
                 case IMOperandKind.Immediate:
                     if (DataType.Kind == DataTypeKind.STRING8)
                         return DataType.Name + "(\"" + ImmediateValue.ToString() + "\")";
+                    else if (DataType.Kind == DataTypeKind.CHAR8)
+                    {
+                        var strValue = (string)ImmediateValue;
+                        return DataType.Name + "('" + StringUtils.CharToPrintableStr(strValue[0]) + "')";
+                    }
                     else
                         return DataType.Name + "(" + ImmediateValue.ToString() + ")";
 

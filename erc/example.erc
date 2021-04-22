@@ -35,6 +35,10 @@ fn arrays() {
 }
 
 fn strings() {
+	let s = "Hello World!";
+}
+
+fn chars() {
 	let c = 'e';
 	let s = c - 'a';
 

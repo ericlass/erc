@@ -831,10 +831,6 @@ namespace erc
                 else
                     throw new Exception("Unknown boolean value: " + str);
             }
-            else if (dataType.Kind == DataTypeKind.STRING8)
-            {
-                return str;
-            }
             else
                 return ParseNumber(str, dataType);
         }

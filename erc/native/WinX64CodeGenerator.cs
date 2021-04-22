@@ -846,8 +846,6 @@ namespace erc
         {
             var target = operation.Operands[0];
 
-            var targetLocation = RequireOperandLocation(target);
-
             var valueTypes = new List<DataType>
             {
                 DataType.U64,
@@ -859,7 +857,7 @@ namespace erc
             {
                 X64StorageLocation.DataSection(ProcessHeapImmName),
                 X64StorageLocation.DataSection(U32ZeroImmName),
-                targetLocation
+                RequireOperandLocation(target)
             };
 
             GenerateCallInternal(output, "erc_heap_free", null, valueTypes, valueLocations);

@@ -93,6 +93,14 @@ namespace erc
             return String.Join(",", immediateBytes.ConvertAll((b) => b.ToString())) + "; " + strValue;
         }
 
+        private static string ImmediateChar8ToAsmCode(IMOperand operand)
+        {
+            var strValue = (string)operand.ImmediateValue;
+            var firstChar = strValue[0];
+            var number = (ushort)firstChar;
+            return number.ToString() + " ;" + StringUtils.CharToPrintableStr(firstChar);
+        }
+
         private static readonly X64DataTypeProperties U8 = new X64DataTypeProperties()
         {
             OperandSize = "byte",
@@ -460,7 +468,7 @@ namespace erc
             OrInstruction = X64Instruction.OR,
             XorInstruction = X64Instruction.XOR,
             NotInstruction = X64Instruction.NOT,
-            ImmediateValueToAsmCode = (o) => "'" + o.ImmediateValue.ToString() + "'"
+            ImmediateValueToAsmCode = ImmediateChar8ToAsmCode
         };
 
         private static readonly X64DataTypeProperties STRING8 = new X64DataTypeProperties()

@@ -160,7 +160,8 @@ namespace erc
                     return Kind + ": " + ImmediateValueToString() + " (" + DataType + ")";
 
                 case AstItemKind.CharLiteral:
-                    return Kind + ": '" + Value + "' (" + DataType + ")";
+                    var strValue = (string)Value;
+                    return Kind + ": '" + StringUtils.CharToPrintableStr(strValue[0]) + "' (" + DataType + ")";
 
                 case AstItemKind.BinaryOperator:
                 case AstItemKind.UnaryOperator:

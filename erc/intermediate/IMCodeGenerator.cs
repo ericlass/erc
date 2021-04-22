@@ -433,10 +433,6 @@ namespace erc
                     output.Add(IMOperation.Mov(targetLocation, source));
                     break;
 
-                case DataTypeKind.STRING8:
-                    output.Add(IMOperation.Mov(targetLocation, IMOperand.Immediate(expression.DataType, expression.Value)));
-                    break;
-
                 default:
                     output.Add(IMOperation.Mov(targetLocation, IMOperand.Immediate(expression.DataType, expression.Value)));
                     break;
