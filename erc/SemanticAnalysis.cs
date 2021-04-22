@@ -667,6 +667,10 @@ namespace erc
                 var paramExpression = expression.Children[i];
                 var dataType = CheckExpression(paramExpression);
 
+                //TODO: Is this really required? When calling a function, the current stack frame still exists.
+                if (dataType.Kind == DataTypeKind.ARRAY && dataType.MemoryRegion == MemoryRegion.Stack)
+                    throw new Exception("Arrays on stack cannot be passed as parameter to function calls! Use heap array instead. In: " + expression + "; parameter: " + paramExpression);
+
                 if (!function.IsVariadic || (function.IsVariadic && i < function.Parameters.Count))
                 {
                     var parameter = function.Parameters[i];
@@ -747,7 +751,11 @@ namespace erc
         private void CheckImmediate(AstItem expression)
         {
             var valueStr = (string)expression.Value;
-            var dataType = FindImmediateType(valueStr);
+
+            var dataType = expression.DataType;
+            if (dataType == null)
+                dataType = FindImmediateType(valueStr);
+
             var value = ParseImmediate(valueStr, dataType);
 
             expression.Value = value;
@@ -822,6 +830,10 @@ namespace erc
                     return false;
                 else
                     throw new Exception("Unknown boolean value: " + str);
+            }
+            else if (dataType.Kind == DataTypeKind.STRING8)
+            {
+                return str;
             }
             else
                 return ParseNumber(str, dataType);

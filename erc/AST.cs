@@ -194,6 +194,10 @@ namespace erc
             {
                 return dVal.ToString("0.0", CultureInfo.InvariantCulture);
             }
+            else if (Value is string strVal)
+            {
+                return "\"" + strVal + "\"";
+            }
 
             return Value.ToString();
         }

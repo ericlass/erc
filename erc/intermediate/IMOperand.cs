@@ -33,7 +33,10 @@ namespace erc
                     return ParameterPrefix + Name;
 
                 case IMOperandKind.Immediate:
-                    return DataType.Name + "(" + ImmediateValue.ToString() + ")";
+                    if (DataType.Kind == DataTypeKind.STRING8)
+                        return DataType.Name + "(\"" + ImmediateValue.ToString() + "\")";
+                    else
+                        return DataType.Name + "(" + ImmediateValue.ToString() + ")";
 
                 case IMOperandKind.Global:
                     return "@" + Name;

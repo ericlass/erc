@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace erc
 {
@@ -35,6 +36,7 @@ namespace erc
         }
 
         private static Dictionary<DataTypeKind, X64DataTypeProperties> _properties;
+        private static readonly Encoding _isoEncoding = Encoding.GetEncoding("ISO-8859-1");
 
         public static X64DataTypeProperties GetProperties(DataTypeKind kind)
         {
@@ -65,6 +67,7 @@ namespace erc
                 [DataTypeKind.BOOL] = BOOL,
                 [DataTypeKind.POINTER] = POINTER,
                 [DataTypeKind.CHAR8] = CHAR8,
+                [DataTypeKind.STRING8] = STRING8,
                 [DataTypeKind.ARRAY] = ARRAY
             };
         }
@@ -439,6 +442,43 @@ namespace erc
             ImmediateValueToAsmCode = (o) => "'" + o.ImmediateValue.ToString() + "'"
         };
 
+        private static readonly X64DataTypeProperties STRING8 = new X64DataTypeProperties()
+        {
+            OperandSize = "qword",
+            ImmediateSize = "db",
+            Accumulator = X64Register.RAX,
+            TempRegister1 = X64Register.R10,
+            TempRegister2 = X64Register.R11,
+            MoveInstructionAligned = X64Instruction.MOV,
+            MoveInstructionUnaligned = X64Instruction.MOV,
+            AddInstruction = X64Instruction.ADD,
+            SubInstruction = X64Instruction.SUB,
+            DivInstruction = X64Instruction.DIV,
+            MulInstruction = X64Instruction.MUL,
+            ImmediateValueToAsmCode = ImmediateString8ToAsmCode
+        };
+
+        private static string ImmediateString8ToAsmCode(IMOperand operand)
+        {
+            var strValue = (string)operand.ImmediateValue;
+
+            var numBytes = 8 + strValue.Length + 1; //size + string value + terminating zero
+            var immediateBytes = new List<byte>(numBytes);
+
+            //Add 4 bytes length
+            var length = (ulong)strValue.Length;
+            immediateBytes.AddRange(BitConverter.GetBytes(length));
+
+            //Add string value encoded as bytes
+            immediateBytes.AddRange(_isoEncoding.GetBytes(strValue));
+
+            //Add terminating zero
+            immediateBytes.Add(0);
+
+            //Create final string
+            return String.Join(",", immediateBytes.ConvertAll((b) => b.ToString())) + "; " + strValue;
+        }
+
         private static readonly X64DataTypeProperties ARRAY = new X64DataTypeProperties()
         {
             OperandSize = "qword",
@@ -451,12 +491,10 @@ namespace erc
             AddInstruction = X64Instruction.ADD,
             SubInstruction = X64Instruction.SUB,
             DivInstruction = X64Instruction.DIV,
-            MulInstruction = X64Instruction.MUL,
-            AndInstruction = X64Instruction.AND,
-            OrInstruction = X64Instruction.OR,
-            XorInstruction = X64Instruction.XOR,
-            NotInstruction = X64Instruction.NOT,
+            MulInstruction = X64Instruction.MUL
         };
+
+        
 
         /*private static readonly X64DataTypeProperties STRING = new X64DataTypeProperties()
         {

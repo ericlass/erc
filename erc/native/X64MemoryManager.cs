@@ -197,6 +197,8 @@ namespace erc
             _freeParameterMMRegisters.Push(X64RegisterGroup.MM1);
             _freeParameterMMRegisters.Push(X64RegisterGroup.MM0);
 
+            //TODO: Variadic functions have a special parameter passing convention. See MS x64 calling convention docs.
+
             var result = new List<X64StorageLocation>();
 
             var paramOffset = 0;

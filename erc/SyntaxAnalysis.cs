@@ -557,6 +557,7 @@ namespace erc
                             case TokenKind.False:
                             case TokenKind.VectorConstructor:
                             case TokenKind.Char:
+                            case TokenKind.String:
                             case TokenKind.SquareBracketOpen:
                                 var operandItem = ReadSingleAstItem(tokenIter);
                                 expItemsInfix.Add(operandItem);
@@ -698,6 +699,11 @@ namespace erc
             else if (token.Kind == TokenKind.Char)
             {
                 result = AstItem.CharLiteral(token.Value);
+            }
+            else if (token.Kind == TokenKind.String)
+            {
+                result = AstItem.Immediate(token.Value);
+                result.DataType = DataType.STRING8;
             }
             else if (token.Kind == TokenKind.SquareBracketOpen)
             {

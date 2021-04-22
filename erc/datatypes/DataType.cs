@@ -96,6 +96,12 @@ namespace erc
             return 8 + (numItems * elementType.ByteSize);
         }
 
+        public static long GetStringByteSize(DataType stringType, long length)
+        {
+            //<length> + <char_data> + <null-terminator>
+            return 8 + (stringType.ElementType.ByteSize * length) + 1;
+        }
+
         public static List<DataType> GetAllValues()
         {
             if (_allValues == null)
@@ -291,6 +297,17 @@ namespace erc
             IsSigned = false,
             NumElements = 1,
             Group = DataTypeGroup.Character,
+        };
+
+        public static DataType STRING8 = new DataType
+        {
+            Kind = DataTypeKind.STRING8,
+            ByteSize = 8,
+            IsVector = false,
+            IsSigned = false,
+            ElementType = CHAR8,
+            NumElements = 0, //Number of elements may not be known at compile time
+            Group = DataTypeGroup.Character
         };
 
         /// <summary>

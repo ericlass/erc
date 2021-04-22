@@ -382,13 +382,7 @@ namespace erc
             {
                 case AstItemKind.Immediate:
                 case AstItemKind.CharLiteral:
-                    IMOperand source;
-                    if (expression.DataType.Kind == DataTypeKind.BOOL)
-                        source = ((bool)expression.Value) ? IMOperand.BOOL_TRUE : IMOperand.BOOL_FALSE;
-                    else
-                        source = IMOperand.Immediate(expression.DataType, expression.Value);
-
-                    output.Add(IMOperation.Mov(targetLocation, source));
+                    GenerateImmediate(output, expression, targetLocation);
                     break;
 
                 case AstItemKind.Vector:
@@ -426,6 +420,25 @@ namespace erc
                         GenerateExpression(output, expression.Children[0], targetLocation);
                     else
                         GenerateExpressionOperations(output, expression.Children, targetLocation);
+                    break;
+            }
+        }
+
+        private void GenerateImmediate(List<IMOperation> output, AstItem expression, IMOperand targetLocation)
+        {
+            switch (expression.DataType.Kind)
+            {
+                case DataTypeKind.BOOL:
+                    var source = ((bool)expression.Value) ? IMOperand.BOOL_TRUE : IMOperand.BOOL_FALSE;
+                    output.Add(IMOperation.Mov(targetLocation, source));
+                    break;
+
+                case DataTypeKind.STRING8:
+                    output.Add(IMOperation.Mov(targetLocation, IMOperand.Immediate(expression.DataType, expression.Value)));
+                    break;
+
+                default:
+                    output.Add(IMOperation.Mov(targetLocation, IMOperand.Immediate(expression.DataType, expression.Value)));
                     break;
             }
         }

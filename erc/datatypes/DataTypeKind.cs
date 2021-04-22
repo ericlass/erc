@@ -24,6 +24,7 @@ namespace erc
         ENUM,
         VARS,
         ARRAY,
-        CHAR8
+        CHAR8,
+        STRING8
     }
 }
