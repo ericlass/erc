@@ -823,15 +823,46 @@ namespace erc
             var target = operation.Operands[0];
             var numBytes = operation.Operands[1];
 
-            var functionCall = IMOperation.Call("erc_heap_alloc", target, new List<IMOperand>() { IMOperand.Global(DataType.U64, ProcessHeapImmName), IMOperand.Global(DataType.U32, U32ZeroImmName), numBytes });
-            GenerateCall(output, functionCall);
+            var targetLocation = RequireOperandLocation(target);
+
+            var valueTypes = new List<DataType>
+            { 
+                DataType.U64, 
+                DataType.U32, 
+                numBytes.DataType 
+            };
+
+            var valueLocations = new List<X64StorageLocation>
+            {
+                X64StorageLocation.DataSection(ProcessHeapImmName),
+                X64StorageLocation.DataSection(U32ZeroImmName),
+                RequireOperandLocation(numBytes)
+            };
+
+            GenerateCallInternal(output, "erc_heap_alloc", targetLocation, valueTypes, valueLocations);
         }
 
         private void GenerateDel(List<string> output, IMOperation operation)
         {
             var target = operation.Operands[0];
-            var functionCall = IMOperation.Call("erc_heap_free", null, new List<IMOperand>() { IMOperand.Global(DataType.U64, ProcessHeapImmName), IMOperand.Global(DataType.U32, U32ZeroImmName), target });
-            GenerateCall(output, functionCall);
+
+            var targetLocation = RequireOperandLocation(target);
+
+            var valueTypes = new List<DataType>
+            {
+                DataType.U64,
+                DataType.U32,
+                target.DataType
+            };
+
+            var valueLocations = new List<X64StorageLocation>
+            {
+                X64StorageLocation.DataSection(ProcessHeapImmName),
+                X64StorageLocation.DataSection(U32ZeroImmName),
+                targetLocation
+            };
+
+            GenerateCallInternal(output, "erc_heap_free", null, valueTypes, valueLocations);
         }
 
         private void GenerateSaloc(List<string> output, IMOperation operation)
@@ -864,15 +895,34 @@ namespace erc
             var resultTarget = allOperands[1];
             var parameterValues = allOperands.GetRange(2, allOperands.Count - 2);
 
-            var function = _context.RequireFunction(functionName);
-
             X64StorageLocation targetLocation = null;
-            var isTargetLocationRegister = false;
             if (resultTarget != null && !resultTarget.IsVoid)
-            {
                 targetLocation = RequireOperandLocation(resultTarget);
+
+            var valueTypes = parameterValues.ConvertAll(pv => pv.DataType);
+            var valueLocations = parameterValues.ConvertAll(pv => RequireOperandLocation(pv));
+
+            GenerateCallInternal(output, functionName, targetLocation, valueTypes, valueLocations);
+        }
+
+        /// <summary>
+        /// Generates a function call with all the stuff required around it like saving registers, allocating shadow space, putting parameter values in the right places etc.
+        /// Does not use any IM objects, so it can be used internally without having to fake IM code.
+        /// </summary>
+        /// <param name="output">Output where ASM code is written to.</param>
+        /// <param name="functionName">The fully qualified name of the function.</param>
+        /// <param name="targetLocation">The location where the return value of the function should be stored. Not the return location of the function!</param>
+        /// <param name="parameterDataTypes">The data types of the given parameter values. Most by in order. Required because of variadic functions.</param>
+        /// <param name="parameterValueLocations">The locations where the values for the parameters for the function call are stored. Must be in order. Not the locations where parameters are passed!</param>
+        private void GenerateCallInternal(List<string> output, string functionName, X64StorageLocation targetLocation, List<DataType> parameterDataTypes, List<X64StorageLocation> parameterValueLocations)
+        {
+            var function = _context.RequireFunction(functionName);
+            if (!function.IsVariadic)
+                Assert.Count(parameterValueLocations.Count, function.Parameters.Count, "Number of given parameter value locations does not match number of parameters of function '" + functionName + "'!");
+
+            var isTargetLocationRegister = false;
+            if (targetLocation != null)
                 isTargetLocationRegister = targetLocation.Kind == X64StorageLocationKind.Register;
-            }
 
             //List of registers that need to be restored
             var savedRegisters = new List<X64Register>();
@@ -907,16 +957,15 @@ namespace erc
             }
 
             //Generate parameter values in desired locations
-            var parameterDataTypes = parameterValues.ConvertAll(p => p.DataType);
             var parameterLocations = _memoryManager.GetParameterLocations(parameterDataTypes);
-            Assert.True(parameterLocations.Count == parameterValues.Count, "Inconsitent number of parameters and locations: " + parameterLocations.Count + " != " + parameterValues.Count);
+            Assert.Count(parameterLocations.Count, parameterValueLocations.Count, "Inconsistent number of parameters and locations!");
 
-            for (int i = 0; i < parameterValues.Count; i++)
+            for (int i = 0; i < parameterValueLocations.Count; i++)
             {
-                var value = parameterValues[i];
-                var valueLocation = RequireOperandLocation(value);
-                var location = parameterLocations[i];
-                X64GeneratorUtils.Move(output, value.DataType, location, valueLocation);
+                var valueType = parameterDataTypes[i];
+                var valueLocation = parameterValueLocations[i];
+                var paramLocation = parameterLocations[i];
+                X64GeneratorUtils.Move(output, valueType, paramLocation, valueLocation);
             }
 
             //Add 32 bytes shadow space
@@ -933,9 +982,7 @@ namespace erc
 
             //Move result value (if exists) to target location (if required)
             if (function.ReturnType != DataType.VOID && targetLocation != null)
-            {
                 X64GeneratorUtils.Move(output, function.ReturnType, targetLocation, _memoryManager.GetFunctionReturnLocation(function));
-            }
 
             //Restore saved registers in reverse order from stack
             savedRegisters.Reverse();

@@ -72,6 +72,27 @@ namespace erc
             };
         }
 
+        private static string ImmediateString8ToAsmCode(IMOperand operand)
+        {
+            var strValue = (string)operand.ImmediateValue;
+
+            var numBytes = 8 + strValue.Length + 1; //size + string value + terminating zero
+            var immediateBytes = new List<byte>(numBytes);
+
+            //Add 4 bytes length
+            var length = (ulong)strValue.Length;
+            immediateBytes.AddRange(BitConverter.GetBytes(length));
+
+            //Add string value encoded as bytes
+            immediateBytes.AddRange(_isoEncoding.GetBytes(strValue));
+
+            //Add terminating zero
+            immediateBytes.Add(0);
+
+            //Create final string
+            return String.Join(",", immediateBytes.ConvertAll((b) => b.ToString())) + "; " + strValue;
+        }
+
         private static readonly X64DataTypeProperties U8 = new X64DataTypeProperties()
         {
             OperandSize = "byte",
@@ -458,27 +479,6 @@ namespace erc
             ImmediateValueToAsmCode = ImmediateString8ToAsmCode
         };
 
-        private static string ImmediateString8ToAsmCode(IMOperand operand)
-        {
-            var strValue = (string)operand.ImmediateValue;
-
-            var numBytes = 8 + strValue.Length + 1; //size + string value + terminating zero
-            var immediateBytes = new List<byte>(numBytes);
-
-            //Add 4 bytes length
-            var length = (ulong)strValue.Length;
-            immediateBytes.AddRange(BitConverter.GetBytes(length));
-
-            //Add string value encoded as bytes
-            immediateBytes.AddRange(_isoEncoding.GetBytes(strValue));
-
-            //Add terminating zero
-            immediateBytes.Add(0);
-
-            //Create final string
-            return String.Join(",", immediateBytes.ConvertAll((b) => b.ToString())) + "; " + strValue;
-        }
-
         private static readonly X64DataTypeProperties ARRAY = new X64DataTypeProperties()
         {
             OperandSize = "qword",
@@ -493,24 +493,6 @@ namespace erc
             DivInstruction = X64Instruction.DIV,
             MulInstruction = X64Instruction.MUL
         };
-
-        
-
-        /*private static readonly X64DataTypeProperties STRING = new X64DataTypeProperties()
-        {
-            OperandSize = "word",
-            ImmediateSize = "dw",
-            Accumulator = X64Register.AX,
-            TempRegister1 = X64Register.R10W,
-            TempRegister2 = X64Register.R11W,
-            MoveInstructionAligned = X64Instruction.MOV,
-            MoveInstructionUnaligned = X64Instruction.MOV,
-            AddInstruction = X64Instruction.ADD,
-            SubInstruction = X64Instruction.SUB,
-            DivInstruction = X64Instruction.DIV,
-            MulInstruction = X64Instruction.MUL,
-            ImmediateValueToAsmCode = (o) => BitConverter.ToString(Encoding.Unicode.GetBytes(((string)o.Value))).Replace("-", "")
-        };*/
 
     }
 }
