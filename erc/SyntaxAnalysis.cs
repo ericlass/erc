@@ -621,6 +621,11 @@ namespace erc
             {
                 return AstItem.NewHeapArray(ReadArray(tokens));
             }
+            else if (token.Kind == TokenKind.String)
+            {
+                tokens.Pop();
+                return AstItem.NewHeapArray(StringToCharArrayDefinition(token.Value));
+            }
             else
             {
                 var subType = ReadDataType(tokens);
@@ -703,10 +708,7 @@ namespace erc
             else if (token.Kind == TokenKind.String)
             {
                 //Currently, string literals are treated as char arrays with trailing null allocated on stack
-                var chars = new List<char>(token.Value.ToCharArray());
-                var literals = chars.ConvertAll(c => AstItem.CharLiteral(c.ToString()));
-                literals.Add(AstItem.CharLiteral("\0"));
-                result = AstItem.NewStackArray(AstItem.ValueArrayDefinition(literals));
+                result = AstItem.NewStackArray(StringToCharArrayDefinition(token.Value));
             }
             else if (token.Kind == TokenKind.SquareBracketOpen)
             {
@@ -716,6 +718,14 @@ namespace erc
                 throw new Exception("Unexpected token type in expression: " + token);
 
             return result;
+        }
+
+        private AstItem StringToCharArrayDefinition(string str)
+        {
+            var chars = new List<char>(str.ToCharArray());
+            var literals = chars.ConvertAll(c => AstItem.CharLiteral(c.ToString()));
+            literals.Add(AstItem.CharLiteral("\0"));
+            return AstItem.ValueArrayDefinition(literals);
         }
 
         private AstItem ReadArray(TokenIterator tokens)

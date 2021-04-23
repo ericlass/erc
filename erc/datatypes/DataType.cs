@@ -18,6 +18,10 @@ namespace erc
         public string CustomTypeName { get; private set; }
         public List<EnumElement> EnumElements { get; private set; }
         public MemoryRegion MemoryRegion { get; private set; }
+        /// <summary>
+        /// Is this a reference type (true) or a value type (false). Reference types are pointers to the actual data.
+        /// </summary>
+        public bool IsReferenceType { get; private set; } = false;
 
         public string Name 
         { 
@@ -307,7 +311,8 @@ namespace erc
             IsSigned = false,
             ElementType = CHAR8,
             NumElements = 0, //Number of elements may not be known at compile time
-            Group = DataTypeGroup.Character
+            Group = DataTypeGroup.Character,
+            IsReferenceType = true
         };
 
         /// <summary>
@@ -332,7 +337,8 @@ namespace erc
                 IsSigned = false,
                 ElementType = subType,
                 NumElements = 1,
-                Group = DataTypeGroup.ScalarInteger
+                Group = DataTypeGroup.ScalarInteger,
+                IsReferenceType = true
             };
 
             DataType.GetAllValues().Add(newType);
@@ -350,7 +356,8 @@ namespace erc
                 ElementType = subType,
                 NumElements = 0, //Number of elements may not be known at compile time
                 Group = DataTypeGroup.Array,
-                MemoryRegion = region
+                MemoryRegion = region,
+                IsReferenceType = true
             };
 
             DataType.GetAllValues().Add(newType);

@@ -2,4 +2,4 @@
 fn ext("GetProcessHeap", "Kernel32.dll") erc_get_process_heap(): void*;
 fn ext("HeapAlloc", "Kernel32.dll") erc_heap_alloc(heap: void*, flags: u32, bytes: u64): void*;
 fn ext("HeapFree", "Kernel32.dll") erc_heap_free(heap: void*, flags: u32, mem: void*): bool;
-fn ext("printf", "MSVCRT.DLL") printf(format: u64, arguments: vars): i32;
+fn ext("printf", "MSVCRT.DLL") printf(format: char8*, arguments: vars): i32;

@@ -14,11 +14,24 @@ namespace erc
 
         public List<IMOperation> Generate(IMOperand target, IMOperand operand)
         {
+            if (operand.DataType.Kind == DataTypeKind.ARRAY)
+            {
+                //Array already is a pointer, so directly use it
+                //Add 8 bytes to array pointer so it points to first value, not to the length
+                var result = new List<IMOperation>(2);
+                result.Add(IMOperation.Mov(target, operand));
+                result.Add(IMOperation.Add(target, target, IMOperand.Immediate(DataType.U64, 8L)));
+                return result;
+            }
+
             return IMOperation.Lea(target, operand).AsList;
         }
 
         public DataType GetReturnType(AstItem operand)
         {
+            if (operand.DataType.Kind == DataTypeKind.ARRAY)
+                return DataType.Pointer(operand.DataType.ElementType);
+
             return DataType.Pointer(operand.DataType);
         }
 

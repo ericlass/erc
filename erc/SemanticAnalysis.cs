@@ -674,7 +674,7 @@ namespace erc
                 if (!function.IsVariadic || (function.IsVariadic && i < function.Parameters.Count))
                 {
                     var parameter = function.Parameters[i];
-                    if (dataType != parameter.DataType)
+                    if (!dataType.Equals(parameter.DataType))
                         throw new Exception("Invalid data type for parameter " + parameter + "! Expected: " + parameter.DataType + ", found: " + dataType);
                 }
 
