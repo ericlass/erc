@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Text;
-using System.Windows.Forms;
 
 namespace erc
 {
@@ -12,7 +10,7 @@ namespace erc
         private const string U32ZeroImmName = "erc_u32_zero";
 
         private const string CodeHeader =
-            "format PE64 NX GUI 6.0\n" +
+            "format PE64 NX console 6.0\n" +
             "entry start\n" +
             "include 'win64a.inc'\n\n" +
             "section '.data' data readable writeable\n\n";

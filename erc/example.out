@@ -17,42 +17,42 @@ Programm
             VarDecl: "s" (array[char8])
                 NewStackArray
                     ValueArrayDefinition: (array[char8])
-                        CharLiteral: 'T' (char8)
-                        CharLiteral: 'e' (char8)
-                        CharLiteral: 's' (char8)
-                        CharLiteral: 't' (char8)
-                        CharLiteral: '\0' (char8)
+                        Immediate: 'T' (char8)
+                        Immediate: 'e' (char8)
+                        Immediate: 's' (char8)
+                        Immediate: 't' (char8)
+                        Immediate: '\0' (char8)
             VarDecl: "h" (array[char8])
                 NewHeapArray
                     ValueArrayDefinition: (array[char8])
-                        CharLiteral: 'H' (char8)
-                        CharLiteral: 'e' (char8)
-                        CharLiteral: 'l' (char8)
-                        CharLiteral: 'l' (char8)
-                        CharLiteral: 'o' (char8)
-                        CharLiteral: ' ' (char8)
-                        CharLiteral: 'W' (char8)
-                        CharLiteral: 'o' (char8)
-                        CharLiteral: 'r' (char8)
-                        CharLiteral: 'l' (char8)
-                        CharLiteral: 'd' (char8)
-                        CharLiteral: '!' (char8)
-                        CharLiteral: ' ' (char8)
-                        CharLiteral: 'V' (char8)
-                        CharLiteral: 'a' (char8)
-                        CharLiteral: 'l' (char8)
-                        CharLiteral: 'u' (char8)
-                        CharLiteral: 'e' (char8)
-                        CharLiteral: ' ' (char8)
-                        CharLiteral: '%' (char8)
-                        CharLiteral: 'd' (char8)
-                        CharLiteral: '!' (char8)
-                        CharLiteral: '\0' (char8)
+                        Immediate: 'H' (char8)
+                        Immediate: 'e' (char8)
+                        Immediate: 'l' (char8)
+                        Immediate: 'l' (char8)
+                        Immediate: 'o' (char8)
+                        Immediate: ' ' (char8)
+                        Immediate: 'W' (char8)
+                        Immediate: 'o' (char8)
+                        Immediate: 'r' (char8)
+                        Immediate: 'l' (char8)
+                        Immediate: 'd' (char8)
+                        Immediate: '!' (char8)
+                        Immediate: ' ' (char8)
+                        Immediate: 'V' (char8)
+                        Immediate: 'a' (char8)
+                        Immediate: 'l' (char8)
+                        Immediate: 'u' (char8)
+                        Immediate: 'e' (char8)
+                        Immediate: ' ' (char8)
+                        Immediate: '%' (char8)
+                        Immediate: 'u' (char8)
+                        Immediate: '!' (char8)
+                        Immediate: '\0' (char8)
             FunctionCall: "printf"
                 Expression
                     Variable: "h" (array[char8])
                     UnaryOperator: &
-                Immediate: 350 (i32)
+                Immediate: 350 (i64)
             DelPointer
     FunctionDecl: "arrays" (void)
         ParameterList
@@ -72,11 +72,11 @@ Programm
             VarDecl: "b" (array[char8])
                 NewStackArray
                     ValueArrayDefinition: (array[char8])
-                        CharLiteral: 'H' (char8)
-                        CharLiteral: 'e' (char8)
-                        CharLiteral: 'l' (char8)
-                        CharLiteral: 'l' (char8)
-                        CharLiteral: 'o' (char8)
+                        Immediate: 'H' (char8)
+                        Immediate: 'e' (char8)
+                        Immediate: 'l' (char8)
+                        Immediate: 'l' (char8)
+                        Immediate: 'o' (char8)
             VarDecl: "c" (array[i64])
                 NewStackArray
                     SizedArrayDefinition: (array[i64])
@@ -117,11 +117,11 @@ Programm
         ParameterList
         StatementList
             VarDecl: "c" (char8)
-                CharLiteral: 'e' (char8)
+                Immediate: 'e' (char8)
             VarDecl: "s" (char8)
                 Expression
                     Variable: "c" (char8)
-                    CharLiteral: 'a' (char8)
+                    Immediate: 'a' (char8)
                     BinaryOperator: -
             VarDecl: "a" (u8)
                 Immediate: 65 (u8)
@@ -771,7 +771,7 @@ fn main(): void
   char8('a')	: data_section(imm_21),
   char8('u')	: data_section(imm_22),
   char8('%')	: data_section(imm_23),
-  i32(350)	: data_section(imm_24),
+  i64(350)	: data_section(imm_24),
 ]
 fn strings(): void
 {
@@ -834,7 +834,7 @@ fn strings(): void
     ADD %2, %2, u64(1)
     MOV [%2], char8('%')
     ADD %2, %2, u64(1)
-    MOV [%2], char8('d')
+    MOV [%2], char8('u')
     ADD %2, %2, u64(1)
     MOV [%2], char8('!')
     ADD %2, %2, u64(1)
@@ -842,7 +842,7 @@ fn strings(): void
     FREE %2
     MOV %3, %h
     ADD %3, %3, u64(8)
-    CALL 'printf', , %3, i32(350)
+    CALL 'printf', , %3, i64(350)
     FREE %3
     DEL %h
     FREE %h
@@ -1650,7 +1650,7 @@ ext fn['printf', 'MSVCRT.DLL'] printf(char8*): i32
 
 
 
-format PE64 NX GUI 6.0
+format PE64 NX console 6.0
 entry start
 include 'win64a.inc'
 
@@ -1709,71 +1709,71 @@ imm_79 dq 7
 imm_52 dq 1
 imm_59 dq 1
 imm_50 dq 0
-imm_2 dq 5
-imm_3 dq 8
-imm_5 dq 1
-imm_10 dq 31
-imm_11 dq 23
-imm_25 dq 5
-imm_51 dq 5
-imm_27 dq 4
-imm_28 dq 8
-imm_29 dq 1
-imm_30 dq 2
-imm_31 dq 3
 imm_32 dq 13
+imm_31 dq 3
+imm_30 dq 2
+imm_29 dq 1
+imm_28 dq 8
+imm_27 dq 4
 imm_33 dq 5
+imm_51 dq 5
+imm_24 dq 350
+imm_11 dq 23
+imm_10 dq 31
+imm_5 dq 1
+imm_3 dq 8
+imm_2 dq 5
+imm_25 dq 5
 imm_35 dq 1
 imm_26 dq 40
 erc_u32_zero dd 0
+imm_45 dq 10
+imm_44 dq 4
+imm_43 dq 6
+imm_42 dq 0
+imm_41 dq 0
+imm_46 dq 7
 imm_39 dq 72
 imm_40 dq 66
-imm_41 dq 0
-imm_42 dq 0
-imm_46 dq 7
-imm_43 dq 6
-imm_44 dq 4
-imm_45 dq 10
-imm_58 dd 0
-imm_98 dd 5
-imm_89 dd 1.5
 imm_78 dd 1.0
-imm_56 dd 1
 imm_101 dd 5
+imm_89 dd 1.5
+imm_56 dd 1
+imm_98 dd 5
+imm_58 dd 0
 imm_57 dd 7
-imm_24 dd 350
 imm_100 dw 5
 imm_97 dw 5
-imm_8 db 116 ;t
-imm_12 db 72 ;H
-imm_13 db 108 ;l
-imm_6 db 101 ;e
-imm_4 db 84 ;T
-imm_55 db 0
+imm_7 db 115 ; 's'
+imm_6 db 101 ; 'e'
+imm_12 db 72 ; 'H'
 imm_54 db 1
+imm_13 db 108 ; 'l'
+imm_55 db 0
+imm_4 db 84 ; 'T'
 imm_99 db 5
-imm_9 db 0 ;\0
-imm_7 db 115 ;s
-imm_18 db 100 ;d
-imm_14 db 111 ;o
-imm_37 db 108 ;l
-imm_36 db 101 ;e
-imm_34 db 72 ;H
+imm_8 db 116 ; 't'
+imm_9 db 0 ; '\0'
+imm_18 db 100 ; 'd'
+imm_14 db 111 ; 'o'
+imm_36 db 101 ; 'e'
+imm_34 db 72 ; 'H'
 imm_75 db 1
 imm_81 db 1
-imm_47 db 101 ;e
-imm_48 db 97 ;a
-imm_96 db 5
+imm_47 db 101 ; 'e'
+imm_48 db 97 ; 'a'
 imm_49 db 65
-imm_22 db 117 ;u
-imm_21 db 97 ;a
-imm_20 db 86 ;V
-imm_19 db 33 ;!
-imm_17 db 114 ;r
-imm_16 db 87 ;W
-imm_15 db 32 ; 
-imm_23 db 37 ;%
-imm_38 db 111 ;o
+imm_96 db 5
+imm_23 db 37 ; '%'
+imm_21 db 97 ; 'a'
+imm_20 db 86 ; 'V'
+imm_19 db 33 ; '!'
+imm_38 db 111 ; 'o'
+imm_17 db 114 ; 'r'
+imm_16 db 87 ; 'W'
+imm_15 db 32 ; ' '
+imm_22 db 117 ; 'u'
+imm_37 db 108 ; 'l'
 
 section '.text' code readable executable
 start:
@@ -1947,8 +1947,8 @@ MOV AL, [imm_23]
 MOV [RSI], AL
 ;ADD %2, %2, u64(1)
 ADD RSI, [imm_5]
-;MOV [%2], char8('d')
-MOV AL, [imm_18]
+;MOV [%2], char8('u')
+MOV AL, [imm_22]
 MOV [RSI], AL
 ;ADD %2, %2, u64(1)
 ADD RSI, [imm_5]
@@ -1964,11 +1964,11 @@ MOV [RSI], AL
 MOV RSI, RBX
 ;ADD %3, %3, u64(8)
 ADD RSI, [imm_3]
-;CALL 'printf', , %3, i32(350)
+;CALL 'printf', , %3, i64(350)
 PUSH RBX
 PUSH RSI
 MOV RCX, RSI
-MOV EDX, [imm_24]
+MOV RDX, [imm_24]
 SUB RSP, 0x20
 CALL [printf]
 ADD RSP, 0x20

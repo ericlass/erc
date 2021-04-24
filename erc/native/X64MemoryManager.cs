@@ -134,20 +134,27 @@ namespace erc
 
                 foreach (var operand in operation.Operands)
                 { 
-                    if (operand != null && operand.Kind == IMOperandKind.Immediate && !locationMap.ContainsKey(operand.FullName))
+                    if (operand != null && !locationMap.ContainsKey(operand.FullName))
                     {
-                        var elementType = operand.DataType;
-                        var x64ElementType = X64DataTypeProperties.GetProperties(elementType.Kind);
-                        var valStr = x64ElementType.ImmediateValueToAsmCode(operand);
+                        if (operand.Kind == IMOperandKind.Immediate)
+                        {
+                            var elementType = operand.DataType;
+                            var x64ElementType = X64DataTypeProperties.GetProperties(elementType.Kind);
+                            var valStr = x64ElementType.ImmediateValueToAsmCode(operand);
 
-                        _immediateCounter += 1;
-                        var immediateName = "imm_" + _immediateCounter;
+                            _immediateCounter += 1;
+                            var immediateName = "imm_" + _immediateCounter;
 
-                        var x64DataType = X64DataTypeProperties.GetProperties(operand.DataType.Kind);
-                        var entry = immediateName + " " + x64DataType.ImmediateSize + " " + valStr;
+                            var x64DataType = X64DataTypeProperties.GetProperties(operand.DataType.Kind);
+                            var entry = immediateName + " " + x64DataType.ImmediateSize + " " + valStr;
 
-                        dataEntries.Add(new Tuple<DataType, string>(operand.DataType, entry));
-                        locationMap.Add(operand.FullName, X64StorageLocation.DataSection(immediateName));
+                            dataEntries.Add(new Tuple<DataType, string>(operand.DataType, entry));
+                            locationMap.Add(operand.FullName, X64StorageLocation.DataSection(immediateName));
+                        }
+                        else if (operand.Kind == IMOperandKind.Global)
+                        {
+
+                        }
                     }
                 }
             }

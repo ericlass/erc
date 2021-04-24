@@ -11,11 +11,14 @@ namespace erc
         [STAThread]
         static void Main(string[] args)
         {
+            var baseName = "autotest";
+            var sourceFile = baseName + ".erc";
+            var outputFile = baseName + ".out";
+
+            var src = File.ReadAllText(sourceFile) + "\n\n\n" + ReadInternalLib();
+
             var stopWatch = new Stopwatch();
-
             stopWatch.Start();
-
-            var src = File.ReadAllText("example.erc") + "\n\n\n" + ReadInternalLib();
 
             var context = new CompilerContext();
             context.Source = src;
@@ -73,7 +76,7 @@ namespace erc
             var outStr = context.AST.ToTreeString() + "\n\n\n" + immediateCode + "\n\n\n" + nativeCode;
             //var outStr = nativeCode;
             Clipboard.SetText(outStr);
-            File.WriteAllText("..\\..\\example.out", outStr);
+            File.WriteAllText("..\\..\\" + outputFile, outStr);
 
             Console.WriteLine();
             Console.WriteLine("Compilation took: " + compilationTime + " ms");

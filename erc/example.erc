@@ -18,8 +18,8 @@ enum TestType2 {
 fn strings() {
 	let s = "Test";
 
-	let h = new "Hello World! Value %d!";
-	printf(&h, 350d);
+	let h = new "Hello World! Value %u!";
+	printf(&h, 350);
 
 	del h;
 }

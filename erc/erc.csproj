@@ -123,6 +123,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="autotest.erc">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="example.erc">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

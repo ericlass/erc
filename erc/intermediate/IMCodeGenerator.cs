@@ -381,7 +381,6 @@ namespace erc
             switch (expression.Kind)
             {
                 case AstItemKind.Immediate:
-                case AstItemKind.CharLiteral:
                     GenerateImmediate(output, expression, targetLocation);
                     break;
 
@@ -752,7 +751,7 @@ namespace erc
         {
             var result = IMOperand.VOID;
 
-            if (operand.Kind == AstItemKind.Immediate || operand.Kind == AstItemKind.CharLiteral)
+            if (operand.Kind == AstItemKind.Immediate)
             {
                 if (operand.DataType.Kind == DataTypeKind.BOOL)
                     return ((bool)operand.Value) ? IMOperand.BOOL_TRUE : IMOperand.BOOL_FALSE;

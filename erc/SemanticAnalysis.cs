@@ -385,9 +385,6 @@ namespace erc
                 case AstItemKind.Identifier:
                     CheckIdentifier(expression);
                     break;
-                case AstItemKind.CharLiteral:
-                    CheckChar(expression);
-                    break;
                 case AstItemKind.NewStackArray:
                     CheckNewStackArray(expression);
                     break;
@@ -494,14 +491,6 @@ namespace erc
                 default:
                     throw new Exception("Invalid kind of AST item given! Expected: ValueArrayDefinition or SizedArrayDefinition, given: " + expression);
             }
-        }
-
-        private void CheckChar(AstItem expression)
-        {
-            var valueStr = (string)expression.Value;
-            Assert.Count(valueStr.Length, 1, "Invalid length for char literal");
-
-            expression.DataType = DataType.CHAR8;
         }
 
         private void CheckIdentifier(AstItem expression)
@@ -830,6 +819,11 @@ namespace erc
                     return false;
                 else
                     throw new Exception("Unknown boolean value: " + str);
+            }
+            else if (dataType.Kind == DataTypeKind.CHAR8)
+            {
+                Assert.Count(str.Length, 1, "Invalid length for char literal");
+                return str;
             }
             else
                 return ParseNumber(str, dataType);

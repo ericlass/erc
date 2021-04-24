@@ -35,7 +35,6 @@ namespace erc
         EnumElement,
         Identifier,
         Type,
-        CharLiteral,
         ValueArrayDefinition,
         SizedArrayDefinition,
         NewStackArray,
@@ -88,7 +87,6 @@ namespace erc
                     return Kind + ": " + DataType + "(" + Children[0] + ")";
 
                 case AstItemKind.Immediate:
-                case AstItemKind.CharLiteral:
                     return Kind + ": " + DataType + "(" + Value + ")";
 
                 case AstItemKind.SizedArrayDefinition:
@@ -159,10 +157,6 @@ namespace erc
                 case AstItemKind.Immediate:
                     return Kind + ": " + ImmediateValueToString() + " (" + DataType + ")";
 
-                case AstItemKind.CharLiteral:
-                    var strValue = (string)Value;
-                    return Kind + ": '" + StringUtils.CharToPrintableStr(strValue[0]) + "' (" + DataType + ")";
-
                 case AstItemKind.BinaryOperator:
                 case AstItemKind.UnaryOperator:
                     return Kind + ": " + this.Operator.Figure;
@@ -197,7 +191,10 @@ namespace erc
             }
             else if (Value is string strVal)
             {
-                return "\"" + strVal + "\"";
+                if (strVal.Length == 1)
+                    return "'" + StringUtils.CharToPrintableStr(strVal[0]) + "'";
+                else
+                    return "\"" + strVal + "\"";
             }
 
             return Value.ToString();
@@ -271,10 +268,11 @@ namespace erc
             return result;
         }
 
-        public static AstItem CharLiteral(string value)
+        public static AstItem Immediate(DataType dataType, object value)
         {
-            var result = new AstItem(AstItemKind.CharLiteral);
+            var result = new AstItem(AstItemKind.Immediate);
             result.Value = value;
+            result.DataType = dataType;
             return result;
         }
 

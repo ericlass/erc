@@ -699,11 +699,11 @@ namespace erc
             }
             else if (token.Kind == TokenKind.True || token.Kind == TokenKind.False)
             {
-                result = AstItem.Immediate(token.Value);
+                result = AstItem.Immediate(DataType.BOOL, token.Value);
             }
             else if (token.Kind == TokenKind.Char)
             {
-                result = AstItem.CharLiteral(token.Value);
+                result = AstItem.Immediate(DataType.CHAR8, token.Value);
             }
             else if (token.Kind == TokenKind.String)
             {
@@ -723,8 +723,8 @@ namespace erc
         private AstItem StringToCharArrayDefinition(string str)
         {
             var chars = new List<char>(str.ToCharArray());
-            var literals = chars.ConvertAll(c => AstItem.CharLiteral(c.ToString()));
-            literals.Add(AstItem.CharLiteral("\0"));
+            var literals = chars.ConvertAll(c => AstItem.Immediate(DataType.CHAR8, c.ToString()));
+            literals.Add(AstItem.Immediate(DataType.CHAR8, "\0"));
             return AstItem.ValueArrayDefinition(literals);
         }
 
@@ -860,8 +860,7 @@ namespace erc
                     item.Kind == AstItemKind.FunctionCall ||
                     item.Kind == AstItemKind.Type ||
                     item.Kind == AstItemKind.Identifier ||
-                    item.Kind == AstItemKind.IndexAccess ||
-                    item.Kind == AstItemKind.CharLiteral)
+                    item.Kind == AstItemKind.IndexAccess)
                 {
                     output.Add(item);
                 }

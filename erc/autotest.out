@@ -1,0 +1,82 @@
+Programm
+    FunctionDecl: "main" (void)
+        ParameterList
+        StatementList
+    ExternFunctionDecl: "erc_exit_process" (void) ["ExitProcess"; "Kernel32.dll"]
+        ParameterList
+            Parameter: "exit_code" (u32)
+    ExternFunctionDecl: "erc_get_process_heap" (void*) ["GetProcessHeap"; "Kernel32.dll"]
+        ParameterList
+    ExternFunctionDecl: "erc_heap_alloc" (void*) ["HeapAlloc"; "Kernel32.dll"]
+        ParameterList
+            Parameter: "heap" (void*)
+            Parameter: "flags" (u32)
+            Parameter: "bytes" (u64)
+    ExternFunctionDecl: "erc_heap_free" (bool) ["HeapFree"; "Kernel32.dll"]
+        ParameterList
+            Parameter: "heap" (void*)
+            Parameter: "flags" (u32)
+            Parameter: "mem" (void*)
+    ExternFunctionDecl: "printf" (i32) ["printf"; "MSVCRT.DLL"]
+        ParameterList
+            Parameter: "format" (char8*)
+            Parameter: "arguments" (vars)
+
+
+
+[stack: 0, heap: 0]
+[
+]
+fn main(): void
+{
+    RET @void
+}
+
+ext fn['ExitProcess', 'Kernel32.dll'] erc_exit_process(u32): void
+
+ext fn['GetProcessHeap', 'Kernel32.dll'] erc_get_process_heap(): void*
+
+ext fn['HeapAlloc', 'Kernel32.dll'] erc_heap_alloc(void*, u32, u64): void*
+
+ext fn['HeapFree', 'Kernel32.dll'] erc_heap_free(void*, u32, void*): bool
+
+ext fn['printf', 'MSVCRT.DLL'] printf(char8*): i32
+
+
+
+format PE64 NX console 6.0
+entry start
+include 'win64a.inc'
+
+section '.data' data readable writeable
+
+erc_process_heap dq 0
+erc_u32_zero dd 0
+
+section '.text' code readable executable
+start:
+call [GetProcessHeap]
+mov [erc_process_heap], rax
+push rbp
+mov rbp, rsp
+call fn_main
+pop rbp
+xor ecx,ecx
+call [ExitProcess]
+
+fn_main:
+MOV RBP, RSP
+;RET @void
+RET
+
+section '.idata' import data readable writeable
+
+library Kernel32,'Kernel32.dll',\
+MSVCRT,'MSVCRT.DLL'
+import Kernel32,\
+  ExitProcess,'ExitProcess',\
+  GetProcessHeap,'GetProcessHeap',\
+  HeapAlloc,'HeapAlloc',\
+  HeapFree,'HeapFree'
+import MSVCRT,\
+  printf,'printf'

@@ -98,7 +98,7 @@ namespace erc
             var strValue = (string)operand.ImmediateValue;
             var firstChar = strValue[0];
             var number = (ushort)firstChar;
-            return number.ToString() + " ;" + StringUtils.CharToPrintableStr(firstChar);
+            return number.ToString() + " ; '" + StringUtils.CharToPrintableStr(firstChar) + "'";
         }
 
         private static readonly X64DataTypeProperties U8 = new X64DataTypeProperties()
