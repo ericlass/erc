@@ -222,6 +222,9 @@ namespace erc
                 c = iterator.Current();
             }
             iterator.Step();
+
+            result = result.Replace("\\n", "\n");
+
             return result;
         }
 

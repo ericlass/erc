@@ -12,6 +12,8 @@ namespace erc
         static void Main(string[] args)
         {
             var baseName = "autotest";
+            //var baseName = "example";
+
             var sourceFile = baseName + ".erc";
             var outputFile = baseName + ".out";
 

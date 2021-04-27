@@ -151,10 +151,6 @@ namespace erc
                             dataEntries.Add(new Tuple<DataType, string>(operand.DataType, entry));
                             locationMap.Add(operand.FullName, X64StorageLocation.DataSection(immediateName));
                         }
-                        else if (operand.Kind == IMOperandKind.Global)
-                        {
-
-                        }
                     }
                 }
             }

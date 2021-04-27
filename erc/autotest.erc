@@ -1,2 +1,46 @@
 ﻿fn main() {
+	test_arithmetic_u8();
+	test_arithmetic_u16();
+}
+
+fn test_arithmetic_u8()
+{
+	let message = new "test_arithmetic_u8(%d): %d \n";
+
+	let a = 5ub;
+	let b = 12ub;
+	let x = a + b;
+	printf(&message, 1ud, x as u32);
+
+	x = b - a;
+	printf(&message, 2ud, x as u32);
+
+	x = a * b;
+	printf(&message, 3ud, x as u32);
+
+	x = b / a;
+	printf(&message, 4ud, x as u32);
+
+	del message;
+}
+
+fn test_arithmetic_u16()
+{
+	let message = new "test_arithmetic_u16(%d): %d \n";
+
+	let a = 5uw;
+	let b = 12uw;
+	let x = a + b;
+	printf(&message, 1ud, x as u32);
+
+	x = b - a;
+	printf(&message, 2ud, x as u32);
+
+	x = a * b;
+	printf(&message, 3ud, x as u32);
+
+	x = b / a;
+	printf(&message, 4ud, x as u32);
+
+	del message;
 }

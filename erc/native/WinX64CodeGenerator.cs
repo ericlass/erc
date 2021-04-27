@@ -33,7 +33,7 @@ namespace erc
         private CompilerContext _context;
         private X64FunctionFrame _functionScope;
         private Function _currentFunction;
-        private List<X64Register> _usedRegisters = new List<X64Register>();
+        private List<X64RegisterGroup> _usedRegisterGroups = new List<X64RegisterGroup>();
         private X64MemoryManager _memoryManager = new X64MemoryManager();
         private List<Tuple<DataType, string>> _dataEntries = new List<Tuple<DataType, string>>();
         private X64TypeCast _typeCastGenerator = new X64TypeCast();
@@ -129,7 +129,7 @@ namespace erc
             _dataEntries.AddRange(_functionScope.DataEntries);
 
             _currentFunction = function.Definition;
-            _usedRegisters.Clear();
+            _usedRegisterGroups.Clear();
 
             output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RBP), X64StorageLocation.AsRegister(X64Register.RSP)));
 
@@ -306,7 +306,7 @@ namespace erc
                     var location = RequireOperandLocation(operation.Operands[0]);
                     if (location.Kind == X64StorageLocationKind.Register)
                     {
-                        if (!_usedRegisters.Remove(location.Register))
+                        if (!_usedRegisterGroups.Remove(location.Register.Group))
                             throw new Exception("Trying to free a register that is not in use: " + location.Register);
                     }
                     break;
@@ -321,10 +321,8 @@ namespace erc
                 var location = GetOperandLocation(operand);
                 if (location != null && location.Kind == X64StorageLocationKind.Register)
                 {
-                    if (!_usedRegisters.Contains(location.Register))
-                    {
-                        _usedRegisters.Add(location.Register);
-                    }
+                    if (!_usedRegisterGroups.Contains(location.Register.Group))
+                        _usedRegisterGroups.Add(location.Register.Group);
                 }
             }
         }
@@ -417,10 +415,10 @@ namespace erc
             var source = operation.Operands[0];
             var dataType = source.DataType;
             var sourceLocation = RequireOperandLocation(source);
-            sourceLocation = GeneratePushInternal(output, dataType, sourceLocation);
+            GeneratePushInternal(output, dataType, sourceLocation);
         }
 
-        private X64StorageLocation GeneratePushInternal(List<string> output, DataType dataType, X64StorageLocation sourceLocation)
+        private void GeneratePushInternal(List<string> output, DataType dataType, X64StorageLocation sourceLocation)
         {
             var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
 
@@ -431,20 +429,19 @@ namespace erc
                 sourceLocation = tempLocation;
             }
 
-            //PUSH only word, double-word or quad-word scalars and pointer in GP registers. byte-ints, scalar-floats and vectors must be MOVed.
-            if (dataType.Kind == DataTypeKind.POINTER || (dataType.Group == DataTypeGroup.ScalarInteger && dataType.ByteSize > 1))
+            //PUSH only word, double-word or quad-word scalars and pointers in GP registers. byte-ints, scalar-floats and vectors must be MOVed.
+            if (dataType.Kind == DataTypeKind.POINTER || dataType.Group == DataTypeGroup.ScalarInteger)
             {
-                output.Add(X64CodeFormat.FormatOperation(X64Instruction.PUSH, sourceLocation));
+                //GP registers should always be pushed in full size, not partially.
+                var fullSizeRegister = X64StorageLocation.AsRegister(X64Register.GroupToFullSizeRegister(sourceLocation.Register.Group));
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.PUSH, fullSizeRegister));
             }
             else
             {
                 //No Push for vectors
-                //No Push for 1-byte operands
                 output.Add(X64CodeFormat.FormatOperation(X64Instruction.SUB, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(dataType.ByteSize.ToString())));
                 output.Add(X64CodeFormat.FormatOperation(x64DataType.MoveInstructionUnaligned, X64StorageLocation.StackFromTop(0), sourceLocation));
             }
-
-            return sourceLocation;
         }
 
         private void GeneratePop(List<string> output, IMOperation operation)
@@ -458,17 +455,17 @@ namespace erc
 
         private void GeneratePopInternal(List<string> output, DataType dataType, X64StorageLocation targetLocation)
         {
-            if (targetLocation.Kind != X64StorageLocationKind.Register || dataType.IsVector || dataType.ByteSize == 1)
+            if (targetLocation.Kind != X64StorageLocationKind.Register || dataType.IsVector)
             {
                 //No Pop to other than register
                 //No Pop for vectors
-                //No Pop for 1-byte operands
                 X64GeneratorUtils.Move(output, dataType, targetLocation, X64StorageLocation.StackFromTop(0));
                 output.Add(X64CodeFormat.FormatOperation(X64Instruction.ADD, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(dataType.ByteSize.ToString())));
             }
             else
             {
-                output.Add(X64CodeFormat.FormatOperation(X64Instruction.POP, targetLocation));
+                var fullSizeRegister = X64StorageLocation.AsRegister(X64Register.GroupToFullSizeRegister(targetLocation.Register.Group));
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.POP, fullSizeRegister));
             }
         }
 
@@ -924,14 +921,16 @@ namespace erc
             var savedRegisters = new List<X64Register>();
 
             //Push used registers
-            foreach (var register in _usedRegisters)
+            foreach (var registerGroup in _usedRegisterGroups)
             {
                 //Do not save register if it is the target location for the return value. It is overwritten anyways.
-                var isTargetRegister = isTargetLocationRegister && targetLocation.Register.Group == register.Group;
+                var isTargetRegister = isTargetLocationRegister && targetLocation.Register.Group == registerGroup;
                 if (!isTargetRegister)
                 {
-                    GeneratePushInternal(output, X64Register.GetDefaultDataType(register), X64StorageLocation.AsRegister(register));
-                    savedRegisters.Add(register);
+                    //Always save full register, not only part of it
+                    var fullRegister = X64Register.GroupToFullSizeRegister(registerGroup);
+                    GeneratePushInternal(output, X64Register.GetDefaultDataType(fullRegister), X64StorageLocation.AsRegister(fullRegister));
+                    savedRegisters.Add(fullRegister);
                 }
             }
 

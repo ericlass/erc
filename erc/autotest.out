@@ -2,6 +2,207 @@ Programm
     FunctionDecl: "main" (void)
         ParameterList
         StatementList
+            FunctionCall: "test_arithmetic_u8"
+            FunctionCall: "test_arithmetic_u16"
+    FunctionDecl: "test_arithmetic_u8" (void)
+        ParameterList
+        StatementList
+            VarDecl: "message" (array[char8])
+                NewHeapArray
+                    ValueArrayDefinition: (array[char8])
+                        Immediate: 't' (char8)
+                        Immediate: 'e' (char8)
+                        Immediate: 's' (char8)
+                        Immediate: 't' (char8)
+                        Immediate: '_' (char8)
+                        Immediate: 'a' (char8)
+                        Immediate: 'r' (char8)
+                        Immediate: 'i' (char8)
+                        Immediate: 't' (char8)
+                        Immediate: 'h' (char8)
+                        Immediate: 'm' (char8)
+                        Immediate: 'e' (char8)
+                        Immediate: 't' (char8)
+                        Immediate: 'i' (char8)
+                        Immediate: 'c' (char8)
+                        Immediate: '_' (char8)
+                        Immediate: 'u' (char8)
+                        Immediate: '8' (char8)
+                        Immediate: '(' (char8)
+                        Immediate: '%' (char8)
+                        Immediate: 'd' (char8)
+                        Immediate: ')' (char8)
+                        Immediate: ':' (char8)
+                        Immediate: ' ' (char8)
+                        Immediate: '%' (char8)
+                        Immediate: 'd' (char8)
+                        Immediate: ' ' (char8)
+                        Immediate: '\10' (char8)
+                        Immediate: '\0' (char8)
+            VarDecl: "a" (u8)
+                Immediate: 5 (u8)
+            VarDecl: "b" (u8)
+                Immediate: 12 (u8)
+            VarDecl: "x" (u8)
+                Expression
+                    Variable: "a" (u8)
+                    Variable: "b" (u8)
+                    BinaryOperator: +
+            FunctionCall: "printf"
+                Expression
+                    Variable: "message" (array[char8])
+                    UnaryOperator: &
+                Immediate: 1 (u32)
+                Expression
+                    Variable: "x" (u8)
+                    Type: (u32)
+                    BinaryOperator: as
+            Assignment
+                Variable: "x" (u8)
+                Expression
+                    Variable: "b" (u8)
+                    Variable: "a" (u8)
+                    BinaryOperator: -
+            FunctionCall: "printf"
+                Expression
+                    Variable: "message" (array[char8])
+                    UnaryOperator: &
+                Immediate: 2 (u32)
+                Expression
+                    Variable: "x" (u8)
+                    Type: (u32)
+                    BinaryOperator: as
+            Assignment
+                Variable: "x" (u8)
+                Expression
+                    Variable: "a" (u8)
+                    Variable: "b" (u8)
+                    BinaryOperator: *
+            FunctionCall: "printf"
+                Expression
+                    Variable: "message" (array[char8])
+                    UnaryOperator: &
+                Immediate: 3 (u32)
+                Expression
+                    Variable: "x" (u8)
+                    Type: (u32)
+                    BinaryOperator: as
+            Assignment
+                Variable: "x" (u8)
+                Expression
+                    Variable: "b" (u8)
+                    Variable: "a" (u8)
+                    BinaryOperator: /
+            FunctionCall: "printf"
+                Expression
+                    Variable: "message" (array[char8])
+                    UnaryOperator: &
+                Immediate: 4 (u32)
+                Expression
+                    Variable: "x" (u8)
+                    Type: (u32)
+                    BinaryOperator: as
+            DelPointer
+    FunctionDecl: "test_arithmetic_u16" (void)
+        ParameterList
+        StatementList
+            VarDecl: "message" (array[char8])
+                NewHeapArray
+                    ValueArrayDefinition: (array[char8])
+                        Immediate: 't' (char8)
+                        Immediate: 'e' (char8)
+                        Immediate: 's' (char8)
+                        Immediate: 't' (char8)
+                        Immediate: '_' (char8)
+                        Immediate: 'a' (char8)
+                        Immediate: 'r' (char8)
+                        Immediate: 'i' (char8)
+                        Immediate: 't' (char8)
+                        Immediate: 'h' (char8)
+                        Immediate: 'm' (char8)
+                        Immediate: 'e' (char8)
+                        Immediate: 't' (char8)
+                        Immediate: 'i' (char8)
+                        Immediate: 'c' (char8)
+                        Immediate: '_' (char8)
+                        Immediate: 'u' (char8)
+                        Immediate: '1' (char8)
+                        Immediate: '6' (char8)
+                        Immediate: '(' (char8)
+                        Immediate: '%' (char8)
+                        Immediate: 'd' (char8)
+                        Immediate: ')' (char8)
+                        Immediate: ':' (char8)
+                        Immediate: ' ' (char8)
+                        Immediate: '%' (char8)
+                        Immediate: 'd' (char8)
+                        Immediate: ' ' (char8)
+                        Immediate: '\10' (char8)
+                        Immediate: '\0' (char8)
+            VarDecl: "a" (u16)
+                Immediate: 5 (u16)
+            VarDecl: "b" (u16)
+                Immediate: 12 (u16)
+            VarDecl: "x" (u16)
+                Expression
+                    Variable: "a" (u16)
+                    Variable: "b" (u16)
+                    BinaryOperator: +
+            FunctionCall: "printf"
+                Expression
+                    Variable: "message" (array[char8])
+                    UnaryOperator: &
+                Immediate: 1 (u32)
+                Expression
+                    Variable: "x" (u16)
+                    Type: (u32)
+                    BinaryOperator: as
+            Assignment
+                Variable: "x" (u16)
+                Expression
+                    Variable: "b" (u16)
+                    Variable: "a" (u16)
+                    BinaryOperator: -
+            FunctionCall: "printf"
+                Expression
+                    Variable: "message" (array[char8])
+                    UnaryOperator: &
+                Immediate: 2 (u32)
+                Expression
+                    Variable: "x" (u16)
+                    Type: (u32)
+                    BinaryOperator: as
+            Assignment
+                Variable: "x" (u16)
+                Expression
+                    Variable: "a" (u16)
+                    Variable: "b" (u16)
+                    BinaryOperator: *
+            FunctionCall: "printf"
+                Expression
+                    Variable: "message" (array[char8])
+                    UnaryOperator: &
+                Immediate: 3 (u32)
+                Expression
+                    Variable: "x" (u16)
+                    Type: (u32)
+                    BinaryOperator: as
+            Assignment
+                Variable: "x" (u16)
+                Expression
+                    Variable: "b" (u16)
+                    Variable: "a" (u16)
+                    BinaryOperator: /
+            FunctionCall: "printf"
+                Expression
+                    Variable: "message" (array[char8])
+                    UnaryOperator: &
+                Immediate: 4 (u32)
+                Expression
+                    Variable: "x" (u16)
+                    Type: (u32)
+                    BinaryOperator: as
+            DelPointer
     ExternFunctionDecl: "erc_exit_process" (void) ["ExitProcess"; "Kernel32.dll"]
         ParameterList
             Parameter: "exit_code" (u32)
@@ -29,6 +230,309 @@ Programm
 ]
 fn main(): void
 {
+    CALL 'test_arithmetic_u8', 
+    CALL 'test_arithmetic_u16', 
+    RET @void
+}
+
+[stack: 0, heap: 0]
+[
+  %message	: register(RBX),
+  %1	: register(RSI),
+  [%1]	: heap_register(RSI+0),
+  %a	: register(SIL),
+  %b	: register(DIL),
+  %x	: register(R12B),
+  %2	: register(R13),
+  %3	: register(R14D),
+  %4	: register(R13),
+  %5	: register(R14D),
+  %6	: register(R13),
+  %7	: register(R14D),
+  %8	: register(RSI),
+  %9	: register(EDI),
+  u64(37)	: data_section(imm_1),
+  u64(29)	: data_section(imm_2),
+  u64(8)	: data_section(imm_3),
+  char8('t')	: data_section(imm_4),
+  u64(1)	: data_section(imm_5),
+  char8('e')	: data_section(imm_6),
+  char8('s')	: data_section(imm_7),
+  char8('_')	: data_section(imm_8),
+  char8('a')	: data_section(imm_9),
+  char8('r')	: data_section(imm_10),
+  char8('i')	: data_section(imm_11),
+  char8('h')	: data_section(imm_12),
+  char8('m')	: data_section(imm_13),
+  char8('c')	: data_section(imm_14),
+  char8('u')	: data_section(imm_15),
+  char8('8')	: data_section(imm_16),
+  char8('(')	: data_section(imm_17),
+  char8('%')	: data_section(imm_18),
+  char8('d')	: data_section(imm_19),
+  char8(')')	: data_section(imm_20),
+  char8(':')	: data_section(imm_21),
+  char8(' ')	: data_section(imm_22),
+  char8('\10')	: data_section(imm_23),
+  char8('\0')	: data_section(imm_24),
+  u8(5)	: data_section(imm_25),
+  u8(12)	: data_section(imm_26),
+  u32(1)	: data_section(imm_27),
+  u32(2)	: data_section(imm_28),
+  u32(3)	: data_section(imm_29),
+  u32(4)	: data_section(imm_30),
+]
+fn test_arithmetic_u8(): void
+{
+    HALOC %message, u64(37)
+    MOV %1, %message
+    MOV [%1], u64(29)
+    ADD %1, %1, u64(8)
+    MOV [%1], char8('t')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('e')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('s')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('t')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('_')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('a')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('r')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('i')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('t')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('h')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('m')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('e')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('t')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('i')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('c')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('_')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('u')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('8')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('(')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('%')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('d')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8(')')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8(':')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8(' ')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('%')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('d')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8(' ')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('\10')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('\0')
+    FREE %1
+    MOV %a, u8(5)
+    MOV %b, u8(12)
+    ADD %x, %a, %b
+    MOV %2, %message
+    ADD %2, %2, u64(8)
+    CAST %3, %x
+    CALL 'printf', , %2, u32(1), %3
+    FREE %3
+    FREE %2
+    SUB %x, %b, %a
+    MOV %4, %message
+    ADD %4, %4, u64(8)
+    CAST %5, %x
+    CALL 'printf', , %4, u32(2), %5
+    FREE %5
+    FREE %4
+    MUL %x, %a, %b
+    MOV %6, %message
+    ADD %6, %6, u64(8)
+    CAST %7, %x
+    CALL 'printf', , %6, u32(3), %7
+    FREE %7
+    FREE %6
+    DIV %x, %b, %a
+    FREE %a
+    FREE %b
+    MOV %8, %message
+    ADD %8, %8, u64(8)
+    CAST %9, %x
+    FREE %x
+    CALL 'printf', , %8, u32(4), %9
+    FREE %9
+    FREE %8
+    DEL %message
+    FREE %message
+    RET @void
+}
+
+[stack: 0, heap: 0]
+[
+  %message	: register(RBX),
+  %1	: register(RSI),
+  [%1]	: heap_register(RSI+0),
+  %a	: register(SI),
+  %b	: register(DI),
+  %x	: register(R12W),
+  %2	: register(R13),
+  %3	: register(R14D),
+  %4	: register(R13),
+  %5	: register(R14D),
+  %6	: register(R13),
+  %7	: register(R14D),
+  %8	: register(RSI),
+  %9	: register(EDI),
+  u64(38)	: data_section(imm_31),
+  u64(30)	: data_section(imm_32),
+  u64(8)	: data_section(imm_33),
+  char8('t')	: data_section(imm_34),
+  u64(1)	: data_section(imm_35),
+  char8('e')	: data_section(imm_36),
+  char8('s')	: data_section(imm_37),
+  char8('_')	: data_section(imm_38),
+  char8('a')	: data_section(imm_39),
+  char8('r')	: data_section(imm_40),
+  char8('i')	: data_section(imm_41),
+  char8('h')	: data_section(imm_42),
+  char8('m')	: data_section(imm_43),
+  char8('c')	: data_section(imm_44),
+  char8('u')	: data_section(imm_45),
+  char8('1')	: data_section(imm_46),
+  char8('6')	: data_section(imm_47),
+  char8('(')	: data_section(imm_48),
+  char8('%')	: data_section(imm_49),
+  char8('d')	: data_section(imm_50),
+  char8(')')	: data_section(imm_51),
+  char8(':')	: data_section(imm_52),
+  char8(' ')	: data_section(imm_53),
+  char8('\10')	: data_section(imm_54),
+  char8('\0')	: data_section(imm_55),
+  u16(5)	: data_section(imm_56),
+  u16(12)	: data_section(imm_57),
+  u32(1)	: data_section(imm_58),
+  u32(2)	: data_section(imm_59),
+  u32(3)	: data_section(imm_60),
+  u32(4)	: data_section(imm_61),
+]
+fn test_arithmetic_u16(): void
+{
+    HALOC %message, u64(38)
+    MOV %1, %message
+    MOV [%1], u64(30)
+    ADD %1, %1, u64(8)
+    MOV [%1], char8('t')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('e')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('s')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('t')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('_')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('a')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('r')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('i')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('t')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('h')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('m')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('e')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('t')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('i')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('c')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('_')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('u')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('1')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('6')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('(')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('%')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('d')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8(')')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8(':')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8(' ')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('%')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('d')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8(' ')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('\10')
+    ADD %1, %1, u64(1)
+    MOV [%1], char8('\0')
+    FREE %1
+    MOV %a, u16(5)
+    MOV %b, u16(12)
+    ADD %x, %a, %b
+    MOV %2, %message
+    ADD %2, %2, u64(8)
+    CAST %3, %x
+    CALL 'printf', , %2, u32(1), %3
+    FREE %3
+    FREE %2
+    SUB %x, %b, %a
+    MOV %4, %message
+    ADD %4, %4, u64(8)
+    CAST %5, %x
+    CALL 'printf', , %4, u32(2), %5
+    FREE %5
+    FREE %4
+    MUL %x, %a, %b
+    MOV %6, %message
+    ADD %6, %6, u64(8)
+    CAST %7, %x
+    CALL 'printf', , %6, u32(3), %7
+    FREE %7
+    FREE %6
+    DIV %x, %b, %a
+    FREE %a
+    FREE %b
+    MOV %8, %message
+    ADD %8, %8, u64(8)
+    CAST %9, %x
+    FREE %x
+    CALL 'printf', , %8, u32(4), %9
+    FREE %9
+    FREE %8
+    DEL %message
+    FREE %message
     RET @void
 }
 
@@ -50,8 +554,69 @@ include 'win64a.inc'
 
 section '.data' data readable writeable
 
+imm_1 dq 37
+imm_35 dq 1
+imm_33 dq 8
 erc_process_heap dq 0
+imm_31 dq 38
+imm_32 dq 30
+imm_2 dq 29
+imm_3 dq 8
+imm_5 dq 1
 erc_u32_zero dd 0
+imm_27 dd 1
+imm_61 dd 4
+imm_60 dd 3
+imm_59 dd 2
+imm_58 dd 1
+imm_29 dd 3
+imm_28 dd 2
+imm_30 dd 4
+imm_57 dw 12
+imm_56 dw 5
+imm_46 db 49 ; '1'
+imm_42 db 104 ; 'h'
+imm_44 db 99 ; 'c'
+imm_43 db 109 ; 'm'
+imm_41 db 105 ; 'i'
+imm_45 db 117 ; 'u'
+imm_11 db 105 ; 'i'
+imm_49 db 37 ; '%'
+imm_48 db 40 ; '('
+imm_40 db 114 ; 'r'
+imm_50 db 100 ; 'd'
+imm_51 db 41 ; ')'
+imm_52 db 58 ; ':'
+imm_53 db 32 ; ' '
+imm_54 db 10 ; '\10'
+imm_55 db 0 ; '\0'
+imm_47 db 54 ; '6'
+imm_39 db 97 ; 'a'
+imm_37 db 115 ; 's'
+imm_10 db 114 ; 'r'
+imm_12 db 104 ; 'h'
+imm_13 db 109 ; 'm'
+imm_14 db 99 ; 'c'
+imm_15 db 117 ; 'u'
+imm_16 db 56 ; '8'
+imm_17 db 40 ; '('
+imm_18 db 37 ; '%'
+imm_19 db 100 ; 'd'
+imm_20 db 41 ; ')'
+imm_21 db 58 ; ':'
+imm_22 db 32 ; ' '
+imm_23 db 10 ; '\10'
+imm_24 db 0 ; '\0'
+imm_25 db 5
+imm_26 db 12
+imm_9 db 97 ; 'a'
+imm_4 db 116 ; 't'
+imm_8 db 95 ; '_'
+imm_34 db 116 ; 't'
+imm_6 db 101 ; 'e'
+imm_36 db 101 ; 'e'
+imm_38 db 95 ; '_'
+imm_7 db 115 ; 's'
 
 section '.text' code readable executable
 start:
@@ -66,6 +631,619 @@ call [ExitProcess]
 
 fn_main:
 MOV RBP, RSP
+;CALL 'test_arithmetic_u8', 
+SUB RSP, 0x20
+CALL fn_test_arithmetic_u8
+ADD RSP, 0x20
+;CALL 'test_arithmetic_u16', 
+SUB RSP, 0x20
+CALL fn_test_arithmetic_u16
+ADD RSP, 0x20
+;RET @void
+RET
+
+fn_test_arithmetic_u8:
+MOV RBP, RSP
+;HALOC %message, u64(37)
+MOV RCX, [erc_process_heap]
+MOV EDX, [erc_u32_zero]
+MOV R8, [imm_1]
+SUB RSP, 0x20
+CALL [HeapAlloc]
+ADD RSP, 0x20
+MOV RBX, RAX
+;MOV %1, %message
+MOV RSI, RBX
+;MOV [%1], u64(29)
+MOV RAX, [imm_2]
+MOV [RSI], RAX
+;ADD %1, %1, u64(8)
+ADD RSI, [imm_3]
+;MOV [%1], char8('t')
+MOV AL, [imm_4]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('e')
+MOV AL, [imm_6]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('s')
+MOV AL, [imm_7]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('t')
+MOV AL, [imm_4]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('_')
+MOV AL, [imm_8]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('a')
+MOV AL, [imm_9]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('r')
+MOV AL, [imm_10]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('i')
+MOV AL, [imm_11]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('t')
+MOV AL, [imm_4]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('h')
+MOV AL, [imm_12]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('m')
+MOV AL, [imm_13]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('e')
+MOV AL, [imm_6]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('t')
+MOV AL, [imm_4]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('i')
+MOV AL, [imm_11]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('c')
+MOV AL, [imm_14]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('_')
+MOV AL, [imm_8]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('u')
+MOV AL, [imm_15]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('8')
+MOV AL, [imm_16]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('(')
+MOV AL, [imm_17]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('%')
+MOV AL, [imm_18]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('d')
+MOV AL, [imm_19]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8(')')
+MOV AL, [imm_20]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8(':')
+MOV AL, [imm_21]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8(' ')
+MOV AL, [imm_22]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('%')
+MOV AL, [imm_18]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('d')
+MOV AL, [imm_19]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8(' ')
+MOV AL, [imm_22]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('\10')
+MOV AL, [imm_23]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_5]
+;MOV [%1], char8('\0')
+MOV AL, [imm_24]
+MOV [RSI], AL
+;MOV %a, u8(5)
+MOV SIL, [imm_25]
+;MOV %b, u8(12)
+MOV DIL, [imm_26]
+;ADD %x, %a, %b
+MOV R12B, SIL
+ADD R12B, DIL
+;MOV %2, %message
+MOV R13, RBX
+;ADD %2, %2, u64(8)
+ADD R13, [imm_3]
+;CAST %3, %x
+MOV R14B, R12B
+;CALL 'printf', , %2, u32(1), %3
+PUSH RBX
+PUSH RSI
+PUSH RDI
+PUSH R12
+PUSH R13
+PUSH R14
+MOV RCX, R13
+MOV EDX, [imm_27]
+MOV R8D, R14D
+SUB RSP, 0x20
+CALL [printf]
+ADD RSP, 0x20
+POP R14
+POP R13
+POP R12
+POP RDI
+POP RSI
+POP RBX
+;SUB %x, %b, %a
+MOV R12B, DIL
+SUB R12B, SIL
+;MOV %4, %message
+MOV R13, RBX
+;ADD %4, %4, u64(8)
+ADD R13, [imm_3]
+;CAST %5, %x
+MOV R14B, R12B
+;CALL 'printf', , %4, u32(2), %5
+PUSH RBX
+PUSH RSI
+PUSH RDI
+PUSH R12
+PUSH R14
+PUSH R13
+MOV RCX, R13
+MOV EDX, [imm_28]
+MOV R8D, R14D
+SUB RSP, 0x20
+CALL [printf]
+ADD RSP, 0x20
+POP R13
+POP R14
+POP R12
+POP RDI
+POP RSI
+POP RBX
+;MUL %x, %a, %b
+MOV AL, SIL
+MUL DIL
+MOV R12B, AL
+;MOV %6, %message
+MOV R13, RBX
+;ADD %6, %6, u64(8)
+ADD R13, [imm_3]
+;CAST %7, %x
+MOV R14B, R12B
+;CALL 'printf', , %6, u32(3), %7
+PUSH RBX
+PUSH RSI
+PUSH RDI
+PUSH R12
+PUSH R14
+PUSH R13
+MOV RCX, R13
+MOV EDX, [imm_29]
+MOV R8D, R14D
+SUB RSP, 0x20
+CALL [printf]
+ADD RSP, 0x20
+POP R13
+POP R14
+POP R12
+POP RDI
+POP RSI
+POP RBX
+;DIV %x, %b, %a
+MOV AL, DIL
+DIV SIL
+MOV R12B, AL
+;MOV %8, %message
+MOV RSI, RBX
+;ADD %8, %8, u64(8)
+ADD RSI, [imm_3]
+;CAST %9, %x
+MOV DIL, R12B
+;CALL 'printf', , %8, u32(4), %9
+PUSH RBX
+PUSH R14
+PUSH R13
+PUSH RSI
+PUSH RDI
+PUSH R12
+MOV RCX, RSI
+MOV EDX, [imm_30]
+MOV R8D, EDI
+SUB RSP, 0x20
+CALL [printf]
+ADD RSP, 0x20
+POP R12
+POP RDI
+POP RSI
+POP R13
+POP R14
+POP RBX
+;DEL %message
+PUSH RBX
+PUSH R14
+PUSH R13
+PUSH R12
+PUSH RDI
+PUSH RSI
+MOV RCX, [erc_process_heap]
+MOV EDX, [erc_u32_zero]
+MOV R8, RBX
+SUB RSP, 0x20
+CALL [HeapFree]
+ADD RSP, 0x20
+POP RSI
+POP RDI
+POP R12
+POP R13
+POP R14
+POP RBX
+;RET @void
+RET
+
+fn_test_arithmetic_u16:
+MOV RBP, RSP
+;HALOC %message, u64(38)
+MOV RCX, [erc_process_heap]
+MOV EDX, [erc_u32_zero]
+MOV R8, [imm_31]
+SUB RSP, 0x20
+CALL [HeapAlloc]
+ADD RSP, 0x20
+MOV RBX, RAX
+;MOV %1, %message
+MOV RSI, RBX
+;MOV [%1], u64(30)
+MOV RAX, [imm_32]
+MOV [RSI], RAX
+;ADD %1, %1, u64(8)
+ADD RSI, [imm_33]
+;MOV [%1], char8('t')
+MOV AL, [imm_34]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('e')
+MOV AL, [imm_36]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('s')
+MOV AL, [imm_37]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('t')
+MOV AL, [imm_34]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('_')
+MOV AL, [imm_38]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('a')
+MOV AL, [imm_39]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('r')
+MOV AL, [imm_40]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('i')
+MOV AL, [imm_41]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('t')
+MOV AL, [imm_34]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('h')
+MOV AL, [imm_42]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('m')
+MOV AL, [imm_43]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('e')
+MOV AL, [imm_36]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('t')
+MOV AL, [imm_34]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('i')
+MOV AL, [imm_41]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('c')
+MOV AL, [imm_44]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('_')
+MOV AL, [imm_38]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('u')
+MOV AL, [imm_45]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('1')
+MOV AL, [imm_46]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('6')
+MOV AL, [imm_47]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('(')
+MOV AL, [imm_48]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('%')
+MOV AL, [imm_49]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('d')
+MOV AL, [imm_50]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8(')')
+MOV AL, [imm_51]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8(':')
+MOV AL, [imm_52]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8(' ')
+MOV AL, [imm_53]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('%')
+MOV AL, [imm_49]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('d')
+MOV AL, [imm_50]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8(' ')
+MOV AL, [imm_53]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('\10')
+MOV AL, [imm_54]
+MOV [RSI], AL
+;ADD %1, %1, u64(1)
+ADD RSI, [imm_35]
+;MOV [%1], char8('\0')
+MOV AL, [imm_55]
+MOV [RSI], AL
+;MOV %a, u16(5)
+MOV SI, [imm_56]
+;MOV %b, u16(12)
+MOV DI, [imm_57]
+;ADD %x, %a, %b
+MOV R12W, SI
+ADD R12W, DI
+;MOV %2, %message
+MOV R13, RBX
+;ADD %2, %2, u64(8)
+ADD R13, [imm_33]
+;CAST %3, %x
+MOV R14W, R12W
+;CALL 'printf', , %2, u32(1), %3
+PUSH RBX
+PUSH RSI
+PUSH RDI
+PUSH R12
+PUSH R13
+PUSH R14
+MOV RCX, R13
+MOV EDX, [imm_58]
+MOV R8D, R14D
+SUB RSP, 0x20
+CALL [printf]
+ADD RSP, 0x20
+POP R14
+POP R13
+POP R12
+POP RDI
+POP RSI
+POP RBX
+;SUB %x, %b, %a
+MOV R12W, DI
+SUB R12W, SI
+;MOV %4, %message
+MOV R13, RBX
+;ADD %4, %4, u64(8)
+ADD R13, [imm_33]
+;CAST %5, %x
+MOV R14W, R12W
+;CALL 'printf', , %4, u32(2), %5
+PUSH RBX
+PUSH RSI
+PUSH RDI
+PUSH R12
+PUSH R14
+PUSH R13
+MOV RCX, R13
+MOV EDX, [imm_59]
+MOV R8D, R14D
+SUB RSP, 0x20
+CALL [printf]
+ADD RSP, 0x20
+POP R13
+POP R14
+POP R12
+POP RDI
+POP RSI
+POP RBX
+;MUL %x, %a, %b
+MOV AX, SI
+MUL DI
+MOV R12W, AX
+;MOV %6, %message
+MOV R13, RBX
+;ADD %6, %6, u64(8)
+ADD R13, [imm_33]
+;CAST %7, %x
+MOV R14W, R12W
+;CALL 'printf', , %6, u32(3), %7
+PUSH RBX
+PUSH RSI
+PUSH RDI
+PUSH R12
+PUSH R14
+PUSH R13
+MOV RCX, R13
+MOV EDX, [imm_60]
+MOV R8D, R14D
+SUB RSP, 0x20
+CALL [printf]
+ADD RSP, 0x20
+POP R13
+POP R14
+POP R12
+POP RDI
+POP RSI
+POP RBX
+;DIV %x, %b, %a
+MOV AX, DI
+DIV SI
+MOV R12W, AX
+;MOV %8, %message
+MOV RSI, RBX
+;ADD %8, %8, u64(8)
+ADD RSI, [imm_33]
+;CAST %9, %x
+MOV DI, R12W
+;CALL 'printf', , %8, u32(4), %9
+PUSH RBX
+PUSH R14
+PUSH R13
+PUSH RSI
+PUSH RDI
+PUSH R12
+MOV RCX, RSI
+MOV EDX, [imm_61]
+MOV R8D, EDI
+SUB RSP, 0x20
+CALL [printf]
+ADD RSP, 0x20
+POP R12
+POP RDI
+POP RSI
+POP R13
+POP R14
+POP RBX
+;DEL %message
+PUSH RBX
+PUSH R14
+PUSH R13
+PUSH R12
+PUSH RDI
+PUSH RSI
+MOV RCX, [erc_process_heap]
+MOV EDX, [erc_u32_zero]
+MOV R8, RBX
+SUB RSP, 0x20
+CALL [HeapFree]
+ADD RSP, 0x20
+POP RSI
+POP RDI
+POP R12
+POP R13
+POP R14
+POP RBX
 ;RET @void
 RET
 

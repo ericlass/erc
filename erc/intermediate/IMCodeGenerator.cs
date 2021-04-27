@@ -746,7 +746,7 @@ namespace erc
         /// </summary>
         /// <param name="output"></param>
         /// <param name="operand"></param>
-        /// <returns>The current location of the operand. If it has no location, it is moved to the default location and that is returned.</returns>
+        /// <returns>The current location of the operand. If it has no location, it is moved to a temp location and that is returned.</returns>
         private IMOperand GetOperandLocation(List<IMOperation> output, AstItem operand)
         {
             var result = IMOperand.VOID;
@@ -773,11 +773,12 @@ namespace erc
                 result = NewTempLocal(operand.DataType);
                 GenerateFunctionCall(output, operand, result);
             }
-            else if (operand.Kind == AstItemKind.BinaryOperator || operand.Kind == AstItemKind.UnaryOperator)
+            //Operators are handled in GenerateExpressionOperations. No need to handle here.
+            /*else if (operand.Kind == AstItemKind.BinaryOperator || operand.Kind == AstItemKind.UnaryOperator)
             {
                 result = NewTempLocal(operand.DataType);
                 output.Add(IMOperation.Pop(result));
-            }
+            }*/
             else if (operand.Kind == AstItemKind.Type || operand.Kind == AstItemKind.Identifier)
             {
                 result = IMOperand.Identifier(operand.Identifier);

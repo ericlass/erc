@@ -70,10 +70,10 @@ namespace erc
         public static X64Instruction NOT = new X64Instruction("NOT", 1);
 
         public static X64Instruction MUL = new X64Instruction("MUL", 1);
-        public static X64Instruction DIV = new X64Instruction("DIV", 2);
+        public static X64Instruction DIV = new X64Instruction("DIV", 1);
 
         public static X64Instruction IMUL = new X64Instruction("IMUL", 1);
-        public static X64Instruction IDIV = new X64Instruction("IDIV", 2);
+        public static X64Instruction IDIV = new X64Instruction("IDIV", 1);
         
         public static X64Instruction NEG = new X64Instruction("NEG", 1);
         public static X64Instruction TEST = new X64Instruction("TEST", 2);
