@@ -243,6 +243,11 @@ namespace erc
         public static X64Instruction VCVTPS2PD = new X64Instruction("VCVTPS2PD", 2);
         public static X64Instruction VCVTPD2PS = new X64Instruction("VCVTPD2PS", 2);
 
+        public static X64Instruction CBW = new X64Instruction("CBW", 0);
+        public static X64Instruction CWD = new X64Instruction("CWD", 0);
+        public static X64Instruction CDQ = new X64Instruction("CDQ", 0);
+        public static X64Instruction CQO = new X64Instruction("CQO", 0);
+
         //##### MISC #####
 
         public static X64Instruction CALL = new X64Instruction("CALL", 1);

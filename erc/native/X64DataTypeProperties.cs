@@ -29,6 +29,10 @@ namespace erc
         public X64Instruction CmpGreaterThanInstruction { get; private set; }
         public X64Instruction CmpGreaterThanOrEqualInstruction { get; private set; }
         public X64Instruction MoveMaskInstruction { get; private set; }
+        /// <summary>
+        /// Only required for signed integer types for division.
+        /// </summary>
+        public X64Instruction DoubleSizeInstruction { get; private set; }
         public Func<IMOperand, string> ImmediateValueToAsmCode { get; private set; }
 
         private X64DataTypeProperties()
@@ -202,6 +206,7 @@ namespace erc
             OrInstruction = X64Instruction.OR,
             XorInstruction = X64Instruction.XOR,
             NotInstruction = X64Instruction.NOT,
+            DoubleSizeInstruction = X64Instruction.CBW,
             ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 
@@ -223,6 +228,7 @@ namespace erc
             OrInstruction = X64Instruction.OR,
             XorInstruction = X64Instruction.XOR,
             NotInstruction = X64Instruction.NOT,
+            DoubleSizeInstruction = X64Instruction.CWD,
             ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 
@@ -244,6 +250,7 @@ namespace erc
             OrInstruction = X64Instruction.OR,
             XorInstruction = X64Instruction.XOR,
             NotInstruction = X64Instruction.NOT,
+            DoubleSizeInstruction = X64Instruction.CDQ,
             ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 
@@ -265,6 +272,7 @@ namespace erc
             OrInstruction = X64Instruction.OR,
             XorInstruction = X64Instruction.XOR,
             NotInstruction = X64Instruction.NOT,
+            DoubleSizeInstruction = X64Instruction.CQO,
             ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 

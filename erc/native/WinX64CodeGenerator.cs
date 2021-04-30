@@ -50,7 +50,7 @@ namespace erc
             _context = context;
             var importedFunctions = new Dictionary<string, List<string>>();
 
-            var asmSource = new List<string>();
+            var asmSource = new List<string>(1000);
             foreach (var obj in context.IMObjects)
             {
                 switch (obj.Kind)
@@ -493,16 +493,69 @@ namespace erc
             var dataType = operand1.DataType;
             var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
 
+            //For scalar integers > 1 byte, must save RDX. It is overwritten by MUL/IMUL
+            var rdx = X64StorageLocation.AsRegister(X64Register.RDX);
+            var mustSaveRdx = dataType.Group == DataTypeGroup.ScalarInteger && dataType.ByteSize > 1;
+            if (mustSaveRdx)
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.PUSH, rdx));
+
             GenerateBinaryOperator(output, x64DataType.MulInstruction, operation);
+
+            if (mustSaveRdx)
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.POP, rdx));
         }
 
         private void GenerateDiv(List<string> output, IMOperation operation)
         {
-            var operand1 = operation.Operands[1];
-            var dataType = operand1.DataType;
+            var dataType = operation.Operands[1].DataType;
             var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
 
-            GenerateBinaryOperator(output, x64DataType.DivInstruction, operation);
+            if (dataType.Group == DataTypeGroup.ScalarInteger)
+            {
+                var target = operation.Operands[0];
+                var operand1 = operation.Operands[1];
+                var operand2 = operation.Operands[2];
+
+                var targetLocation = RequireOperandLocation(target);
+                var op1Location = RequireOperandLocation(operand1);
+                var op2Location = RequireOperandLocation(operand2);
+
+                var acc = X64StorageLocation.AsRegister(x64DataType.Accumulator);
+                var rdx = X64StorageLocation.AsRegister(X64Register.RDX);
+
+                //DIV instruction uses RDX:RAX (or smaller versions accordingly) as combined source
+                //So it is required to safe RDX (which might be used for parameter)
+                //But only for types > 1 byte. 1 byte int use AH:AL
+                if (dataType.ByteSize > 1)
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.PUSH, rdx));
+
+                //For signed type: sign extend to AX/RDX. For unsigned: zero extend (just zero AX/RDX)
+                if (dataType.IsSigned)
+                {
+                    X64GeneratorUtils.Move(output, dataType, acc, op1Location);
+                    output.Add(X64CodeFormat.FormatOperation(x64DataType.DoubleSizeInstruction));
+                }
+                else
+                {
+                    if (dataType.ByteSize == 1)
+                    {
+                        var ax = X64StorageLocation.AsRegister(X64Register.AX);
+                        output.Add(X64CodeFormat.FormatOperation(X64Instruction.XOR, ax, ax));
+                    }
+                    else
+                        output.Add(X64CodeFormat.FormatOperation(X64Instruction.XOR, rdx, rdx));
+
+                    X64GeneratorUtils.Move(output, dataType, acc, op1Location);
+                }
+
+                output.Add(X64CodeFormat.FormatOperation(x64DataType.DivInstruction, op2Location));
+                X64GeneratorUtils.Move(output, dataType, targetLocation, acc);
+
+                if (dataType.ByteSize > 1)
+                    output.Add(X64CodeFormat.FormatOperation(X64Instruction.POP, rdx));
+            }
+            else
+                GenerateBinaryOperator(output, x64DataType.DivInstruction, operation);
         }
 
         private void GenerateBinaryOperator(List<string> output, X64Instruction instruction, IMOperation operation)

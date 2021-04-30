@@ -35,20 +35,5 @@ namespace erc
             return instruction.Name + " " + operand1.ToCode() + ", " + operand2.ToCode() + ", " + operand3.ToCode();
         }
 
-        public static string ByteSizeToName(int byteSize)
-        {
-            switch (byteSize)
-            {
-                case 1: return "byte";
-                case 2: return "word";
-                case 4: return "dword";
-                case 8: return "qword";
-                case 16: return "dqword";
-                case 32: return "qqword";
-                case 64: return "dqqword";
-                default:
-                    throw new Exception("Unsupported byte size: " + byteSize);
-            }
-        }
     }
 }
