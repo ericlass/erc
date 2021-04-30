@@ -94,7 +94,7 @@ namespace erc
             immediateBytes.Add(0);
 
             //Create final string
-            return String.Join(",", immediateBytes.ConvertAll((b) => b.ToString())) + "; " + strValue;
+            return String.Join(",", immediateBytes.ConvertAll((b) => b.ToString())) + "; \"" + StringUtils.Escape(strValue) + "\"";
         }
 
         private static string ImmediateChar8ToAsmCode(IMOperand operand)

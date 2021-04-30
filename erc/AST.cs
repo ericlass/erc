@@ -194,7 +194,7 @@ namespace erc
                 if (strVal.Length == 1)
                     return "'" + StringUtils.CharToPrintableStr(strVal[0]) + "'";
                 else
-                    return "\"" + strVal + "\"";
+                    return "\"" + StringUtils.Escape(strVal) + "\"";
             }
 
             return Value.ToString();

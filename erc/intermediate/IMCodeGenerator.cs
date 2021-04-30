@@ -432,6 +432,10 @@ namespace erc
                     output.Add(IMOperation.Mov(targetLocation, source));
                     break;
 
+                case DataTypeKind.STRING8:
+                    output.Add(IMOperation.Lea(targetLocation, IMOperand.Immediate(expression.DataType, expression.Value)));
+                    break;
+
                 default:
                     output.Add(IMOperation.Mov(targetLocation, IMOperand.Immediate(expression.DataType, expression.Value)));
                     break;
@@ -447,7 +451,7 @@ namespace erc
 
             var resultType = symbol.DataType.ElementType;
 
-            if (symbol.DataType.Kind == DataTypeKind.ARRAY)
+            if (symbol.DataType.Kind == DataTypeKind.ARRAY || symbol.DataType.Kind == DataTypeKind.STRING8)
             {
                 //TODO: Generate code that check if the index is in bounds and throws exception if not!
 
@@ -753,10 +757,19 @@ namespace erc
 
             if (operand.Kind == AstItemKind.Immediate)
             {
-                if (operand.DataType.Kind == DataTypeKind.BOOL)
-                    return ((bool)operand.Value) ? IMOperand.BOOL_TRUE : IMOperand.BOOL_FALSE;
+                switch (operand.DataType.Kind)
+                {
+                    case DataTypeKind.BOOL:
+                        return ((bool)operand.Value) ? IMOperand.BOOL_TRUE : IMOperand.BOOL_FALSE;
 
-                result = IMOperand.Immediate(operand.DataType, operand.Value);
+                    case DataTypeKind.STRING8:
+                        result = NewTempLocal(operand.DataType);
+                        output.Add(IMOperation.Lea(result, IMOperand.Immediate(operand.DataType, operand.Value)));
+                        return result;
+
+                    default:
+                        return IMOperand.Immediate(operand.DataType, operand.Value);
+                }
             }
             else if (operand.Kind == AstItemKind.Vector)
             {
@@ -773,12 +786,6 @@ namespace erc
                 result = NewTempLocal(operand.DataType);
                 GenerateFunctionCall(output, operand, result);
             }
-            //Operators are handled in GenerateExpressionOperations. No need to handle here.
-            /*else if (operand.Kind == AstItemKind.BinaryOperator || operand.Kind == AstItemKind.UnaryOperator)
-            {
-                result = NewTempLocal(operand.DataType);
-                output.Add(IMOperation.Pop(result));
-            }*/
             else if (operand.Kind == AstItemKind.Type || operand.Kind == AstItemKind.Identifier)
             {
                 result = IMOperand.Identifier(operand.Identifier);

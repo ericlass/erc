@@ -6,7 +6,7 @@ namespace erc
     /// <summary>
     /// Gets the length of an array.
     /// </summary>
-    class ArrayLengthOperator : IUnaryOperator
+    class LengthOperator : IUnaryOperator
     {
         public string Figure => "#";
 
@@ -24,7 +24,7 @@ namespace erc
 
         public void ValidateOperand(AstItem operand)
         {
-            Assert.DataTypeKind(operand.DataType.Kind, DataTypeKind.ARRAY, "Invalid operand for array length operator!");
+            Assert.True(operand.DataType.Kind == DataTypeKind.ARRAY || operand.DataType.Kind == DataTypeKind.STRING8, "Invalid operand for array length operator! Must be array or string!");
         }
     }
 }

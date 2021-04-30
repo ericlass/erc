@@ -36,6 +36,6 @@ namespace erc
         public static IUnaryOperator BOOLEAN_INVERT = new BooleanInversionOperator();
         public static IUnaryOperator POINTER_DEREFERENCE = new PointerDereferenceOperator();
         public static IUnaryOperator ADDRESS_OF = new AddressOperator();
-        public static IUnaryOperator ARRAY_LENGTH = new ArrayLengthOperator();
+        public static IUnaryOperator ARRAY_LENGTH = new LengthOperator();
     }
 }

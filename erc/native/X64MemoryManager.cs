@@ -81,8 +81,8 @@ namespace erc
                                 else if (CanGoOnStack(operand.DataType))
                                 {
                                     //If no register, try on stack
-                                    location = X64StorageLocation.StackFromBase(stackOffset);
                                     stackOffset += operand.DataType.ByteSize;
+                                    location = X64StorageLocation.StackFromBase(stackOffset);
                                 }
 
                                 //If no register and not on stack, it must be heap
@@ -207,7 +207,13 @@ namespace erc
             var paramOffset = 0;
             foreach (var paramType in parameterTypes)
             {
-                if (paramType.Group == DataTypeGroup.ScalarInteger || paramType.Kind == DataTypeKind.BOOL || paramType.Kind == DataTypeKind.POINTER || paramType.Kind == DataTypeKind.ARRAY)
+                if (paramType.Group == DataTypeGroup.ScalarInteger ||
+                    paramType.Kind == DataTypeKind.BOOL ||
+                    paramType.Kind == DataTypeKind.POINTER ||
+                    paramType.Kind == DataTypeKind.ARRAY ||
+                    paramType.Kind == DataTypeKind.STRING8 ||
+                    paramType.Kind == DataTypeKind.CHAR8
+                    )
                 {
                     if (_freeParameterRRegisters.Count > 0)
                     {

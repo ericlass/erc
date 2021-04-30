@@ -76,7 +76,7 @@
     <Compile Include="operators\ArithmeticOperator.cs" />
     <Compile Include="AST.cs" />
     <Compile Include="BlockScope.cs" />
-    <Compile Include="operators\ArrayLengthOperator.cs" />
+    <Compile Include="operators\LengthOperator.cs" />
     <Compile Include="operators\BooleanInversionOperator.cs" />
     <Compile Include="operators\BooleanOperator.cs" />
     <Compile Include="CompilerContext.cs" />

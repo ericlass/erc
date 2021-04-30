@@ -15,179 +15,183 @@
 	test_arithmetic_i32();
 	print_separator();
 	test_arithmetic_i64();
+	print_separator();
+	
+	test_string();
 }
 
 fn print_separator()
 {
-	let separator = new "######################\n";
-	printf(&separator);
-	del separator;
+	printf(&"######################\n");
 }
 
 fn test_arithmetic_u8()
 {
-	let message = new "test_arithmetic_u8(%d): %d \n";
+	let message = &"test_arithmetic_u8(%d): %d \n";
 
 	let a = 5ub;
 	let b = 12ub;
 	let x = a + b;
-	printf(&message, 1ud, x as u32);
+	printf(message, 1ud, x as u32);
 
 	x = b - a;
-	printf(&message, 2ud, x as u32);
+	printf(message, 2ud, x as u32);
 
 	x = a * b;
-	printf(&message, 3ud, x as u32);
+	printf(message, 3ud, x as u32);
 
 	x = b / a;
-	printf(&message, 4ud, x as u32);
-
-	del message;
+	printf(message, 4ud, x as u32);
 }
 
 fn test_arithmetic_u16()
 {
-	let message = new "test_arithmetic_u16(%d): %d \n";
+	let message = &"test_arithmetic_u16(%d): %d \n";
 
 	let a = 5uw;
 	let b = 12uw;
 	let x = a + b;
-	printf(&message, 1ud, x as u32);
+	printf(message, 1ud, x as u32);
 
 	x = b - a;
-	printf(&message, 2ud, x as u32);
+	printf(message, 2ud, x as u32);
 
 	x = a * b;
-	printf(&message, 3ud, x as u32);
+	printf(message, 3ud, x as u32);
 
 	x = b / a;
-	printf(&message, 4ud, x as u32);
-
-	del message;
+	printf(message, 4ud, x as u32);
 }
 
 fn test_arithmetic_u32()
 {
-	let message = new "test_arithmetic_u32(%d): %d \n";
+	let message = &"test_arithmetic_u32(%d): %d \n";
 
 	let a = 5ud;
 	let b = 12ud;
 	let x = a + b;
-	printf(&message, 1ud, x);
+	printf(message, 1ud, x);
 
 	x = b - a;
-	printf(&message, 2ud, x);
+	printf(message, 2ud, x);
 
 	x = a * b;
-	printf(&message, 3ud, x);
+	printf(message, 3ud, x);
 
 	x = b / a;
-	printf(&message, 4ud, x);
-
-	del message;
+	printf(message, 4ud, x);
 }
 
 fn test_arithmetic_u64()
 {
-	let message = new "test_arithmetic_u64(%d): %lld \n";
+	let message = &"test_arithmetic_u64(%d): %lld \n";
 
 	let a = 5u;
 	let b = 12u;
 	let x = a + b;
-	printf(&message, 1ud, x);
+	printf(message, 1ud, x);
 
 	x = b - a;
-	printf(&message, 2ud, x);
+	printf(message, 2ud, x);
 
 	x = a * b;
-	printf(&message, 3ud, x);
+	printf(message, 3ud, x);
 
 	x = b / a;
-	printf(&message, 4ud, x);
-
-	del message;
+	printf(message, 4ud, x);
 }
 
 fn test_arithmetic_i8()
 {
-	let message = new "test_arithmetic_i8(%d): %i \n";
+	let message = &"test_arithmetic_i8(%d): %i \n";
 
 	let a = 5b;
 	let b = -12b;
 	let x = a + b;
-	printf(&message, 1ud, x as i32);
+	printf(message, 1ud, x as i32);
 
 	x = b - a;
-	printf(&message, 2ud, x as i32);
+	printf(message, 2ud, x as i32);
 
 	x = a * b;
-	printf(&message, 3ud, x as i32);
+	printf(message, 3ud, x as i32);
 
 	x = b / a;
-	printf(&message, 4ud, x as i32);
-
-	del message;
+	printf(message, 4ud, x as i32);
 }
 
 fn test_arithmetic_i16()
 {
-	let message = new "test_arithmetic_i16(%d): %i \n";
+	let message = &"test_arithmetic_i16(%d): %i \n";
 
 	let a = 5w;
 	let b = -12w;
 	let x = a + b;
-	printf(&message, 1ud, x as i32);
+	printf(message, 1ud, x as i32);
 
 	x = b - a;
-	printf(&message, 2ud, x as i32);
+	printf(message, 2ud, x as i32);
 
 	x = a * b;
-	printf(&message, 3ud, x as i32);
+	printf(message, 3ud, x as i32);
 
 	x = b / a;
-	printf(&message, 4ud, x as i32);
-
-	del message;
+	printf(message, 4ud, x as i32);
 }
 
 fn test_arithmetic_i32()
 {
-	let message = new "test_arithmetic_i32(%d): %i \n";
+	let message = &"test_arithmetic_i32(%d): %i \n";
 
 	let a = 5d;
 	let b = -12d;
 	let x = a + b;
-	printf(&message, 1ud, x);
+	printf(message, 1ud, x);
 
 	x = b - a;
-	printf(&message, 2ud, x);
+	printf(message, 2ud, x);
 
 	x = a * b;
-	printf(&message, 3ud, x);
+	printf(message, 3ud, x);
 
 	x = b / a;
-	printf(&message, 4ud, x);
-
-	del message;
+	printf(message, 4ud, x);
 }
 
 fn test_arithmetic_i64()
 {
-	let message = new "test_arithmetic_i64(%d): %lli \n";
+	let message = &"test_arithmetic_i64(%d): %lli \n";
 
 	let a = 5;
 	let b = -12;
 	let x = a + b;
-	printf(&message, 1ud, x);
+	printf(message, 1ud, x);
 
 	x = b - a;
-	printf(&message, 2ud, x);
+	printf(message, 2ud, x);
 
 	x = a * b;
-	printf(&message, 3ud, x);
+	printf(message, 3ud, x);
 
 	x = b / a;
-	printf(&message, 4ud, x);
+	printf(message, 4ud, x);
+}
 
-	del message;
+fn test_string()
+{
+	let s = "Hello World!";
+	
+	let c = s[6];
+	printf(&"test_string(1): %c\n", c);
+
+	let l = #s;
+	printf(&"test_string(2): %lld\n", l);
+}
+
+fn test_arrays()
+{
+}
+
+fn test_casting()
+{
 }

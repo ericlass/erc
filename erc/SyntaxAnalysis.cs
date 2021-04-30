@@ -621,11 +621,6 @@ namespace erc
             {
                 return AstItem.NewHeapArray(ReadArray(tokens));
             }
-            else if (token.Kind == TokenKind.String)
-            {
-                tokens.Pop();
-                return AstItem.NewHeapArray(StringToCharArrayDefinition(token.Value));
-            }
             else
             {
                 var subType = ReadDataType(tokens);
@@ -707,8 +702,7 @@ namespace erc
             }
             else if (token.Kind == TokenKind.String)
             {
-                //Currently, string literals are treated as char arrays with trailing null allocated on stack
-                result = AstItem.NewStackArray(StringToCharArrayDefinition(token.Value));
+                result = AstItem.Immediate(DataType.STRING8, token.Value);
             }
             else if (token.Kind == TokenKind.SquareBracketOpen)
             {

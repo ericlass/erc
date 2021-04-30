@@ -14,7 +14,7 @@ namespace erc
 
         public List<IMOperation> Generate(IMOperand target, IMOperand operand)
         {
-            if (operand.DataType.Kind == DataTypeKind.ARRAY)
+            if (operand.DataType.Kind == DataTypeKind.ARRAY || operand.DataType.Kind == DataTypeKind.STRING8)
             {
                 //Array already is a pointer, so directly use it
                 //Add 8 bytes to array pointer so it points to first value, not to the length
@@ -29,7 +29,7 @@ namespace erc
 
         public DataType GetReturnType(AstItem operand)
         {
-            if (operand.DataType.Kind == DataTypeKind.ARRAY)
+            if (operand.DataType.Kind == DataTypeKind.ARRAY || operand.DataType.Kind == DataTypeKind.STRING8)
                 return DataType.Pointer(operand.DataType.ElementType);
 
             return DataType.Pointer(operand.DataType);

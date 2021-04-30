@@ -335,6 +335,9 @@ namespace erc
                     break;
 
                 case AstItemKind.IndexAccess:
+                    var symbol = _context.RequireSymbol(target.Identifier);
+                    Assert.True(symbol.DataType.Kind != DataTypeKind.STRING8, "Cannot use index access assignment on string! Strings are immutable!");
+
                     target.DataType = CheckIndexAccess(target);
                     Assert.True(variable.DataType.ElementType.Equals(item.DataType), "Cannot assign value of type " + item.DataType + " to index access of type " + variable.DataType);
                     break;
@@ -523,7 +526,7 @@ namespace erc
         private DataType CheckIndexAccess(AstItem expression)
         {
             var symbol = _context.RequireSymbol(expression.Identifier);
-            Assert.True(symbol.DataType.Kind == DataTypeKind.POINTER || symbol.DataType.Kind == DataTypeKind.ARRAY, "Invalid data type for index access! Can be pointer or array, given: " + symbol.DataType);
+            Assert.True(symbol.DataType.Kind == DataTypeKind.POINTER || symbol.DataType.Kind == DataTypeKind.ARRAY || symbol.DataType.Kind == DataTypeKind.STRING8, "Invalid data type for index access! Can be pointer or array, given: " + symbol.DataType);
 
             var indexExpression = expression.Children[0];
             var indexExpType = CheckExpression(indexExpression);
@@ -811,22 +814,26 @@ namespace erc
 
         private object ParseImmediate(string str, DataType dataType)
         {
-            if (dataType.Kind == DataTypeKind.BOOL)
+            switch (dataType.Kind)
             {
-                if (str == "true")
-                    return true;
-                else if (str == "false")
-                    return false;
-                else
-                    throw new Exception("Unknown boolean value: " + str);
+                case DataTypeKind.BOOL:
+                    if (str == "true")
+                        return true;
+                    else if (str == "false")
+                        return false;
+                    else
+                        throw new Exception("Unknown boolean value: " + str);
+
+                case DataTypeKind.CHAR8:
+                    Assert.Count(str.Length, 1, "Invalid length for char literal");
+                    return str;
+
+                case DataTypeKind.STRING8:
+                    return str;
+
+                default:
+                    return ParseNumber(str, dataType);
             }
-            else if (dataType.Kind == DataTypeKind.CHAR8)
-            {
-                Assert.Count(str.Length, 1, "Invalid length for char literal");
-                return str;
-            }
-            else
-                return ParseNumber(str, dataType);
         }
 
         private object ParseNumber(string str, DataType dataType)
