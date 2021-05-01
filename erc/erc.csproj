@@ -131,6 +131,8 @@
     </None>
     <EmbeddedResource Include="internal_lib.erc" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>Xcopy /E /I /Y $(ProjectDir)fasmw $(TargetDir)fasmw</PostBuildEvent>
+  </PropertyGroup>
 </Project>

@@ -80,8 +80,24 @@ namespace erc
             Clipboard.SetText(outStr);
             File.WriteAllText("..\\..\\" + outputFile, outStr);
 
+            //Compile .exe
+            var folderName = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            var asmFileName = Path.Combine(folderName, baseName + ".asm");
+            var exeFileName = Path.Combine(folderName, baseName + ".exe");
+            File.WriteAllText(asmFileName, nativeCode);
+
+            Console.WriteLine("Running FASM");
+            Process.Start("cmd.exe", "/C cd /D \"" + folderName + "\" && .\\fasmw\\fasm.exe " + asmFileName + " " + exeFileName);
+
             Console.WriteLine();
             Console.WriteLine("Compilation took: " + compilationTime + " ms");
+
+            //Run .exe
+            Console.WriteLine();
+            Console.WriteLine("Running application");
+            var runProcess = Process.Start("cmd.exe", "/C cd /D \"" + folderName + "\" && " + exeFileName + " && pause");
+            runProcess.WaitForExit();
+            Console.WriteLine("Application finished with code " + runProcess.ExitCode);
 
             Console.WriteLine();
             Console.Write("Press Enter to close");

@@ -12,7 +12,7 @@ namespace erc
         private const string CodeHeader =
             "format PE64 NX console 6.0\n" +
             "entry start\n" +
-            "include 'win64a.inc'\n\n" +
+            "include 'fasmw\\include\\win64a.inc'\n\n" +
             "section '.data' data readable writeable\n\n";
 
         private const string CodeSection =

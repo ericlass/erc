@@ -1012,7 +1012,7 @@ ext fn['printf', 'MSVCRT.DLL'] printf(char8*): i32
 
 format PE64 NX console 6.0
 entry start
-include 'win64a.inc'
+include 'fasmw\include\win64a.inc'
 
 section '.data' data readable writeable
 
