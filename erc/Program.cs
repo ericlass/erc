@@ -87,7 +87,7 @@ namespace erc
             File.WriteAllText(asmFileName, nativeCode);
 
             Console.WriteLine("Running FASM");
-            Process.Start("cmd.exe", "/C cd /D \"" + folderName + "\" && .\\fasmw\\fasm.exe " + asmFileName + " " + exeFileName);
+            Process.Start("cmd.exe", "/C cd /D \"" + folderName + "\" && del " + exeFileName + " && .\\fasmw\\fasm.exe " + asmFileName + " " + exeFileName + "");
 
             Console.WriteLine();
             Console.WriteLine("Compilation took: " + compilationTime + " ms");

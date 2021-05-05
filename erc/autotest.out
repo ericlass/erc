@@ -504,6 +504,21 @@ Programm
                     Immediate: "test_string(2): %lld\n" (string8)
                     UnaryOperator: &
                 Variable: "l" (u64)
+            VarDecl: "s2" (string8)
+                Expression
+                    Immediate: "abc" (string8)
+                    Immediate: "defg" (string8)
+                    BinaryOperator: +
+            Assignment
+                Variable: "l" (u64)
+                Expression
+                    Variable: "s2" (string8)
+                    UnaryOperator: #
+            FunctionCall: "printf"
+                Expression
+                    Immediate: "test_string(2): %lld\n" (string8)
+                    UnaryOperator: &
+                Variable: "l" (u64)
     FunctionDecl: "test_arrays" (void)
         ParameterList
         StatementList
@@ -947,12 +962,31 @@ fn test_arithmetic_i64(): void
   [%s]	: heap_register(RBX+0),
   %5	: register(RBX),
   %4	: register(RDI),
+  %6	: register(RBX),
+  %7	: register(RDI),
+  %c1	: register(R12),
+  [%6]	: heap_register(RBX+0),
+  [%7]	: heap_register(RDI+0),
+  %c2	: register(R13),
+  %s2	: register(R14),
+  %c3	: register(R13),
+  [%c3]	: heap_register(R13+0),
+  %c4	: register(R12),
+  [%c4]	: heap_register(R12+0),
+  [%s2]	: heap_register(R14+0),
+  %9	: register(RBX),
+  %8	: register(RDI),
   string8("Hello World!")	: data_section(imm_67),
   i64(6)	: data_section(imm_68),
   u64(1)	: data_section(imm_69),
   u64(8)	: data_section(imm_70),
   string8("test_string(1): %c\n")	: data_section(imm_71),
   string8("test_string(2): %lld\n")	: data_section(imm_72),
+  string8("abc")	: data_section(imm_73),
+  string8("defg")	: data_section(imm_74),
+  u64(9)	: data_section(imm_75),
+  char8('\0')	: data_section(imm_76),
+  u8(0)	: data_section(imm_77),
 ]
 fn test_string(): void
 {
@@ -977,8 +1011,51 @@ fn test_string(): void
     FREE %5
     ADD %4, %4, u64(8)
     CALL 'printf', , %4, %l
-    FREE %l
     FREE %4
+    LEA %6, string8("abc")
+    LEA %7, string8("defg")
+    MOV %c1, [%6]
+    ADD %c1, %c1, [%7]
+    MOV %c2, %c1
+    ADD %c1, %c1, u64(9)
+    HALOC %s2, %c2
+    FREE %c2
+    MOV %c3, %s2
+    MOV [%c3], %c1
+    FREE %c1
+    ADD %c3, %c3, u64(8)
+    MOV %c4, %6
+    FREE %6
+    ADD %c4, %c4, u64(8)
+    LABL 'str_concat_1'
+    JMPE [%c4], char8('\0'), 'str_concat_2'
+    MOV [%c3], [%c4]
+    ADD %c3, %c3, u64(1)
+    ADD %c4, %c4, u64(1)
+    JMP 'str_concat_1'
+    LABL 'str_concat_2'
+    MOV %c4, %7
+    FREE %7
+    ADD %c4, %c4, u64(8)
+    LABL 'str_concat_3'
+    JMPE [%c4], char8('\0'), 'str_concat_4'
+    MOV [%c3], [%c4]
+    ADD %c3, %c3, u64(1)
+    ADD %c4, %c4, u64(1)
+    FREE %c4
+    JMP 'str_concat_3'
+    LABL 'str_concat_4'
+    MOV [%c3], u8(0)
+    FREE %c3
+    MOV %l, [%s2]
+    FREE %s2
+    LEA %9, string8("test_string(2): %lld\n")
+    MOV %8, %9
+    FREE %9
+    ADD %8, %8, u64(8)
+    CALL 'printf', , %8, %l
+    FREE %l
+    FREE %8
     RET @void
 }
 
@@ -1027,8 +1104,8 @@ imm_44 dq 8
 imm_51 db 29,0,0,0,0,0,0,0,116,101,115,116,95,97,114,105,116,104,109,101,116,105,99,95,105,51,50,40,37,100,41,58,32,37,105,32,10,0; "test_arithmetic_i32(%d): %i \n"
 imm_52 dq 8
 imm_59 db 31,0,0,0,0,0,0,0,116,101,115,116,95,97,114,105,116,104,109,101,116,105,99,95,105,54,52,40,37,100,41,58,32,37,108,108,105,32,10,0; "test_arithmetic_i64(%d): %lli \n"
+imm_28 dq 8
 imm_60 dq 8
-imm_61 dq 5
 imm_62 dq 12
 imm_67 db 12,0,0,0,0,0,0,0,72,101,108,108,111,32,87,111,114,108,100,33,0; "Hello World!"
 imm_68 dq 6
@@ -1036,59 +1113,64 @@ imm_69 dq 1
 imm_70 dq 8
 imm_71 db 19,0,0,0,0,0,0,0,116,101,115,116,95,115,116,114,105,110,103,40,49,41,58,32,37,99,10,0; "test_string(1): %c\n"
 imm_72 db 21,0,0,0,0,0,0,0,116,101,115,116,95,115,116,114,105,110,103,40,50,41,58,32,37,108,108,100,10,0; "test_string(2): %lld\n"
-imm_28 dq 8
+imm_73 db 3,0,0,0,0,0,0,0,97,98,99,0; "abc"
+imm_74 db 4,0,0,0,0,0,0,0,100,101,102,103,0; "defg"
+imm_75 dq 9
+imm_61 dq 5
 imm_27 db 31,0,0,0,0,0,0,0,116,101,115,116,95,97,114,105,116,104,109,101,116,105,99,95,117,54,52,40,37,100,41,58,32,37,108,108,100,32,10,0; "test_arithmetic_u64(%d): %lld \n"
 erc_u32_zero dd 0
 imm_2 dq 8
 imm_3 db 28,0,0,0,0,0,0,0,116,101,115,116,95,97,114,105,116,104,109,101,116,105,99,95,117,56,40,37,100,41,58,32,37,100,32,10,0; "test_arithmetic_u8(%d): %d \n"
 imm_4 dq 8
-imm_12 dq 8
 imm_20 dq 8
-imm_19 db 29,0,0,0,0,0,0,0,116,101,115,116,95,97,114,105,116,104,109,101,116,105,99,95,117,51,50,40,37,100,41,58,32,37,100,32,10,0; "test_arithmetic_u32(%d): %d \n"
+imm_12 dq 8
 imm_11 db 29,0,0,0,0,0,0,0,116,101,115,116,95,97,114,105,116,104,109,101,116,105,99,95,117,49,54,40,37,100,41,58,32,37,100,32,10,0; "test_arithmetic_u16(%d): %d \n"
-imm_24 dd 2
-imm_53 dd 5
+imm_19 db 29,0,0,0,0,0,0,0,116,101,115,116,95,97,114,105,116,104,109,101,116,105,99,95,117,51,50,40,37,100,41,58,32,37,100,32,10,0; "test_arithmetic_u32(%d): %d \n"
+imm_25 dd 3
+imm_26 dd 4
 imm_54 dd 12
 imm_55 dd 1
 imm_56 dd 2
 imm_57 dd 3
 imm_58 dd 4
-imm_8 dd 2
-imm_9 dd 3
-imm_50 dd 4
-imm_63 dd 1
 imm_64 dd 2
+imm_15 dd 1
 imm_65 dd 3
 imm_66 dd 4
-imm_7 dd 1
 imm_10 dd 4
-imm_23 dd 1
+imm_9 dd 3
+imm_8 dd 2
+imm_7 dd 1
+imm_63 dd 1
+imm_16 dd 2
+imm_53 dd 5
 imm_49 dd 3
-imm_47 dd 1
-imm_25 dd 3
-imm_26 dd 4
+imm_24 dd 2
+imm_23 dd 1
 imm_22 dd 12
-imm_21 dd 5
 imm_31 dd 1
 imm_32 dd 2
 imm_33 dd 3
 imm_34 dd 4
-imm_18 dd 4
-imm_48 dd 2
-imm_17 dd 3
+imm_21 dd 5
+imm_50 dd 4
 imm_39 dd 1
 imm_40 dd 2
-imm_41 dd 3
 imm_42 dd 4
-imm_15 dd 1
-imm_16 dd 2
+imm_18 dd 4
+imm_17 dd 3
+imm_47 dd 1
+imm_48 dd 2
+imm_41 dd 3
+imm_13 dw 5
 imm_14 dw 12
 imm_45 dw 5
-imm_13 dw 5
 imm_46 dw 12
 imm_38 db 12
 imm_6 db 12
 imm_5 db 5
+imm_76 db 0 ; '\0'
+imm_77 db 0
 imm_37 db 5
 
 section '.text' code readable executable
@@ -2062,6 +2144,113 @@ SUB RSP, 0x20
 CALL [printf]
 ADD RSP, 0x20
 POP RBX
+POP R12
+POP RDI
+POP RSI
+;LEA %6, string8("abc")
+LEA RBX, [imm_73]
+;LEA %7, string8("defg")
+LEA RDI, [imm_74]
+;MOV %c1, [%6]
+MOV R12, [RBX]
+;ADD %c1, %c1, [%7]
+ADD R12, [RDI]
+;MOV %c2, %c1
+MOV R13, R12
+;ADD %c1, %c1, u64(9)
+ADD R12, [imm_75]
+;HALOC %s2, %c2
+PUSH RSI
+PUSH R12
+PUSH RBX
+PUSH RDI
+PUSH R13
+MOV RCX, [erc_process_heap]
+MOV EDX, [erc_u32_zero]
+MOV R8, R13
+SUB RSP, 0x20
+CALL [HeapAlloc]
+ADD RSP, 0x20
+MOV R14, RAX
+POP R13
+POP RDI
+POP RBX
+POP R12
+POP RSI
+;MOV %c3, %s2
+MOV R13, R14
+;MOV [%c3], %c1
+MOV [R13], R12
+;ADD %c3, %c3, u64(8)
+ADD R13, [imm_70]
+;MOV %c4, %6
+MOV R12, RBX
+;ADD %c4, %c4, u64(8)
+ADD R12, [imm_70]
+;LABL 'str_concat_1'
+str_concat_1:
+;JMPE [%c4], char8('\0'), 'str_concat_2'
+MOV AL, [R12]
+CMP AL, [imm_76]
+JE str_concat_2
+;MOV [%c3], [%c4]
+MOV AL, [R12]
+MOV [R13], AL
+;ADD %c3, %c3, u64(1)
+ADD R13, [imm_69]
+;ADD %c4, %c4, u64(1)
+ADD R12, [imm_69]
+;JMP 'str_concat_1'
+JMP str_concat_1
+;LABL 'str_concat_2'
+str_concat_2:
+;MOV %c4, %7
+MOV R12, RDI
+;ADD %c4, %c4, u64(8)
+ADD R12, [imm_70]
+;LABL 'str_concat_3'
+str_concat_3:
+;JMPE [%c4], char8('\0'), 'str_concat_4'
+MOV AL, [R12]
+CMP AL, [imm_76]
+JE str_concat_4
+;MOV [%c3], [%c4]
+MOV AL, [R12]
+MOV [R13], AL
+;ADD %c3, %c3, u64(1)
+ADD R13, [imm_69]
+;ADD %c4, %c4, u64(1)
+ADD R12, [imm_69]
+;JMP 'str_concat_3'
+JMP str_concat_3
+;LABL 'str_concat_4'
+str_concat_4:
+;MOV [%c3], u8(0)
+MOV AL, [imm_77]
+MOV [R13], AL
+;MOV %l, [%s2]
+MOV RSI, [R14]
+;LEA %9, string8("test_string(2): %lld\n")
+LEA RBX, [imm_72]
+;MOV %8, %9
+MOV RDI, RBX
+;ADD %8, %8, u64(8)
+ADD RDI, [imm_70]
+;CALL 'printf', , %8, %l
+PUSH RSI
+PUSH RDI
+PUSH R12
+PUSH R13
+PUSH R14
+PUSH RBX
+MOV RCX, RDI
+MOV RDX, RSI
+SUB RSP, 0x20
+CALL [printf]
+ADD RSP, 0x20
+POP RBX
+POP R14
+POP R13
 POP R12
 POP RDI
 POP RSI

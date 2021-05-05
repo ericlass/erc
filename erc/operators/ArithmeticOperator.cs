@@ -27,6 +27,11 @@ namespace erc
         public abstract string Figure { get; }
         public abstract int Precedence { get; }
 
+        protected virtual bool IsSupportedOperandType(DataType dataType)
+        {
+            return _supportedDataTypes.Contains(dataType.Kind);
+        }
+
         public void ValidateOperands(AstItem operand1, AstItem operand2)
         {
             var operand1Type = operand1.DataType;
@@ -35,7 +40,7 @@ namespace erc
             if (operand1Type.Kind != operand2Type.Kind)
                 throw new Exception("Data types of both operands must match for arithmetic operator! " + operand1Type + " != " + operand2Type);
 
-            if (!_supportedDataTypes.Contains(operand1Type.Kind))
+            if (!IsSupportedOperandType(operand1Type))
                 throw new Exception("Datatype not supported for arithmetic operator '" + Figure + "': " + operand1Type);
         }        
 

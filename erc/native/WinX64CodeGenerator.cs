@@ -312,7 +312,7 @@ namespace erc
                     break;
 
                 default:
-                    throw new Exception("");
+                    throw new Exception("Unsupported IM instruction: " + operation.Instruction.Kind);
             }
 
             //Track list of used registers for saving them on function call
@@ -803,6 +803,7 @@ namespace erc
             var label = operation.Operands[2];
 
             var dataType = op1.DataType;
+            var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
 
             var op1Location = RequireOperandLocation(op1);
             var op2Location = RequireOperandLocation(op2);
@@ -819,6 +820,14 @@ namespace erc
                 case DataTypeKind.U64:
                 case DataTypeKind.BOOL:
                 case DataTypeKind.POINTER:
+                case DataTypeKind.CHAR8:
+                    if (op1Location.Kind != X64StorageLocationKind.Register)
+                    {
+                        var accLocation = X64StorageLocation.AsRegister(x64DataType.Accumulator);
+                        output.Add(X64CodeFormat.FormatOperation(x64DataType.MoveInstructionUnaligned, accLocation, op1Location));
+                        op1Location = accLocation;
+                    }
+
                     output.Add(X64CodeFormat.FormatOperation(X64Instruction.CMP, op1Location, op2Location));
                     output.Add(X64CodeFormat.FormatOperation(scalarJmpInstruction, X64StorageLocation.Immediate(label.Name)));
                     break;
@@ -837,7 +846,6 @@ namespace erc
                 case DataTypeKind.VEC8F:
                 case DataTypeKind.VEC2D:
                 case DataTypeKind.VEC4D:
-                    var x64DataType = X64DataTypeProperties.GetProperties(dataType.Kind);
                     var cmpResultLocation = X64StorageLocation.AsRegister(x64DataType.Accumulator);
                     var maskLocation = X64StorageLocation.AsRegister(X64DataTypeProperties.GetProperties(DataTypeKind.U32).Accumulator);
 
