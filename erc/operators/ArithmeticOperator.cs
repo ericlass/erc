@@ -49,7 +49,7 @@ namespace erc
             return operand1.DataType;
         }
 
-        public abstract List<IMOperation> Generate(IMOperand target, IMOperand operand1, IMOperand operand2);
+        public abstract List<IMOperation> Generate(IMGeneratorEnv env, IMOperand target, IMOperand operand1, IMOperand operand2);
     }
 
 }

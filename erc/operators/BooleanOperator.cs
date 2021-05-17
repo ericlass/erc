@@ -34,7 +34,7 @@ namespace erc
             return DataType.BOOL;
         }
 
-        public List<IMOperation> Generate(IMOperand target, IMOperand operand1, IMOperand operand2)
+        public List<IMOperation> Generate(IMGeneratorEnv env, IMOperand target, IMOperand operand1, IMOperand operand2)
         {
             return new IMOperation(_instruction, target, operand1, operand2).AsList;
         }

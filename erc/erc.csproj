@@ -55,6 +55,7 @@
     <Compile Include="intermediate\IMCodeGenerator.cs" />
     <Compile Include="intermediate\IMExternalFunction.cs" />
     <Compile Include="intermediate\IMFunction.cs" />
+    <Compile Include="intermediate\IMGeneratorEnv.cs" />
     <Compile Include="intermediate\IMInstruction.cs" />
     <Compile Include="intermediate\IMObjectKind.cs" />
     <Compile Include="intermediate\IMOperand.cs" />

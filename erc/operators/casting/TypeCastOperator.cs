@@ -23,7 +23,7 @@ namespace erc
             return operand2.DataType;
         }
 
-        public List<IMOperation> Generate(IMOperand target, IMOperand operand1, IMOperand operand2)
+        public List<IMOperation> Generate(IMGeneratorEnv env, IMOperand target, IMOperand operand1, IMOperand operand2)
         {
             if (target.DataType.Kind == operand1.DataType.Kind)
                 return new List<IMOperation>() { IMOperation.Mov(target, operand1) };

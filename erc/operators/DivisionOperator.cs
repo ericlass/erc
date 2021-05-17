@@ -9,7 +9,7 @@ namespace erc
 
         public override int Precedence => 20;
 
-        public override List<IMOperation> Generate(IMOperand target, IMOperand operand1, IMOperand operand2)
+        public override List<IMOperation> Generate(IMGeneratorEnv env, IMOperand target, IMOperand operand1, IMOperand operand2)
         {
             return IMOperation.Div(target, operand1, operand2).AsList;
         }

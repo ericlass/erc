@@ -27,7 +27,7 @@ namespace erc
             Assert.True(element != null, "Element '" + operand2.Identifier + "' not found in enum '" + operand1.Identifier + "'!");
         }
 
-        public List<IMOperation> Generate(IMOperand target, IMOperand operand1, IMOperand operand2)
+        public List<IMOperation> Generate(IMGeneratorEnv env, IMOperand target, IMOperand operand1, IMOperand operand2)
         {
             throw new NotImplementedException("StaticAccessOperator should not generate anything at the moment!");
         }

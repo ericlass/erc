@@ -240,9 +240,26 @@ namespace erc
             return new IMOperation(IMInstruction.HALOC, target, numBytes);
         }
 
+        /// <summary>
+        /// Static stack allocation with size known at compile time. Will be allocated statically in the function prolog.
+        /// </summary>
+        /// <param name="target">The target.</param>
+        /// <param name="numBytes">The number of bytes to allocate.</param>
+        /// <returns></returns>
         public static IMOperation SAloc(IMOperand target, long numBytes)
         {
             return new IMOperation(IMInstruction.SALOC, target, IMOperand.Immediate(DataType.U64, numBytes));
+        }
+
+        /// <summary>
+        /// Dynamic stack allocation with size known at runtime. Will be allocated dynamically when called and freed in function epilog.
+        /// </summary>
+        /// <param name="target">The target.</param>
+        /// <param name="numBytes">A location holding the number of bytes to allocate.</param>
+        /// <returns></returns>
+        public static IMOperation SAloc(IMOperand target, IMOperand numBytes)
+        {
+            return new IMOperation(IMInstruction.SALOC, target, numBytes);
         }
 
         public static IMOperation Del(IMOperand target)

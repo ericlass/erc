@@ -6,8 +6,7 @@ namespace erc
     public class IMCodeGenerator
     {
         private CompilerContext _context = null;
-        private long _labelCounter = 0;
-        private long _tempLocalCounter = 0;
+        private IMGeneratorEnv _env = new IMGeneratorEnv();
 
         public void Generate(CompilerContext context)
         {
@@ -30,7 +29,7 @@ namespace erc
                         throw new Exception("Unexpected AST item on top level: " + item);
                 }
 
-                _tempLocalCounter = 0;
+                _env.ResetTempLocals();
             }
 
             _context.IMObjects = imObjects;
@@ -194,7 +193,7 @@ namespace erc
                     break;
 
                 case AstItemKind.IndexAccess:
-                    var tmpLocation = NewTempLocal(symbol.DataType);
+                    var tmpLocation = _env.NewTempLocal(symbol.DataType);
                     GenerateIndexAddressCalculation(output, target.Children[0], symbol, tmpLocation);
                     targetLocation = IMOperand.Reference(symbol.DataType, tmpLocation);
                     break;
@@ -250,10 +249,10 @@ namespace erc
 
             //OPTIMIZE: If "expression" is a simple, one operator operation, generate the JMP instruction directly instead of going through the temp location!
             //IE: single "break" statement => directly jump to end label
-            var tmpLocation = NewTempLocal(DataType.BOOL);
+            var tmpLocation = _env.NewTempLocal(DataType.BOOL);
             GenerateExpression(output, expression, tmpLocation);
 
-            var endLabel = NewLabelName();
+            var endLabel = _env.NewLabelName();
 
             if (elseStatements == null)
             {
@@ -270,7 +269,7 @@ namespace erc
             }
             else
             {
-                var elseLabel = NewLabelName();
+                var elseLabel = _env.NewLabelName();
 
                 output.Add(IMOperation.JmpNE(tmpLocation, IMOperand.BOOL_TRUE, elseLabel));
 
@@ -302,8 +301,8 @@ namespace erc
             var incExpression = statement.Children[2];
             var statements = statement.Children[3];
 
-            var startLabelName = NewLabelName();
-            var endLabelName = NewLabelName();
+            var startLabelName = _env.NewLabelName();
+            var endLabelName = _env.NewLabelName();
 
             var varLocation = IMOperand.Local(DataType.I64, varName);
 
@@ -344,9 +343,9 @@ namespace erc
             var whileExpression = statement.Children[0];
             var statements = statement.Children[1];
 
-            var testLocation = NewTempLocal(DataType.BOOL);
-            var startLabelName = NewLabelName();
-            var endLabelName = NewLabelName();
+            var testLocation = _env.NewTempLocal(DataType.BOOL);
+            var startLabelName = _env.NewLabelName();
+            var endLabelName = _env.NewLabelName();
 
             //Start label
             output.Add(IMOperation.Labl(startLabelName));
@@ -445,7 +444,7 @@ namespace erc
         private void GenerateIndexAccess(List<IMOperation> output, AstItem item, IMOperand targetLocation)
         {
             var symbol = _context.RequireSymbol(item.Identifier);
-            var tmpLocation = NewTempLocal(symbol.DataType);
+            var tmpLocation = _env.NewTempLocal(symbol.DataType);
 
             GenerateIndexAddressCalculation(output, item.Children[0], symbol, tmpLocation);
 
@@ -486,7 +485,7 @@ namespace erc
         private void GenerateNewPointer(List<IMOperation> output, AstItem expression, IMOperand targetLocation)
         {
             var amountExpression = expression.Children[0];
-            var amountLocation = NewTempLocal(amountExpression.DataType);
+            var amountLocation = _env.NewTempLocal(amountExpression.DataType);
             GenerateExpression(output, amountExpression, amountLocation);
 
             output.Add(IMOperation.Mul(amountLocation, amountLocation, IMOperand.Immediate(DataType.U64, expression.DataType.ElementType.ByteSize)));
@@ -559,7 +558,7 @@ namespace erc
                         var arrayLength = GetOperandLocationOrGenerateExpression(output, numItems);
 
                         //Calculate array byte size at runtime
-                        var arrayByteSize = NewTempLocal(DataType.U64);
+                        var arrayByteSize = _env.NewTempLocal(DataType.U64);
                         output.Add(IMOperation.Mov(arrayByteSize, arrayLength));
                         output.Add(IMOperation.Mul(arrayByteSize, arrayByteSize, itemSize));
                         output.Add(IMOperation.Add(arrayByteSize, arrayByteSize, IMOperand.Immediate(DataType.U64, (long)DataType.U64.ByteSize)));
@@ -587,7 +586,7 @@ namespace erc
             var firstValue = arrayDefinition.Children[0];
 
             //Create copy of pointer
-            var pointer = NewTempLocal(arrayDefinition.DataType);
+            var pointer = _env.NewTempLocal(arrayDefinition.DataType);
             output.Add(IMOperation.Mov(pointer, arrayDataLocation));
 
             var arrayLength = IMOperand.Immediate(DataType.U64, (long)arrayDefinition.Children.Count);
@@ -628,7 +627,7 @@ namespace erc
             var initialValueLocation = GetOperandLocationOrGenerateExpression(output, initialValue);
 
             //Create copy of pointer
-            var pointer = NewTempLocal(arrayDefinition.DataType);
+            var pointer = _env.NewTempLocal(arrayDefinition.DataType);
             output.Add(IMOperation.Mov(pointer, arrayDataLocation));
 
             var refLocation = IMOperand.Reference(initialValue.DataType, pointer);
@@ -638,12 +637,12 @@ namespace erc
             //Increment pointer to point to first item
             output.Add(IMOperation.Add(pointer, pointer, IMOperand.Immediate(DataType.U64, (long)DataType.U64.ByteSize)));
 
-            var counter = NewTempLocal(DataType.U64);
+            var counter = _env.NewTempLocal(DataType.U64);
             //Initialize counter variable
             output.Add(IMOperation.Mov(counter, arrayLength));
 
             //Create label for loop
-            var labelName = NewLabelName();
+            var labelName = _env.NewLabelName();
             output.Add(IMOperation.Labl(labelName));
 
             //Write actual value
@@ -689,7 +688,7 @@ namespace erc
                     var target = targetLocation;
                     var isLastOperation = terms.Count == 3;
                     if (!isLastOperation)
-                        target = NewTempLocal(item.BinaryOperator.GetReturnType(operand1, operand2));
+                        target = _env.NewTempLocal(item.BinaryOperator.GetReturnType(operand1, operand2));
 
                     IMOperand op1Location = null;
                     if (operand1.Kind == AstItemKind.UnaryOperator || operand1.Kind == AstItemKind.BinaryOperator)
@@ -703,7 +702,7 @@ namespace erc
                     else
                         op2Location = GetOperandLocation(output, operand2);
 
-                    output.AddRange(item.BinaryOperator.Generate(target, op1Location, op2Location));
+                    output.AddRange(item.BinaryOperator.Generate(_env, target, op1Location, op2Location));
                     term.Location = target;
 
                     //Remove the two operands from the expression, do not remove the current operator
@@ -729,7 +728,7 @@ namespace erc
                     var target = targetLocation;
                     var isLastOperation = terms.Count == 2;
                     if (!isLastOperation)
-                        target = NewTempLocal(item.UnaryOperator.GetReturnType(operand));
+                        target = _env.NewTempLocal(item.UnaryOperator.GetReturnType(operand));
 
                     output.AddRange(item.UnaryOperator.Generate(target, opLocation));
                     term.Location = target;
@@ -763,7 +762,7 @@ namespace erc
                         return ((bool)operand.Value) ? IMOperand.BOOL_TRUE : IMOperand.BOOL_FALSE;
 
                     case DataTypeKind.STRING8:
-                        result = NewTempLocal(operand.DataType);
+                        result = _env.NewTempLocal(operand.DataType);
                         output.Add(IMOperation.Lea(result, IMOperand.Immediate(operand.DataType, operand.Value)));
                         return result;
 
@@ -773,7 +772,7 @@ namespace erc
             }
             else if (operand.Kind == AstItemKind.Vector)
             {
-                result = NewTempLocal(operand.DataType);
+                result = _env.NewTempLocal(operand.DataType);
                 GenerateVectorWithExpressions(output, operand, result);
             }
             else if (operand.Kind == AstItemKind.Variable)
@@ -783,7 +782,7 @@ namespace erc
             }
             else if (operand.Kind == AstItemKind.FunctionCall)
             {
-                result = NewTempLocal(operand.DataType);
+                result = _env.NewTempLocal(operand.DataType);
                 GenerateFunctionCall(output, operand, result);
             }
             else if (operand.Kind == AstItemKind.Type || operand.Kind == AstItemKind.Identifier)
@@ -793,7 +792,7 @@ namespace erc
             }
             else if (operand.Kind == AstItemKind.IndexAccess)
             {
-                result = NewTempLocal(operand.DataType);
+                result = _env.NewTempLocal(operand.DataType);
                 GenerateIndexAccess(output, operand, result);
             }
 
@@ -805,7 +804,7 @@ namespace erc
             var result = GetOperandLocation(output, operand);
             if (result.IsVoid)
             {
-                result = NewTempLocal(operand.DataType);
+                result = _env.NewTempLocal(operand.DataType);
                 GenerateExpression(output, operand, result);
             }
             return result;
@@ -820,7 +819,7 @@ namespace erc
                 IMOperand location;
                 if (child.Kind == AstItemKind.Expression)
                 {
-                    location = NewTempLocal(child.DataType);
+                    location = _env.NewTempLocal(child.DataType);
                     GenerateExpression(output, child, location);
                 }
                 else
@@ -830,18 +829,6 @@ namespace erc
             }
 
             output.Add(IMOperation.GVec(targetLocation, valueLocations));
-        }
-
-        private string NewLabelName()
-        {
-            _labelCounter += 1;
-            return "label_" + _labelCounter;
-        }
-
-        private IMOperand NewTempLocal(DataType dataType)
-        {
-            _tempLocalCounter += 1;
-            return IMOperand.Local(dataType, _tempLocalCounter.ToString());
         }
 
     }

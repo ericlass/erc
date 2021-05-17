@@ -39,6 +39,7 @@ namespace erc
         private X64TypeCast _typeCastGenerator = new X64TypeCast();
         private long _vectorImmCounter = 0;
         private bool _debugOutput = false;
+        private long _dynamicStackSize = 0;
 
         public WinX64CodeGenerator(bool debugOutput)
         {
@@ -131,15 +132,12 @@ namespace erc
             _currentFunction = function.Definition;
             _usedRegisterGroups.Clear();
 
+            _dynamicStackSize = 0;
+
             output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RBP), X64StorageLocation.AsRegister(X64Register.RSP)));
 
             if (_functionScope.LocalsStackFrameSize > 0)
                 output.Add(X64CodeFormat.FormatOperation(X64Instruction.SUB, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(_functionScope.LocalsStackFrameSize.ToString())));
-
-            if (_functionScope.LocalsHeapChunkSize > 0)
-            {
-                //TODO: Allocate locals heap chunk
-            }
 
             foreach (var operation in function.Body)
             {
@@ -655,10 +653,11 @@ namespace erc
 
         private void GenerateRet(List<string> output, IMOperation operation)
         {
-            if (_functionScope.LocalsHeapChunkSize > 0)
-            {
-                //TODO: Free locals heap chunk
-            }
+            //TODO: Put all the cleanup stuff in prolog and make RET actually jump to prolog which ends with ret
+
+            //Clean up dynamically allocated stack space
+            if (_dynamicStackSize > 0)
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.ADD, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(_dynamicStackSize.ToString())));
 
             //Free stack portion for locals so stack pointer now points to return address
             if (_functionScope.LocalsStackFrameSize > 0)
@@ -922,8 +921,22 @@ namespace erc
         private void GenerateSaloc(List<string> output, IMOperation operation)
         {
             var target = operation.Operands[0];
-            var memLocation = RequireMemLocation(target);
-            Assert.True(memLocation.IsMemory, "Memory location for SALOC must be memory, given: " + memLocation);
+            var size = operation.Operands[1];
+
+            X64StorageLocation memLocation;
+            if (size.Kind == IMOperandKind.Immediate)
+            {
+                memLocation = RequireMemLocation(target);
+                Assert.True(memLocation.IsMemory, "Memory location for SALOC must be memory, given: " + memLocation);
+            }
+            else
+            {
+                //FIX: Need to remember dynamic size somewhere to free it later or remember original RSP
+                var bytesLocation = RequireOperandLocation(size);
+                var rsp = X64StorageLocation.AsRegister(X64Register.RSP);
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.ADD, rsp, bytesLocation));
+                memLocation = X64StorageLocation.StackFromTop(0);
+            }
 
             var targetLocation = RequireOperandLocation(target);
 

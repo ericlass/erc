@@ -49,7 +49,6 @@ namespace erc
 
             //Now the local variables. Intentionally do no look into sub-values. These must be "defined" before already.
             var stackOffset = 0L;
-            var heapOffset = 0L;
             foreach (var operation in function.Body)
             {
                 if (operation.Instruction.Kind == IMInstructionKind.FREE)
@@ -78,18 +77,11 @@ namespace erc
                                 {
                                     location = X64StorageLocation.AsRegister(register);
                                 }
-                                else if (CanGoOnStack(operand.DataType))
+                                else
                                 {
                                     //If no register, try on stack
                                     stackOffset += operand.DataType.ByteSize;
                                     location = X64StorageLocation.StackFromBase(stackOffset);
-                                }
-
-                                //If no register and not on stack, it must be heap
-                                if (location == null)
-                                {
-                                    location = X64StorageLocation.HeapForLocals(heapOffset);
-                                    heapOffset += operand.DataType.ByteSize;
                                 }
 
                                 Assert.True(location != null, "No location found for operand!");
@@ -105,18 +97,21 @@ namespace erc
                     }
                 }
 
+                //Reserve space for static stack allocation (size known at compile time)
                 if (operation.Instruction.Kind == IMInstructionKind.SALOC)
                 {
                     var target = operation.Operands[0];
                     var sizeOperand = operation.Operands[1];
-                    Assert.IMOperandKind(sizeOperand.Kind, IMOperandKind.Immediate, "Invalid kind of operand for SALOC byte size!");
-                    var numBytes = (long)sizeOperand.ImmediateValue;
+                    if (sizeOperand.Kind == IMOperandKind.Immediate)
+                    {
+                        var numBytes = (long)sizeOperand.ImmediateValue;
 
-                    //Increment stack offset first so target points to bottom of reserved memory.
-                    stackOffset += numBytes;
-                    var arrayLocation = X64StorageLocation.StackFromBase(stackOffset);
+                        //Increment stack offset first so target points to bottom of reserved memory.
+                        stackOffset += numBytes;
+                        var arrayLocation = X64StorageLocation.StackFromBase(stackOffset);
 
-                    locationMap.Add(IMOperand.GetMemLocationName(target), arrayLocation);
+                        locationMap.Add(IMOperand.GetMemLocationName(target), arrayLocation);
+                    }
                 }
             }
 
@@ -163,16 +158,9 @@ namespace erc
             {
                 LocalsLocations = locationMap,
                 LocalsStackFrameSize = stackOffset,
-                LocalsHeapChunkSize = heapOffset,
                 DataEntries = dataEntries,
                 ReturnLocation = returnLocation
             };
-        }
-
-        private bool CanGoOnStack(DataType dataType)
-        {
-            //Currently, all data types can go on the stack, so just return true.
-            return true;
         }
 
         public List<X64StorageLocation> GetParameterLocations(Function function)

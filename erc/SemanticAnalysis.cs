@@ -220,10 +220,10 @@ namespace erc
                 throw new Exception("Undeclared variable: '" + item.Identifier + "' at: " + item);
 
             var isHeapArray = variable.DataType.Kind == DataTypeKind.ARRAY && variable.DataType.MemoryRegion == MemoryRegion.Heap;
-            if (variable.DataType.Kind != DataTypeKind.POINTER && !isHeapArray)
+            if (variable.DataType.Kind != DataTypeKind.POINTER && variable.DataType.Kind != DataTypeKind.STRING8 && !isHeapArray)
                 throw new Exception("Can only delete pointer or heap-array data type: " + variable.DataType + " at: " + item);
 
-            //TODO: Check that the pointer is one that was created with "new" and not some other self-created one
+            //TODO: Check that the pointer is one that was created with "new" and not some other self-created one (i.e. pointer arithmetic)
         }
 
         private void CheckIfStatement(AstItem item)

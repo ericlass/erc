@@ -35,9 +35,6 @@ namespace erc
                 case X64StorageLocationKind.StackFromTop:
                     return "stack_top(+" + Offset + ")";
 
-                case X64StorageLocationKind.HeapForLocals:
-                    return "heap_locals(" + Offset + ")";
-
                 case X64StorageLocationKind.HeapInRegister:
                     return "heap_register(" + Register + "+" + Offset + ")";
 
@@ -70,12 +67,6 @@ namespace erc
                         return "[RSP+" + Offset + "]";
                     else
                         return "[RSP]";
-
-                case X64StorageLocationKind.HeapForLocals:
-                    if (Offset != 0)
-                        return "[locals_heap+" + Offset + "]";
-                    else
-                        return "[locals_heap]";
 
                 case X64StorageLocationKind.HeapInRegister:
                     if (Offset != 0)
@@ -114,7 +105,6 @@ namespace erc
 
                 case X64StorageLocationKind.StackFromBase:
                 case X64StorageLocationKind.StackFromTop:
-                case X64StorageLocationKind.HeapForLocals:
                     return Offset == other.Offset;
 
                 case X64StorageLocationKind.HeapInRegister:
@@ -143,7 +133,6 @@ namespace erc
             {
                 return
                     Kind == X64StorageLocationKind.DataSection ||
-                    Kind == X64StorageLocationKind.HeapForLocals ||
                     Kind == X64StorageLocationKind.HeapInRegister ||
                     Kind == X64StorageLocationKind.StackFromBase ||
                     Kind == X64StorageLocationKind.StackFromTop;
@@ -159,14 +148,10 @@ namespace erc
         {
             return new X64StorageLocation() { Kind = X64StorageLocationKind.StackFromBase, Offset = offset };
         }
+
         public static X64StorageLocation StackFromTop(long offset)
         {
             return new X64StorageLocation() { Kind = X64StorageLocationKind.StackFromTop, Offset = offset };
-        }
-
-        public static X64StorageLocation HeapForLocals(long offset)
-        {
-            return new X64StorageLocation() { Kind = X64StorageLocationKind.HeapForLocals, Offset = offset };
         }
 
         public static X64StorageLocation HeapInRegister(X64Register register, long offset)

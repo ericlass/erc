@@ -190,6 +190,7 @@ fn test_string()
 	let s2 = "abc" + "defg";
 	l = #s2;
 	printf(&"test_string(2): %lld\n", l);
+	del s2;
 }
 
 fn test_arrays()

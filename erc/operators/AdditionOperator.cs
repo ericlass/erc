@@ -17,7 +17,7 @@ namespace erc
                 return base.IsSupportedOperandType(dataType);
         }
 
-        public override List<IMOperation> Generate(IMOperand target, IMOperand operand1, IMOperand operand2)
+        public override List<IMOperation> Generate(IMGeneratorEnv env, IMOperand target, IMOperand operand1, IMOperand operand2)
         {
             switch (operand1.DataType.Kind)
             {
@@ -25,29 +25,14 @@ namespace erc
                     throw new NotImplementedException();
 
                 case DataTypeKind.STRING8:
-                    return GenerateStringConcat(target, operand1, operand2);
+                    return GenerateStringConcat(env, target, operand1, operand2);
 
                 default:
                     return IMOperation.Add(target, operand1, operand2).AsList;
             }
         }
 
-        private static long _concatLabelCounter = 0;
-        private static long _tempLocalCounter = 0;
-
-        private string NewLabel()
-        {
-            _concatLabelCounter += 1;
-            return "str_concat_" + _concatLabelCounter;
-        }
-
-        private IMOperand NewTempLocal(DataType dataType)
-        {
-            _tempLocalCounter += 1;
-            return IMOperand.Local(dataType, "c" + _tempLocalCounter);
-        }
-
-        private List<IMOperation> GenerateStringConcat(IMOperand target, IMOperand operand1, IMOperand operand2)
+        private List<IMOperation> GenerateStringConcat(IMGeneratorEnv env, IMOperand target, IMOperand operand1, IMOperand operand2)
         {
             var result = new List<IMOperation>(20);
 
@@ -55,21 +40,20 @@ namespace erc
             var op2LengthLocation = IMOperand.Reference(DataType.U64, operand2);
 
             //Calculate new string length
-            var lengthLocation = NewTempLocal(DataType.U64);
+            var lengthLocation = env.NewTempLocal(DataType.U64);
             result.Add(IMOperation.Mov(lengthLocation, op1LengthLocation));
             result.Add(IMOperation.Add(lengthLocation, lengthLocation, op2LengthLocation));
 
             //Calculate new string byte size
-            var byteSizeLocation = NewTempLocal(DataType.U64);
+            var byteSizeLocation = env.NewTempLocal(DataType.U64);
             result.Add(IMOperation.Mov(byteSizeLocation, lengthLocation));
             result.Add(IMOperation.Add(lengthLocation, lengthLocation, IMOperand.Immediate(DataType.U64, 9L)));
 
-            //Reserve new memory on heap
-            //TODO: Who frees this memory?
-            result.Add(IMOperation.HAloc(target, byteSizeLocation));
+            //Reserve new memory on stack, which is freed automatically
+            result.Add(IMOperation.SAloc(target, byteSizeLocation));
 
             //Copy target address
-            var targetAddressLocation = NewTempLocal(target.DataType);
+            var targetAddressLocation = env.NewTempLocal(target.DataType);
             result.Add(IMOperation.Mov(targetAddressLocation, target));
 
             //Write new string length to target
@@ -81,14 +65,14 @@ namespace erc
             var targetRefLocation = IMOperand.Reference(DataType.CHAR8, targetAddressLocation);
 
             //Get address of first char of operand1
-            var sourceAddressLocation = NewTempLocal(target.DataType);
+            var sourceAddressLocation = env.NewTempLocal(target.DataType);
             result.Add(IMOperation.Mov(sourceAddressLocation, operand1));
             result.Add(IMOperation.Add(sourceAddressLocation, sourceAddressLocation, IMOperand.Immediate(DataType.U64, 8L)));
 
             var sourceRefLocation = IMOperand.Reference(DataType.CHAR8, sourceAddressLocation);
 
-            var startLabel = NewLabel();
-            var endLabel = NewLabel();
+            var startLabel = env.NewLabelName();
+            var endLabel = env.NewLabelName();
 
             //Start label
             result.Add(IMOperation.Labl(startLabel));
@@ -107,14 +91,12 @@ namespace erc
             result.Add(IMOperation.Jmp(startLabel));
             result.Add(IMOperation.Labl(endLabel));
 
-
-
             //Get address of first char of operand2
             result.Add(IMOperation.Mov(sourceAddressLocation, operand2));
             result.Add(IMOperation.Add(sourceAddressLocation, sourceAddressLocation, IMOperand.Immediate(DataType.U64, 8L)));
 
-            startLabel = NewLabel();
-            endLabel = NewLabel();
+            startLabel = env.NewLabelName();
+            endLabel = env.NewLabelName();
 
             //Start label
             result.Add(IMOperation.Labl(startLabel));

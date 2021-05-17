@@ -12,7 +12,7 @@ namespace erc
 
         public override string ToString()
         {
-            var frameStr = "[stack: " + FunctionFrame.LocalsStackFrameSize + ", heap: " + FunctionFrame.LocalsHeapChunkSize + "]\n";
+            var frameStr = "[stack: " + FunctionFrame.LocalsStackFrameSize + "]\n";
 
             frameStr += "[\n";
             foreach (var item in FunctionFrame.LocalsLocations)

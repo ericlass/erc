@@ -38,7 +38,7 @@ namespace erc
             return operand1.DataType;
         }
 
-        public List<IMOperation> Generate(IMOperand target, IMOperand operand1, IMOperand operand2)
+        public List<IMOperation> Generate(IMGeneratorEnv env, IMOperand target, IMOperand operand1, IMOperand operand2)
         {
             throw new NotImplementedException();
         }

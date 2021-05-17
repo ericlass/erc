@@ -372,7 +372,6 @@ namespace erc
 
                     case X64StorageLocationKind.StackFromBase:
                     case X64StorageLocationKind.StackFromTop:
-                    case X64StorageLocationKind.HeapForLocals:
                     case X64StorageLocationKind.HeapInRegister:
                     case X64StorageLocationKind.Immediate:
                         //When moving from memory to register, just move, size is determined by target
@@ -396,7 +395,6 @@ namespace erc
 
                     case X64StorageLocationKind.StackFromBase:
                     case X64StorageLocationKind.StackFromTop:
-                    case X64StorageLocationKind.HeapForLocals:
                     case X64StorageLocationKind.HeapInRegister:
                     case X64StorageLocationKind.DataSection:
                         //When moving from memory to memory, need to use target sized accumulator as temp location
@@ -667,7 +665,6 @@ namespace erc
 
                 case X64StorageLocationKind.StackFromBase:
                 case X64StorageLocationKind.StackFromTop:
-                case X64StorageLocationKind.HeapForLocals:
                 case X64StorageLocationKind.HeapInRegister:
                     var x64SourceType = X64DataTypeProperties.GetProperties(sourceType.Kind);
                     if (sourceType.ByteSize == 8)
