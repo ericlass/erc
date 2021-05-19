@@ -1,5 +1,6 @@
 
 erc/bin/*
 erc/obj/*
+erc/packages/*
 erc/.vs/*
 *.7z

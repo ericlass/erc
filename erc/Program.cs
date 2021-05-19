@@ -14,6 +14,8 @@ namespace erc
             var baseName = "autotest";
             //var baseName = "example";
 
+            var config = Config.Load();
+
             var sourceFile = baseName + ".erc";
             var outputFile = baseName + ".out";
 
@@ -87,7 +89,8 @@ namespace erc
             File.WriteAllText(asmFileName, nativeCode);
 
             Console.WriteLine("Running FASM");
-            Process.Start("cmd.exe", "/C cd /D \"" + folderName + "\" && del " + exeFileName + " && .\\fasmw\\fasm.exe " + asmFileName + " " + exeFileName + "");
+            var fasmIncludePath = Path.Combine(Path.GetDirectoryName(config.FasmPath), "INCLUDE");
+            Process.Start("cmd.exe", "/C cd /D \"" + folderName + "\" && set INCLUDE=\"" + fasmIncludePath + "\" && del " + exeFileName + " && " + config.FasmPath + " " + asmFileName + " " + exeFileName + " & pause");
 
             Console.WriteLine();
             Console.WriteLine("Compilation took: " + compilationTime + " ms");
@@ -95,7 +98,7 @@ namespace erc
             //Run .exe
             Console.WriteLine();
             Console.WriteLine("Running application");
-            var runProcess = Process.Start("cmd.exe", "/C cd /D \"" + folderName + "\" && " + exeFileName + " && pause");
+            var runProcess = Process.Start("cmd.exe", "/C cd /D \"" + folderName + "\" && " + exeFileName + " & pause");
             runProcess.WaitForExit();
             Console.WriteLine("Application finished with code " + runProcess.ExitCode);
 

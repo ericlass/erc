@@ -12,7 +12,7 @@ namespace erc
         private const string CodeHeader =
             "format PE64 NX console 6.0\n" +
             "entry start\n" +
-            "include 'fasmw\\include\\win64a.inc'\n\n" +
+            "include 'win64a.inc'\n\n" +
             "section '.data' data readable writeable\n\n";
 
         private const string CodeSection =
@@ -936,6 +936,7 @@ namespace erc
                 var rsp = X64StorageLocation.AsRegister(X64Register.RSP);
                 output.Add(X64CodeFormat.FormatOperation(X64Instruction.ADD, rsp, bytesLocation));
                 memLocation = X64StorageLocation.StackFromTop(0);
+
             }
 
             var targetLocation = RequireOperandLocation(target);
