@@ -11,6 +11,10 @@ namespace erc
         [STAThread]
         static void Main(string[] args)
         {
+            Console.ForegroundColor = ConsoleColor.Magenta;
+            Console.WriteLine("erc compiler - alpha");
+            Console.WriteLine("--------------------");
+
             var baseName = "autotest";
             //var baseName = "example";
 
@@ -18,6 +22,9 @@ namespace erc
 
             var sourceFile = baseName + ".erc";
             var outputFile = baseName + ".out";
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine(">>> Compiling: " + sourceFile);
 
             var src = File.ReadAllText(sourceFile) + "\n\n\n" + ReadInternalLib();
 
@@ -56,11 +63,17 @@ namespace erc
 
             stopWatch.Stop();
             var compilationTime = stopWatch.ElapsedMilliseconds;
+            Console.WriteLine(">>> Compilation took: " + compilationTime + " ms");
 
             var immediateCode = String.Join("\n", context.IMObjects);
             var nativeCode = String.Join("\n", context.NativeCode);
-            
-            Console.WriteLine();
+
+            var outStr = context.AST.ToTreeString() + "\n\n\n" + immediateCode + "\n\n\n" + nativeCode;
+            //var outStr = nativeCode;
+            Clipboard.SetText(outStr);
+            File.WriteAllText("..\\..\\" + outputFile, outStr);
+
+            /*Console.WriteLine();
             Console.WriteLine("AST");
             Console.WriteLine("===");
             Console.Write(context.AST.ToTreeString());
@@ -75,36 +88,59 @@ namespace erc
             Console.WriteLine();
             Console.WriteLine("NATIVE CODE");
             Console.WriteLine("==========");
-            Console.WriteLine(nativeCode);
-
-            var outStr = context.AST.ToTreeString() + "\n\n\n" + immediateCode + "\n\n\n" + nativeCode;
-            //var outStr = nativeCode;
-            Clipboard.SetText(outStr);
-            File.WriteAllText("..\\..\\" + outputFile, outStr);
+            Console.WriteLine(nativeCode);*/
 
             //Compile .exe
             var folderName = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            var exeName = baseName + ".exe";
+            var exeFileName = Path.Combine(folderName, exeName);
             var asmFileName = Path.Combine(folderName, baseName + ".asm");
-            var exeFileName = Path.Combine(folderName, baseName + ".exe");
-            File.WriteAllText(asmFileName, nativeCode);
-
-            Console.WriteLine("Running FASM");
-            var fasmIncludePath = Path.Combine(Path.GetDirectoryName(config.FasmPath), "INCLUDE");
-            Process.Start("cmd.exe", "/C cd /D \"" + folderName + "\" && set INCLUDE=\"" + fasmIncludePath + "\" && del " + exeFileName + " && " + config.FasmPath + " " + asmFileName + " " + exeFileName + " & pause");
 
             Console.WriteLine();
-            Console.WriteLine("Compilation took: " + compilationTime + " ms");
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine(">>> Running FASM");
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            AssembleExecutable(config, nativeCode, exeFileName, asmFileName);
 
-            //Run .exe
+            //Run compiled .exe
             Console.WriteLine();
-            Console.WriteLine("Running application");
-            var runProcess = Process.Start("cmd.exe", "/C cd /D \"" + folderName + "\" && " + exeFileName + " & pause");
-            runProcess.WaitForExit();
-            Console.WriteLine("Application finished with code " + runProcess.ExitCode);
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine(">>> Running " + exeName);
+            Console.ResetColor();
+
+            var appStartInfo = new ProcessStartInfo();
+            appStartInfo.FileName = "cmd.exe";
+            appStartInfo.Arguments = "/C " + exeFileName + " & pause";
+            var appProcess = Process.Start(appStartInfo);
+            appProcess.WaitForExit();
 
             Console.WriteLine();
             Console.Write("Press Enter to close");
             Console.Read();
+        }
+
+        private static void AssembleExecutable(Config config, string nativeCode, string exeFileName, string asmFileName)
+        {
+            var stopWatch = new Stopwatch();
+            stopWatch.Start();
+
+            File.WriteAllText(asmFileName, nativeCode);
+            var fasmIncludePath = Path.Combine(Path.GetDirectoryName(config.FasmPath), "INCLUDE");
+
+            var startInfo = new ProcessStartInfo();
+            startInfo.UseShellExecute = false;
+            startInfo.EnvironmentVariables["INCLUDE"] = fasmIncludePath;
+            startInfo.FileName = config.FasmPath;
+            startInfo.Arguments = asmFileName + " " + exeFileName;
+            var fasmProcess = Process.Start(startInfo);
+            fasmProcess.WaitForExit();
+
+            stopWatch.Start();
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine(">>> FASM took " + stopWatch.ElapsedMilliseconds + " ms");
+            Console.ResetColor();
+
+            Assert.True(fasmProcess.ExitCode == 0, "FASM failed with code: " + fasmProcess.ExitCode);
         }
 
         private static string ReadInternalLib()

@@ -698,7 +698,7 @@ Programm
 
 
 
-[stack: 0, heap: 0]
+[stack: 0]
 [
 ]
 fn main(): void
@@ -707,7 +707,7 @@ fn main(): void
     RET @void
 }
 
-[stack: 0, heap: 0]
+[stack: 0]
 [
   %s	: register(RBX),
   %h	: register(RBX),
@@ -730,7 +730,7 @@ fn strings(): void
     RET @void
 }
 
-[stack: 128, heap: 0]
+[stack: 128]
 [
   %k	: register(RBX),
   %a	: register(RSI),
@@ -901,7 +901,7 @@ fn arrays(): void
     RET @void
 }
 
-[stack: 0, heap: 0]
+[stack: 0]
 [
   %c	: register(BL),
   %s	: register(SIL),
@@ -936,7 +936,7 @@ fn chars(): void
     RET @void
 }
 
-[stack: 0, heap: 0]
+[stack: 0]
 [
   %i	: register(RBX),
   %x	: register(RSI),
@@ -979,7 +979,7 @@ fn loops(): void
     RET @void
 }
 
-[stack: 0, heap: 0]
+[stack: 0]
 [
   %test	: register(EBX),
   %same	: register(BL),
@@ -997,7 +997,7 @@ fn enums(): void
     RET @void
 }
 
-[stack: 0, heap: 0]
+[stack: 0]
 [
   %a	: register(RBX),
   %1	: register(RSI),
@@ -1022,7 +1022,7 @@ fn expressions(): void
     RET @void
 }
 
-[stack: 24, heap: 0]
+[stack: 24]
 [
   %1	: register(RBX),
   %p	: register(RSI),
@@ -1103,7 +1103,7 @@ fn pointers(): void
     RET @void
 }
 
-[stack: 0, heap: 0]
+[stack: 0]
 [
   $1	: register(CL),
   %test	: register(BL),
@@ -1162,7 +1162,7 @@ fn boolean(bool): void
 
 ext fn['GetLastError', 'Kernel32.dll'] last_error(): i64
 
-[stack: 0, heap: 0]
+[stack: 0]
 [
   %err_code	: register(RBX),
   %1	: register(SIL),
@@ -1202,7 +1202,7 @@ fn fn_calls(): void
     RET @void
 }
 
-[stack: 0, heap: 0]
+[stack: 0]
 [
   $1	: register(YMM0),
   $2	: register(YMM1),
@@ -1220,7 +1220,7 @@ fn add(vec4d, vec4d): vec4d
     FREE %1
 }
 
-[stack: 0, heap: 0]
+[stack: 0]
 [
   $1	: register(CL),
   $2	: register(DL),
@@ -1238,7 +1238,7 @@ fn add2(i8, i8): i8
     FREE %r
 }
 
-[stack: 0, heap: 0]
+[stack: 0]
 [
   $1	: register(CX),
   $2	: register(DX),
@@ -1256,7 +1256,7 @@ fn add3(u16, u16): u16
     FREE %1
 }
 
-[stack: 0, heap: 0]
+[stack: 0]
 [
   %1	: register(RBX),
   %2	: register(RSI),
@@ -1376,7 +1376,7 @@ fn types(): void
     RET @void
 }
 
-[stack: 0, heap: 0]
+[stack: 0]
 [
 ]
 fn empty(): void
@@ -1384,7 +1384,7 @@ fn empty(): void
     RET @void
 }
 
-[stack: 0, heap: 0]
+[stack: 0]
 [
   %x	: register(EBX),
   %y1	: register(RSI),
@@ -1435,7 +1435,7 @@ fn type_casting_int(): void
     RET @void
 }
 
-[stack: 0, heap: 0]
+[stack: 0]
 [
   %v4f	: register(XMM7),
   %v1	: register(XMM8),
@@ -1533,7 +1533,7 @@ ext fn['printf', 'MSVCRT.DLL'] printf(char8*): i32
 
 format PE64 NX console 6.0
 entry start
-include 'fasmw\include\win64a.inc'
+include 'win64a.inc'
 
 section '.data' data readable writeable
 
