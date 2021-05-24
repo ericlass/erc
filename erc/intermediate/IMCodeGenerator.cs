@@ -66,18 +66,6 @@ namespace erc
             _context.LeaveBlock();
             _context.LeaveFunction();
 
-            //Add return as last instruction, if required
-            if (operations.Count > 0)
-            {
-                var last = operations[operations.Count - 1];
-                if (last.Instruction != IMInstruction.RET)
-                    operations.Add(IMOperation.Ret(IMOperand.VOID));
-            }
-            else
-            {
-                operations.Add(IMOperation.Ret(IMOperand.VOID));
-            }
-
             InsertFreeInstructions(operations);
 
             return new IMFunction() { Definition = currentFunction, Body = operations };

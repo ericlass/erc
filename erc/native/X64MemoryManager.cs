@@ -48,6 +48,8 @@ namespace erc
             }
 
             //Now the local variables. Intentionally do no look into sub-values. These must be "defined" before already.
+            var usedNonVolatileRegisters = new HashSet<X64RegisterGroup>();
+            var usesDynamicStack = false;
             var stackOffset = 0L;
             foreach (var operation in function.Body)
             {
@@ -76,6 +78,8 @@ namespace erc
                                 if (register != null)
                                 {
                                     location = X64StorageLocation.AsRegister(register);
+                                    if (!register.IsVolatile)
+                                        usedNonVolatileRegisters.Add(register.Group);
                                 }
                                 else
                                 {
@@ -111,6 +115,10 @@ namespace erc
                         var arrayLocation = X64StorageLocation.StackFromBase(stackOffset);
 
                         locationMap.Add(IMOperand.GetMemLocationName(target), arrayLocation);
+                    }
+                    else
+                    {
+                        usesDynamicStack = true;
                     }
                 }
             }
@@ -159,7 +167,9 @@ namespace erc
                 LocalsLocations = locationMap,
                 LocalsStackFrameSize = stackOffset,
                 DataEntries = dataEntries,
-                ReturnLocation = returnLocation
+                ReturnLocation = returnLocation,
+                UsesDynamicStackAllocation = usesDynamicStack,
+                UsedNonVolatileRegisters = usedNonVolatileRegisters
             };
         }
 

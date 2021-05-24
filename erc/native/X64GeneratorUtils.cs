@@ -44,5 +44,24 @@ namespace erc
             else
                 output.Add(X64CodeFormat.FormatOperation(instruction, targetLocStr, sourceLocStr));
         }
+
+        public static string GetStartLabel(string functionName)
+        {
+            return "fn_" + functionName + "_start";
+        }
+
+        public static string GetPrologEndLabel(string functionName)
+        {
+            return "fn_" + functionName + "_prolog_end";
+        }
+        public static string GetEpilogStartLabel(string functionName)
+        {
+            return "fn_" + functionName + "_epilog_start";
+        }
+        public static string GetEndLabel(string functionName)
+        {
+            return "fn_" + functionName + "_end";
+        }
+
     }
 }

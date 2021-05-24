@@ -127,6 +127,14 @@ namespace erc
             return base.GetHashCode();
         }
 
+        public bool IsStack
+        {
+            get
+            {
+                return Kind == X64StorageLocationKind.StackFromBase || Kind == X64StorageLocationKind.StackFromTop;
+            }
+        }
+
         public bool IsMemory
         {
             get

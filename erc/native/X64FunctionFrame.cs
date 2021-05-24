@@ -11,5 +11,7 @@ namespace erc
         public long LocalsStackFrameSize { get; set; }
         public X64StorageLocation ReturnLocation { get; set; }
         public List<Tuple<DataType, string>> DataEntries { get; set; }
+        public bool UsesDynamicStackAllocation { get; set; }
+        public HashSet<X64RegisterGroup> UsedNonVolatileRegisters { get; set; }
     }
 }

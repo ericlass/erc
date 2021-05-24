@@ -57,10 +57,34 @@ namespace erc
     /// </summary>
     public class X64Register
     {
+        private static HashSet<X64RegisterGroup> _volatileGroups = new HashSet<X64RegisterGroup>() {
+            X64RegisterGroup.A,
+            X64RegisterGroup.C,
+            X64RegisterGroup.D,
+            X64RegisterGroup.R8,
+            X64RegisterGroup.R9,
+            X64RegisterGroup.R10,
+            X64RegisterGroup.R11,
+            X64RegisterGroup.MM0,
+            X64RegisterGroup.MM1,
+            X64RegisterGroup.MM2,
+            X64RegisterGroup.MM3,
+            X64RegisterGroup.MM4,
+            X64RegisterGroup.MM5
+        };
+
         public string Name { get; private set; }
         public X64RegisterCategory Category { get; private set; }
         public X64RegisterGroup Group { get; private set; }
         public int ByteSize { get; private set; }
+
+        /// <summary>
+        /// Is this register volatile (must be saved by calling function) or non-volatile (must be save by called function)
+        /// </summary>
+        public bool IsVolatile
+        {
+            get { return _volatileGroups.Contains(Group); }
+        }
 
         private X64Register()
         {

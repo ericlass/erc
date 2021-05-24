@@ -519,7 +519,6 @@ Programm
                     Immediate: "test_string(2): %lld\n" (string8)
                     UnaryOperator: &
                 Variable: "l" (u64)
-            DelPointer
     FunctionDecl: "test_arrays" (void)
         ParameterList
         StatementList
@@ -570,7 +569,6 @@ fn main(): void
     CALL 'test_arithmetic_i64', 
     CALL 'print_separator', 
     CALL 'test_string', 
-    RET @void
 }
 
 [stack: 0]
@@ -588,7 +586,6 @@ fn print_separator(): void
     ADD %1, %1, u64(8)
     CALL 'printf', , %1
     FREE %1
-    RET @void
 }
 
 [stack: 0]
@@ -639,7 +636,6 @@ fn test_arithmetic_u8(): void
     CALL 'printf', , %message, u32(4), %5
     FREE %5
     FREE %message
-    RET @void
 }
 
 [stack: 0]
@@ -690,7 +686,6 @@ fn test_arithmetic_u16(): void
     CALL 'printf', , %message, u32(4), %5
     FREE %5
     FREE %message
-    RET @void
 }
 
 [stack: 0]
@@ -729,7 +724,6 @@ fn test_arithmetic_u32(): void
     CALL 'printf', , %message, u32(4), %x
     FREE %x
     FREE %message
-    RET @void
 }
 
 [stack: 0]
@@ -768,7 +762,6 @@ fn test_arithmetic_u64(): void
     CALL 'printf', , %message, u32(4), %x
     FREE %x
     FREE %message
-    RET @void
 }
 
 [stack: 0]
@@ -819,7 +812,6 @@ fn test_arithmetic_i8(): void
     CALL 'printf', , %message, u32(4), %5
     FREE %5
     FREE %message
-    RET @void
 }
 
 [stack: 0]
@@ -870,7 +862,6 @@ fn test_arithmetic_i16(): void
     CALL 'printf', , %message, u32(4), %5
     FREE %5
     FREE %message
-    RET @void
 }
 
 [stack: 0]
@@ -909,7 +900,6 @@ fn test_arithmetic_i32(): void
     CALL 'printf', , %message, u32(4), %x
     FREE %x
     FREE %message
-    RET @void
 }
 
 [stack: 0]
@@ -948,7 +938,6 @@ fn test_arithmetic_i64(): void
     CALL 'printf', , %message, u32(4), %x
     FREE %x
     FREE %message
-    RET @void
 }
 
 [stack: 0]
@@ -1049,6 +1038,7 @@ fn test_string(): void
     MOV [%10], u8(0)
     FREE %10
     MOV %l, [%s2]
+    FREE %s2
     LEA %13, string8("test_string(2): %lld\n")
     MOV %12, %13
     FREE %13
@@ -1056,9 +1046,6 @@ fn test_string(): void
     CALL 'printf', , %12, %l
     FREE %l
     FREE %12
-    DEL %s2
-    FREE %s2
-    RET @void
 }
 
 [stack: 0]
@@ -1066,7 +1053,7 @@ fn test_string(): void
 ]
 fn test_arrays(): void
 {
-    RET @void
+
 }
 
 [stack: 0]
@@ -1074,7 +1061,7 @@ fn test_arrays(): void
 ]
 fn test_casting(): void
 {
-    RET @void
+
 }
 
 ext fn['ExitProcess', 'Kernel32.dll'] erc_exit_process(u32): void
@@ -1181,86 +1168,94 @@ call [GetProcessHeap]
 mov [erc_process_heap], rax
 push rbp
 mov rbp, rsp
-call fn_main
+call fn_main_start
 pop rbp
 xor ecx,ecx
 call [ExitProcess]
 
-fn_main:
+fn_main_start:
+PUSH RBP
 MOV RBP, RSP
+fn_main_prolog_end:
 ;CALL 'test_arithmetic_u8', 
 SUB RSP, 0x20
-CALL fn_test_arithmetic_u8
+CALL fn_test_arithmetic_u8_start
 ADD RSP, 0x20
 ;CALL 'print_separator', 
 SUB RSP, 0x20
-CALL fn_print_separator
+CALL fn_print_separator_start
 ADD RSP, 0x20
 ;CALL 'test_arithmetic_u16', 
 SUB RSP, 0x20
-CALL fn_test_arithmetic_u16
+CALL fn_test_arithmetic_u16_start
 ADD RSP, 0x20
 ;CALL 'print_separator', 
 SUB RSP, 0x20
-CALL fn_print_separator
+CALL fn_print_separator_start
 ADD RSP, 0x20
 ;CALL 'test_arithmetic_u32', 
 SUB RSP, 0x20
-CALL fn_test_arithmetic_u32
+CALL fn_test_arithmetic_u32_start
 ADD RSP, 0x20
 ;CALL 'print_separator', 
 SUB RSP, 0x20
-CALL fn_print_separator
+CALL fn_print_separator_start
 ADD RSP, 0x20
 ;CALL 'test_arithmetic_u64', 
 SUB RSP, 0x20
-CALL fn_test_arithmetic_u64
+CALL fn_test_arithmetic_u64_start
 ADD RSP, 0x20
 ;CALL 'print_separator', 
 SUB RSP, 0x20
-CALL fn_print_separator
+CALL fn_print_separator_start
 ADD RSP, 0x20
 ;CALL 'test_arithmetic_i8', 
 SUB RSP, 0x20
-CALL fn_test_arithmetic_i8
+CALL fn_test_arithmetic_i8_start
 ADD RSP, 0x20
 ;CALL 'print_separator', 
 SUB RSP, 0x20
-CALL fn_print_separator
+CALL fn_print_separator_start
 ADD RSP, 0x20
 ;CALL 'test_arithmetic_i16', 
 SUB RSP, 0x20
-CALL fn_test_arithmetic_i16
+CALL fn_test_arithmetic_i16_start
 ADD RSP, 0x20
 ;CALL 'print_separator', 
 SUB RSP, 0x20
-CALL fn_print_separator
+CALL fn_print_separator_start
 ADD RSP, 0x20
 ;CALL 'test_arithmetic_i32', 
 SUB RSP, 0x20
-CALL fn_test_arithmetic_i32
+CALL fn_test_arithmetic_i32_start
 ADD RSP, 0x20
 ;CALL 'print_separator', 
 SUB RSP, 0x20
-CALL fn_print_separator
+CALL fn_print_separator_start
 ADD RSP, 0x20
 ;CALL 'test_arithmetic_i64', 
 SUB RSP, 0x20
-CALL fn_test_arithmetic_i64
+CALL fn_test_arithmetic_i64_start
 ADD RSP, 0x20
 ;CALL 'print_separator', 
 SUB RSP, 0x20
-CALL fn_print_separator
+CALL fn_print_separator_start
 ADD RSP, 0x20
 ;CALL 'test_string', 
 SUB RSP, 0x20
-CALL fn_test_string
+CALL fn_test_string_start
 ADD RSP, 0x20
-;RET @void
+fn_main_epilog_start:
+POP RBP
 RET
+fn_main_end:
 
-fn_print_separator:
+fn_print_separator_start:
+PUSH RBP
 MOV RBP, RSP
+PUSH RBX
+PUSH RSI
+fn_print_separator_prolog_end:
 ;LEA %2, string8("######################\n")
 LEA RBX, [imm_1]
 ;MOV %1, %2
@@ -1276,11 +1271,22 @@ CALL [printf]
 ADD RSP, 0x20
 POP RBX
 POP RSI
-;RET @void
+fn_print_separator_epilog_start:
+POP RBX
+POP RSI
+POP RBP
 RET
+fn_print_separator_end:
 
-fn_test_arithmetic_u8:
+fn_test_arithmetic_u8_start:
+PUSH RBP
 MOV RBP, RSP
+PUSH RBX
+PUSH RSI
+PUSH RDI
+PUSH R12
+PUSH R13
+fn_test_arithmetic_u8_prolog_end:
 ;LEA %1, string8("test_arithmetic_u8(%d): %d \n")
 LEA RBX, [imm_3]
 ;MOV %message, %1
@@ -1382,11 +1388,25 @@ POP RDI
 POP RBX
 POP R13
 POP RSI
-;RET @void
+fn_test_arithmetic_u8_epilog_start:
+POP RBX
+POP RSI
+POP RDI
+POP R12
+POP R13
+POP RBP
 RET
+fn_test_arithmetic_u8_end:
 
-fn_test_arithmetic_u16:
+fn_test_arithmetic_u16_start:
+PUSH RBP
 MOV RBP, RSP
+PUSH RBX
+PUSH RSI
+PUSH RDI
+PUSH R12
+PUSH R13
+fn_test_arithmetic_u16_prolog_end:
 ;LEA %1, string8("test_arithmetic_u16(%d): %d \n")
 LEA RBX, [imm_11]
 ;MOV %message, %1
@@ -1492,11 +1512,24 @@ POP RDI
 POP RBX
 POP R13
 POP RSI
-;RET @void
+fn_test_arithmetic_u16_epilog_start:
+POP RBX
+POP RSI
+POP RDI
+POP R12
+POP R13
+POP RBP
 RET
+fn_test_arithmetic_u16_end:
 
-fn_test_arithmetic_u32:
+fn_test_arithmetic_u32_start:
+PUSH RBP
 MOV RBP, RSP
+PUSH RBX
+PUSH RSI
+PUSH RDI
+PUSH R12
+fn_test_arithmetic_u32_prolog_end:
 ;LEA %1, string8("test_arithmetic_u32(%d): %d \n")
 LEA RBX, [imm_19]
 ;MOV %message, %1
@@ -1586,11 +1619,23 @@ POP RDI
 POP RBX
 POP R12
 POP RSI
-;RET @void
+fn_test_arithmetic_u32_epilog_start:
+POP RBX
+POP RSI
+POP RDI
+POP R12
+POP RBP
 RET
+fn_test_arithmetic_u32_end:
 
-fn_test_arithmetic_u64:
+fn_test_arithmetic_u64_start:
+PUSH RBP
 MOV RBP, RSP
+PUSH RBX
+PUSH RSI
+PUSH RDI
+PUSH R12
+fn_test_arithmetic_u64_prolog_end:
 ;LEA %1, string8("test_arithmetic_u64(%d): %lld \n")
 LEA RBX, [imm_27]
 ;MOV %message, %1
@@ -1680,11 +1725,24 @@ POP RDI
 POP RBX
 POP R12
 POP RSI
-;RET @void
+fn_test_arithmetic_u64_epilog_start:
+POP RBX
+POP RSI
+POP RDI
+POP R12
+POP RBP
 RET
+fn_test_arithmetic_u64_end:
 
-fn_test_arithmetic_i8:
+fn_test_arithmetic_i8_start:
+PUSH RBP
 MOV RBP, RSP
+PUSH RBX
+PUSH RSI
+PUSH RDI
+PUSH R12
+PUSH R13
+fn_test_arithmetic_i8_prolog_end:
 ;LEA %1, string8("test_arithmetic_i8(%d): %i \n")
 LEA RBX, [imm_35]
 ;MOV %message, %1
@@ -1787,11 +1845,25 @@ POP RDI
 POP RBX
 POP R13
 POP RSI
-;RET @void
+fn_test_arithmetic_i8_epilog_start:
+POP RBX
+POP RSI
+POP RDI
+POP R12
+POP R13
+POP RBP
 RET
+fn_test_arithmetic_i8_end:
 
-fn_test_arithmetic_i16:
+fn_test_arithmetic_i16_start:
+PUSH RBP
 MOV RBP, RSP
+PUSH RBX
+PUSH RSI
+PUSH RDI
+PUSH R12
+PUSH R13
+fn_test_arithmetic_i16_prolog_end:
 ;LEA %1, string8("test_arithmetic_i16(%d): %i \n")
 LEA RBX, [imm_43]
 ;MOV %message, %1
@@ -1898,11 +1970,24 @@ POP RDI
 POP RBX
 POP R13
 POP RSI
-;RET @void
+fn_test_arithmetic_i16_epilog_start:
+POP RBX
+POP RSI
+POP RDI
+POP R12
+POP R13
+POP RBP
 RET
+fn_test_arithmetic_i16_end:
 
-fn_test_arithmetic_i32:
+fn_test_arithmetic_i32_start:
+PUSH RBP
 MOV RBP, RSP
+PUSH RBX
+PUSH RSI
+PUSH RDI
+PUSH R12
+fn_test_arithmetic_i32_prolog_end:
 ;LEA %1, string8("test_arithmetic_i32(%d): %i \n")
 LEA RBX, [imm_51]
 ;MOV %message, %1
@@ -1993,11 +2078,23 @@ POP RDI
 POP RBX
 POP R12
 POP RSI
-;RET @void
+fn_test_arithmetic_i32_epilog_start:
+POP RBX
+POP RSI
+POP RDI
+POP R12
+POP RBP
 RET
+fn_test_arithmetic_i32_end:
 
-fn_test_arithmetic_i64:
+fn_test_arithmetic_i64_start:
+PUSH RBP
 MOV RBP, RSP
+PUSH RBX
+PUSH RSI
+PUSH RDI
+PUSH R12
+fn_test_arithmetic_i64_prolog_end:
 ;LEA %1, string8("test_arithmetic_i64(%d): %lli \n")
 LEA RBX, [imm_59]
 ;MOV %message, %1
@@ -2088,11 +2185,27 @@ POP RDI
 POP RBX
 POP R12
 POP RSI
-;RET @void
+fn_test_arithmetic_i64_epilog_start:
+POP RBX
+POP RSI
+POP RDI
+POP R12
+POP RBP
 RET
+fn_test_arithmetic_i64_end:
 
-fn_test_string:
+fn_test_string_start:
+PUSH RBP
 MOV RBP, RSP
+PUSH RAX
+PUSH RBX
+PUSH RSI
+PUSH RDI
+PUSH R12
+PUSH R13
+PUSH R14
+MOV [RBP-8], RSP
+fn_test_string_prolog_end:
 ;LEA %s, string8("Hello World!")
 LEA RBX, [imm_67]
 ;MOV %1, i64(6)
@@ -2225,10 +2338,10 @@ MOV RDI, RBX
 ADD RDI, [imm_70]
 ;CALL 'printf', , %12, %l
 PUSH RSI
-PUSH R14
 PUSH RDI
 PUSH R12
 PUSH R13
+PUSH R14
 PUSH RBX
 MOV RCX, RDI
 MOV RDX, RSI
@@ -2236,42 +2349,41 @@ SUB RSP, 0x20
 CALL [printf]
 ADD RSP, 0x20
 POP RBX
+POP R14
 POP R13
 POP R12
 POP RDI
-POP R14
 POP RSI
-;DEL %s2
-PUSH R14
-PUSH R12
-PUSH R13
-PUSH RBX
-PUSH RSI
-PUSH RDI
-MOV RCX, [erc_process_heap]
-MOV EDX, [erc_u32_zero]
-MOV R8, R14
-SUB RSP, 0x20
-CALL [HeapFree]
-ADD RSP, 0x20
-POP RDI
-POP RSI
+fn_test_string_epilog_start:
+MOV RSP, [RBP-8]
 POP RBX
-POP R13
+POP RSI
+POP RDI
 POP R12
+POP R13
 POP R14
-;RET @void
+ADD RSP, 8
+POP RBP
 RET
+fn_test_string_end:
 
-fn_test_arrays:
+fn_test_arrays_start:
+PUSH RBP
 MOV RBP, RSP
-;RET @void
+fn_test_arrays_prolog_end:
+fn_test_arrays_epilog_start:
+POP RBP
 RET
+fn_test_arrays_end:
 
-fn_test_casting:
+fn_test_casting_start:
+PUSH RBP
 MOV RBP, RSP
-;RET @void
+fn_test_casting_prolog_end:
+fn_test_casting_epilog_start:
+POP RBP
 RET
+fn_test_casting_end:
 
 section '.idata' import data readable writeable
 

@@ -22,7 +22,7 @@ namespace erc
             "mov [" + ProcessHeapImmName + "], rax\n" +
             "push rbp\n" +
             "mov rbp, rsp\n" +
-            "call fn_main\n" +
+            "call fn_main_start\n" +
             "pop rbp\n" +
             "xor ecx,ecx\n" +
             "call [ExitProcess]\n\n";
@@ -39,7 +39,6 @@ namespace erc
         private X64TypeCast _typeCastGenerator = new X64TypeCast();
         private long _vectorImmCounter = 0;
         private bool _debugOutput = false;
-        private long _dynamicStackSize = 0;
 
         public WinX64CodeGenerator(bool debugOutput)
         {
@@ -123,7 +122,13 @@ namespace erc
 
         private void GenerateFunction(List<string> output, IMFunction function)
         {
-            output.Add("fn_" + function.Definition.Name + ":");
+            var functionName = function.Definition.Name;
+            var fnStartLabel = X64GeneratorUtils.GetStartLabel(functionName) + ":";
+            var fnProloEndgLabel = X64GeneratorUtils.GetPrologEndLabel(functionName) + ":";
+            var fnEpilogStartLabel = X64GeneratorUtils.GetEpilogStartLabel(functionName) + ":";
+            var fnEndLabel = X64GeneratorUtils.GetEndLabel(functionName) + ":";
+
+            output.Add(fnStartLabel);
 
             _functionScope = _memoryManager.CreateFunctionScope(function);
             function.FunctionFrame = _functionScope;
@@ -132,12 +137,41 @@ namespace erc
             _currentFunction = function.Definition;
             _usedRegisterGroups.Clear();
 
-            _dynamicStackSize = 0;
+            /** PROLOG **/
 
-            output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, X64StorageLocation.AsRegister(X64Register.RBP), X64StorageLocation.AsRegister(X64Register.RSP)));
+            var rax = X64StorageLocation.AsRegister(X64Register.RAX);
+            var rbp = X64StorageLocation.AsRegister(X64Register.RBP);
+            var rsp = X64StorageLocation.AsRegister(X64Register.RSP);
+            var fixedStackEndLocation = X64StorageLocation.StackFromBase(8);
 
+            output.Add(X64CodeFormat.FormatOperation(X64Instruction.PUSH, rbp));
+            output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, rbp, rsp));
+
+            //Reserve 8 byte on stack to remember end of fixed size stack
+            //Push any 8-byte value from RAX on stack, will be overwritten anyways
+            if (_functionScope.UsesDynamicStackAllocation)
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.PUSH, rax));
+
+            //Save any non-volatile registers that the current function uses. They have to be restored in the epilog.
+            foreach (var nvRegister in _functionScope.UsedNonVolatileRegisters)
+            {
+                var fullSizeRegister = X64Register.GroupToFullSizeRegister(nvRegister);
+                var defaultDataType = X64Register.GetDefaultDataType(fullSizeRegister);
+                GeneratePushInternal(output, defaultDataType, X64StorageLocation.AsRegister(fullSizeRegister));
+            }
+
+            //Allocate space for locals on stack
+            X64StorageLocation localsStackSize = X64StorageLocation.Immediate(_functionScope.LocalsStackFrameSize.ToString());
             if (_functionScope.LocalsStackFrameSize > 0)
-                output.Add(X64CodeFormat.FormatOperation(X64Instruction.SUB, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(_functionScope.LocalsStackFrameSize.ToString())));
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.SUB, X64StorageLocation.AsRegister(X64Register.RSP), localsStackSize));
+
+            //Remember end of fixed stack to be able to restore it later
+            if (_functionScope.UsesDynamicStackAllocation)
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, fixedStackEndLocation, rsp));
+
+            output.Add(fnProloEndgLabel);
+
+            /** BODY **/
 
             foreach (var operation in function.Body)
             {
@@ -147,9 +181,55 @@ namespace erc
                 GenerateOperation(output, operation);
             }
 
+            /** EPILOG **/
+
+            output.Add(fnEpilogStartLabel);
+
+            //Restore end of fixed stack
+            if (_functionScope.UsesDynamicStackAllocation)
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, rsp, fixedStackEndLocation));
+
+            //Remove stack space or local variables
+            if (_functionScope.LocalsStackFrameSize > 0)
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.ADD, rsp, localsStackSize));
+
+            //Restore non-volatile registers
+            foreach (var nvRegister in _functionScope.UsedNonVolatileRegisters)
+            {
+                var fullSizeRegister = X64Register.GroupToFullSizeRegister(nvRegister);
+                var defaultDataType = X64Register.GetDefaultDataType(fullSizeRegister);
+                GeneratePopInternal(output, defaultDataType, X64StorageLocation.AsRegister(fullSizeRegister));
+            }
+
+            //Remove stack space for fixed stack end
+            if (_functionScope.UsesDynamicStackAllocation)
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.ADD, rsp, X64StorageLocation.Immediate("8")));
+
+            //Restore previous stack base
+            output.Add(X64CodeFormat.FormatOperation(X64Instruction.POP, rbp));
+
+            //Return
+            output.Add(X64CodeFormat.FormatOperation(X64Instruction.RET));
+
+            output.Add(fnEndLabel);
+
             _currentFunction = null;
             _functionScope = null;
             output.Add("");
+        }
+
+        private void GenerateRet(List<string> output, IMOperation operation)
+        {
+            var returnValue = operation.Operands[0];
+            if (returnValue.DataType.Kind != DataTypeKind.VOID)
+            {
+                var returnLocation = _functionScope.ReturnLocation;
+                var valueLocation = RequireOperandLocation(returnValue);
+                X64GeneratorUtils.Move(output, returnValue.DataType, returnLocation, valueLocation);
+            }
+
+            var epilogLabel = X64GeneratorUtils.GetEpilogStartLabel(_currentFunction.Name);
+            output.Add(X64CodeFormat.FormatOperation(X64Instruction.JMP, epilogLabel));
         }
 
         private void GenerateOperation(List<string> output, IMOperation operation)
@@ -651,29 +731,6 @@ namespace erc
             }
         }
 
-        private void GenerateRet(List<string> output, IMOperation operation)
-        {
-            //TODO: Put all the cleanup stuff in prolog and make RET actually jump to prolog which ends with ret
-
-            //Clean up dynamically allocated stack space
-            if (_dynamicStackSize > 0)
-                output.Add(X64CodeFormat.FormatOperation(X64Instruction.ADD, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(_dynamicStackSize.ToString())));
-
-            //Free stack portion for locals so stack pointer now points to return address
-            if (_functionScope.LocalsStackFrameSize > 0)
-                output.Add(X64CodeFormat.FormatOperation(X64Instruction.ADD, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(_functionScope.LocalsStackFrameSize.ToString())));
-
-            var returnValue = operation.Operands[0];
-            if (returnValue.DataType.Kind != DataTypeKind.VOID)
-            {
-                var returnLocation = _functionScope.ReturnLocation;
-                var valueLocation = RequireOperandLocation(returnValue);
-                X64GeneratorUtils.Move(output, returnValue.DataType, returnLocation, valueLocation);
-            }
-
-            output.Add(X64CodeFormat.FormatOperation(X64Instruction.RET));
-        }
-
         private void GenerateAnd(List<string> output, IMOperation operation)
         {
             var operand1 = operation.Operands[1];
@@ -998,18 +1055,19 @@ namespace erc
             //Push used registers
             foreach (var registerGroup in _usedRegisterGroups)
             {
+                var fullRegister = X64Register.GroupToFullSizeRegister(registerGroup);
                 //Do not save register if it is the target location for the return value. It is overwritten anyways.
                 var isTargetRegister = isTargetLocationRegister && targetLocation.Register.Group == registerGroup;
-                if (!isTargetRegister)
+                //Only save volatile registers
+                if (!isTargetRegister && fullRegister.IsVolatile)
                 {
                     //Always save full register, not only part of it
-                    var fullRegister = X64Register.GroupToFullSizeRegister(registerGroup);
                     GeneratePushInternal(output, X64Register.GetDefaultDataType(fullRegister), X64StorageLocation.AsRegister(fullRegister));
                     savedRegisters.Add(fullRegister);
                 }
             }
 
-            //Push parameter registers of current function
+            //Push parameter registers of current function (which are also volatile)
             for (int p = 0; p < _currentFunction.Parameters.Count; p++)
             {
                 var parameter = _currentFunction.Parameters[p];
@@ -1045,7 +1103,7 @@ namespace erc
             if (function.IsExtern)
                 output.Add(X64CodeFormat.FormatOperation(X64Instruction.CALL, X64StorageLocation.Immediate("[" + function.ExternalName + "]")));
             else
-                output.Add(X64CodeFormat.FormatOperation(X64Instruction.CALL, X64StorageLocation.Immediate("fn_" + function.Name)));
+                output.Add(X64CodeFormat.FormatOperation(X64Instruction.CALL, X64StorageLocation.Immediate(X64GeneratorUtils.GetStartLabel(function.Name))));
 
             //Remove shadow space
             output.Add(X64CodeFormat.FormatOperation(X64Instruction.ADD, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate("0x20")));
