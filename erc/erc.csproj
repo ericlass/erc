@@ -1,17 +1,7 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{7AC295FC-0208-405B-8C63-7A8357DC3277}</ProjectGuid>
+    <TargetFramework>net5.0-windows</TargetFramework>
     <OutputType>Exe</OutputType>
-    <RootNamespace>erc</RootNamespace>
-    <AssemblyName>erc</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <Deterministic>true</Deterministic>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -27,138 +17,25 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <Prefer32Bit>false</Prefer32Bit>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+    <DisableWinExeOutputInference>true</DisableWinExeOutputInference>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject>erc.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <HintPath>packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Windows.Forms" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Assert.cs" />
-    <Compile Include="AstOptimizer.cs" />
-    <Compile Include="Config.cs" />
-    <Compile Include="datatypes\DataTypeGroup.cs" />
-    <Compile Include="datatypes\DataTypeKind.cs" />
-    <Compile Include="datatypes\EnumElement.cs" />
-    <Compile Include="datatypes\MemoryRegion.cs" />
-    <Compile Include="Extensions.cs" />
-    <Compile Include="intermediate\IIMObject.cs" />
-    <Compile Include="intermediate\IMCodeGenerator.cs" />
-    <Compile Include="intermediate\IMExternalFunction.cs" />
-    <Compile Include="intermediate\IMFunction.cs" />
-    <Compile Include="intermediate\IMGeneratorEnv.cs" />
-    <Compile Include="intermediate\IMInstruction.cs" />
-    <Compile Include="intermediate\IMObjectKind.cs" />
-    <Compile Include="intermediate\IMOperand.cs" />
-    <Compile Include="intermediate\IMOperandKind.cs" />
-    <Compile Include="intermediate\IMOperation.cs" />
-    <Compile Include="intermediate\IMInstructionKind.cs" />
-    <Compile Include="native\WinX64CodeGenerator.cs" />
-    <Compile Include="native\X64CodeFormat.cs" />
-    <Compile Include="native\X64DataTypeProperties.cs" />
-    <Compile Include="native\X64FunctionFrame.cs" />
-    <Compile Include="native\X64GeneratorUtils.cs" />
-    <Compile Include="native\X64MemoryManager.cs" />
-    <Compile Include="native\X64StorageLocation.cs" />
-    <Compile Include="native\X64StorageLocationKind.cs" />
-    <Compile Include="native\X64TypeCast.cs" />
-    <Compile Include="operators\AdditionOperator.cs" />
-    <Compile Include="operators\AddressOperator.cs" />
-    <Compile Include="operators\ArithmeticNegationOperator.cs" />
-    <Compile Include="operators\ArithmeticOperator.cs" />
-    <Compile Include="AST.cs" />
-    <Compile Include="BlockScope.cs" />
-    <Compile Include="operators\LengthOperator.cs" />
-    <Compile Include="operators\BooleanInversionOperator.cs" />
-    <Compile Include="operators\BooleanOperator.cs" />
-    <Compile Include="CompilerContext.cs" />
-    <Compile Include="operators\casting\TypeCast.cs" />
-    <Compile Include="operators\casting\TypeCastOperator.cs" />
-    <Compile Include="operators\casting\TypeCastDefinition.cs" />
-    <Compile Include="operators\DivisionOperator.cs" />
-    <Compile Include="operators\StaticAccessOperator.cs" />
-    <Compile Include="operators\EqualityOperator.cs" />
-    <Compile Include="Function.cs" />
-    <Compile Include="FunctionScope.cs" />
-    <Compile Include="native\X64Instruction.cs" />
-    <Compile Include="operators\IBinaryOperator.cs" />
-    <Compile Include="operators\IOperator.cs" />
-    <Compile Include="operators\IUnaryOperator.cs" />
-    <Compile Include="LogLevel.cs" />
-    <Compile Include="operators\ModuloOperator.cs" />
-    <Compile Include="operators\MultiplicationOperator.cs" />
-    <Compile Include="operators\NoOpOperator.cs" />
-    <Compile Include="operators\Operator.cs" />
-    <Compile Include="operators\PointerDereferenceOperator.cs" />
-    <Compile Include="operators\RelationalOperator.cs" />
-    <Compile Include="operators\SubtractionOperator.cs" />
-    <Compile Include="operators\UnaryOperator.cs" />
-    <Compile Include="datatypes\DataType.cs" />
-    <Compile Include="Program.cs" />
-    <Compile Include="ProgramScope.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="native\X64Register.cs" />
-    <Compile Include="native\X64RegisterPool.cs" />
-    <Compile Include="Scope.cs" />
-    <Compile Include="SemanticAnalysis.cs" />
-    <Compile Include="SimpleIterator.cs" />
-    <Compile Include="SimpleLogger.cs" />
-    <Compile Include="StringIterator.cs" />
-    <Compile Include="StringUtils.cs" />
-    <Compile Include="SymbolKind.cs" />
-    <Compile Include="SyntaxAnalysis.cs" />
-    <Compile Include="Token.cs" />
-    <Compile Include="TokenIterator.cs" />
-    <Compile Include="Tokenizer.cs" />
-    <Compile Include="TokenKind.cs" />
-    <Compile Include="Symbol.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="App.config" />
-    <None Include="autotest.erc">
+    <None Update="autotest.erc">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="config.json">
+    <None Update="config.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Include="example.erc">
+    <None Update="example.erc">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <EmbeddedResource Include="internal_lib.erc" />
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.6.1">
@@ -172,9 +49,10 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
-  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="5.0.2" />
+  </ItemGroup>
+  <PropertyGroup />
 </Project>
