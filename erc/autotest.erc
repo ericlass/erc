@@ -18,6 +18,8 @@
 	print_separator();
 	
 	test_string();
+	print_separator();
+	test_parameters();
 }
 
 fn print_separator()
@@ -189,7 +191,100 @@ fn test_string()
 
 	let s2 = "abc" + "defg";
 	l = #s2;
-	printf(&"test_string(2): %lld\n", l);
+	printf(&"test_string(3): %lld\n", l);
+}
+
+fn test_parameters()
+{
+	test_param_1(1b, 2b, 3b, 4b, 5b, 6b, 7b, 8b);
+	print_separator();
+	test_param_2(1w, 2w, 3w, 4w, 5w, 6w, 7w, 8w);
+	print_separator();
+	test_param_4(1d, 2d, 3d, 4d, 5d, 6d, 7d, 8d);
+	print_separator();
+	test_param_8(1, 2, 3, 4, 5, 6, 7, 8);
+	print_separator();
+	//test_param_16f(vec(1,8), vec(2,7), vec(3,6), vec(4,5), vec(5,4), vec(6,3), vec(7,2), vec(8,1));
+}
+
+fn test_param_1(a: i8, b: i8, c: i8, d: i8, e: i8, f: i8, g: i8, h: i8)
+{
+	let message = &"test_param_1(%d): %d\n";
+
+	printf(message, 1ud, a as i32);
+	printf(message, 2ud, b as i32);
+	printf(message, 3ud, c as i32);
+	printf(message, 4ud, d as i32);
+	printf(message, 5ud, e as i32);
+	printf(message, 6ud, f as i32);
+	printf(message, 7ud, g as i32);
+	printf(message, 8ud, h as i32);
+}
+
+fn test_param_2(a: i16, b: i16, c: i16, d: i16, e: i16, f: i16, g: i16, h: i16)
+{
+	let message = &"test_param_2(%d): %d\n";
+
+	printf(message, 1ud, a as i32);
+	printf(message, 2ud, b as i32);
+	printf(message, 3ud, c as i32);
+	printf(message, 4ud, d as i32);
+	printf(message, 5ud, e as i32);
+	printf(message, 6ud, f as i32);
+	printf(message, 7ud, g as i32);
+	printf(message, 8ud, h as i32);
+}
+
+fn test_param_4(a: i32, b: i32, c: i32, d: i32, e: i32, f: i32, g: i32, h: i32)
+{
+	let message = &"test_param_4(%d): %d\n";
+
+	printf(message, 1ud, a);
+	printf(message, 2ud, b);
+	printf(message, 3ud, c);
+	printf(message, 4ud, d);
+	printf(message, 5ud, e);
+	printf(message, 6ud, f);
+	printf(message, 7ud, g);
+	printf(message, 8ud, h);
+}
+
+fn test_param_8(a: i64, b: i64, c: i64, d: i64, e: i64, f: i64, g: i64, h: i64)
+{
+	let message = &"test_param_8(%d): %lld\n";
+
+	printf(message, 1ud, a);
+	printf(message, 2ud, b);
+	printf(message, 3ud, c);
+	printf(message, 4ud, d);
+	printf(message, 5ud, e);
+	printf(message, 6ud, f);
+	printf(message, 7ud, g);
+	printf(message, 8ud, h);
+}
+
+fn test_param_4f()
+{
+	//Test f32 parameters
+}
+
+fn test_param_8f()
+{
+	//Test f64 parameters
+}
+
+fn test_param_16f(a: vec2d, b: vec2d, c: vec2d, d: vec2d, e: vec2d, f: vec2d, g: vec2d, h: vec2d)
+{
+	let message = &"test_param_16(%d): %lf, %lf\n";
+
+	printf(message, 1ud, a);
+	printf(message, 2ud, b);
+	printf(message, 3ud, c);
+	printf(message, 4ud, d);
+	printf(message, 5ud, e);
+	printf(message, 6ud, f);
+	printf(message, 7ud, g);
+	printf(message, 8ud, h);
 }
 
 fn test_arrays()

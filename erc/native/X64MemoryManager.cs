@@ -5,8 +5,6 @@ namespace erc
 {
     class X64MemoryManager
     {
-        private Stack<X64RegisterGroup> _freeParameterRRegisters = new Stack<X64RegisterGroup>();
-        private Stack<X64RegisterGroup> _freeParameterMMRegisters = new Stack<X64RegisterGroup>();
         private long _immediateCounter = 0;
 
         public X64FunctionFrame CreateFunctionScope(IMFunction function)
@@ -15,15 +13,23 @@ namespace erc
             var locationMap = new Dictionary<string, X64StorageLocation>();
 
             //First the parameters
-            var paramLocations = GetParameterLocations(function.Definition);
+            var paramFrame = GetParameterFrame(function.Definition);
             var paramIndex = 1;
-            foreach (var location in paramLocations)
+            foreach (var location in paramFrame.ParameterLocations)
             {
                 var name = IMOperand.ParameterPrefix + paramIndex;
-                locationMap.Add(name, location);
+                var realLocation = location;
 
-                if (location.Kind == X64StorageLocationKind.Register)
-                    registerPool.Use(location.Register);
+                //If parameter is on stack, calculate correct offset (+16, 8 saved RBP + 8 return address)
+                if (realLocation.Kind == X64StorageLocationKind.StackFromTop)
+                {
+                    realLocation = X64StorageLocation.StackFromBase(location.Offset + 16);
+                }
+
+                locationMap.Add(name, realLocation);
+
+                if (realLocation.Kind == X64StorageLocationKind.Register)
+                    registerPool.Use(realLocation.Register);
 
                 paramIndex += 1;
             }
@@ -83,9 +89,9 @@ namespace erc
                                 }
                                 else
                                 {
-                                    //If no register, try on stack
+                                    //If no register, use stack
                                     stackOffset += operand.DataType.ByteSize;
-                                    location = X64StorageLocation.StackFromBase(stackOffset);
+                                    location = X64StorageLocation.StackFromBase(-stackOffset);
                                 }
 
                                 Assert.True(location != null, "No location found for operand!");
@@ -112,7 +118,7 @@ namespace erc
 
                         //Increment stack offset first so target points to bottom of reserved memory.
                         stackOffset += numBytes;
-                        var arrayLocation = X64StorageLocation.StackFromBase(stackOffset);
+                        var arrayLocation = X64StorageLocation.StackFromBase(-stackOffset);
 
                         locationMap.Add(IMOperand.GetMemLocationName(target), arrayLocation);
                     }
@@ -166,6 +172,7 @@ namespace erc
             {
                 LocalsLocations = locationMap,
                 LocalsStackFrameSize = stackOffset,
+                ParameterStackFrameSize = paramFrame.ParameterStackSize,
                 DataEntries = dataEntries,
                 ReturnLocation = returnLocation,
                 UsesDynamicStackAllocation = usesDynamicStack,
@@ -173,10 +180,10 @@ namespace erc
             };
         }
 
-        public List<X64StorageLocation> GetParameterLocations(Function function)
+        public X64ParameterFrame GetParameterFrame(Function function)
         {
             var paramTypes = function.Parameters.ConvertAll<DataType>((p) => p.DataType);
-            return GetParameterLocations(paramTypes);
+            return GetParameterFrame(paramTypes);
         }
 
         /// <summary>
@@ -184,87 +191,121 @@ namespace erc
         /// </summary>
         /// <param name="function">The function.</param>
         /// <returns>List of locations in the order of the parameters.</returns>
-        public List<X64StorageLocation> GetParameterLocations(List<DataType> parameterTypes)
+        public X64ParameterFrame GetParameterFrame(List<DataType> parameterTypes)
         {
-            _freeParameterRRegisters.Clear();
-            _freeParameterRRegisters.Push(X64RegisterGroup.R9);
-            _freeParameterRRegisters.Push(X64RegisterGroup.R8);
-            _freeParameterRRegisters.Push(X64RegisterGroup.D);
-            _freeParameterRRegisters.Push(X64RegisterGroup.C);
+            var freeParameterRRegisters = new Stack<X64RegisterGroup>();
+            freeParameterRRegisters.Push(X64RegisterGroup.R9);
+            freeParameterRRegisters.Push(X64RegisterGroup.R8);
+            freeParameterRRegisters.Push(X64RegisterGroup.D);
+            freeParameterRRegisters.Push(X64RegisterGroup.C);
 
-            _freeParameterMMRegisters.Clear();
-            _freeParameterMMRegisters.Push(X64RegisterGroup.MM3);
-            _freeParameterMMRegisters.Push(X64RegisterGroup.MM2);
-            _freeParameterMMRegisters.Push(X64RegisterGroup.MM1);
-            _freeParameterMMRegisters.Push(X64RegisterGroup.MM0);
+            var freeParameterMMRegisters = new Stack<X64RegisterGroup>();
+            freeParameterMMRegisters.Push(X64RegisterGroup.MM3);
+            freeParameterMMRegisters.Push(X64RegisterGroup.MM2);
+            freeParameterMMRegisters.Push(X64RegisterGroup.MM1);
+            freeParameterMMRegisters.Push(X64RegisterGroup.MM0);
 
             //TODO: Variadic functions have a special parameter passing convention. See MS x64 calling convention docs.
 
-            var result = new List<X64StorageLocation>();
+            var locations = new List<X64StorageLocation>();
 
-            var paramOffset = 0;
+            const long alignment = 8;
+            long paramOffset = 0;
             foreach (var paramType in parameterTypes)
             {
-                if (paramType.Group == DataTypeGroup.ScalarInteger ||
-                    paramType.Kind == DataTypeKind.BOOL ||
-                    paramType.Kind == DataTypeKind.POINTER ||
-                    paramType.Kind == DataTypeKind.ARRAY ||
-                    paramType.Kind == DataTypeKind.STRING8 ||
-                    paramType.Kind == DataTypeKind.CHAR8
-                    )
+                switch (paramType.Kind)
                 {
-                    if (_freeParameterRRegisters.Count > 0)
-                    {
-                        var group = _freeParameterRRegisters.Pop();
-                        //Also need to pop MM register to keep param position correct!
-                        _freeParameterMMRegisters.Pop();
+                    case DataTypeKind.I8:
+                    case DataTypeKind.I16:
+                    case DataTypeKind.I32:
+                    case DataTypeKind.I64:
+                    case DataTypeKind.U8:
+                    case DataTypeKind.U16:
+                    case DataTypeKind.U32:
+                    case DataTypeKind.U64:
+                    case DataTypeKind.BOOL:
+                    case DataTypeKind.POINTER:
+                    case DataTypeKind.ARRAY:
+                    case DataTypeKind.CHAR8:
+                    case DataTypeKind.STRING8:
+                        if (freeParameterRRegisters.Count > 0)
+                        {
+                            var group = freeParameterRRegisters.Pop();
+                            //Also need to pop MM register to keep param position correct!
+                            freeParameterMMRegisters.Pop();
 
-                        result.Add(X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegister(group, paramType)));
-                    }
-                    else
-                    {
-                        result.Add(X64StorageLocation.StackFromBase(paramOffset));
-                        paramOffset += paramType.ByteSize;
-                    }
-                }
-                else if (paramType == DataType.F32 || paramType == DataType.F64)
-                {
-                    if (_freeParameterMMRegisters.Count > 0)
-                    {
-                        var group = _freeParameterMMRegisters.Pop();
-                        //Also need to pop R register to keep param position correct!
-                        _freeParameterRRegisters.Pop();
+                            locations.Add(X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegister(group, paramType)));
+                        }
+                        else
+                        {
+                            locations.Add(X64StorageLocation.StackFromBase(-paramOffset));
+                            //Parameter value on stack must be 8 byte aligned
+                            paramOffset += (paramType.ByteSize & -alignment) + alignment;
+                        }
+                        break;
 
-                        result.Add(X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegister(group, paramType)));
-                    }
-                    else
-                    {
-                        result.Add(X64StorageLocation.StackFromBase(paramOffset));
-                        paramOffset += paramType.ByteSize;
-                    }
-                }
-                else if (paramType.IsVector)
-                {
-                    //This differs from Win64 calling convention. The register are there, why not use them?
-                    if (_freeParameterMMRegisters.Count > 0)
-                    {
-                        var group = _freeParameterMMRegisters.Pop();
-                        //Also need to pop R register to keep param position correct!
-                        _freeParameterRRegisters.Pop();
+                    case DataTypeKind.F32:
+                    case DataTypeKind.F64:
+                        if (freeParameterMMRegisters.Count > 0)
+                        {
+                            var group = freeParameterMMRegisters.Pop();
+                            //Also need to pop R register to keep param position correct!
+                            freeParameterRRegisters.Pop();
 
-                        result.Add(X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegister(group, paramType)));
-                    }
-                    else
-                    {
-                        result.Add(X64StorageLocation.StackFromBase(paramOffset));
-                        paramOffset += paramType.ByteSize;
-                    }
+                            locations.Add(X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegister(group, paramType)));
+                        }
+                        else
+                        {
+                            locations.Add(X64StorageLocation.StackFromBase(-paramOffset));
+                            //Parameter value on stck must be 8 byte aligned
+                            paramOffset += (paramType.ByteSize & -alignment) + alignment;
+                        }
+                        break;
+
+                    case DataTypeKind.VEC4F:
+                    case DataTypeKind.VEC8F:
+                    case DataTypeKind.VEC2D:
+                    case DataTypeKind.VEC4D:
+                        //This differs from Win64 calling convention. The register are there, why not use them?
+                        if (freeParameterMMRegisters.Count > 0)
+                        {
+                            var group = freeParameterMMRegisters.Pop();
+                            //Also need to pop R register to keep param position correct!
+                            freeParameterRRegisters.Pop();
+
+                            locations.Add(X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegister(group, paramType)));
+                        }
+                        else
+                        {
+                            locations.Add(X64StorageLocation.StackFromBase(-paramOffset));
+                            //No alignment required here, as the vectors are already either 16 or 32 byte, which are multiples of 8
+                            paramOffset += paramType.ByteSize;
+                        }
+                        break;
+
+                    default:
+                        throw new Exception("Unknown/invalid parameter data type: " + paramType);
                 }
-                else
-                    throw new Exception("Unknown data type: " + paramType);
             }
 
-            return result;
+            var paramStackSize = paramOffset;
+            //Reverse stack offsets as they are addressed from RSP, not RBP
+            for (int i = locations.Count - 1; i >= 0; i--)
+            {
+                var location = locations[i];
+                if (location.Kind == X64StorageLocationKind.StackFromBase)
+                    locations[i] = X64StorageLocation.StackFromTop(paramStackSize + location.Offset);
+            }
+
+            //We always need the shadow space for the first four register parameters, so add it here to the total parameter stack size.
+            //The offsets of the parameters calculated above are still correct, because the shadow space is before those!
+            var stackSize = paramStackSize + 32;
+
+            return new X64ParameterFrame
+            {
+                ParameterLocations = locations,
+                ParameterStackSize = stackSize
+            };
         }
 
         public X64StorageLocation GetFunctionReturnLocation(Function function)
@@ -272,7 +313,7 @@ namespace erc
             return GetFunctionReturnLocation(function.ReturnType);
         }
 
-        private X64StorageLocation GetFunctionReturnLocation(DataType returnType)
+        private static X64StorageLocation GetFunctionReturnLocation(DataType returnType)
         {
             //ENUM is missing here because it is converted to int in previous step
 

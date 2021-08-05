@@ -13,13 +13,14 @@ namespace erc
 
         public X64StorageLocation Copy()
         {
-            var result = new X64StorageLocation();
-            result.Kind = this.Kind;
-            result.Register = this.Register;
-            result.Offset = this.Offset;
-            result.DataName = this.DataName;
-            result.ImmediateValue = this.ImmediateValue;
-            return result;
+            return new X64StorageLocation
+            {
+                Kind = this.Kind,
+                Register = this.Register,
+                Offset = this.Offset,
+                DataName = this.DataName,
+                ImmediateValue = this.ImmediateValue
+            };
         }
 
         public override string ToString()
@@ -30,13 +31,13 @@ namespace erc
                     return "register(" + Register + ")";
 
                 case X64StorageLocationKind.StackFromBase:
-                    return "stack_base(-" + Offset + ")";
+                    return "stack_base(" + OffsetAsSignedStr() + ")";
 
                 case X64StorageLocationKind.StackFromTop:
-                    return "stack_top(+" + Offset + ")";
+                    return "stack_top(" + OffsetAsSignedStr() + ")";
 
                 case X64StorageLocationKind.HeapInRegister:
-                    return "heap_register(" + Register + "+" + Offset + ")";
+                    return "heap_register(" + Register + OffsetAsSignedStr() + ")";
 
                 case X64StorageLocationKind.DataSection:
                     return "data_section(" + DataName + ")";
@@ -58,19 +59,19 @@ namespace erc
 
                 case X64StorageLocationKind.StackFromBase:
                     if (Offset != 0)
-                        return "[RBP-" + Offset + "]";
+                        return "[RBP" + OffsetAsSignedStr() + "]";
                     else
                         return "[RBP]";
 
                 case X64StorageLocationKind.StackFromTop:
                     if (Offset != 0)
-                        return "[RSP+" + Offset + "]";
+                        return "[RSP" + OffsetAsSignedStr() + "]";
                     else
                         return "[RSP]";
 
                 case X64StorageLocationKind.HeapInRegister:
                     if (Offset != 0)
-                        return "[" + Register + "+" + Offset + "]";
+                        return "[" + Register + OffsetAsSignedStr() + "]";
                     else
                         return "[" + Register + "]";
 
@@ -83,6 +84,14 @@ namespace erc
                 default:
                     throw new Exception("Unknown location kind: " + Kind);
             }
+        }
+
+        private string OffsetAsSignedStr()
+        {
+            if (Offset < 0)
+                return Offset.ToString();
+            else
+                return "+" + Offset;
         }
 
         public override bool Equals(object obj)

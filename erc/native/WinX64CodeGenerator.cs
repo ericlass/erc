@@ -142,8 +142,9 @@ namespace erc
             var rax = X64StorageLocation.AsRegister(X64Register.RAX);
             var rbp = X64StorageLocation.AsRegister(X64Register.RBP);
             var rsp = X64StorageLocation.AsRegister(X64Register.RSP);
-            var fixedStackEndLocation = X64StorageLocation.StackFromBase(8);
+            var fixedStackEndLocation = X64StorageLocation.StackFromBase(-8);
 
+            //Save previous RBP to be able to restore it later
             output.Add(X64CodeFormat.FormatOperation(X64Instruction.PUSH, rbp));
             output.Add(X64CodeFormat.FormatOperation(X64Instruction.MOV, rbp, rsp));
 
@@ -1067,12 +1068,12 @@ namespace erc
                 }
             }
 
-            //Push parameter registers of current function (which are also volatile)
+            //Push parameter registers of current function (which are also always volatile)
             for (int p = 0; p < _currentFunction.Parameters.Count; p++)
             {
                 var parameter = _currentFunction.Parameters[p];
                 var paramLocation = RequireOperandLocation(IMOperand.Parameter(parameter.DataType, p + 1));
-                if (paramLocation.Kind == X64StorageLocationKind.Register && savedRegisters.Contains(paramLocation.Register))
+                if (paramLocation.Kind == X64StorageLocationKind.Register && !savedRegisters.Contains(paramLocation.Register))
                 {
                     //Do not save register if it is the target location for the return value. It is overwritten anyways.
                     var isTargetRegister = isTargetLocationRegister && targetLocation.Register.Group == paramLocation.Register.Group;
@@ -1085,8 +1086,13 @@ namespace erc
             }
 
             //Generate parameter values in desired locations
-            var parameterLocations = _memoryManager.GetParameterLocations(parameterDataTypes);
+            var parameterFrame = _memoryManager.GetParameterFrame(parameterDataTypes);
+            var parameterLocations = parameterFrame.ParameterLocations;
             Assert.Count(parameterLocations.Count, parameterValueLocations.Count, "Inconsistent number of parameters and locations!");
+
+            //Reserve space for stack parameters. Already includes the 32 byte shadow space.
+            var paramStackSizeStr = parameterFrame.ParameterStackSize.ToString();
+            output.Add(X64CodeFormat.FormatOperation(X64Instruction.SUB, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(paramStackSizeStr)));
 
             for (int i = 0; i < parameterValueLocations.Count; i++)
             {
@@ -1096,17 +1102,14 @@ namespace erc
                 X64GeneratorUtils.Move(output, valueType, paramLocation, valueLocation);
             }
 
-            //Add 32 bytes shadow space
-            output.Add(X64CodeFormat.FormatOperation(X64Instruction.SUB, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate("0x20")));
-
             //Finally, call function
             if (function.IsExtern)
                 output.Add(X64CodeFormat.FormatOperation(X64Instruction.CALL, X64StorageLocation.Immediate("[" + function.ExternalName + "]")));
             else
                 output.Add(X64CodeFormat.FormatOperation(X64Instruction.CALL, X64StorageLocation.Immediate(X64GeneratorUtils.GetStartLabel(function.Name))));
 
-            //Remove shadow space
-            output.Add(X64CodeFormat.FormatOperation(X64Instruction.ADD, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate("0x20")));
+            //Remove space for staack parameters and shadow space
+            output.Add(X64CodeFormat.FormatOperation(X64Instruction.ADD, X64StorageLocation.AsRegister(X64Register.RSP), X64StorageLocation.Immediate(paramStackSizeStr)));
 
             //Move result value (if exists) to target location (if required)
             if (function.ReturnType != DataType.VOID && targetLocation != null)

@@ -206,6 +206,13 @@ namespace erc
                 //Assuming that AST item has as many children as function has parameters, as this is checked before
                 var expression = funcCall.Children[i];
                 var location = GetOperandLocationOrGenerateExpression(output, expression);
+                //Directly passing parameters as parameters causes issues, so use temp local for them
+                if (location.Kind == IMOperandKind.Parameter)
+                {
+                    var tempLocation = _env.NewTempLocal(expression.DataType);
+                    output.Add(IMOperation.Mov(tempLocation, location));
+                    location = tempLocation;
+                }
                 paramLocations.Add(location);
             }
 

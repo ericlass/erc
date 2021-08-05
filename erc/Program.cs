@@ -92,25 +92,25 @@ namespace erc
 
             //Compile .exe
             var folderName = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-            var exeName = baseName + ".exe";
-            var exeFileName = Path.Combine(folderName, exeName);
-            var asmFileName = Path.Combine(folderName, baseName + ".asm");
+            var exeFileName = baseName + ".exe";
+            var exeFilePath = Path.Combine(folderName, exeFileName);
+            var asmFilePath = Path.Combine(folderName, baseName + ".asm");
 
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine(">>> Running FASM");
             Console.ForegroundColor = ConsoleColor.Yellow;
-            AssembleExecutable(config, nativeCode, exeFileName, asmFileName);
+            AssembleExecutable(config, nativeCode, exeFilePath, asmFilePath);
 
             //Run compiled .exe
             Console.WriteLine();
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine(">>> Running " + exeName);
+            Console.WriteLine(">>> Running " + exeFileName);
             Console.ResetColor();
 
             var appStartInfo = new ProcessStartInfo();
             appStartInfo.FileName = "cmd.exe";
-            appStartInfo.Arguments = "/C " + exeFileName + " & pause";
+            appStartInfo.Arguments = "/C " + exeFilePath + " & pause";
             var appProcess = Process.Start(appStartInfo);
             appProcess.WaitForExit();
 
@@ -119,19 +119,19 @@ namespace erc
             Console.Read();
         }
 
-        private static void AssembleExecutable(Config config, string nativeCode, string exeFileName, string asmFileName)
+        private static void AssembleExecutable(Config config, string nativeCode, string exeFilePath, string asmFilePath)
         {
             var stopWatch = new Stopwatch();
             stopWatch.Start();
 
-            File.WriteAllText(asmFileName, nativeCode);
+            File.WriteAllText(asmFilePath, nativeCode);
             var fasmIncludePath = Path.Combine(Path.GetDirectoryName(config.FasmPath), "INCLUDE");
 
             var startInfo = new ProcessStartInfo();
             startInfo.UseShellExecute = false;
             startInfo.EnvironmentVariables["INCLUDE"] = fasmIncludePath;
             startInfo.FileName = config.FasmPath;
-            startInfo.Arguments = asmFileName + " " + exeFileName;
+            startInfo.Arguments = asmFilePath + " " + exeFilePath;
             var fasmProcess = Process.Start(startInfo);
             fasmProcess.WaitForExit();
 
