@@ -5,15 +5,6 @@ namespace erc
 {
     public static class StringUtils
     {
-        private static Dictionary<string, string> _replacements = new Dictionary<string, string>()
-        {
-            ["\n"] = "\\n",
-            ["\r"] = "\\r",
-            ["\0"] = "\\0",
-            ["\t"] = "\\t",
-            ["\b"] = "\\b",
-        };
-
         public static string CharToPrintableStr(char c)
         {
             if (c < 32 || (c > 126 && c < 160))

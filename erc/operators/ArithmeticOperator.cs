@@ -5,7 +5,7 @@ namespace erc
 {
     public abstract class ArithmeticOperator : IBinaryOperator
     {
-        private HashSet<DataTypeKind> _supportedDataTypes = new HashSet<DataTypeKind>()
+        private HashSet<DataTypeKind> _supportedDataTypes = new()
         {
             DataTypeKind.I8,
             DataTypeKind.I16,

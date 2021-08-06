@@ -8,7 +8,7 @@ namespace erc
     /// </summary>
     public class BlockScope
     {
-        private Dictionary<string, Symbol> _variables = new Dictionary<string, Symbol>();
+        private Dictionary<string, Symbol> _variables = new();
         private string _endLabelName = null;
 
         public BlockScope Parent { get; set; }

@@ -204,7 +204,7 @@ fn test_parameters()
 	print_separator();
 	test_param_8(1, 2, 3, 4, 5, 6, 7, 8);
 	print_separator();
-	//test_param_16f(vec(1,8), vec(2,7), vec(3,6), vec(4,5), vec(5,4), vec(6,3), vec(7,2), vec(8,1));
+	test_param_16f(vec(1.0,8.0), vec(2.0,7.0), vec(3.0,6.0), vec(4.0,5.0), vec(5.0,4.0), vec(6.0,3.0), vec(7.0,2.0), vec(8.0,1.0));
 }
 
 fn test_param_1(a: i8, b: i8, c: i8, d: i8, e: i8, f: i8, g: i8, h: i8)

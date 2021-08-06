@@ -5,17 +5,17 @@ namespace erc
 {
     public class Tokenizer
     {
-        private HashSet<char> _digits = new HashSet<char> { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-        private HashSet<char> _numberSuffixChars = new HashSet<char> { 'b', 'w', 'd', 'q', 'u', 'f' }; //d is used for both 32 bit integer and float
-        private HashSet<char> _letter = new HashSet<char>
+        private HashSet<char> _digits = new() { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
+        private HashSet<char> _numberSuffixChars = new() { 'b', 'w', 'd', 'q', 'u', 'f' }; //d is used for both 32 bit integer and float
+        private HashSet<char> _letter = new()
         {
             'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
             'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'
         };
-        private HashSet<char> _identifierChars = new HashSet<char> { '_' };
-        private HashSet<char> _whiteSpaces = new HashSet<char> { ' ', '\t', '\r', '\n' };
+        private HashSet<char> _identifierChars = new() { '_' };
+        private HashSet<char> _whiteSpaces = new() { ' ', '\t', '\r', '\n' };
 
-        private Dictionary<string, TokenKind> _reservedWordTypes = new Dictionary<string, TokenKind>()
+        private Dictionary<string, TokenKind> _reservedWordTypes = new()
         {
             ["let"] = TokenKind.Let,
             ["fn"] = TokenKind.Fn,
@@ -25,8 +25,6 @@ namespace erc
             ["if"] = TokenKind.If,
             ["else"] = TokenKind.Else,
             ["vec"] = TokenKind.VectorConstructor,
-            ["in"] = TokenKind.In,
-            ["to"] = TokenKind.To,
             ["for"] = TokenKind.For,
             ["while"] = TokenKind.While,
             ["break"] = TokenKind.Break,
@@ -39,7 +37,7 @@ namespace erc
             ["enum"] = TokenKind.Enum
         };
 
-        private Dictionary<char, TokenKind> _specialCharacterTypes = new Dictionary<char, TokenKind>()
+        private Dictionary<char, TokenKind> _specialCharacterTypes = new()
         {
             [';'] = TokenKind.SemiColon,
             ['('] = TokenKind.RoundBracketOpen,

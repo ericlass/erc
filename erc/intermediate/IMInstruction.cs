@@ -18,51 +18,51 @@ namespace erc
             get { return Kind.ToString(); }
         }
 
-        public static IMInstruction PUSH = new IMInstruction(IMInstructionKind.PUSH, 1);  //X <source>
-        public static IMInstruction POP  = new IMInstruction(IMInstructionKind.POP, 1);   //X <target>
-        public static IMInstruction ADD  = new IMInstruction(IMInstructionKind.ADD, 3);   //X <target>, <op1>, <op2>
-        public static IMInstruction SUB  = new IMInstruction(IMInstructionKind.SUB, 3);   //X <target>, <op1>, <op2>
-        public static IMInstruction MUL  = new IMInstruction(IMInstructionKind.MUL, 3);   //X <target>, <op1>, <op2>
-        public static IMInstruction DIV  = new IMInstruction(IMInstructionKind.DIV, 3);   //X <target>, <op1>, <op2>
-        public static IMInstruction AND  = new IMInstruction(IMInstructionKind.AND, 3);   //X <target>, <op1>, <op2>
-        public static IMInstruction OR   = new IMInstruction(IMInstructionKind.OR, 3);    //X <target>, <op1>, <op2>
-        public static IMInstruction XOR  = new IMInstruction(IMInstructionKind.XOR, 3);   //X <target>, <op1>, <op2>
-        public static IMInstruction NOT  = new IMInstruction(IMInstructionKind.NOT, 2);   //X <target>, <op1>
-        public static IMInstruction NEG  = new IMInstruction(IMInstructionKind.NEG, 2);   //X <target>, <op1>
-        public static IMInstruction CALL = new IMInstruction(IMInstructionKind.CALL, 3);  //X <identifier>, [<target>], [<parameter_values...>]
-        public static IMInstruction RET  = new IMInstruction(IMInstructionKind.RET, 1);   //X <op>
-        public static IMInstruction MOV  = new IMInstruction(IMInstructionKind.MOV, 2);   //X <target>, <source>
+        public static readonly IMInstruction PUSH = new(IMInstructionKind.PUSH, 1);  //X <source>
+        public static readonly IMInstruction POP  = new(IMInstructionKind.POP, 1);   //X <target>
+        public static readonly IMInstruction ADD  = new(IMInstructionKind.ADD, 3);   //X <target>, <op1>, <op2>
+        public static readonly IMInstruction SUB  = new(IMInstructionKind.SUB, 3);   //X <target>, <op1>, <op2>
+        public static readonly IMInstruction MUL  = new(IMInstructionKind.MUL, 3);   //X <target>, <op1>, <op2>
+        public static readonly IMInstruction DIV  = new(IMInstructionKind.DIV, 3);   //X <target>, <op1>, <op2>
+        public static readonly IMInstruction AND  = new(IMInstructionKind.AND, 3);   //X <target>, <op1>, <op2>
+        public static readonly IMInstruction OR   = new(IMInstructionKind.OR, 3);    //X <target>, <op1>, <op2>
+        public static readonly IMInstruction XOR  = new(IMInstructionKind.XOR, 3);   //X <target>, <op1>, <op2>
+        public static readonly IMInstruction NOT  = new(IMInstructionKind.NOT, 2);   //X <target>, <op1>
+        public static readonly IMInstruction NEG  = new(IMInstructionKind.NEG, 2);   //X <target>, <op1>
+        public static readonly IMInstruction CALL = new(IMInstructionKind.CALL, 3);  //X <identifier>, [<target>], [<parameter_values...>]
+        public static readonly IMInstruction RET  = new(IMInstructionKind.RET, 1);   //X <op>
+        public static readonly IMInstruction MOV  = new(IMInstructionKind.MOV, 2);   //X <target>, <source>
         
-        public static IMInstruction JMP   = new IMInstruction(IMInstructionKind.JMP, 1);    //X <identifier>
-        public static IMInstruction JMPE  = new IMInstruction(IMInstructionKind.JMPE, 3);   //X <op1>, <op2>, <identifier>
-        public static IMInstruction JMPNE = new IMInstruction(IMInstructionKind.JMPNE, 3);  //X <op1>, <op2>, <identifier>
-        public static IMInstruction JMPG  = new IMInstruction(IMInstructionKind.JMPG, 3);   //X <op1>, <op2>, <identifier>
-        public static IMInstruction JMPGE = new IMInstruction(IMInstructionKind.JMPGE, 3);  //X <op1>, <op2>, <identifier>
-        public static IMInstruction JMPL  = new IMInstruction(IMInstructionKind.JMPL, 3);   //X <op1>, <op2>, <identifier>
-        public static IMInstruction JMPLE = new IMInstruction(IMInstructionKind.JMPLE, 3);  //X <op1>, <op2>, <identifier>
-        public static IMInstruction JMPNZ = new IMInstruction(IMInstructionKind.JMPNZ, 2);  // <op>, <identifier>
-        public static IMInstruction JMPZ  = new IMInstruction(IMInstructionKind.JMPZ, 2);   // <op>, <identifier>
+        public static readonly IMInstruction JMP   = new(IMInstructionKind.JMP, 1);    //X <identifier>
+        public static readonly IMInstruction JMPE  = new(IMInstructionKind.JMPE, 3);   //X <op1>, <op2>, <identifier>
+        public static readonly IMInstruction JMPNE = new(IMInstructionKind.JMPNE, 3);  //X <op1>, <op2>, <identifier>
+        public static readonly IMInstruction JMPG  = new(IMInstructionKind.JMPG, 3);   //X <op1>, <op2>, <identifier>
+        public static readonly IMInstruction JMPGE = new(IMInstructionKind.JMPGE, 3);  //X <op1>, <op2>, <identifier>
+        public static readonly IMInstruction JMPL  = new(IMInstructionKind.JMPL, 3);   //X <op1>, <op2>, <identifier>
+        public static readonly IMInstruction JMPLE = new(IMInstructionKind.JMPLE, 3);  //X <op1>, <op2>, <identifier>
+        public static readonly IMInstruction JMPNZ = new(IMInstructionKind.JMPNZ, 2);  // <op>, <identifier>
+        public static readonly IMInstruction JMPZ  = new(IMInstructionKind.JMPZ, 2);   // <op>, <identifier>
 
-        public static IMInstruction SETE  = new IMInstruction(IMInstructionKind.SETE, 3);   //X <target>, <op1>, <op2>
-        public static IMInstruction SETG  = new IMInstruction(IMInstructionKind.SETG, 3);   //X <target>, <op1>, <op2>
-        public static IMInstruction SETGE = new IMInstruction(IMInstructionKind.SETGE, 3);  //X <target>, <op1>, <op2>
-        public static IMInstruction SETL  = new IMInstruction(IMInstructionKind.SETL, 3);   //X <target>, <op1>, <op2>
-        public static IMInstruction SETLE = new IMInstruction(IMInstructionKind.SETLE, 3);  //X <target>, <op1>, <op2>
-        public static IMInstruction SETNE = new IMInstruction(IMInstructionKind.SETNE, 3);  //X <target>, <op1>, <op2>
-        public static IMInstruction SETNZ = new IMInstruction(IMInstructionKind.SETNZ, 3);  // <target>, <op>
-        public static IMInstruction SETZ  = new IMInstruction(IMInstructionKind.SETZ, 3);   // <target>, <op>
+        public static readonly IMInstruction SETE  = new(IMInstructionKind.SETE, 3);   //X <target>, <op1>, <op2>
+        public static readonly IMInstruction SETG  = new(IMInstructionKind.SETG, 3);   //X <target>, <op1>, <op2>
+        public static readonly IMInstruction SETGE = new(IMInstructionKind.SETGE, 3);  //X <target>, <op1>, <op2>
+        public static readonly IMInstruction SETL  = new(IMInstructionKind.SETL, 3);   //X <target>, <op1>, <op2>
+        public static readonly IMInstruction SETLE = new(IMInstructionKind.SETLE, 3);  //X <target>, <op1>, <op2>
+        public static readonly IMInstruction SETNE = new(IMInstructionKind.SETNE, 3);  //X <target>, <op1>, <op2>
+        public static readonly IMInstruction SETNZ = new(IMInstructionKind.SETNZ, 3);  // <target>, <op>
+        public static readonly IMInstruction SETZ  = new(IMInstructionKind.SETZ, 3);   // <target>, <op>
 
-        public static IMInstruction HALOC = new IMInstruction(IMInstructionKind.HALOC, 2);   //X <target>, <num_bytes>
-        public static IMInstruction SALOC = new IMInstruction(IMInstructionKind.SALOC, 2);   //X <target>, <num_bytes>
+        public static readonly IMInstruction HALOC = new(IMInstructionKind.HALOC, 2);   //X <target>, <num_bytes>
+        public static readonly IMInstruction SALOC = new(IMInstructionKind.SALOC, 2);   //X <target>, <num_bytes>
 
-        public static IMInstruction NOP  = new IMInstruction(IMInstructionKind.NOP, 0);    //X
-        public static IMInstruction DEL  = new IMInstruction(IMInstructionKind.DEL, 1);    //X <target>
-        public static IMInstruction LABL = new IMInstruction(IMInstructionKind.LABL, 1);   //X <identifier>
-        public static IMInstruction CMNT = new IMInstruction(IMInstructionKind.CMNT, 1);   //X <identifier>
-        public static IMInstruction FREE = new IMInstruction(IMInstructionKind.FREE, 1);   //X <identifier>
-        public static IMInstruction GVEC = new IMInstruction(IMInstructionKind.GVEC, 4);   //X <value_list>
-        public static IMInstruction CAST = new IMInstruction(IMInstructionKind.CAST, 2);   //X <target>, <source>
-        public static IMInstruction LEA  = new IMInstruction(IMInstructionKind.LEA, 2);     //X <target>, <source>
+        public static readonly IMInstruction NOP  = new(IMInstructionKind.NOP, 0);    //X
+        public static readonly IMInstruction DEL  = new(IMInstructionKind.DEL, 1);    //X <target>
+        public static readonly IMInstruction LABL = new(IMInstructionKind.LABL, 1);   //X <identifier>
+        public static readonly IMInstruction CMNT = new(IMInstructionKind.CMNT, 1);   //X <identifier>
+        public static readonly IMInstruction FREE = new(IMInstructionKind.FREE, 1);   //X <identifier>
+        public static readonly IMInstruction GVEC = new(IMInstructionKind.GVEC, 4);   //X <value_list>
+        public static readonly IMInstruction CAST = new(IMInstructionKind.CAST, 2);   //X <target>, <source>
+        public static readonly IMInstruction LEA  = new(IMInstructionKind.LEA, 2);     //X <target>, <source>
 
     }
 }

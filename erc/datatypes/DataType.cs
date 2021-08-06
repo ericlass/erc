@@ -131,14 +131,14 @@ namespace erc
         /*********************************/
         /*********************************/
 
-        public static DataType VOID = new DataType
+        public static readonly DataType VOID = new()
         {
             Kind = DataTypeKind.VOID
         };
 
         /*########## UNSIGNED INTEGERS ##########*/
 
-        public static DataType U8 = new DataType
+        public static readonly DataType U8 = new()
         {
             Kind = DataTypeKind.U8,
             ByteSize = 1,
@@ -148,7 +148,7 @@ namespace erc
             Group = DataTypeGroup.ScalarInteger,
         };
 
-        public static DataType U16 = new DataType
+        public static readonly DataType U16 = new()
         {
             Kind = DataTypeKind.U16,
             ByteSize = 2,
@@ -158,7 +158,7 @@ namespace erc
             Group = DataTypeGroup.ScalarInteger,
         };
 
-        public static DataType U32 = new DataType
+        public static readonly DataType U32 = new()
         {
             Kind = DataTypeKind.U32,
             ByteSize = 4,
@@ -168,7 +168,7 @@ namespace erc
             Group = DataTypeGroup.ScalarInteger,
         };
 
-        public static DataType U64 = new DataType
+        public static readonly DataType U64 = new()
         {
             Kind = DataTypeKind.U64,
             ByteSize = 8,
@@ -180,7 +180,7 @@ namespace erc
 
         /*########## SIGNED INTEGERS ##########*/
 
-        public static DataType I8 = new DataType
+        public static readonly DataType I8 = new()
         {
             Kind = DataTypeKind.I8,
             ByteSize = 1,
@@ -190,7 +190,7 @@ namespace erc
             Group = DataTypeGroup.ScalarInteger,
         };
 
-        public static DataType I16 = new DataType
+        public static readonly DataType I16 = new()
         {
             Kind = DataTypeKind.I16,
             ByteSize = 2,
@@ -200,7 +200,7 @@ namespace erc
             Group = DataTypeGroup.ScalarInteger,
         };
 
-        public static DataType I32 = new DataType
+        public static readonly DataType I32 = new()
         {
             Kind = DataTypeKind.I32,
             ByteSize = 4,
@@ -210,7 +210,7 @@ namespace erc
             Group = DataTypeGroup.ScalarInteger,
         };
 
-        public static DataType I64 = new DataType
+        public static readonly DataType I64 = new()
         {
             Kind = DataTypeKind.I64,
             ByteSize = 8,
@@ -222,7 +222,7 @@ namespace erc
 
         /*########## SIGNED FLOATS ##########*/
 
-        public static DataType F32 = new DataType
+        public static readonly DataType F32 = new()
         {
             Kind = DataTypeKind.F32,
             ByteSize = 4,
@@ -231,7 +231,7 @@ namespace erc
             Group = DataTypeGroup.ScalarFloat,
         };
 
-        public static DataType F64 = new DataType
+        public static readonly DataType F64 = new()
         {
             Kind = DataTypeKind.F64,
             ByteSize = 8,
@@ -242,7 +242,7 @@ namespace erc
 
         /*########## FLOAT VECTORS ##########*/
 
-        public static DataType VEC4F = new DataType
+        public static readonly DataType VEC4F = new()
         {
             Kind = DataTypeKind.VEC4F,
             ByteSize = 16,
@@ -252,7 +252,7 @@ namespace erc
             Group = DataTypeGroup.VectorFloat,
         };
 
-        public static DataType VEC8F = new DataType
+        public static readonly DataType VEC8F = new()
         {
             Kind = DataTypeKind.VEC8F,
             ByteSize = 32,
@@ -262,7 +262,7 @@ namespace erc
             Group = DataTypeGroup.VectorFloat,
         };
 
-        public static DataType VEC2D = new DataType
+        public static readonly DataType VEC2D = new()
         {
             Kind = DataTypeKind.VEC2D,
             ByteSize = 16,
@@ -272,7 +272,7 @@ namespace erc
             Group = DataTypeGroup.VectorFloat,
         };
 
-        public static DataType VEC4D = new DataType
+        public static readonly DataType VEC4D = new()
         {
             Kind = DataTypeKind.VEC4D,
             ByteSize = 32,
@@ -284,7 +284,7 @@ namespace erc
 
         /*########## OTHERS ##########*/
 
-        public static DataType BOOL = new DataType
+        public static readonly DataType BOOL = new()
         {
             Kind = DataTypeKind.BOOL,
             ByteSize = 1,
@@ -293,7 +293,7 @@ namespace erc
             Group = DataTypeGroup.Other,
         };
 
-        public static DataType CHAR8 = new DataType
+        public static readonly DataType CHAR8 = new()
         {
             Kind = DataTypeKind.CHAR8,
             ByteSize = 1,
@@ -303,7 +303,7 @@ namespace erc
             Group = DataTypeGroup.Character,
         };
 
-        public static DataType STRING8 = new DataType
+        public static readonly DataType STRING8 = new()
         {
             Kind = DataTypeKind.STRING8,
             ByteSize = 8,
@@ -318,7 +318,7 @@ namespace erc
         /// <summary>
         /// Placeholder data type that is only used to make the syntax nice. It does not survive the sematic analysis.
         /// </summary>
-        public static DataType VARS = new DataType
+        public static readonly DataType VARS = new()
         {
             Kind = DataTypeKind.VARS,
             ByteSize = 1,

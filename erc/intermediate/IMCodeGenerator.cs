@@ -6,7 +6,7 @@ namespace erc
     public class IMCodeGenerator
     {
         private CompilerContext _context = null;
-        private IMGeneratorEnv _env = new IMGeneratorEnv();
+        private IMGeneratorEnv _env = new();
 
         public void Generate(CompilerContext context)
         {

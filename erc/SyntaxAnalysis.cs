@@ -356,7 +356,7 @@ namespace erc
             var name = tokens.PopExpected(TokenKind.Word);
             tokens.PopExpected(TokenKind.RoundBracketOpen);
 
-            var paramValues = ReadTokenList(tokens, TokenKind.Comma, TokenKind.RoundBracketClose);
+            var paramValues = ReadBreaketedList(tokens, TokenKind.RoundBracketOpen, TokenKind.RoundBracketClose, TokenKind.Comma);
             var paramExpressions = new List<AstItem>(paramValues.Count);
             foreach (var valueTokens in paramValues)
             {
@@ -367,29 +367,53 @@ namespace erc
             return AstItem.FunctionCall(name.Value, paramExpressions);
         }
 
-        private List<List<Token>> ReadTokenList(TokenIterator tokens, TokenKind separator, TokenKind terminator)
+        public List<List<Token>> ReadBreaketedList(TokenIterator tokens, TokenKind openBracket, TokenKind closeBracket, TokenKind separator)
         {
             var result = new List<List<Token>>();
-            var expTokens = new List<Token>();
+            var currentTokens = new List<Token>();
+            var bracketCounter = 0;
 
             var token = tokens.Pop();
-            if (token.Kind == terminator)
+
+            if (token.Kind == closeBracket)
                 return result;
 
             while (token != null)
             {
-                if (token.Kind == separator)
+                if (token.Kind == openBracket)
                 {
-                    result.Add(expTokens);
-                    expTokens = new List<Token>();
+                    bracketCounter += 1;
+                    currentTokens.Add(token);
                 }
-                else if (token.Kind == terminator)
+                else if (token.Kind == closeBracket)
                 {
-                    result.Add(expTokens);
-                    break;
+                    if (bracketCounter > 0)
+                    {
+                        bracketCounter -= 1;
+                        currentTokens.Add(token);
+                    }
+                    else
+                    {
+                        result.Add(currentTokens);
+                        break;
+                    }
+                }
+                else if (token.Kind == separator)
+                {
+                    if (bracketCounter > 0)
+                    {
+                        currentTokens.Add(token);
+                    }
+                    else
+                    {
+                        result.Add(currentTokens);
+                        currentTokens = new List<Token>();
+                    }
                 }
                 else
-                    expTokens.Add(token);
+                {
+                    currentTokens.Add(token);
+                }
 
                 token = tokens.Pop();
             }
@@ -477,7 +501,7 @@ namespace erc
 
             if (isPointer)
             {
-                name = name +  "*";
+                name += "*";
                 var pointerType = DataType.FindByName(name);
 
                 if (pointerType == null)
@@ -714,14 +738,6 @@ namespace erc
             return result;
         }
 
-        private AstItem StringToCharArrayDefinition(string str)
-        {
-            var chars = new List<char>(str.ToCharArray());
-            var literals = chars.ConvertAll(c => AstItem.Immediate(DataType.CHAR8, c.ToString()));
-            literals.Add(AstItem.Immediate(DataType.CHAR8, "\0"));
-            return AstItem.ValueArrayDefinition(literals);
-        }
-
         private AstItem ReadArray(TokenIterator tokens)
         {
             tokens.PopExpected(TokenKind.SquareBracketOpen);
@@ -737,10 +753,13 @@ namespace erc
             if (token.Kind == TokenKind.Comma)
             {
                 //Array definition with n values
-                var valueTokens = ReadTokenList(tokens, TokenKind.Comma, TokenKind.SquareBracketClose);
+                var valueTokens = ReadBreaketedList(tokens, TokenKind.SquareBracketOpen, TokenKind.SquareBracketClose, TokenKind.Comma);
 
-                var valueExpressions = new List<AstItem>(valueTokens.Count + 1);
-                valueExpressions.Add(firstValue);
+                var valueExpressions = new List<AstItem>(valueTokens.Count + 1)
+                {
+                    firstValue
+                };
+
                 foreach (var tokenList in valueTokens)
                 {
                     var iterator = new TokenIterator(tokenList);

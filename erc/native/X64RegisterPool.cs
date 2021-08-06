@@ -5,8 +5,8 @@ namespace erc
 {
     public class X64RegisterPool
     {
-        private HashSet<X64RegisterGroup> _used = new HashSet<X64RegisterGroup>();
-        private HashSet<X64RegisterGroup> _excluded = new HashSet<X64RegisterGroup>();
+        private HashSet<X64RegisterGroup> _used = new();
+        private HashSet<X64RegisterGroup> _excluded = new();
 
         public X64RegisterPool()
         {

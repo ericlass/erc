@@ -18,9 +18,11 @@ namespace erc
             {
                 //Array already is a pointer, so directly use it
                 //Add 8 bytes to array pointer so it points to first value, not to the length
-                var result = new List<IMOperation>(2);
-                result.Add(IMOperation.Mov(target, operand));
-                result.Add(IMOperation.Add(target, target, IMOperand.Immediate(DataType.U64, 8L)));
+                var result = new List<IMOperation>(2)
+                {
+                    IMOperation.Mov(target, operand),
+                    IMOperation.Add(target, target, IMOperand.Immediate(DataType.U64, 8L))
+                };
                 return result;
             }
 

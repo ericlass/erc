@@ -11,7 +11,7 @@ namespace erc
     /// </summary>
     public class FunctionScope
     {
-        private Dictionary<string, Symbol> _parameters = new Dictionary<string, Symbol>();
+        private Dictionary<string, Symbol> _parameters = new();
 
         public FunctionScope(Function function)
         {

@@ -57,7 +57,7 @@ namespace erc
             }
         }
 
-        public static readonly IMOperand VOID = new IMOperand() { DataType = DataType.VOID, Kind = IMOperandKind.Global, Name = "void" };
+        public static readonly IMOperand VOID = new() { DataType = DataType.VOID, Kind = IMOperandKind.Global, Name = "void" };
         public static readonly IMOperand BOOL_TRUE = IMOperand.Immediate(DataType.BOOL, 1);
         public static readonly IMOperand BOOL_FALSE = IMOperand.Immediate(DataType.BOOL, 0);
 

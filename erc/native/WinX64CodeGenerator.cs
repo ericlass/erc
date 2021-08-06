@@ -33,10 +33,10 @@ namespace erc
         private CompilerContext _context;
         private X64FunctionFrame _functionScope;
         private Function _currentFunction;
-        private List<X64RegisterGroup> _usedRegisterGroups = new List<X64RegisterGroup>();
-        private X64MemoryManager _memoryManager = new X64MemoryManager();
-        private List<Tuple<DataType, string>> _dataEntries = new List<Tuple<DataType, string>>();
-        private X64TypeCast _typeCastGenerator = new X64TypeCast();
+        private List<X64RegisterGroup> _usedRegisterGroups = new();
+        private X64MemoryManager _memoryManager = new();
+        private List<Tuple<DataType, string>> _dataEntries = new();
+        private X64TypeCast _typeCastGenerator = new();
         private long _vectorImmCounter = 0;
         private bool _debugOutput = false;
 

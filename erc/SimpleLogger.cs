@@ -5,7 +5,7 @@ namespace erc
 {
     public class SimpleLogger
     {
-        private StringBuilder _logBuilder = new StringBuilder();
+        private StringBuilder _logBuilder = new();
         public LogLevel LogLevel { get; set; } = LogLevel.Debug;
 
         public SimpleLogger()

@@ -7,10 +7,10 @@ namespace erc
     public class SemanticAnalysis
     {
         private const string FakeEndLabelName = "scope-end-label";
-        private HashSet<char> _numberSuffixChars = new HashSet<char> { 'b', 'w', 'd', 'q', 'u', 'f' }; //d is used for both 32 bit integer and float
+        private HashSet<char> _numberSuffixChars = new() { 'b', 'w', 'd', 'q', 'u', 'f' }; //d is used for both 32 bit integer and float
 
         private CompilerContext _context;
-        private AstOptimizer _optimizer = new AstOptimizer();
+        private AstOptimizer _optimizer = new();
 
         public SemanticAnalysis()
         {

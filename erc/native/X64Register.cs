@@ -57,7 +57,7 @@ namespace erc
     /// </summary>
     public class X64Register
     {
-        private static HashSet<X64RegisterGroup> _volatileGroups = new HashSet<X64RegisterGroup>() {
+        private static readonly HashSet<X64RegisterGroup> _volatileGroups = new() {
             X64RegisterGroup.A,
             X64RegisterGroup.C,
             X64RegisterGroup.D,
@@ -155,109 +155,63 @@ namespace erc
 
         public static X64Register GroupToFullSizeRegister(X64RegisterGroup group)
         {
-            switch (group)
+            return group switch
             {
-                case X64RegisterGroup.A:
-                    return RAX;
-                case X64RegisterGroup.B:
-                    return RBX;
-                case X64RegisterGroup.C:
-                    return RCX;
-                case X64RegisterGroup.D:
-                    return RDX;
-                case X64RegisterGroup.BP:
-                    return RBP;
-                case X64RegisterGroup.SP:
-                    return RSP;
-                case X64RegisterGroup.SI:
-                    return RSI;
-                case X64RegisterGroup.DI:
-                    return RDI;
-                case X64RegisterGroup.R8:
-                    return R8;
-                case X64RegisterGroup.R9:
-                    return R9;
-                case X64RegisterGroup.R10:
-                    return R10;
-                case X64RegisterGroup.R11:
-                    return R11;
-                case X64RegisterGroup.R12:
-                    return R12;
-                case X64RegisterGroup.R13:
-                    return R13;
-                case X64RegisterGroup.R14:
-                    return R14;
-                case X64RegisterGroup.R15:
-                    return R15;
-                case X64RegisterGroup.MM0:
-                    return YMM0;
-                case X64RegisterGroup.MM1:
-                    return YMM1;
-                case X64RegisterGroup.MM2:
-                    return YMM2;
-                case X64RegisterGroup.MM3:
-                    return YMM3;
-                case X64RegisterGroup.MM4:
-                    return YMM4;
-                case X64RegisterGroup.MM5:
-                    return YMM5;
-                case X64RegisterGroup.MM6:
-                    return YMM6;
-                case X64RegisterGroup.MM7:
-                    return YMM7;
-                case X64RegisterGroup.MM8:
-                    return YMM8;
-                case X64RegisterGroup.MM9:
-                    return YMM9;
-                case X64RegisterGroup.MM10:
-                    return YMM10;
-                case X64RegisterGroup.MM11:
-                    return YMM11;
-                case X64RegisterGroup.MM12:
-                    return YMM12;
-                case X64RegisterGroup.MM13:
-                    return YMM13;
-                case X64RegisterGroup.MM14:
-                    return YMM14;
-                case X64RegisterGroup.MM15:
-                    return YMM15;
-                default:
-                    throw new Exception("Unknown register group: " + group);
-            }
+                X64RegisterGroup.A => RAX,
+                X64RegisterGroup.B => RBX,
+                X64RegisterGroup.C => RCX,
+                X64RegisterGroup.D => RDX,
+                X64RegisterGroup.BP => RBP,
+                X64RegisterGroup.SP => RSP,
+                X64RegisterGroup.SI => RSI,
+                X64RegisterGroup.DI => RDI,
+                X64RegisterGroup.R8 => R8,
+                X64RegisterGroup.R9 => R9,
+                X64RegisterGroup.R10 => R10,
+                X64RegisterGroup.R11 => R11,
+                X64RegisterGroup.R12 => R12,
+                X64RegisterGroup.R13 => R13,
+                X64RegisterGroup.R14 => R14,
+                X64RegisterGroup.R15 => R15,
+                X64RegisterGroup.MM0 => YMM0,
+                X64RegisterGroup.MM1 => YMM1,
+                X64RegisterGroup.MM2 => YMM2,
+                X64RegisterGroup.MM3 => YMM3,
+                X64RegisterGroup.MM4 => YMM4,
+                X64RegisterGroup.MM5 => YMM5,
+                X64RegisterGroup.MM6 => YMM6,
+                X64RegisterGroup.MM7 => YMM7,
+                X64RegisterGroup.MM8 => YMM8,
+                X64RegisterGroup.MM9 => YMM9,
+                X64RegisterGroup.MM10 => YMM10,
+                X64RegisterGroup.MM11 => YMM11,
+                X64RegisterGroup.MM12 => YMM12,
+                X64RegisterGroup.MM13 => YMM13,
+                X64RegisterGroup.MM14 => YMM14,
+                X64RegisterGroup.MM15 => YMM15,
+                _ => throw new Exception("Unknown register group: " + group),
+            };
         }
 
         public static DataType GetDefaultDataType(X64Register register)
         {
-            switch (register.ByteSize)
+            return register.ByteSize switch
             {
-                case 1:
-                    return DataType.U8;
-
-                case 2:
-                    return DataType.U16;
-
-                case 4:
-                    return DataType.U32;
-
-                case 8:
-                    return DataType.U64;
-
-                case 16:
-                    return DataType.VEC2D;
-
-                case 32:
-                    return DataType.VEC4D;
-
-                default:
-                    throw new Exception("Unknown register size: " + register);
-            }
+                1 => DataType.U8,
+                2 => DataType.U16,
+                4 => DataType.U32,
+                8 => DataType.U64,
+                16 => DataType.VEC2D,
+                32 => DataType.VEC4D,
+                _ => throw new Exception("Unknown register size: " + register),
+            };
         }
 
         /*********************************************/
         /**************** R REGISTERS ****************/
         /*********************************************/
 
-        public static X64Register RAX = new X64Register()
+        public static readonly X64Register RAX = new()
         {
             Name = "RAX",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -265,7 +219,7 @@ namespace erc
             ByteSize = 8
         };        
 
-        public static X64Register EAX = new X64Register()
+        public static readonly X64Register EAX = new()
         {
             Name = "EAX",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -273,7 +227,7 @@ namespace erc
             ByteSize = 4
         };
 
-        public static X64Register AX = new X64Register()
+        public static readonly X64Register AX = new()
         {
             Name = "AX",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -281,7 +235,7 @@ namespace erc
             ByteSize = 2
         };
 
-        public static X64Register AL = new X64Register()
+        public static readonly X64Register AL = new()
         {
             Name = "AL",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -289,7 +243,7 @@ namespace erc
             ByteSize = 1
         };
 
-        public static X64Register RBX = new X64Register()
+        public static readonly X64Register RBX = new()
         {
             Name = "RBX",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -297,7 +251,7 @@ namespace erc
             ByteSize = 8
         };
 
-        public static X64Register EBX = new X64Register()
+        public static readonly X64Register EBX = new()
         {
             Name = "EBX",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -305,7 +259,7 @@ namespace erc
             ByteSize = 4
         };
 
-        public static X64Register BX = new X64Register()
+        public static readonly X64Register BX = new()
         {
             Name = "BX",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -313,7 +267,7 @@ namespace erc
             ByteSize = 2
         };
 
-        public static X64Register BL = new X64Register()
+        public static readonly X64Register BL = new()
         {
             Name = "BL",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -321,7 +275,7 @@ namespace erc
             ByteSize = 1
         };
 
-        public static X64Register RCX = new X64Register()
+        public static readonly X64Register RCX = new()
         {
             Name = "RCX",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -329,7 +283,7 @@ namespace erc
             ByteSize = 8
         };
 
-        public static X64Register ECX = new X64Register()
+        public static readonly X64Register ECX = new()
         {
             Name = "ECX",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -337,7 +291,7 @@ namespace erc
             ByteSize = 4
         };
 
-        public static X64Register CX = new X64Register()
+        public static readonly X64Register CX = new()
         {
             Name = "CX",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -345,7 +299,7 @@ namespace erc
             ByteSize = 2
         };
 
-        public static X64Register CL = new X64Register()
+        public static readonly X64Register CL = new()
         {
             Name = "CL",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -353,7 +307,7 @@ namespace erc
             ByteSize = 1
         };
 
-        public static X64Register RDX = new X64Register()
+        public static readonly X64Register RDX = new()
         {
             Name = "RDX",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -361,7 +315,7 @@ namespace erc
             ByteSize = 8
         };
 
-        public static X64Register EDX = new X64Register()
+        public static readonly X64Register EDX = new()
         {
             Name = "EDX",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -369,7 +323,7 @@ namespace erc
             ByteSize = 4
         };
 
-        public static X64Register DX = new X64Register()
+        public static readonly X64Register DX = new()
         {
             Name = "DX",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -377,7 +331,7 @@ namespace erc
             ByteSize = 2
         };
 
-        public static X64Register DL = new X64Register()
+        public static readonly X64Register DL = new()
         {
             Name = "DL",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -385,7 +339,7 @@ namespace erc
             ByteSize = 1
         };
 
-        public static X64Register RBP = new X64Register()
+        public static readonly X64Register RBP = new()
         {
             Name = "RBP",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -393,7 +347,7 @@ namespace erc
             ByteSize = 8
         };
 
-        public static X64Register EBP = new X64Register()
+        public static readonly X64Register EBP = new()
         {
             Name = "EBP",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -401,7 +355,7 @@ namespace erc
             ByteSize = 4
         };
 
-        public static X64Register BP = new X64Register()
+        public static readonly X64Register BP = new()
         {
             Name = "BP",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -409,7 +363,7 @@ namespace erc
             ByteSize = 2
         };
 
-        public static X64Register BPL = new X64Register()
+        public static readonly X64Register BPL = new()
         {
             Name = "BPL",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -417,7 +371,7 @@ namespace erc
             ByteSize = 1
         };
 
-        public static X64Register RSP = new X64Register()
+        public static readonly X64Register RSP = new()
         {
             Name = "RSP",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -425,7 +379,7 @@ namespace erc
             ByteSize = 8
         };
 
-        public static X64Register ESP = new X64Register()
+        public static readonly X64Register ESP = new()
         {
             Name = "ESP",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -433,7 +387,7 @@ namespace erc
             ByteSize = 4
         };
 
-        public static X64Register SP = new X64Register()
+        public static readonly X64Register SP = new()
         {
             Name = "SP",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -441,7 +395,7 @@ namespace erc
             ByteSize = 2
         };
 
-        public static X64Register SPL = new X64Register()
+        public static readonly X64Register SPL = new()
         {
             Name = "SPL",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -449,7 +403,7 @@ namespace erc
             ByteSize = 1
         };
 
-        public static X64Register RSI = new X64Register()
+        public static readonly X64Register RSI = new()
         {
             Name = "RSI",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -457,7 +411,7 @@ namespace erc
             ByteSize = 8
         };
 
-        public static X64Register ESI = new X64Register()
+        public static readonly X64Register ESI = new()
         {
             Name = "ESI",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -465,7 +419,7 @@ namespace erc
             ByteSize = 4
         };
 
-        public static X64Register SI = new X64Register()
+        public static readonly X64Register SI = new()
         {
             Name = "SI",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -473,7 +427,7 @@ namespace erc
             ByteSize = 2
         };
 
-        public static X64Register SIL = new X64Register()
+        public static readonly X64Register SIL = new()
         {
             Name = "SIL",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -481,7 +435,7 @@ namespace erc
             ByteSize = 1
         };
 
-        public static X64Register RDI = new X64Register()
+        public static readonly X64Register RDI = new()
         {
             Name = "RDI",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -489,7 +443,7 @@ namespace erc
             ByteSize = 8
         };
 
-        public static X64Register EDI = new X64Register()
+        public static readonly X64Register EDI = new()
         {
             Name = "EDI",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -497,7 +451,7 @@ namespace erc
             ByteSize = 4
         };
 
-        public static X64Register DI = new X64Register()
+        public static readonly X64Register DI = new()
         {
             Name = "DI",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -505,7 +459,7 @@ namespace erc
             ByteSize = 2
         };
 
-        public static X64Register DIL = new X64Register()
+        public static readonly X64Register DIL = new()
         {
             Name = "DIL",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -513,7 +467,7 @@ namespace erc
             ByteSize = 1
         };
 
-        public static X64Register R8 = new X64Register()
+        public static readonly X64Register R8 = new()
         {
             Name = "R8",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -521,7 +475,7 @@ namespace erc
             ByteSize = 8
         };
 
-        public static X64Register R8D = new X64Register()
+        public static readonly X64Register R8D = new()
         {
             Name = "R8D",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -529,7 +483,7 @@ namespace erc
             ByteSize = 4
         };
 
-        public static X64Register R8W = new X64Register()
+        public static readonly X64Register R8W = new()
         {
             Name = "R8W",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -537,7 +491,7 @@ namespace erc
             ByteSize = 2
         };
 
-        public static X64Register R8B = new X64Register()
+        public static readonly X64Register R8B = new()
         {
             Name = "R8B",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -545,7 +499,7 @@ namespace erc
             ByteSize = 1
         };
 
-        public static X64Register R9 = new X64Register()
+        public static readonly X64Register R9 = new()
         {
             Name = "R9",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -553,7 +507,7 @@ namespace erc
             ByteSize = 8
         };
 
-        public static X64Register R9D = new X64Register()
+        public static readonly X64Register R9D = new()
         {
             Name = "R9D",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -561,7 +515,7 @@ namespace erc
             ByteSize = 4
         };
 
-        public static X64Register R9W = new X64Register()
+        public static readonly X64Register R9W = new()
         {
             Name = "R9W",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -569,7 +523,7 @@ namespace erc
             ByteSize = 2
         };
 
-        public static X64Register R9B = new X64Register()
+        public static readonly X64Register R9B = new()
         {
             Name = "R9B",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -577,7 +531,7 @@ namespace erc
             ByteSize = 1
         };
 
-        public static X64Register R10 = new X64Register()
+        public static readonly X64Register R10 = new()
         {
             Name = "R10",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -585,7 +539,7 @@ namespace erc
             ByteSize = 8
         };
 
-        public static X64Register R10D = new X64Register()
+        public static readonly X64Register R10D = new()
         {
             Name = "R10D",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -593,7 +547,7 @@ namespace erc
             ByteSize = 4
         };
 
-        public static X64Register R10W = new X64Register()
+        public static readonly X64Register R10W = new()
         {
             Name = "R10W",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -601,7 +555,7 @@ namespace erc
             ByteSize = 2
         };
 
-        public static X64Register R10B = new X64Register()
+        public static readonly X64Register R10B = new()
         {
             Name = "R10B",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -609,7 +563,7 @@ namespace erc
             ByteSize = 1
         };
 
-        public static X64Register R11 = new X64Register()
+        public static readonly X64Register R11 = new()
         {
             Name = "R11",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -617,7 +571,7 @@ namespace erc
             ByteSize = 8
         };
 
-        public static X64Register R11D = new X64Register()
+        public static readonly X64Register R11D = new()
         {
             Name = "R11D",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -625,7 +579,7 @@ namespace erc
             ByteSize = 4
         };
 
-        public static X64Register R11W = new X64Register()
+        public static readonly X64Register R11W = new()
         {
             Name = "R11W",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -633,7 +587,7 @@ namespace erc
             ByteSize = 2
         };
 
-        public static X64Register R11B = new X64Register()
+        public static readonly X64Register R11B = new()
         {
             Name = "R11B",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -641,7 +595,7 @@ namespace erc
             ByteSize = 1
         };
 
-        public static X64Register R12 = new X64Register()
+        public static readonly X64Register R12 = new()
         {
             Name = "R12",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -649,7 +603,7 @@ namespace erc
             ByteSize = 8
         };
 
-        public static X64Register R12D = new X64Register()
+        public static readonly X64Register R12D = new()
         {
             Name = "R12D",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -657,7 +611,7 @@ namespace erc
             ByteSize = 4
         };
 
-        public static X64Register R12W = new X64Register()
+        public static readonly X64Register R12W = new()
         {
             Name = "R12W",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -665,7 +619,7 @@ namespace erc
             ByteSize = 2
         };
 
-        public static X64Register R12B = new X64Register()
+        public static readonly X64Register R12B = new()
         {
             Name = "R12B",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -673,7 +627,7 @@ namespace erc
             ByteSize = 1
         };
 
-        public static X64Register R13 = new X64Register()
+        public static readonly X64Register R13 = new()
         {
             Name = "R13",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -681,7 +635,7 @@ namespace erc
             ByteSize = 8
         };
 
-        public static X64Register R13D = new X64Register()
+        public static readonly X64Register R13D = new()
         {
             Name = "R13D",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -689,7 +643,7 @@ namespace erc
             ByteSize = 4
         };
 
-        public static X64Register R13W = new X64Register()
+        public static readonly X64Register R13W = new()
         {
             Name = "R13W",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -697,7 +651,7 @@ namespace erc
             ByteSize = 2
         };
 
-        public static X64Register R13B = new X64Register()
+        public static readonly X64Register R13B = new()
         {
             Name = "R13B",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -705,7 +659,7 @@ namespace erc
             ByteSize = 1
         };
 
-        public static X64Register R14 = new X64Register()
+        public static readonly X64Register R14 = new()
         {
             Name = "R14",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -713,7 +667,7 @@ namespace erc
             ByteSize = 8
         };
 
-        public static X64Register R14D = new X64Register()
+        public static readonly X64Register R14D = new()
         {
             Name = "R14D",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -721,7 +675,7 @@ namespace erc
             ByteSize = 4
         };
 
-        public static X64Register R14W = new X64Register()
+        public static readonly X64Register R14W = new()
         {
             Name = "R14W",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -729,7 +683,7 @@ namespace erc
             ByteSize = 2
         };
 
-        public static X64Register R14B = new X64Register()
+        public static readonly X64Register R14B = new()
         {
             Name = "R14B",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -737,7 +691,7 @@ namespace erc
             ByteSize = 1
         };
 
-        public static X64Register R15 = new X64Register()
+        public static readonly X64Register R15 = new()
         {
             Name = "R15",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -745,7 +699,7 @@ namespace erc
             ByteSize = 8
         };
 
-        public static X64Register R15D = new X64Register()
+        public static readonly X64Register R15D = new()
         {
             Name = "R15D",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -753,7 +707,7 @@ namespace erc
             ByteSize = 4
         };
 
-        public static X64Register R15W = new X64Register()
+        public static readonly X64Register R15W = new()
         {
             Name = "R15W",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -761,7 +715,7 @@ namespace erc
             ByteSize = 2
         };
 
-        public static X64Register R15B = new X64Register()
+        public static readonly X64Register R15B = new()
         {
             Name = "R15B",
             Category = X64RegisterCategory.GeneralPurpose,
@@ -773,7 +727,7 @@ namespace erc
         /**************  MM REGISTERS  ***************/
         /*********************************************/
 
-        public static X64Register XMM0 = new X64Register()
+        public static readonly X64Register XMM0 = new()
         {
             Name = "XMM0",
             Category = X64RegisterCategory.MultiMedia,
@@ -781,7 +735,7 @@ namespace erc
             ByteSize = 16
         };
 
-        public static X64Register YMM0 = new X64Register()
+        public static readonly X64Register YMM0 = new()
         {
             Name = "YMM0",
             Category = X64RegisterCategory.MultiMedia,
@@ -789,7 +743,7 @@ namespace erc
             ByteSize = 32
         };
 
-        public static X64Register XMM1 = new X64Register()
+        public static readonly X64Register XMM1 = new()
         {
             Name = "XMM1",
             Category = X64RegisterCategory.MultiMedia,
@@ -797,7 +751,7 @@ namespace erc
             ByteSize = 16
         };
 
-        public static X64Register YMM1 = new X64Register()
+        public static readonly X64Register YMM1 = new()
         {
             Name = "YMM1",
             Category = X64RegisterCategory.MultiMedia,
@@ -805,7 +759,7 @@ namespace erc
             ByteSize = 32
         };
 
-        public static X64Register XMM2 = new X64Register()
+        public static readonly X64Register XMM2 = new()
         {
             Name = "XMM2",
             Category = X64RegisterCategory.MultiMedia,
@@ -813,7 +767,7 @@ namespace erc
             ByteSize = 16
         };
 
-        public static X64Register YMM2 = new X64Register()
+        public static readonly X64Register YMM2 = new()
         {
             Name = "YMM2",
             Category = X64RegisterCategory.MultiMedia,
@@ -821,7 +775,7 @@ namespace erc
             ByteSize = 32
         };
 
-        public static X64Register XMM3 = new X64Register()
+        public static readonly X64Register XMM3 = new()
         {
             Name = "XMM3",
             Category = X64RegisterCategory.MultiMedia,
@@ -829,7 +783,7 @@ namespace erc
             ByteSize = 16
         };
 
-        public static X64Register YMM3 = new X64Register()
+        public static readonly X64Register YMM3 = new()
         {
             Name = "YMM3",
             Category = X64RegisterCategory.MultiMedia,
@@ -837,7 +791,7 @@ namespace erc
             ByteSize = 32
         };
 
-        public static X64Register XMM4 = new X64Register()
+        public static readonly X64Register XMM4 = new()
         {
             Name = "XMM4",
             Category = X64RegisterCategory.MultiMedia,
@@ -845,7 +799,7 @@ namespace erc
             ByteSize = 16
         };
 
-        public static X64Register YMM4 = new X64Register()
+        public static readonly X64Register YMM4 = new()
         {
             Name = "YMM4",
             Category = X64RegisterCategory.MultiMedia,
@@ -853,7 +807,7 @@ namespace erc
             ByteSize = 32
         };
 
-        public static X64Register XMM5 = new X64Register()
+        public static readonly X64Register XMM5 = new()
         {
             Name = "XMM5",
             Category = X64RegisterCategory.MultiMedia,
@@ -861,7 +815,7 @@ namespace erc
             ByteSize = 16
         };
 
-        public static X64Register YMM5 = new X64Register()
+        public static readonly X64Register YMM5 = new()
         {
             Name = "YMM5",
             Category = X64RegisterCategory.MultiMedia,
@@ -869,7 +823,7 @@ namespace erc
             ByteSize = 32
         };
 
-        public static X64Register XMM6 = new X64Register()
+        public static readonly X64Register XMM6 = new()
         {
             Name = "XMM6",
             Category = X64RegisterCategory.MultiMedia,
@@ -877,7 +831,7 @@ namespace erc
             ByteSize = 16
         };
 
-        public static X64Register YMM6 = new X64Register()
+        public static readonly X64Register YMM6 = new()
         {
             Name = "YMM6",
             Category = X64RegisterCategory.MultiMedia,
@@ -885,7 +839,7 @@ namespace erc
             ByteSize = 32
         };
 
-        public static X64Register XMM7 = new X64Register()
+        public static readonly X64Register XMM7 = new()
         {
             Name = "XMM7",
             Category = X64RegisterCategory.MultiMedia,
@@ -893,7 +847,7 @@ namespace erc
             ByteSize = 16
         };
 
-        public static X64Register YMM7 = new X64Register()
+        public static readonly X64Register YMM7 = new()
         {
             Name = "YMM7",
             Category = X64RegisterCategory.MultiMedia,
@@ -901,7 +855,7 @@ namespace erc
             ByteSize = 32
         };
 
-        public static X64Register XMM8 = new X64Register()
+        public static readonly X64Register XMM8 = new()
         {
             Name = "XMM8",
             Category = X64RegisterCategory.MultiMedia,
@@ -909,7 +863,7 @@ namespace erc
             ByteSize = 16
         };
 
-        public static X64Register YMM8 = new X64Register()
+        public static readonly X64Register YMM8 = new()
         {
             Name = "YMM8",
             Category = X64RegisterCategory.MultiMedia,
@@ -917,7 +871,7 @@ namespace erc
             ByteSize = 32
         };
 
-        public static X64Register XMM9 = new X64Register()
+        public static readonly X64Register XMM9 = new()
         {
             Name = "XMM9",
             Category = X64RegisterCategory.MultiMedia,
@@ -925,7 +879,7 @@ namespace erc
             ByteSize = 16
         };
 
-        public static X64Register YMM9 = new X64Register()
+        public static readonly X64Register YMM9 = new()
         {
             Name = "YMM9",
             Category = X64RegisterCategory.MultiMedia,
@@ -933,7 +887,7 @@ namespace erc
             ByteSize = 32
         };
 
-        public static X64Register XMM10 = new X64Register()
+        public static readonly X64Register XMM10 = new()
         {
             Name = "XMM10",
             Category = X64RegisterCategory.MultiMedia,
@@ -941,7 +895,7 @@ namespace erc
             ByteSize = 16
         };
 
-        public static X64Register YMM10 = new X64Register()
+        public static readonly X64Register YMM10 = new()
         {
             Name = "YMM10",
             Category = X64RegisterCategory.MultiMedia,
@@ -949,7 +903,7 @@ namespace erc
             ByteSize = 32
         };
 
-        public static X64Register XMM11 = new X64Register()
+        public static readonly X64Register XMM11 = new()
         {
             Name = "XMM11",
             Category = X64RegisterCategory.MultiMedia,
@@ -957,7 +911,7 @@ namespace erc
             ByteSize = 16
         };
 
-        public static X64Register YMM11 = new X64Register()
+        public static readonly X64Register YMM11 = new()
         {
             Name = "YMM11",
             Category = X64RegisterCategory.MultiMedia,
@@ -965,7 +919,7 @@ namespace erc
             ByteSize = 32
         };
 
-        public static X64Register XMM12 = new X64Register()
+        public static readonly X64Register XMM12 = new()
         {
             Name = "XMM12",
             Category = X64RegisterCategory.MultiMedia,
@@ -973,7 +927,7 @@ namespace erc
             ByteSize = 16
         };
 
-        public static X64Register YMM12 = new X64Register()
+        public static readonly X64Register YMM12 = new()
         {
             Name = "YMM12",
             Category = X64RegisterCategory.MultiMedia,
@@ -981,7 +935,7 @@ namespace erc
             ByteSize = 32
         };
 
-        public static X64Register XMM13 = new X64Register()
+        public static readonly X64Register XMM13 = new()
         {
             Name = "XMM13",
             Category = X64RegisterCategory.MultiMedia,
@@ -989,7 +943,7 @@ namespace erc
             ByteSize = 16
         };
 
-        public static X64Register YMM13 = new X64Register()
+        public static readonly X64Register YMM13 = new()
         {
             Name = "YMM13",
             Category = X64RegisterCategory.MultiMedia,
@@ -997,7 +951,7 @@ namespace erc
             ByteSize = 32
         };
 
-        public static X64Register XMM14 = new X64Register()
+        public static readonly X64Register XMM14 = new()
         {
             Name = "XMM14",
             Category = X64RegisterCategory.MultiMedia,
@@ -1005,7 +959,7 @@ namespace erc
             ByteSize = 16
         };
 
-        public static X64Register YMM14 = new X64Register()
+        public static readonly X64Register YMM14 = new()
         {
             Name = "YMM14",
             Category = X64RegisterCategory.MultiMedia,
@@ -1013,7 +967,7 @@ namespace erc
             ByteSize = 32
         };
 
-        public static X64Register XMM15 = new X64Register()
+        public static readonly X64Register XMM15 = new()
         {
             Name = "XMM15",
             Category = X64RegisterCategory.MultiMedia,
@@ -1021,7 +975,7 @@ namespace erc
             ByteSize = 16
         };
 
-        public static X64Register YMM15 = new X64Register()
+        public static readonly X64Register YMM15 = new()
         {
             Name = "YMM15",
             Category = X64RegisterCategory.MultiMedia,

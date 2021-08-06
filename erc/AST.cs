@@ -66,114 +66,75 @@ namespace erc
 
         public AstItem Copy()
         {
-            var result = new AstItem();
-            result.Kind = Kind;
-            result.DataType = DataType;
-            result.Identifier = Identifier;
-            result.Value = Value;
-            result.Value2 = Value2;
-            result.Operator = Operator;
-            result.SourceLine = SourceLine;
-            result.Children = new List<AstItem>(Children);
-            return result;
+            return new AstItem
+            {
+                Kind = Kind,
+                DataType = DataType,
+                Identifier = Identifier,
+                Value = Value,
+                Value2 = Value2,
+                Operator = Operator,
+                SourceLine = SourceLine,
+                Children = new List<AstItem>(Children)
+            };
         }
 
         public override string ToString()
         {
-            switch (Kind)
+            return Kind switch
             {
-                case AstItemKind.VarDecl:
-                case AstItemKind.Assignment:
-                    return Kind + ": " + DataType + "(" + Children[0] + ")";
-
-                case AstItemKind.Immediate:
-                    return Kind + ": " + DataType + "(" + Value + ")";
-
-                case AstItemKind.SizedArrayDefinition:
-                    return Kind + ": " + DataType.ElementType + " * " + Children[1];
-
-                case AstItemKind.ValueArrayDefinition:
-                    return Kind + ": [" + String.Join(",", Children) + "]";
-
-                case AstItemKind.Vector:
-                    return "<" + String.Join(",", Children) + ">";
-
-                case AstItemKind.Variable:
-                case AstItemKind.PointerDeref:
-                case AstItemKind.IndexAccess:
-                    return Kind + ": " + DataType + "(" + Identifier + ")";
-
-                case AstItemKind.BinaryOperator:
-                case AstItemKind.UnaryOperator:
-                    return Kind + ": " + Operator.Figure;
-
-                case AstItemKind.Parameter:
-                    return Kind + ": " + Identifier + "(" + DataType + ")";
-
-                case AstItemKind.ParameterList:
-                case AstItemKind.StatementList:
-                    return Kind + ": " + String.Join(", ", Children);
-
-                case AstItemKind.FunctionDecl:
-                case AstItemKind.FunctionCall:
-                case AstItemKind.ExternFunctionDecl:
-                    return Kind + ": " + Identifier + "(" + String.Join(", ", Children) + ")";
-
-                case AstItemKind.Type:
-                    return Kind + ": " + DataType.ElementType.Name;
-
-                case AstItemKind.Identifier:
-                    return Kind + ": " + Identifier;
-
-                default:
-                    return Kind.ToString();
-            }
+                AstItemKind.VarDecl or AstItemKind.Assignment
+                    => Kind + ": " + DataType + "(" + Children[0] + ")",
+                AstItemKind.Immediate
+                    => Kind + ": " + DataType + "(" + Value + ")",
+                AstItemKind.SizedArrayDefinition
+                    => Kind + ": " + DataType.ElementType + " * " + Children[1],
+                AstItemKind.ValueArrayDefinition
+                    => Kind + ": [" + String.Join(",", Children) + "]",
+                AstItemKind.Vector
+                    => "<" + String.Join(",", Children) + ">",
+                AstItemKind.Variable or AstItemKind.PointerDeref or AstItemKind.IndexAccess 
+                    => Kind + ": " + DataType + "(" + Identifier + ")",
+                AstItemKind.BinaryOperator or AstItemKind.UnaryOperator
+                    => Kind + ": " + Operator.Figure,
+                AstItemKind.Parameter
+                    => Kind + ": " + Identifier + "(" + DataType + ")",
+                AstItemKind.ParameterList or AstItemKind.StatementList
+                    => Kind + ": " + String.Join(", ", Children),
+                AstItemKind.FunctionDecl or AstItemKind.FunctionCall or AstItemKind.ExternFunctionDecl
+                    => Kind + ": " + Identifier + "(" + String.Join(", ", Children) + ")",
+                AstItemKind.Type
+                    => Kind + ": " + DataType.ElementType.Name,
+                AstItemKind.Identifier
+                    => Kind + ": " + Identifier,
+                _ => Kind.ToString(),
+            };
         }
 
         public string ToSimpleString()
         {
-            switch (Kind)
+            return Kind switch
             {
-                case AstItemKind.VarDecl:
-                case AstItemKind.Variable:
-                case AstItemKind.Parameter:
-                case AstItemKind.PointerDeref:
-                case AstItemKind.IndexAccess:
-                    return Kind + ": \"" + Identifier + "\" (" + DataType + ")";
-
-                case AstItemKind.FunctionCall:
-                case AstItemKind.EnumDecl:
-                    return Kind + ": \"" + Identifier + "\"";
-
-                case AstItemKind.EnumElement:
-                    return Kind + ": \"" + Identifier + "\" (" + Value + ")";
-
-                case AstItemKind.FunctionDecl:
-                    return Kind + ": \"" + Identifier + "\" (" + DataType + ")";
-
-                case AstItemKind.ExternFunctionDecl:
-                    return Kind + ": \"" + Identifier + "\" (" + DataType + ") [\"" + Value2 + "\"; \"" + Value + "\"]";
-
-                case AstItemKind.Immediate:
-                    return Kind + ": " + ImmediateValueToString() + " (" + DataType + ")";
-
-                case AstItemKind.BinaryOperator:
-                case AstItemKind.UnaryOperator:
-                    return Kind + ": " + this.Operator.Figure;
-
-                case AstItemKind.Type:
-                case AstItemKind.SizedArrayDefinition:
-                case AstItemKind.ValueArrayDefinition:
-                case AstItemKind.NewRawPointer:
-                    return Kind + ": (" + DataType.Name + ")";
-
-                case AstItemKind.Identifier:
-                    return Kind + ": " + Identifier;
-
-
-                default:
-                    return Kind.ToString();
-            }
+                AstItemKind.VarDecl or AstItemKind.Variable or AstItemKind.Parameter or AstItemKind.PointerDeref or AstItemKind.IndexAccess
+                    => Kind + ": \"" + Identifier + "\" (" + DataType + ")",
+                AstItemKind.FunctionCall or AstItemKind.EnumDecl
+                    => Kind + ": \"" + Identifier + "\"",
+                AstItemKind.EnumElement
+                    => Kind + ": \"" + Identifier + "\" (" + Value + ")",
+                AstItemKind.FunctionDecl
+                    => Kind + ": \"" + Identifier + "\" (" + DataType + ")",
+                AstItemKind.ExternFunctionDecl
+                    => Kind + ": \"" + Identifier + "\" (" + DataType + ") [\"" + Value2 + "\"; \"" + Value + "\"]",
+                AstItemKind.Immediate
+                    => Kind + ": " + ImmediateValueToString() + " (" + DataType + ")",
+                AstItemKind.BinaryOperator or AstItemKind.UnaryOperator
+                    => Kind + ": " + this.Operator.Figure,
+                AstItemKind.Type or AstItemKind.SizedArrayDefinition or AstItemKind.ValueArrayDefinition or AstItemKind.NewRawPointer   
+                    => Kind + ": (" + DataType.Name + ")",
+                AstItemKind.Identifier
+                    => Kind + ": " + Identifier,
+                _ => Kind.ToString(),
+            };
         }
 
         private string ImmediateValueToString()
@@ -225,8 +186,10 @@ namespace erc
 
         public static AstItem VarDecl(string varName, AstItem expression)
         {
-            var result = new AstItem(AstItemKind.VarDecl);
-            result.Identifier = varName;
+            var result = new AstItem(AstItemKind.VarDecl)
+            {
+                Identifier = varName
+            };
             result.Children.Add(expression);
             return result;
         }
@@ -263,23 +226,29 @@ namespace erc
 
         public static AstItem Immediate(object value)
         {
-            var result = new AstItem(AstItemKind.Immediate);
-            result.Value = value;
+            var result = new AstItem(AstItemKind.Immediate)
+            {
+                Value = value
+            };
             return result;
         }
 
         public static AstItem Immediate(DataType dataType, object value)
         {
-            var result = new AstItem(AstItemKind.Immediate);
-            result.Value = value;
-            result.DataType = dataType;
+            var result = new AstItem(AstItemKind.Immediate)
+            {
+                Value = value,
+                DataType = dataType
+            };
             return result;
         }
 
         public static AstItem Variable(string varName)
         {
-            var result = new AstItem(AstItemKind.Variable);
-            result.Identifier = varName;
+            var result = new AstItem(AstItemKind.Variable)
+            {
+                Identifier = varName
+            };
             return result;
         }
 

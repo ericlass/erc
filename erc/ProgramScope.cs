@@ -8,7 +8,7 @@ namespace erc
 {
     public class ProgramScope
     {
-        public Dictionary<string, Function> _functions = new Dictionary<string, Function>();
+        public Dictionary<string, Function> _functions = new();
 
         public Function GetFunction(string name)
         {

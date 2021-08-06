@@ -9,7 +9,7 @@ namespace erc
         public Scope Parent { get; set; }
         public Dictionary<string, Scope> Children { get; set; } = new Dictionary<string, Scope>();
 
-        private Dictionary<string, Symbol> _symbols = new Dictionary<string, Symbol>();
+        private Dictionary<string, Symbol> _symbols = new();
         private Dictionary<string, Function> _functions { get; set; } = new Dictionary<string, Function>();
 
         public Scope(string name, Scope parent)

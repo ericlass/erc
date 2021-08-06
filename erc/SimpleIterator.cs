@@ -14,11 +14,6 @@ namespace erc
             _items = items;
         }
 
-        public static SimpleIterator<T> Singleton(T value)
-        {
-            return new SimpleIterator<T>(new List<T> { value });
-        }
-
         public void StartCapture()
         {
             _captureStart = _position;
@@ -35,7 +30,7 @@ namespace erc
         public T Current()
         {
             if (_position >= _items.Count)
-                return default(T);
+                return default;
 
             return _items[_position];
         }
@@ -43,7 +38,7 @@ namespace erc
         public T Next()
         {
             if (_position + 1 >= _items.Count)
-                return default(T);
+                return default;
 
             return _items[_position + 1];
         }
@@ -51,7 +46,7 @@ namespace erc
         public T Pop()
         {
             if (_position >= _items.Count)
-                return default(T);
+                return default;
 
             var result = _items[_position];
             _position += 1;

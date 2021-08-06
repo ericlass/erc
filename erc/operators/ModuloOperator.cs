@@ -7,7 +7,7 @@ namespace erc
     public class ModuloOperator : IBinaryOperator
     {
         //TODO: Check which are really supported
-        private HashSet<DataTypeKind> _supportedDataTypes = new HashSet<DataTypeKind>() {
+        private HashSet<DataTypeKind> _supportedDataTypes = new() {
                  DataTypeKind.I64,
                  DataTypeKind.F32,
                  DataTypeKind.F64,

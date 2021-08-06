@@ -9,7 +9,7 @@ namespace erc
 
         private delegate void GenerateTypeCastDelegate(List<string> output, X64StorageLocation target, DataType targetType, X64StorageLocation source, DataType sourceType);
 
-        private Dictionary<DataTypeKind, Dictionary<DataTypeKind, GenerateTypeCastDelegate>> Generators = new Dictionary<DataTypeKind, Dictionary<DataTypeKind, GenerateTypeCastDelegate>>()
+        private Dictionary<DataTypeKind, Dictionary<DataTypeKind, GenerateTypeCastDelegate>> Generators = new()
         {
             //Conversions from U8 to <other>
             [DataTypeKind.U8] = new Dictionary<DataTypeKind, GenerateTypeCastDelegate>()

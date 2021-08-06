@@ -105,7 +105,7 @@ namespace erc
             return number.ToString() + " ; '" + StringUtils.CharToPrintableStr(firstChar) + "'";
         }
 
-        private static readonly X64DataTypeProperties U8 = new X64DataTypeProperties()
+        private static readonly X64DataTypeProperties U8 = new()
         {
             OperandSize = "byte",
             ImmediateSize = "db",
@@ -126,7 +126,7 @@ namespace erc
         };
 
 
-        private static readonly X64DataTypeProperties U16 = new X64DataTypeProperties()
+        private static readonly X64DataTypeProperties U16 = new()
         {
             OperandSize = "word",
             ImmediateSize = "dw",
@@ -147,7 +147,7 @@ namespace erc
         };
 
 
-        private static readonly X64DataTypeProperties U32 = new X64DataTypeProperties()
+        private static readonly X64DataTypeProperties U32 = new()
         {
             OperandSize = "dword",
             ImmediateSize = "dd",
@@ -168,7 +168,7 @@ namespace erc
         };
 
 
-        private static readonly X64DataTypeProperties U64 = new X64DataTypeProperties()
+        private static readonly X64DataTypeProperties U64 = new()
         {
             OperandSize = "qword",
             ImmediateSize = "dq",
@@ -189,7 +189,7 @@ namespace erc
         };
 
 
-        private static readonly X64DataTypeProperties I8 = new X64DataTypeProperties()
+        private static readonly X64DataTypeProperties I8 = new()
         {
             OperandSize = "byte",
             ImmediateSize = "db",
@@ -211,7 +211,7 @@ namespace erc
         };
 
 
-        private static readonly X64DataTypeProperties I16 = new X64DataTypeProperties()
+        private static readonly X64DataTypeProperties I16 = new()
         {
             OperandSize = "word",
             ImmediateSize = "dw",
@@ -233,7 +233,7 @@ namespace erc
         };
 
 
-        private static readonly X64DataTypeProperties I32 = new X64DataTypeProperties()
+        private static readonly X64DataTypeProperties I32 = new()
         {
             OperandSize = "dword",
             ImmediateSize = "dd",
@@ -255,7 +255,7 @@ namespace erc
         };
 
 
-        private static readonly X64DataTypeProperties I64 = new X64DataTypeProperties()
+        private static readonly X64DataTypeProperties I64 = new()
         {
             OperandSize = "qword",
             ImmediateSize = "dq",
@@ -277,7 +277,7 @@ namespace erc
         };
 
 
-        private static readonly X64DataTypeProperties F32 = new X64DataTypeProperties()
+        private static readonly X64DataTypeProperties F32 = new()
         {
             OperandSize = "dword",
             ImmediateSize = "dd",
@@ -297,7 +297,7 @@ namespace erc
         };
 
 
-        private static readonly X64DataTypeProperties F64 = new X64DataTypeProperties()
+        private static readonly X64DataTypeProperties F64 = new()
         {
             OperandSize = "qword",
             ImmediateSize = "dq",
@@ -317,7 +317,7 @@ namespace erc
         };
 
 
-        private static readonly X64DataTypeProperties VEC4F = new X64DataTypeProperties()
+        private static readonly X64DataTypeProperties VEC4F = new()
         {
             OperandSize = "dqword",
             ImmediateSize = "dd",
@@ -344,7 +344,7 @@ namespace erc
         };
 
 
-        private static readonly X64DataTypeProperties VEC8F = new X64DataTypeProperties()
+        private static readonly X64DataTypeProperties VEC8F = new()
         {
             OperandSize = "qqword",
             ImmediateSize = "dd",
@@ -371,7 +371,7 @@ namespace erc
         };
 
 
-        private static readonly X64DataTypeProperties VEC2D = new X64DataTypeProperties()
+        private static readonly X64DataTypeProperties VEC2D = new()
         {
             OperandSize = "dqword",
             ImmediateSize = "dq",
@@ -398,7 +398,7 @@ namespace erc
         };
 
 
-        private static readonly X64DataTypeProperties VEC4D = new X64DataTypeProperties()
+        private static readonly X64DataTypeProperties VEC4D = new()
         {
             OperandSize = "qqword",
             ImmediateSize = "dq",
@@ -424,7 +424,7 @@ namespace erc
             MoveMaskInstruction = X64Instruction.VMOVMSKPD
         };
 
-        private static readonly X64DataTypeProperties BOOL = new X64DataTypeProperties()
+        private static readonly X64DataTypeProperties BOOL = new()
         {
             OperandSize = "byte",
             ImmediateSize = "db",
@@ -440,7 +440,7 @@ namespace erc
             ImmediateValueToAsmCode = (o) => o.ImmediateValue.ToString()
         };
 
-        private static readonly X64DataTypeProperties POINTER = new X64DataTypeProperties()
+        private static readonly X64DataTypeProperties POINTER = new()
         {
             OperandSize = "qword",
             ImmediateSize = "dq",
@@ -459,7 +459,7 @@ namespace erc
             NotInstruction = X64Instruction.NOT,
         };
 
-        private static readonly X64DataTypeProperties CHAR8 = new X64DataTypeProperties()
+        private static readonly X64DataTypeProperties CHAR8 = new()
         {
             OperandSize = "byte",
             ImmediateSize = "db",
@@ -479,7 +479,7 @@ namespace erc
             ImmediateValueToAsmCode = ImmediateChar8ToAsmCode
         };
 
-        private static readonly X64DataTypeProperties STRING8 = new X64DataTypeProperties()
+        private static readonly X64DataTypeProperties STRING8 = new()
         {
             OperandSize = "qword",
             ImmediateSize = "db",
@@ -495,7 +495,7 @@ namespace erc
             ImmediateValueToAsmCode = ImmediateString8ToAsmCode
         };
 
-        private static readonly X64DataTypeProperties ARRAY = new X64DataTypeProperties()
+        private static readonly X64DataTypeProperties ARRAY = new()
         {
             OperandSize = "qword",
             ImmediateSize = "dq",

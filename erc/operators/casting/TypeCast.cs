@@ -11,7 +11,7 @@ namespace erc
     {
         //No casting from or to bool. This should be done with comparision and such things.
 
-        private static HashSet<DataTypeKind> AllScalarNumberTypes = new HashSet<DataTypeKind>()
+        private static readonly HashSet<DataTypeKind> AllScalarNumberTypes = new()
         {
             DataTypeKind.U8,
             DataTypeKind.U16,
@@ -25,7 +25,7 @@ namespace erc
             DataTypeKind.F64
         };
 
-        private static HashSet<DataTypeKind> AllScalarNumberTypesAndChars = new HashSet<DataTypeKind>()
+        private static readonly HashSet<DataTypeKind> AllScalarNumberTypesAndChars = new()
         {
             DataTypeKind.U8,
             DataTypeKind.U16,
@@ -40,7 +40,7 @@ namespace erc
             DataTypeKind.CHAR8
         };
 
-        private static HashSet<DataTypeKind> AllVectorNumberTypes = new HashSet<DataTypeKind>()
+        private static readonly HashSet<DataTypeKind> AllVectorNumberTypes = new()
         {
             DataTypeKind.VEC4F,
             DataTypeKind.VEC8F,
@@ -72,11 +72,11 @@ namespace erc
             return allValues.Find((o) => o.From == dataType);
         }
 
-        public static TypeCastDefinition FromU8 = new TypeCastDefinition(DataTypeKind.U8, AllScalarNumberTypesAndChars);
-        public static TypeCastDefinition FromU16 = new TypeCastDefinition(DataTypeKind.U16, AllScalarNumberTypesAndChars);
-        public static TypeCastDefinition FromU32 = new TypeCastDefinition(DataTypeKind.U32, AllScalarNumberTypesAndChars);
-        
-        public static TypeCastDefinition FromU64 = new TypeCastDefinition(
+        public static readonly TypeCastDefinition FromU8 = new(DataTypeKind.U8, AllScalarNumberTypesAndChars);
+        public static readonly TypeCastDefinition FromU16 = new(DataTypeKind.U16, AllScalarNumberTypesAndChars);
+        public static readonly TypeCastDefinition FromU32 = new(DataTypeKind.U32, AllScalarNumberTypesAndChars);
+
+        public static readonly TypeCastDefinition FromU64 = new(
             DataTypeKind.U64,
             new HashSet<DataTypeKind>()
             {
@@ -95,20 +95,20 @@ namespace erc
             }
         );
 
-        public static TypeCastDefinition FromI8 = new TypeCastDefinition(DataTypeKind.I8, AllScalarNumberTypesAndChars);
-        public static TypeCastDefinition FromI16 = new TypeCastDefinition(DataTypeKind.I16, AllScalarNumberTypesAndChars);
-        public static TypeCastDefinition FromI32 = new TypeCastDefinition(DataTypeKind.I32, AllScalarNumberTypesAndChars);
-        public static TypeCastDefinition FromI64 = new TypeCastDefinition(DataTypeKind.I64, AllScalarNumberTypesAndChars);
+        public static readonly TypeCastDefinition FromI8 = new(DataTypeKind.I8, AllScalarNumberTypesAndChars);
+        public static readonly TypeCastDefinition FromI16 = new(DataTypeKind.I16, AllScalarNumberTypesAndChars);
+        public static readonly TypeCastDefinition FromI32 = new(DataTypeKind.I32, AllScalarNumberTypesAndChars);
+        public static readonly TypeCastDefinition FromI64 = new(DataTypeKind.I64, AllScalarNumberTypesAndChars);
 
-        public static TypeCastDefinition FromF32 = new TypeCastDefinition(DataTypeKind.F32, AllScalarNumberTypes);
-        public static TypeCastDefinition FromF64 = new TypeCastDefinition(DataTypeKind.F64, AllScalarNumberTypes);
+        public static readonly TypeCastDefinition FromF32 = new(DataTypeKind.F32, AllScalarNumberTypes);
+        public static readonly TypeCastDefinition FromF64 = new(DataTypeKind.F64, AllScalarNumberTypes);
 
-        public static TypeCastDefinition FromVEC4F = new TypeCastDefinition(DataTypeKind.VEC4F, AllVectorNumberTypes);
-        public static TypeCastDefinition FromVEC8F = new TypeCastDefinition(DataTypeKind.VEC8F, AllVectorNumberTypes);
-        public static TypeCastDefinition FromVEC2D = new TypeCastDefinition(DataTypeKind.VEC2D, AllVectorNumberTypes);
-        public static TypeCastDefinition FromVEC4D = new TypeCastDefinition(DataTypeKind.VEC4D, AllVectorNumberTypes);
+        public static readonly TypeCastDefinition FromVEC4F = new(DataTypeKind.VEC4F, AllVectorNumberTypes);
+        public static readonly TypeCastDefinition FromVEC8F = new(DataTypeKind.VEC8F, AllVectorNumberTypes);
+        public static readonly TypeCastDefinition FromVEC2D = new(DataTypeKind.VEC2D, AllVectorNumberTypes);
+        public static readonly TypeCastDefinition FromVEC4D = new(DataTypeKind.VEC4D, AllVectorNumberTypes);
 
-        public static TypeCastDefinition FromCHAR8 = new TypeCastDefinition(
+        public static readonly TypeCastDefinition FromCHAR8 = new(
             DataTypeKind.CHAR8,
             new HashSet<DataTypeKind>()
             {
@@ -123,12 +123,12 @@ namespace erc
             }
         );
 
-        public static TypeCastDefinition FromPointer = new TypeCastDefinition(
+        public static readonly TypeCastDefinition FromPointer = new(
             DataTypeKind.POINTER,
             new HashSet<DataTypeKind>() { DataTypeKind.U64 }
         );
 
-        public static TypeCastDefinition FromEnum = new TypeCastDefinition(
+        public static readonly TypeCastDefinition FromEnum = new(
             DataTypeKind.ENUM,
             new HashSet<DataTypeKind>()
             {

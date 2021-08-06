@@ -12,7 +12,7 @@ namespace erc
         public SimpleLogger Logger { get; } = new SimpleLogger();
         public string NativeCode { get; set; }
 
-        private ProgramScope _programScope = new ProgramScope();
+        private ProgramScope _programScope = new();
         private FunctionScope _functionScope = null;
         private BlockScope _blockScope = null;
 
