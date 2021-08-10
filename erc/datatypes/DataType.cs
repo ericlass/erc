@@ -22,6 +22,7 @@ namespace erc
         /// Is this a reference type (true) or a value type (false). Reference types are pointers to the actual data.
         /// </summary>
         public bool IsReferenceType { get; private set; } = false;
+        public bool AllowsIndexAccess { get; private set; } = false;
 
         public string Name 
         { 
@@ -220,7 +221,7 @@ namespace erc
             Group = DataTypeGroup.ScalarInteger,
         };
 
-        /*########## SIGNED FLOATS ##########*/
+        /*########## SCALAR FLOATS ##########*/
 
         public static readonly DataType F32 = new()
         {
@@ -250,6 +251,7 @@ namespace erc
             NumElements = 4,
             ElementType = F32,
             Group = DataTypeGroup.VectorFloat,
+            AllowsIndexAccess = true
         };
 
         public static readonly DataType VEC8F = new()
@@ -260,6 +262,7 @@ namespace erc
             NumElements = 8,
             ElementType = F32,
             Group = DataTypeGroup.VectorFloat,
+            AllowsIndexAccess = true
         };
 
         public static readonly DataType VEC2D = new()
@@ -270,6 +273,7 @@ namespace erc
             NumElements = 2,
             ElementType = F64,
             Group = DataTypeGroup.VectorFloat,
+            AllowsIndexAccess = true
         };
 
         public static readonly DataType VEC4D = new()
@@ -280,6 +284,7 @@ namespace erc
             NumElements = 4,
             ElementType = F64,
             Group = DataTypeGroup.VectorFloat,
+            AllowsIndexAccess = true
         };
 
         /*########## OTHERS ##########*/
@@ -312,7 +317,8 @@ namespace erc
             ElementType = CHAR8,
             NumElements = 0, //Number of elements may not be known at compile time
             Group = DataTypeGroup.Character,
-            IsReferenceType = true
+            IsReferenceType = true,
+            AllowsIndexAccess = true
         };
 
         /// <summary>
@@ -338,7 +344,8 @@ namespace erc
                 ElementType = subType,
                 NumElements = 1,
                 Group = DataTypeGroup.ScalarInteger,
-                IsReferenceType = true
+                IsReferenceType = true,
+                AllowsIndexAccess = true
             };
 
             DataType.GetAllValues().Add(newType);
@@ -357,7 +364,8 @@ namespace erc
                 NumElements = 0, //Number of elements may not be known at compile time
                 Group = DataTypeGroup.Array,
                 MemoryRegion = region,
-                IsReferenceType = true
+                IsReferenceType = true,
+                AllowsIndexAccess = true
             };
 
             DataType.GetAllValues().Add(newType);

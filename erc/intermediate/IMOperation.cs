@@ -292,5 +292,15 @@ namespace erc
             return new IMOperation(IMInstruction.LEA, target, source);
         }
 
+        public static IMOperation VExtract(IMOperand target, IMOperand source, IMOperand index)
+        {
+            return new IMOperation(IMInstruction.VEXTRACT, target, source, index);
+        }
+
+        public static IMOperation VInsert(IMOperand target, IMOperand source, IMOperand index)
+        {
+            return new IMOperation(IMInstruction.VINSERT, target, source, index);
+        }
+
     }
 }

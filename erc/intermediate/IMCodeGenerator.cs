@@ -169,10 +169,20 @@ namespace erc
 
         private void GenerateAssignment(List<IMOperation> output, AstItem statement)
         {
-            //No need to check if variable was already declared or declared. That is already check by syntax analysis!
+            //No need to check if variable was already declared or not. That is already check by syntax analysis!
             var target = statement.Children[0];
-            IMOperand targetLocation;
             var symbol = _context.RequireSymbol(target.Identifier);
+
+            //Special handling for vector index access
+            if (target.Kind == AstItemKind.IndexAccess && symbol.DataType.IsVector)
+            {
+                var valueLocation = GetOperandLocationOrGenerateExpression(output, statement.Children[1]);
+                var indexLocation = GetOperandLocationOrGenerateExpression(output, target.Children[0]);
+                output.Add(IMOperation.VInsert(symbol.Location, valueLocation, indexLocation));
+                return;
+            }
+
+            IMOperand targetLocation;
 
             switch (target.Kind)
             {
@@ -439,6 +449,15 @@ namespace erc
         private void GenerateIndexAccess(List<IMOperation> output, AstItem item, IMOperand targetLocation)
         {
             var symbol = _context.RequireSymbol(item.Identifier);
+            if (symbol.DataType.IsVector)
+                GenerateVectorIndexAccess(output, item, targetLocation);
+            else
+                GeneratePointerIndexAccess(output, item, targetLocation);
+        }
+
+        private void GeneratePointerIndexAccess(List<IMOperation> output, AstItem item, IMOperand targetLocation)
+        {
+            var symbol = _context.RequireSymbol(item.Identifier);
             var tmpLocation = _env.NewTempLocal(symbol.DataType);
 
             GenerateIndexAddressCalculation(output, item.Children[0], symbol, tmpLocation);
@@ -449,13 +468,22 @@ namespace erc
             {
                 //TODO: Generate code that check if the index is in bounds and throws exception if not!
 
-                //Need to offset pointer by 8 bytes, which is the size of the array
+                //Need to offset pointer by 8 bytes, which is the size of the array or string
                 output.Add(IMOperation.Add(tmpLocation, tmpLocation, IMOperand.Immediate(DataType.U64, DataType.U64.ByteSize)));
                 resultType = symbol.DataType.ElementType;
             }
 
             //Move value to target
             output.Add(IMOperation.Mov(targetLocation, IMOperand.Reference(resultType, tmpLocation)));
+        }
+
+        private void GenerateVectorIndexAccess(List<IMOperation> output, AstItem item, IMOperand targetLocation)
+        {
+            var symbol = _context.RequireSymbol(item.Identifier);
+            var indexExpression = item.Children[0];
+
+            var indexLocation = GetOperandLocationOrGenerateExpression(output, indexExpression);
+            output.Add(IMOperation.VExtract(targetLocation, symbol.Location, indexLocation));
         }
 
         private void GenerateIndexAddressCalculation(List<IMOperation> output, AstItem indexExpression, Symbol symbol, IMOperand target)

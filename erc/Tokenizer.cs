@@ -6,7 +6,7 @@ namespace erc
     public class Tokenizer
     {
         private HashSet<char> _digits = new() { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
-        private HashSet<char> _numberSuffixChars = new() { 'b', 'w', 'd', 'q', 'u', 'f' }; //d is used for both 32 bit integer and float
+        private HashSet<char> _numberSuffixChars = new() { 'b', 'w', 'd', 'q', 'u', 'f' }; //'d' is used for both 32 bit integer and float
         private HashSet<char> _letter = new()
         {
             'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',

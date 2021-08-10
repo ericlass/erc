@@ -64,5 +64,8 @@ namespace erc
         public static readonly IMInstruction CAST = new(IMInstructionKind.CAST, 2);   //X <target>, <source>
         public static readonly IMInstruction LEA  = new(IMInstructionKind.LEA, 2);     //X <target>, <source>
 
+        public static readonly IMInstruction VEXTRACT = new(IMInstructionKind.VEXTRACT, 3);     //X <target_scalar>, <source_vector>, <index>
+        public static readonly IMInstruction VINSERT = new(IMInstructionKind.VINSERT, 3);     //X <target_vector>, <source_scalar>, <index>
+
     }
 }

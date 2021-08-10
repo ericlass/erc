@@ -5,6 +5,22 @@ namespace erc
 {
     class X64MemoryManager
     {
+        private readonly X64RegisterGroup[] _generalPurposeParameterRegisters = 
+        { 
+            X64RegisterGroup.C,
+            X64RegisterGroup.D,
+            X64RegisterGroup.R8,
+            X64RegisterGroup.R9,
+        };
+
+        private readonly X64RegisterGroup[] _floatVectorParameterRegisters =
+        {
+            X64RegisterGroup.MM0,
+            X64RegisterGroup.MM1,
+            X64RegisterGroup.MM2,
+            X64RegisterGroup.MM3,
+        };
+
         private long _immediateCounter = 0;
 
         public X64FunctionFrame CreateFunctionScope(IMFunction function)
@@ -193,26 +209,17 @@ namespace erc
         /// <returns>List of locations in the order of the parameters.</returns>
         public X64ParameterFrame GetParameterFrame(List<DataType> parameterTypes)
         {
-            var freeParameterRRegisters = new Stack<X64RegisterGroup>();
-            freeParameterRRegisters.Push(X64RegisterGroup.R9);
-            freeParameterRRegisters.Push(X64RegisterGroup.R8);
-            freeParameterRRegisters.Push(X64RegisterGroup.D);
-            freeParameterRRegisters.Push(X64RegisterGroup.C);
-
-            var freeParameterMMRegisters = new Stack<X64RegisterGroup>();
-            freeParameterMMRegisters.Push(X64RegisterGroup.MM3);
-            freeParameterMMRegisters.Push(X64RegisterGroup.MM2);
-            freeParameterMMRegisters.Push(X64RegisterGroup.MM1);
-            freeParameterMMRegisters.Push(X64RegisterGroup.MM0);
-
             //TODO: Variadic functions have a special parameter passing convention. See MS x64 calling convention docs.
 
             var locations = new List<X64StorageLocation>();
 
             const long alignment = 8;
             long paramOffset = 0;
-            foreach (var paramType in parameterTypes)
+
+            for (int p = 0; p < parameterTypes.Count; p++)
             {
+                var paramType = parameterTypes[p];
+
                 switch (paramType.Kind)
                 {
                     case DataTypeKind.I8:
@@ -228,12 +235,9 @@ namespace erc
                     case DataTypeKind.ARRAY:
                     case DataTypeKind.CHAR8:
                     case DataTypeKind.STRING8:
-                        if (freeParameterRRegisters.Count > 0)
+                        if (p < _generalPurposeParameterRegisters.Length)
                         {
-                            var group = freeParameterRRegisters.Pop();
-                            //Also need to pop MM register to keep param position correct!
-                            freeParameterMMRegisters.Pop();
-
+                            var group = _generalPurposeParameterRegisters[p];
                             locations.Add(X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegister(group, paramType)));
                         }
                         else
@@ -246,12 +250,9 @@ namespace erc
 
                     case DataTypeKind.F32:
                     case DataTypeKind.F64:
-                        if (freeParameterMMRegisters.Count > 0)
+                        if (p < _floatVectorParameterRegisters.Length)
                         {
-                            var group = freeParameterMMRegisters.Pop();
-                            //Also need to pop R register to keep param position correct!
-                            freeParameterRRegisters.Pop();
-
+                            var group = _floatVectorParameterRegisters[p];
                             locations.Add(X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegister(group, paramType)));
                         }
                         else
@@ -266,13 +267,11 @@ namespace erc
                     case DataTypeKind.VEC8F:
                     case DataTypeKind.VEC2D:
                     case DataTypeKind.VEC4D:
-                        //This differs from Win64 calling convention. The register are there, why not use them?
-                        if (freeParameterMMRegisters.Count > 0)
+                        //This differs from Win64 calling convention. The registers are there, why not use them?
+                        //TODO: Use correct Win64 calling convetion for external functions!
+                        if (p < _floatVectorParameterRegisters.Length)
                         {
-                            var group = freeParameterMMRegisters.Pop();
-                            //Also need to pop R register to keep param position correct!
-                            freeParameterRRegisters.Pop();
-
+                            var group = _floatVectorParameterRegisters[p];
                             locations.Add(X64StorageLocation.AsRegister(X64Register.GroupToSpecificRegister(group, paramType)));
                         }
                         else

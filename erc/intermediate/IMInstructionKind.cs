@@ -44,6 +44,8 @@ namespace erc
         FREE,
         GVEC,
         CAST,
-        LEA
+        LEA,
+        VEXTRACT,
+        VINSERT
     }
 }
