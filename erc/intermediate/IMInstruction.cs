@@ -32,7 +32,9 @@ namespace erc
         public static readonly IMInstruction CALL = new(IMInstructionKind.CALL, 3);  //X <identifier>, [<target>], [<parameter_values...>]
         public static readonly IMInstruction RET  = new(IMInstructionKind.RET, 1);   //X <op>
         public static readonly IMInstruction MOV  = new(IMInstructionKind.MOV, 2);   //X <target>, <source>
-        
+        public static readonly IMInstruction SHL = new(IMInstructionKind.SHL, 3);   //X <target>, <source>, <bits_to_shift>
+        public static readonly IMInstruction SHR = new(IMInstructionKind.SHR, 3);   //X <target>, <source>, <bits_to_shift>
+
         public static readonly IMInstruction JMP   = new(IMInstructionKind.JMP, 1);    //X <identifier>
         public static readonly IMInstruction JMPE  = new(IMInstructionKind.JMPE, 3);   //X <op1>, <op2>, <identifier>
         public static readonly IMInstruction JMPNE = new(IMInstructionKind.JMPNE, 3);  //X <op1>, <op2>, <identifier>
@@ -63,9 +65,6 @@ namespace erc
         public static readonly IMInstruction GVEC = new(IMInstructionKind.GVEC, 4);   //X <value_list>
         public static readonly IMInstruction CAST = new(IMInstructionKind.CAST, 2);   //X <target>, <source>
         public static readonly IMInstruction LEA  = new(IMInstructionKind.LEA, 2);     //X <target>, <source>
-
-        public static readonly IMInstruction VEXTRACT = new(IMInstructionKind.VEXTRACT, 3);     //X <target_scalar>, <source_vector>, <index>
-        public static readonly IMInstruction VINSERT = new(IMInstructionKind.VINSERT, 3);     //X <target_vector>, <source_scalar>, <index>
 
     }
 }

@@ -45,7 +45,7 @@ namespace erc
         GVEC,
         CAST,
         LEA,
-        VEXTRACT,
-        VINSERT
+        SHL,
+        SHR
     }
 }

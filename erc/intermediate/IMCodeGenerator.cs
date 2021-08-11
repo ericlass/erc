@@ -178,7 +178,42 @@ namespace erc
             {
                 var valueLocation = GetOperandLocationOrGenerateExpression(output, statement.Children[1]);
                 var indexLocation = GetOperandLocationOrGenerateExpression(output, target.Children[0]);
-                output.Add(IMOperation.VInsert(symbol.Location, valueLocation, indexLocation));
+
+                var pointerLocation = _env.NewTempLocal(DataType.U64);
+                var refLocation = IMOperand.Reference(symbol.DataType, pointerLocation);
+                var basePointerLocation = _env.NewTempLocal(DataType.U64);
+                var offsetLocation = _env.NewTempLocal(DataType.U64);
+
+                //Find how many bits to shift for multiplication
+                long shiftAmount;
+                if (symbol.DataType.ElementType.ByteSize == 4)
+                    shiftAmount = 2;
+                else if (symbol.DataType.ElementType.ByteSize == 8)
+                    shiftAmount = 3;
+                else
+                    throw new Exception("Unsupported vector element byte size: " + symbol.DataType.ElementType.ByteSize);
+
+                //Reserve stack space
+                output.Add(IMOperation.SAloc(pointerLocation, IMOperand.Immediate(DataType.U64, (long)symbol.DataType.ElementType.ByteSize)));
+                //Remember pointer for later
+                output.Add(IMOperation.Mov(basePointerLocation, pointerLocation));
+                //Load vector into stack space
+                output.Add(IMOperation.Mov(refLocation, symbol.Location));
+                //Calculate byte offset for index
+                output.Add(IMOperation.Shl(offsetLocation, indexLocation, IMOperand.Immediate(DataType.U64, shiftAmount)));
+                //Add byte offset to address
+                output.Add(IMOperation.Add(pointerLocation, pointerLocation, offsetLocation));
+
+                //Change ref location to element type for move
+                refLocation = IMOperand.Reference(symbol.DataType.ElementType, pointerLocation);
+                //Move scalar value to offset location
+                output.Add(IMOperation.Mov(refLocation, valueLocation));
+
+                //Create ref location to full vector
+                refLocation = IMOperand.Reference(symbol.DataType, basePointerLocation);
+                //Move changed vector back to original location
+                output.Add(IMOperation.Mov(symbol.Location, refLocation));
+
                 return;
             }
 
@@ -482,8 +517,35 @@ namespace erc
             var symbol = _context.RequireSymbol(item.Identifier);
             var indexExpression = item.Children[0];
 
+            //Evaluate index location
             var indexLocation = GetOperandLocationOrGenerateExpression(output, indexExpression);
-            output.Add(IMOperation.VExtract(targetLocation, symbol.Location, indexLocation));
+
+            var pointerLocation = _env.NewTempLocal(DataType.U64);
+            var refLocation = IMOperand.Reference(symbol.DataType, pointerLocation);
+            var offsetLocation = _env.NewTempLocal(DataType.U64);
+
+            //Find how many bits to shift for multiplication
+            long shiftAmount;
+            if (symbol.DataType.ElementType.ByteSize == 4)
+                shiftAmount = 2;
+            else if (symbol.DataType.ElementType.ByteSize == 8)
+                shiftAmount = 3;
+            else
+                throw new Exception("Unsupported vector element byte size: " + symbol.DataType.ElementType.ByteSize);
+
+            //Reserve stack space
+            output.Add(IMOperation.SAloc(pointerLocation, IMOperand.Immediate(DataType.U64, (long)symbol.DataType.ElementType.ByteSize)));
+            //Load vector into stack space
+            output.Add(IMOperation.Mov(refLocation, symbol.Location));
+            //Calculate byte offset for index
+            output.Add(IMOperation.Shl(offsetLocation, indexLocation, IMOperand.Immediate(DataType.U64, shiftAmount)));
+            //Add byte offset to address
+            output.Add(IMOperation.Add(pointerLocation, pointerLocation, offsetLocation));
+
+            //Change ref location to element type for move
+            refLocation = IMOperand.Reference(symbol.DataType.ElementType, pointerLocation);
+            //Finally move scalar value to target
+            output.Add(IMOperation.Mov(targetLocation, refLocation));
         }
 
         private void GenerateIndexAddressCalculation(List<IMOperation> output, AstItem indexExpression, Symbol symbol, IMOperand target)

@@ -381,6 +381,14 @@ namespace erc
                     GenerateLea(output, operation);
                     break;
 
+                case IMInstructionKind.SHL:
+                    GenerateShift(output, operation, X64Instruction.SHL);
+                    break;
+
+                case IMInstructionKind.SHR:
+                    GenerateShift(output, operation, X64Instruction.SHR);
+                    break;
+
                 case IMInstructionKind.FREE:
                     var location = RequireOperandLocation(operation.Operands[0]);
                     if (location.Kind == X64StorageLocationKind.Register)
@@ -447,6 +455,34 @@ namespace erc
 
             if (useTempLocation)
                 X64GeneratorUtils.Move(output, target.DataType, targetLocation, realTarget);
+        }
+
+        private void GenerateShift(List<string> output, IMOperation operation, X64Instruction shiftInstruction)
+        {
+            var target = operation.Operands[0];
+            Assert.DataTypeGroup(target.DataType.Group, DataTypeGroup.ScalarInteger, shiftInstruction.Name + " only supports scalar integers as target");
+            var source = operation.Operands[1];
+            Assert.DataTypeGroup(target.DataType.Group, DataTypeGroup.ScalarInteger, shiftInstruction.Name + " only supports scalar integers as source");
+            var numBits = operation.Operands[2];
+            Assert.IMOperandKind(numBits.Kind, IMOperandKind.Immediate, shiftInstruction.Name + " only supports immediate for bits to shift");
+
+            var targetLocation = RequireOperandLocation(target);
+            var sourceLocation = RequireOperandLocation(source);
+            var numBitsLocation = RequireOperandLocation(numBits);
+
+            var x64TargetType = X64DataTypeProperties.GetProperties(target.DataType.Kind);
+
+            var shiftLocation = targetLocation;
+            var needsTemplocation = targetLocation.Kind != X64StorageLocationKind.Register;
+            if (needsTemplocation)
+                shiftLocation = X64StorageLocation.AsRegister(x64TargetType.Accumulator);
+
+            X64GeneratorUtils.Move(output, target.DataType, shiftLocation, sourceLocation);
+            var shiftAmount = X64StorageLocation.Immediate(x64TargetType.ImmediateValueToAsmCode(numBits));
+            output.Add(X64CodeFormat.FormatOperation(shiftInstruction, shiftLocation, shiftAmount));
+
+            if (needsTemplocation)
+                X64GeneratorUtils.Move(output, target.DataType, targetLocation, shiftLocation);
         }
 
         private X64StorageLocation GetOperandLocation(IMOperand operand)

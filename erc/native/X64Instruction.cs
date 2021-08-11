@@ -78,10 +78,12 @@ namespace erc
         public static readonly X64Instruction NEG = new("NEG", 1);
         public static readonly X64Instruction TEST = new("TEST", 2);
         public static readonly X64Instruction SHR = new("SHR", 2);
+        public static readonly X64Instruction SHL = new("SHL", 2);
         public static readonly X64Instruction LEA = new("LEA", 2);
 
         public static readonly X64Instruction INC = new("INC", 1);
         public static readonly X64Instruction DEC = new("DEC", 1);
+
 
         //##### Comparison Instructions #####
 

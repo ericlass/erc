@@ -15,8 +15,8 @@ namespace erc
             Console.WriteLine("erc compiler - alpha");
             Console.WriteLine("--------------------");
 
-            var baseName = "autotest";
-            //var baseName = "example";
+            //var baseName = "autotest";
+            var baseName = "example";
 
             var config = Config.Load();
 
