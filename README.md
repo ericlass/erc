@@ -1,3 +1,6 @@
+> **Note**
+> This project is discontinued and will receive no more updates.
+
 # erc Programming Language
 Modern, powerful programming language for modern x64 CPUs. erc is made with performance in mind as the first and most important aspect.
 
